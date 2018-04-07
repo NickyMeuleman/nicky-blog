@@ -8,7 +8,7 @@ const Container = styled.header`
   grid-template-columns: 1fr auto 1fr;
   grid-template-rows: ${rhythm(3)};
   background: #333;
-  color: #eee;
+  color: #999;
 `;
 
 const Nav = styled.div`
@@ -30,7 +30,9 @@ const Nav = styled.div`
     color: inherit;
     text-decoration: none;
   }
-  .is-active {
+  .is-active,
+  a:hover {
+    color: #eee;
     border-bottom: 5px solid #18a1ff;
   }
 `;
@@ -94,7 +96,7 @@ const Header = () => (
         </li>
         <li>
           <Link to="/posts" activeClassName="is-active">
-            Articles
+            Posts
           </Link>
         </li>
         <li>
