@@ -9,6 +9,12 @@ const Container = styled.header`
   grid-template-rows: ${rhythm(3)};
   background: #333;
   color: #999;
+  a {
+    text-shadow: none;
+    background-image: none;
+    text-decoration: none;
+    color: inherit;
+  }
 `;
 
 const Nav = styled.div`
@@ -25,10 +31,6 @@ const Nav = styled.div`
   li {
     margin: 0;
     margin-left: ${rhythm(1)};
-  }
-  a {
-    color: inherit;
-    text-decoration: none;
   }
   .is-active,
   a:hover {
