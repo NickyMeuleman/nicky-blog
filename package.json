@@ -9,15 +9,18 @@
     "gatsby-link": "^1.6.39",
     "gatsby-plugin-catch-links": "^1.0.19",
     "gatsby-plugin-react-helmet": "^2.0.8",
+    "gatsby-plugin-sharp": "^1.6.41",
     "gatsby-plugin-styled-components": "^2.0.11",
     "gatsby-plugin-typography": "^1.7.18",
+    "gatsby-remark-images": "^1.5.60",
     "gatsby-source-filesystem": "^1.5.28",
     "gatsby-transformer-remark": "^1.7.39",
     "react": "^16.3.1",
     "react-dom": "^16.3.1",
     "react-helmet": "^5.2.0",
     "styled-components": "^3.2.5",
-    "typography-theme-kirkham": "^0.16.3"
+    "typography-theme-kirkham": "^0.16.3",
+    "typography-theme-ocean-beach": "^0.15.11"
   },
   "keywords": [
     "gatsby"
