@@ -9,6 +9,7 @@ const Container = styled.header`
   grid-template-rows: ${rhythm(3)};
   background: #333;
   color: #999;
+  z-index: 100;
   a {
     text-shadow: none;
     background-image: none;

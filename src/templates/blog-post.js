@@ -1,10 +1,11 @@
 import React from 'react';
+import Hero from '../components/Hero/Hero';
 
 const BlogPostTemplate = ({ data }) => {
   const { markdownRemark: post } = data;
   return (
     <div>
-      <h1>{post.frontmatter.title}</h1>
+      <Hero title={post.frontmatter.title} />
       <div dangerouslySetInnerHTML={{ __html: post.html }} />
     </div>
   );

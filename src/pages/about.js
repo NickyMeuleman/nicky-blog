@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
+import Hero from '../components/Hero/Hero';
 
 export default class AboutPage extends Component {
   render() {
     return (
       <React.Fragment>
+        <Hero title="About me" />
         <p>
           Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestiae, facilis corrupti placeat pariatur totam
           iure, ad eos sapiente odit excepturi tenetur? Ipsam nobis id quibusdam suscipit quidem omnis nemo ab ex
