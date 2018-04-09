@@ -21,9 +21,9 @@ const ArticleContainer = styled.div`
       padding: ${rhythm(2)};
     }
     grid-template-columns: ${rhythm(2)} 1fr ${rhythm(2)};
+    grid-template-rows: ${rhythm(1)} 1fr ${rhythm(1)};
   }
   @media (min-width: 70rem) {
-    grid-template-rows: ${rhythm(1)} 1fr ${rhythm(1)};
     grid-template-columns: ${rhythm(4)} 1fr ${rhythm(4)};
 
     & > article {
