@@ -6,7 +6,7 @@ import { rhythm } from '../../utils/typography';
 const Container = styled.header`
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  grid-template-rows: ${rhythm(3)};
+  grid-template-rows: ${rhythm(2)};
   background: #333;
   color: #999;
   z-index: 100;
@@ -15,6 +15,9 @@ const Container = styled.header`
     background-image: none;
     text-decoration: none;
     color: inherit;
+  }
+  @media (min-width: 55rem) {
+    grid-template-rows: ${rhythm(3)};
   }
 `;
 
@@ -31,12 +34,17 @@ const Nav = styled.div`
   }
   li {
     margin: 0;
-    margin-left: ${rhythm(1)};
+    margin-left: ${rhythm(1 / 2)};
   }
   .is-active,
   a:hover {
     color: #eee;
     border-bottom: 5px solid #18a1ff;
+  }
+  @media (min-width: 55rem) {
+    li {
+      margin-left: ${rhythm(1)};
+    }
   }
 `;
 
@@ -45,14 +53,21 @@ const Logo = styled.div`
   grid-row: 1/2;
   align-self: center;
   padding: 0;
-  margin: 0 ${rhythm(1)};
-  width: ${rhythm(4)};
-  height: ${rhythm(4)};
-  padding: ${rhythm(1 / 2)};
   border: 5px solid #333;
   border-radius: 50%;
   background-color: #999;
-  transform: translateY(25%);
+  width: ${rhythm(2)};
+  height: ${rhythm(2)};
+  padding: ${rhythm(1 / 4)};
+  transform: translateY(50%);
+  margin: 0 ${rhythm(0.5)};
+  @media (min-width: 55rem) {
+    margin: 0 ${rhythm(1)};
+    width: ${rhythm(4)};
+    height: ${rhythm(4)};
+    padding: ${rhythm(1 / 2)};
+    transform: translateY(25%);
+  }
 `;
 
 const Social = styled.div`
@@ -66,25 +81,34 @@ const Social = styled.div`
     margin: 0;
     padding: 0;
   }
-  li {
-    display: flex;
-    align-self: center;
-    margin: 0;
-    margin-right: ${rhythm(1)};
-  }
   a {
     display: flex;
     align-self: center;
     color: inherit;
     text-decoration: none;
   }
-  svg {
-    width: ${rhythm(1)};
-    height: ${rhythm(1)};
-    fill: #999;
-  }
   a:hover svg {
     fill: #eee;
+  }
+  li {
+    display: flex;
+    align-self: center;
+    margin: 0;
+    margin-right: ${rhythm(1 / 2)};
+  }
+  svg {
+    fill: #999;
+    width: ${rhythm(3 / 4)};
+    height: ${rhythm(3 / 4)};
+  }
+  @media (min-width: 55rem) {
+    li {
+      margin-right: ${rhythm(1)};
+    }
+    svg {
+      width: ${rhythm(1)};
+      height: ${rhythm(1)};
+    }
   }
 `;
 
