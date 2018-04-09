@@ -8,6 +8,20 @@ date: "2018-04-08"
 
 [external link](https://www.google.com)
 
+```js
+exports.onCreateNode = ({ node, getNode, boundActionCreators }) => {
+  const { createNodeField } = boundActionCreators;
+  if (node.internal.type === 'MarkdownRemark') {
+    const slug = createFilePath({ node, getNode, basePath: 'pages' });
+    createNodeField({
+      node,
+      name: 'slug',
+      value: slug,
+    });
+  }
+};
+```
+
 # Now, look here, my good man.
 
 But you are dressed as one… The Knights Who Say Ni demand a sacrifice! It's only a model. Why? I'm not a witch.
