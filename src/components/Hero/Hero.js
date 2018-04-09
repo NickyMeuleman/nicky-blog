@@ -8,7 +8,7 @@ const Container = styled.header`
   grid-template-rows: ${rhythm(3)} 1fr ${rhythm(3)};
   background-image: linear-gradient(141deg, #069265, #13dcbe 71%, #00fbff);
   color: #999;
-  margin-bottom: ${rhythm(3)};
+  margin-bottom: ${rhythm(1)};
   a {
     text-shadow: none;
     background-image: none;
