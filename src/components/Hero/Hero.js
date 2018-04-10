@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { rhythm } from '../../utils/typography';
 
 const Container = styled.header`
+  height: 100%;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   grid-template-rows: ${rhythm(3)} 1fr ${rhythm(3)};
@@ -25,9 +26,11 @@ const Pattern = styled.div`
 `;
 
 const Content = styled.div`
+  z-index: 30;
   grid-column: 2/3;
   grid-row: 2/3;
   & > h1 {
+    color: #fff;
     padding: 0;
     margin: 0;
   }

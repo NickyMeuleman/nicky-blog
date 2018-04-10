@@ -10,7 +10,10 @@ const TemplateWrapper = ({ children }) => (
   <React.Fragment>
     <Helmet
       title="Nicky blogs"
-      meta={[{ name: 'description', content: 'Sample' }, { name: 'keywords', content: 'sample, something' }]}
+      meta={[
+        { name: 'description', content: 'Nicky talks about JavaScript' },
+        { name: 'keywords', content: 'blog, programming, javascript' },
+      ]}
     >
       <link rel="icon" type="image/png" sizes="64x64" href={favicon} />
     </Helmet>

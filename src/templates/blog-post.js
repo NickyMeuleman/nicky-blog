@@ -25,50 +25,45 @@ const ArticleContainer = styled.div`
   }
   @media (min-width: 70rem) {
     grid-template-columns: ${rhythm(4)} 1fr ${rhythm(4)};
-
     & > article {
       padding: ${rhythm(3)};
     }
   }
 `;
 
-// const ArticleContainer = styled.div`
-//   display: grid;
-//   grid-template-rows: ${rhythm(1)} 1fr ${rhythm(1)};
-//   grid-template-columns: ${rhythm(4)} 1fr ${rhythm(4)};
-//   & > article {
-//     background-color: #fff;
-//     grid-column: 2/3;
-//     grid-row: 2/3;
-//     border-radius: 5px;
-//     padding: ${rhythm(3)};
-//     h1:first-child {
-//       margin-top: 0;
-//     }
-//   }
-//   @media (max-width: 70rem) {
-//     & > article {
-//       padding: ${rhythm(2)};
-//     }
-//     grid-template-columns: ${rhythm(2)} 1fr ${rhythm(2)};
-//   }
-//   @media (max-width: 50rem) {
-//     display: block;
-//     & > article {
-//       padding: ${rhythm(1)};
-//     }
-//   }
-// `;
+const Section = styled.section`
+  @media (min-width: 55rem) {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: ${rhythm(6)} ${rhythm(4)} 1fr;
+    & > div:first-child {
+      grid-row: 1/3;
+      grid-column: 1/2;
+      z-index: 20;
+    }
+    & > div:last-child {
+      grid-row: 2/4;
+      grid-column: 1/2;
+      z-index: 30;
+    }
+  }
+`;
+
+// TODO: accomplish overlap without divitis, maybe use styled(ReactComponent)
 
 const BlogPostTemplate = ({ data }) => {
   const { markdownRemark: post } = data;
   return (
-    <div>
-      <Hero title={post.frontmatter.title} />
-      <ArticleContainer>
-        <article dangerouslySetInnerHTML={{ __html: post.html }} />
-      </ArticleContainer>
-    </div>
+    <Section>
+      <div>
+        <Hero title={post.frontmatter.title} />
+      </div>
+      <div>
+        <ArticleContainer>
+          <article dangerouslySetInnerHTML={{ __html: post.html }} />
+        </ArticleContainer>
+      </div>
+    </Section>
   );
 };
 
