@@ -12,6 +12,11 @@ const Container = styled.footer`
     background-image: none;
     text-decoration: none;
     color: inherit;
+    border: none;
+    box-shadow: none;
+  }
+  a:hover {
+    background: transparent;
   }
 `;
 

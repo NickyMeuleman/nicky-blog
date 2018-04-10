@@ -15,6 +15,11 @@ const Container = styled.header`
     background-image: none;
     text-decoration: none;
     color: inherit;
+    border: none;
+    box-shadow: none;
+  }
+  a:hover {
+    background: transparent;
   }
   @media (min-width: 55rem) {
     grid-template-rows: ${rhythm(3)};
