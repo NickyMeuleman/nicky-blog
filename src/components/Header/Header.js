@@ -44,7 +44,7 @@ const Nav = styled.div`
   .is-active,
   a:hover {
     color: #eee;
-    border-bottom: 5px solid #18a1ff;
+    border-bottom: 5px solid #61dafb;
   }
   @media (min-width: 55rem) {
     li {

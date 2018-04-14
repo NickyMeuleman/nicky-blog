@@ -17,11 +17,16 @@ const ArticleContainer = styled.div`
   }
   @media (min-width: 55rem) {
     display: grid;
+    grid-template-columns: ${rhythm(2)} 1fr ${rhythm(2)};
+    grid-template-rows: ${rhythm(1)} 1fr ${rhythm(1)};
     & > article {
       padding: ${rhythm(2)};
     }
-    grid-template-columns: ${rhythm(2)} 1fr ${rhythm(2)};
-    grid-template-rows: ${rhythm(1)} 1fr ${rhythm(1)};
+    .gatsby-highlight {
+      /* use negative margin instead of css grid to preserve margin collapsing */
+      margin-left: -${rhythm(2)};
+      margin-right: -${rhythm(2)};
+    }
   }
   @media (min-width: 70rem) {
     grid-template-columns: ${rhythm(4)} 1fr ${rhythm(4)};

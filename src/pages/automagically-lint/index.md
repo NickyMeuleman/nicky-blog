@@ -8,7 +8,7 @@ date: "2018-04-08"
 
 [external link](https://www.google.com)
 
-```js
+```js{4}
 exports.onCreateNode = ({ node, getNode, boundActionCreators }) => {
   const { createNodeField } = boundActionCreators;
   if (node.internal.type === 'MarkdownRemark') {
@@ -22,6 +22,41 @@ exports.onCreateNode = ({ node, getNode, boundActionCreators }) => {
 };
 ```
 
+
+```css
+html {
+  box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+#___gatsby {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+  background-color: #f5f5f5;
+}
+```
+
+Well, I didn't vote for you. I am your king. Ni! Ni! Ni! Ni! No, no, no! Yes, yes. A bit. But she's got a wart. __Listen.__ *Strange women lying in ponds distributing swords is no basis for a system of government.* Supreme executive power derives from `inline code` a mandate from the masses, not from some farcical aquatic ceremony.
+
+
+```jsx
+const Hero = props => (
+  <Container>
+    <Pattern />
+    <Content>{props.title && <h1>{props.title}</h1>}</Content>
+  </Container>
+);
+```
+
+
 # Now, look here, my good man.
 
 But you are dressed as one… The Knights Who Say Ni demand a sacrifice! It's only a model. Why? I'm not a witch.
@@ -30,9 +65,9 @@ Well, I didn't vote for you. I am your king. Ni! Ni! Ni! Ni! No, no, no! Yes, ye
 
 ## I'm not a witch.
 
-Bloody Peasant! Well, I got better. How do you know she is a witch? The swallow may fly south with the sun, and the house martin or the plover may seek warmer climes in winter, yet these are not strangers to our land.
+Bloody Peasant! Well, I got better. How do you know she is a witch? `The swallow may fly` south with the sun, and the house martin or the plover may seek warmer climes in winter, yet these are not strangers to our land.
 
-1. Be quiet!
+1. `Be quiet!`
 2. How do you know she is a witch?
 3. The Knights Who Say Ni demand a sacrifice!
 
@@ -48,7 +83,7 @@ The Knights Who Say Ni demand a sacrifice! Well, we did do the nose. How do you 
 
 I don't want to talk to you no more, you empty-headed animal food trough water! I fart in your general direction! Your mother was a hamster and your father smelt of elderberries! Now leave before I am forced to taunt you a second time! Ah, now we see the violence inherent in the system!
 
-You can't expect to wield supreme power just 'cause some watery tart threw a sword at you! We shall say 'Ni' again to you, if you do not appease us. I'm not a witch. What a strange person.
+You can't `expect` to wield supreme power just 'cause some watery tart threw a sword at you! We shall say 'Ni' again to you, if you do not appease us. I'm not a witch. What a strange person.
 
 Shh! Knights, I bid you welcome to your new home. Let us ride to Camelot! We want a shrubbery!! Did you dress her up like this? Well, how'd you become king, then?
 

@@ -1,11 +1,10 @@
-/* html {
-  font-size: 62.5%;
-} */
 html {
   box-sizing: border-box;
 }
 
-*, *:before, *:after {
+*,
+*:before,
+*:after {
   box-sizing: inherit;
 }
 
@@ -15,7 +14,7 @@ html {
   flex-direction: column;
 }
 
-main {
+#___gatsby > main {
   flex: 1 0 auto;
   background-color: #f5f5f5;
 }
@@ -26,4 +25,122 @@ button {
 
 button:disabled {
   cursor: default;
+}
+
+/* Prism highlighting styles */
+
+/**
+ * Add back the container background-color, border-radius, padding, margin
+ * and overflow that we removed from <pre>.
+ */
+.gatsby-highlight {
+  background-color: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  border-radius: 0.4em;
+  margin: 0.5em 0;
+  margin-bottom: 1.58rem;
+  padding: 1rem;
+  overflow: auto;
+}
+
+/**
+ * Remove the default PrismJS theme background-color, border-radius, margin,
+ * padding and overflow.
+ * 1. Make the element just wide enough to fit its content.
+ * 2. Always fill the visible space in .gatsby-highlight.
+ */
+.gatsby-highlight pre[class*="language-"] {
+  background-color: transparent;
+  margin: 0;
+  padding: 0;
+  overflow: initial;
+  float: left; /* 1 */
+  min-width: 100%; /* 2 */
+}
+
+.gatsby-highlight-code-line {
+  background-color: #14161a;
+  display: block;
+  margin-right: -1rem;
+  margin-left: -1rem;
+  padding-right: 1em;
+  padding-left: 0.75em;
+  border-left: 0.25em solid #79b6f2;
+}
+
+.token.attr-name {
+  color: #c5a5c5;
+}
+.token.comment,
+.token.block-comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #999999;
+}
+.token.property,
+.token.number,
+.token.function-name,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: #5a9bcf;
+}
+.token.boolean {
+  color: #ff8b50;
+}
+.token.tag {
+  color: #fc929e;
+}
+.token.string {
+  color: #8dc891;
+}
+.token.punctuation {
+  color: #5fb3b3;
+}
+.token.selector,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: #d8dee9;
+}
+.token.function {
+  color: #79b6f2;
+}
+.token.operator,
+.token.entity,
+.token.url,
+.token.variable {
+  color: #d7deea;
+}
+.token.attr-value {
+  color: #8dc891;
+}
+.token.keyword {
+  color: #c5a5c5;
+}
+.token.atrule,
+.token.class-name {
+  color: #fac863;
+}
+.token.important {
+  font-weight: 400;
+}
+.token.bold {
+  font-weight: 700;
+}
+.token.italic {
+  font-style: italic;
+}
+.token.entity {
+  cursor: help;
+}
+.namespace {
+  opacity: 0.7;
+}
+html {
+  font-family: sans-serif; /* 1 */
+  line-height: 1.15; /* 2 */
+  -ms-text-size-adjust: 100%; /* 3 */
+  -webkit-text-size-adjust: 100%; /* 3 */
 }

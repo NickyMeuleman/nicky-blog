@@ -7,14 +7,24 @@ oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
     color: 'inherit',
     fontWeight: 700,
     textDecoration: 'none',
-    borderBottom: '1px solid #18a1ff',
-    boxShadow: 'inset 0 -2px 0px 0px #18a1ff',
+    borderBottom: '1px solid #bbeffd',
+    boxShadow: 'inset 0 -2px 0px 0px #bbeffd',
     textShadow: 'none',
     backgroundImage: 'none',
     transition: 'all 100ms cubic-bezier(0.4, 0, 0.2, 1)',
   },
   'a:hover': {
-    background: '#18a1ff',
+    background: '#bbeffd',
+  },
+  'code.language-text': {
+    borderRadius: '3px',
+    padding: '0 0.2rem',
+    paddingTop: '0.1em',
+    paddingBottom: '0.1em',
+    background: '#f5f5f5',
+    fontSize: '80%',
+    fontVariant: 'none',
+    fontFeatureSettings: '"clig" 0, "calt" 0',
   },
 });
 
