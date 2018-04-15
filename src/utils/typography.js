@@ -25,6 +25,9 @@ oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
     fontSize: '80%',
     fontVariant: 'none',
     fontFeatureSettings: '"clig" 0, "calt" 0',
+    position: 'relative',
+    top: '-1px',
+    lineHeight: 'inherit',
   },
 });
 

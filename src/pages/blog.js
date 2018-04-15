@@ -1,29 +1,27 @@
 import React from 'react';
-import Link from 'gatsby-link';
 import Hero from '../components/Hero/Hero';
+import PostCard from '../components/PostCard/PostCard';
 
-const IndexPage = ({ data }) => (
+const PostsPage = ({ data }) => (
   <div>
-    <Hero title="Building for the modern web" />
+    <Hero title="Writing things down" />
     <h4>{data.allMarkdownRemark.totalCount} Posts</h4>
     {data.allMarkdownRemark.edges.map(({ node }) => (
-      <div key={node.id}>
-        <Link to={`/blog${node.fields.slug}`}>
-          <h3>
-            {node.frontmatter.title} <span>— {node.frontmatter.date}</span>
-          </h3>
-          <p>{node.excerpt}</p>
-        </Link>
-      </div>
+      <PostCard
+        key={node.id}
+        url={`/blog${node.fields.slug}`}
+        title={node.frontmatter.title}
+        date={node.frontmatter.date}
+      />
     ))}
   </div>
 );
 
-export default IndexPage;
+export default PostsPage;
 
 // eslint-disable-next-line
 export const query = graphql`
-  query IndexQuery {
+  query PostsQuery {
     allMarkdownRemark(sort: { fields: [frontmatter___date], order: DESC }) {
       totalCount
       edges {
@@ -33,7 +31,6 @@ export const query = graphql`
             title
             date(formatString: "DD MMMM, YYYY")
           }
-          excerpt
           fields {
             slug
           }

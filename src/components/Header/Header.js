@@ -128,8 +128,8 @@ const Header = () => (
           </Link>
         </li>
         <li>
-          <Link to="/posts" activeClassName="is-active">
-            Posts
+          <Link to="/blog" activeClassName="is-active">
+            Blog
           </Link>
         </li>
         <li>
