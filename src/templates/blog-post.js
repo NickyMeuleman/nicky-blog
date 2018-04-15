@@ -6,6 +6,7 @@ import { rhythm } from '../utils/typography';
 const ArticleContainer = styled.div`
   display: block;
   & > article {
+    box-shadow: 0px 3px 25px #333;
     background-color: #fff;
     grid-column: 2/3;
     grid-row: 2/3;

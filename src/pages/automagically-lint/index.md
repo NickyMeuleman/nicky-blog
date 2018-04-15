@@ -61,7 +61,8 @@ const Hero = props => (
 
 But you are dressed as one… The Knights Who Say Ni demand a sacrifice! It's only a model. Why? I'm not a witch.
 
-Well, I didn't vote for you. I am your king. Ni! Ni! Ni! Ni! No, no, no! Yes, yes. A bit. But she's got a wart. __Listen.__ *Strange women lying in ponds distributing swords is no basis for a system of government.* Supreme executive power derives from a mandate from the masses, not from some farcical aquatic ceremony.
+Well, I didn't vote for you. I am your king. Ni! Ni! Ni! Ni! No, no, no! Yes, yes. A bit. But she's got a wart. __Listen.__ *Strange women lying in ponds [internal link](/about) distributing swords is no basis for a system of government.* Supreme executive power derives from a mandate from the masses [internal link](/about), not from some __[internal link](/about)__ farcical aquatic ceremony.
+
 
 ## I'm not a witch.
 

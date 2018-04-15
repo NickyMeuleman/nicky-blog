@@ -21,7 +21,7 @@ oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
     padding: '0 0.2rem',
     paddingTop: '0.1em',
     paddingBottom: '0.1em',
-    background: '#f5f5f5',
+    background: '#bbeffd',
     fontSize: '80%',
     fontVariant: 'none',
     fontFeatureSettings: '"clig" 0, "calt" 0',

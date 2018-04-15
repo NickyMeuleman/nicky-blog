@@ -24,6 +24,7 @@ const Container = styled.header`
   @media (min-width: 55rem) {
     grid-template-rows: ${rhythm(3)};
   }
+  filter: drop-shadow(rgba(0, 0, 0, 0.5) 2px 1px 10px);
 `;
 
 const Nav = styled.div`
