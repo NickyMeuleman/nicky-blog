@@ -2,102 +2,210 @@
 title: Automagically lint and format your code
 date: "2018-04-08"
 ---
-![random image](./test.png)
 
-[internal link](/about)
+## Linting and formatting JavaScript
 
-[external link](https://www.google.com)
+The goal is to automatically check our javascript files for linting errors and formatting errors. It would also be nice to fix those on each save.
 
-```js{4}
-exports.onCreateNode = ({ node, getNode, boundActionCreators }) => {
-  const { createNodeField } = boundActionCreators;
-  if (node.internal.type === 'MarkdownRemark') {
-    const slug = createFilePath({ node, getNode, basePath: 'pages' });
-    createNodeField({
-      node,
-      name: 'slug',
-      value: slug,
-    });
+### Initial Setup
+
+To get started we'll install [Visual Studio Code](https://code.visualstudio.com/) as editor.
+
+To complete this tutorial we'll also need
+2 extensions.
+[ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) and [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode).
+
+Let's try this on a [GatsbyJS](https://www.gatsbyjs.org/) project.
+
+After bootstrapping our project with
+
+```sh
+gatsby new automagically-lint
+```
+
+Open VSC in the newly created directory and delete some files we won't use
+`yarn.lock` (we'll use `npm`) and `.prettierrc` (those options will live inside an other configuration file)
+
+### Configure some editor settings
+
+Inside VSC, go to the user-settings (`file>preferences>settings`)
+
+Tell VSC to format the document every time we save a file.
+
+Explicitly disable fomatting for javascript files, as we will format through ESLint.
+
+Since we disabled formatting for javascript files each save, we can enable the ESLint extension.
+
+Tell ESLint to always show us its status to stay informed.
+
+```json
+    "editor.formatOnSave": true,
+    "[javascript]": {
+      "editor.formatOnSave": false
+    },
+    "prettier.disableLanguages": [
+    "js"
+    ],
+    "eslint.autoFixOnSave": true,
+    "eslint.alwaysShowStatus": true,
+```
+
+Now Prettier wil run on all file formats it supports except for javascript, that will be handled through ESLint
+
+## Starting with ESLint
+
+We'll install everything we need locally, so the machine we develop on doesn't matter. Don't worry, there's no magic here, I'll briefly explain what each package does.
+
+Start with installing ESLint
+
+```sh
+npm i eslint -D
+```
+
+We don't need to install Prettier since that already comes bundled with Gatsby.
+
+Since we installed eslint locally, we'll initialize it from the node modules, we'll go with the AirBnB rules
+
+```sh
+./node_modules/.bin/eslint --init
+```
+
+* Answer `Use a popular style guide` to the question how you would like to configure ESLint
+
+* `Airbnb` when asked which style guide
+
+* enter `Y` when asked if you use React
+
+* Lastly we'll create our rules-file in the `JSON` format
+
+This process will create a `.eslintrc.json` file in the root folder of your project, it will also install the dependencies needed for our chose styleguide.
+
+### Adding the power of Prettier
+
+The problem we are faced with if we want to combine ESLint and Prettier is that some rules exist in both extension, causing conflicts between the two.
+
+To prevent the conflicts we'll install and configure `eslint-config-prettier`.
+This package disables all formatting-related ESLint rules.
+
+```sh
+npm i eslint-config-prettier -D
+```
+
+We'll use this by adding it to our `eslintrc.json` file
+It now looks like this
+
+```json
+{
+  "extends": ["airbnb", "prettier", "prettier/react"]
+}
+```
+
+next up is the `eslint-plugin-prettier`
+
+```sh
+npm i eslint-plugin-prettier -D
+```
+
+This will run prettier as an ESLint rule and reports differences as individual ESLint issues.
+
+To use it we'll add this to our `.eslintrc` file
+
+```json
+"plugins": [
+  "prettier"
+],
+"rules": {
+  "prettier/prettier": "error"
+}
+```
+
+### Dictating our own rules
+
+While the Airbnb configuration contains an excellent set of rules, we'll make this our own and use the existing configuation as a starting point
+
+Let's add some rules specific to prettier in our ESLint configuration
+
+```json
+"prettier/prettier": [
+    "error",
+    {
+        "singleQuote": true,
+        "printWidth": 120,
+        "trailingComma": "es5"
+    }
+]
+```
+
+Next we'll override some of the rules set by the Airbnb styleguide
+
+```json
+"react/jsx-filename-extension": [
+    1,
+    {
+        "extensions": [
+            ".js",
+            ".jsx"
+        ]
+    }
+],
+"react/prop-types": 0,
+"no-unused-vars": [
+    "error",
+    {
+        "vars": "local",
+        "args": "none"
+    }
+],
+"jsx-a11y/anchor-is-valid": [
+    "error",
+    {
+        "components": [
+            "Link"
+        ],
+        "specialLink": [
+            "to",
+            "hrefLeft",
+            "hrefRight"
+        ],
+        "aspects": [
+            "noHref",
+            "invalidHref",
+            "preferButton"
+        ]
+    }
+]
+```
+
+### Some special configuration for Gatsby
+
+In this specific case (project bootstrapped by Gatsby v1), we'll add some imports that are injected to our core-modules so ESLint doesn't warn us about the imports not existing
+
+```json
+"settings": {
+    "import/core-modules": [
+        "react"
+    ]
+}
+```
+
+Gatsby also supports the use of `graphql` while it's undefined. ESLint doesn't like that (more specifically the no-undef rule).
+More info available [here](https://www.gatsbyjs.org/tutorial/part-four/#wait--where-did-the-graphql-tag-come-from)
+In Gatsby v2 this won't be an issue anymore thanks to their own [ESLint webpack loader](https://github.com/gatsbyjs/gatsby/pull/4893).
+For now, I just disable the no-undef rule for one line.
+In the layouts/index.js file
+
+```js
+// eslint-disable-next-line no-undef
+export const query = graphql`
+  query SiteTitleQuery {
+    site {
+      siteMetadata {
+        title
+      }
+    }
   }
-};
+`;
 ```
 
-
-```css
-html {
-  box-sizing: border-box;
-}
-
-*, *:before, *:after {
-  box-sizing: inherit;
-}
-
-#___gatsby {
-  display: flex;
-  min-height: 100vh;
-  flex-direction: column;
-}
-
-main {
-  flex: 1 0 auto;
-  background-color: #f5f5f5;
-}
-```
-
-Well, I didn't vote for you. I am your king. Ni! Ni! Ni! Ni! No, no, no! Yes, yes. A bit. But she's got a wart. __Listen.__ *Strange women lying in ponds distributing swords is no basis for a system of government.* Supreme executive power derives from `inline code` a mandate from the masses, not from some farcical aquatic ceremony.
-
-
-```jsx
-const Hero = props => (
-  <Container>
-    <Pattern />
-    <Content>{props.title && <h1>{props.title}</h1>}</Content>
-  </Container>
-);
-```
-
-
-# Now, look here, my good man.
-
-But you are dressed as one… The Knights Who Say Ni demand a sacrifice! It's only a model. Why? I'm not a witch.
-
-Well, I didn't vote for you. I am your king. Ni! Ni! Ni! Ni! No, no, no! Yes, yes. A bit. But she's got a wart. __Listen.__ *Strange women lying in ponds [internal link](/about) distributing swords is no basis for a system of government.* Supreme executive power derives from a mandate from the masses [internal link](/about), not from some __[internal link](/about)__ farcical aquatic ceremony.
-
-
-## I'm not a witch.
-
-Bloody Peasant! Well, I got better. How do you know she is a witch? `The swallow may fly` south with the sun, and the house martin or the plover may seek warmer climes in winter, yet these are not strangers to our land.
-
-1. `Be quiet!`
-2. How do you know she is a witch?
-3. The Knights Who Say Ni demand a sacrifice!
-
-### Bring her forward!
-
-I don't want to talk to you no more, you empty-headed animal food trough water! I fart in your general direction! Your mother was a hamster and your father smelt of elderberries! Now leave before I am forced to taunt you a second time! I dunno. Must be a king.
-
-* Shut up! Will you shut up?!
-* Knights of Ni, we are but simple travelers who seek the enchanter who lives beyond these woods.
-* But you are dressed as one…
-
-The Knights Who Say Ni demand a sacrifice! Well, we did do the nose. How do you know she is a witch? Who's that then? Well, we did do the nose. We want a shrubbery!!
-
-I don't want to talk to you no more, you empty-headed animal food trough water! I fart in your general direction! Your mother was a hamster and your father smelt of elderberries! Now leave before I am forced to taunt you a second time! Ah, now we see the violence inherent in the system!
-
-You can't `expect` to wield supreme power just 'cause some watery tart threw a sword at you! We shall say 'Ni' again to you, if you do not appease us. I'm not a witch. What a strange person.
-
-Shh! Knights, I bid you welcome to your new home. Let us ride to Camelot! We want a shrubbery!! Did you dress her up like this? Well, how'd you become king, then?
-
-I'm not a witch. But you are dressed as one… And this isn't my nose. This is a false one. I dunno. Must be a king. What a strange person.
-
-I have to push the pram a lot. And the hat. She's a witch! No, no, no! Yes, yes. A bit. But she's got a wart. Shh! Knights, I bid you welcome to your new home. Let us ride to Camelot!
-
-Shut up! The nose? Well, we did do the nose. Bloody Peasant!
-
-I dunno. Must be a king. Camelot! Who's that then? On second thoughts, let's not go there. It is a silly place. We shall say 'Ni' again to you, if you do not appease us.
-
-Bring her forward! No, no, no! Yes, yes. A bit. But she's got a wart. You don't frighten us, English pig-dogs! Go and boil your bottoms, sons of a silly person! I blow my nose at you, so-called Ah-thoor Keeng, you and all your silly English K-n-n-n-n-n-n-n-niggits!
-
-You can't expect to wield supreme power just 'cause some watery tart threw a sword at you! Ah, now we see the violence inherent in the system! But you are dressed as one… We want a shrubbery!! Well, Mercia's a temperate zone!
-
-A newt? What a strange person. Burn her anyway! Look, my liege! Shut up! Will you shut up?!
+We successfully set up ESLint to work together with prettier.
+Go and write some beautiful code!
