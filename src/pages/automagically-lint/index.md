@@ -1,6 +1,7 @@
 ---
 title: Automagically lint and format your code
 date: "2018-04-08"
+cover: './cover.png'
 ---
 
 We'll set up our editor to [lint](<https://en.wikipedia.org/wiki/Lint_(software)>) and format our code automatically, leaving us free to think about the functionality of our code. Not whether or not a variable is defined or if we should insert a space.

@@ -144,3 +144,10 @@ html {
   -ms-text-size-adjust: 100%; /* 3 */
   -webkit-text-size-adjust: 100%; /* 3 */
 }
+
+/* Gatsby-image */
+
+.gatsby-image-wrapper {
+  width: 100%;
+  height: 100%;
+}

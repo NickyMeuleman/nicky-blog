@@ -41,7 +41,7 @@ const Section = styled.section`
   @media (min-width: 55rem) {
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: ${rhythm(6)} ${rhythm(4)} 1fr;
+    grid-template-rows: ${rhythm(10)} ${rhythm(3)} 1fr;
     & > div:first-child {
       grid-row: 1/3;
       grid-column: 1/2;
@@ -62,11 +62,14 @@ const BlogPostTemplate = ({ data }) => {
   return (
     <Section>
       <div>
-        <Hero title={post.frontmatter.title} />
+        <Hero title={post.frontmatter.title} coverSizes={post.frontmatter.cover.childImageSharp.sizes} />
       </div>
       <div>
         <ArticleContainer>
-          <article dangerouslySetInnerHTML={{ __html: post.html }} />
+          <article>
+            <h1>{post.frontmatter.title}</h1>
+            <div dangerouslySetInnerHTML={{ __html: post.html }} />
+          </article>
         </ArticleContainer>
       </div>
     </Section>
@@ -80,6 +83,15 @@ export const query = graphql`
       html
       frontmatter {
         title
+        cover {
+          childImageSharp {
+            sizes {
+              base64
+              src
+              srcSet
+            }
+          }
+        }
       }
     }
   }
