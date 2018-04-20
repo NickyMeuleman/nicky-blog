@@ -147,6 +147,7 @@ html {
 
 /* Gatsby-image */
 
+.gatsby-image-outer-wrapper,
 .gatsby-image-wrapper {
   width: 100%;
   height: 100%;

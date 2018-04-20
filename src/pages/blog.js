@@ -12,6 +12,7 @@ const PostsPage = ({ data }) => (
         url={`/blog${node.fields.slug}`}
         title={node.frontmatter.title}
         date={node.frontmatter.date}
+        coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.sizes : null}
       />
     ))}
   </div>
@@ -30,6 +31,13 @@ export const query = graphql`
           frontmatter {
             title
             date(formatString: "DD MMMM, YYYY")
+            cover {
+              childImageSharp {
+                sizes {
+                  ...GatsbyImageSharpSizes
+                }
+              }
+            }
           }
           fields {
             slug

@@ -64,9 +64,7 @@ const BlogPostTemplate = ({ data }) => {
       <div>
         <Hero
           title={post.frontmatter.title}
-          coverSizes={
-            post.frontmatter.cover ? post.frontmatter.cover.childImageSharp.sizes : null
-          }
+          coverSizes={post.frontmatter.cover ? post.frontmatter.cover.childImageSharp.sizes : null}
         />
       </div>
       <div>
@@ -91,9 +89,7 @@ export const query = graphql`
         cover {
           childImageSharp {
             sizes {
-              base64
-              src
-              srcSet
+              ...GatsbyImageSharpSizes
             }
           }
         }
