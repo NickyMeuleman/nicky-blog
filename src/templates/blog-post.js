@@ -65,7 +65,7 @@ const BlogPostTemplate = ({ data }) => {
         <Hero
           title={post.frontmatter.title}
           coverSizes={
-            post.frontmatter.cover.childImageSharp.sizes ? post.frontmatter.cover.childImageSharp.sizes : null
+            post.frontmatter.cover ? post.frontmatter.cover.childImageSharp.sizes : null
           }
         />
       </div>

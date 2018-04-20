@@ -6,7 +6,7 @@ import { rhythm } from '../../utils/typography';
 const Container = styled.header`
   height: 100%;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(${rhythm(1 / 3)}, 1fr) auto minmax(${rhythm(1 / 3)}, 1fr);
   grid-template-rows: ${rhythm(3)} 1fr ${rhythm(3)};
   background-image: linear-gradient(141deg, #41b782, #39b982 65%, #86d169);
   background-image: linear-gradient(141deg, #122549, #34495f 65%, #203762);
@@ -39,6 +39,9 @@ const Pattern = styled.div`
 `;
 
 const Content = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 30;
   grid-column: 2/3;
   grid-row: 2/3;
