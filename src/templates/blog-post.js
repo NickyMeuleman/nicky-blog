@@ -62,7 +62,12 @@ const BlogPostTemplate = ({ data }) => {
   return (
     <Section>
       <div>
-        <Hero title={post.frontmatter.title} coverSizes={post.frontmatter.cover.childImageSharp.sizes} />
+        <Hero
+          title={post.frontmatter.title}
+          coverSizes={
+            post.frontmatter.cover.childImageSharp.sizes ? post.frontmatter.cover.childImageSharp.sizes : null
+          }
+        />
       </div>
       <div>
         <ArticleContainer>

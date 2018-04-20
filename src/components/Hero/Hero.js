@@ -21,10 +21,10 @@ const Container = styled.header`
     text-decoration: none;
     color: inherit;
   }
-  &>:first-child{
-    grid-row:1/4;
-    grid-column:1/4;
-    z-index:999:
+  & > :first-child {
+    grid-row: 1/4;
+    grid-column: 1/4;
+    z-index: 20;
   }
 `;
 
