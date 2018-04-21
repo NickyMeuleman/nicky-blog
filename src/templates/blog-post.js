@@ -88,8 +88,8 @@ export const query = graphql`
         title
         cover {
           childImageSharp {
-            sizes {
-              ...GatsbyImageSharpSizes
+            sizes(maxWidth: 1920) {
+              ...GatsbyImageSharpSizes_withWebp
             }
           }
         }
