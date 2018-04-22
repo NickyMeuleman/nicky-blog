@@ -6,12 +6,18 @@ import { rhythm } from '../utils/typography';
 
 const Container = styled.div`
   margin: 0 ${rhythm(1)} ${rhythm(0.5)} ${rhythm(1)};
+  & > * {
+    margin-bottom: ${rhythm(1)};
+  }
   @media (min-width: 55rem) {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto;
     grid-gap: ${rhythm(1)};
     margin: 0 ${rhythm(2)} ${rhythm(1.5)} ${rhythm(2)};
+    & > * {
+      margin-bottom: 0;
+    }
   }
   @media (min-width: 70rem) {
     grid-template-columns: 1fr 1fr;
@@ -19,23 +25,27 @@ const Container = styled.div`
   }
 `;
 
-const PostsPage = ({ data }) => (
-  <div>
-    <Hero title="Writing things down" />
-    <h4>{data.allMarkdownRemark.totalCount} Posts</h4>
-    <Container>
-      {data.allMarkdownRemark.edges.map(({ node }) => (
-        <PostCard
-          key={node.id}
-          url={`/blog${node.fields.slug}`}
-          title={node.frontmatter.title}
-          date={node.frontmatter.date}
-          coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.sizes : null}
-        />
-      ))}
-    </Container>
-  </div>
-);
+const PostsPage = ({ data }) => {
+  console.log('postpage:', data);
+  return (
+    <div>
+      <Hero title="Writing things down" />
+      <h4>{data.allMarkdownRemark.totalCount} Posts</h4>
+      <Container>
+        {data.allMarkdownRemark.edges.map(({ node }) => (
+          <PostCard
+            key={node.id}
+            url={`/blog${node.fields.slug}`}
+            title={node.frontmatter.title}
+            date={node.frontmatter.date}
+            author={node.frontmatter.author}
+            coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.sizes : null}
+          />
+        ))}
+      </Container>
+    </div>
+  );
+};
 
 export default PostsPage;
 
@@ -50,6 +60,7 @@ export const query = graphql`
           frontmatter {
             title
             date(formatString: "DD MMMM, YYYY")
+            author
             cover {
               childImageSharp {
                 sizes {

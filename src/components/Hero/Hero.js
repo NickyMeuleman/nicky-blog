@@ -8,10 +8,6 @@ const Container = styled.header`
   display: grid;
   grid-template-columns: minmax(${rhythm(1 / 3)}, 1fr) auto minmax(${rhythm(1 / 3)}, 1fr);
   grid-template-rows: ${rhythm(3)} 1fr ${rhythm(3)};
-  background-image: linear-gradient(141deg, #41b782, #39b982 65%, #86d169);
-  background-image: linear-gradient(141deg, #122549, #34495f 65%, #203762);
-  background-image: linear-gradient(175deg, #41b782, #34495f 40%, #122549);
-  background-image: linear-gradient(141deg, #069265, #13dcbe 71%, #00fbff);
   background-image: linear-gradient(120deg, #155799, #159957);
   color: #999;
   margin-bottom: ${rhythm(1)};
