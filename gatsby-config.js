@@ -44,6 +44,19 @@ module.exports = {
       },
     },
     {
+      resolve: `gatsby-plugin-manifest`,
+      options: {
+        name: 'Nicky Meuleman',
+        short_name: 'NickyM',
+        start_url: '/',
+        background_color: '#f5f5f5',
+        theme_color: '#155799',
+        display: 'minimal-ui',
+        icon: 'static/favicon.svg',
+      },
+    },
+    'gatsby-plugin-offline',
+    {
       resolve: `gatsby-plugin-google-analytics`,
       options: {
         trackingId: 'UA-117805994-1',

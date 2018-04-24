@@ -55,7 +55,6 @@ const Info = styled.div`
 
 export default class PostCard extends Component {
   render() {
-    console.log('card props', this.props);
     return (
       <Card>
         <Top>
