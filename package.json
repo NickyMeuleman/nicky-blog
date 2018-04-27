@@ -14,6 +14,7 @@
     "gatsby-plugin-offline": "^1.0.15",
     "gatsby-plugin-react-helmet": "^2.0.8",
     "gatsby-plugin-sharp": "^1.6.41",
+    "gatsby-plugin-sitemap": "^1.2.23",
     "gatsby-plugin-styled-components": "^2.0.11",
     "gatsby-plugin-typography": "^1.7.18",
     "gatsby-remark-images": "^1.5.60",
@@ -28,12 +29,11 @@
     "typography-theme-kirkham": "^0.16.3",
     "typography-theme-ocean-beach": "^0.15.11"
   },
-  "keywords": [
-    "gatsby"
-  ],
+  "keywords": ["gatsby"],
   "license": "GNU GPLv3",
   "scripts": {
     "build": "gatsby build",
+    "serve": "gatsby serve",
     "dev": "gatsby develop",
     "format": "prettier --write 'src/**/*.js'",
     "test": "echo \"Error: no test specified\" && exit 1"

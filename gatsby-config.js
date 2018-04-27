@@ -1,6 +1,7 @@
 module.exports = {
   siteMetadata: {
     title: 'Nicky blogs',
+    siteUrl: 'https://nickymeuleman.netlify.com',
   },
   plugins: [
     'gatsby-plugin-react-helmet',
@@ -56,6 +57,9 @@ module.exports = {
       },
     },
     'gatsby-plugin-offline',
+    {
+      resolve: `gatsby-plugin-sitemap`,
+    },
     {
       resolve: `gatsby-plugin-google-analytics`,
       options: {
