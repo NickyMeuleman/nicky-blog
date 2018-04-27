@@ -97,6 +97,9 @@ const Bottom = styled.div`
       margin: 0;
       margin-right: ${rhythm(3 / 4)};
     }
+    li:last-of-type {
+      margin-right:0;
+    }
   }
   @media (min-width: 55rem) {
     grid-template-rows: ${rhythm(0.5)} 1fr ${rhythm(0.5)};

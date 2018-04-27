@@ -5,7 +5,7 @@ import { rhythm } from '../../utils/typography';
 
 const Container = styled.header`
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto 1fr;
   grid-template-rows: ${rhythm(2)};
   background: #333;
   color: #999;
@@ -22,15 +22,17 @@ const Container = styled.header`
     background: transparent;
   }
   @media (min-width: 55rem) {
+    grid-template-columns: 1fr auto 1fr;
+
     grid-template-rows: ${rhythm(3)};
   }
   filter: drop-shadow(rgba(0, 0, 0, 0.5) 2px 1px 10px);
 `;
 
 const Nav = styled.div`
-  grid-column: 1/2;
+  grid-column: 2/3;
   grid-row: 1/2;
-  justify-self: end;
+
   align-self: center;
   ul {
     display: flex;
@@ -48,6 +50,9 @@ const Nav = styled.div`
     border-bottom: 5px solid #61dafb;
   }
   @media (min-width: 55rem) {
+    grid-column: 1/2;
+    grid-row: 1/2;
+    justify-self: end;
     li {
       margin-left: ${rhythm(1)};
     }
@@ -55,19 +60,22 @@ const Nav = styled.div`
 `;
 
 const Logo = styled.div`
-  grid-column: 2/3;
+  grid-column: 1/2;
   grid-row: 1/2;
+  transform: translateY(20%);
   align-self: center;
   padding: 0;
   border: 5px solid #333;
-  border-radius: 50%;
+  border-radius: 20%;
   background-color: #999;
   width: ${rhythm(2)};
   height: ${rhythm(2)};
   padding: ${rhythm(1 / 4)};
-  transform: translateY(50%);
   margin: 0 ${rhythm(0.5)};
   @media (min-width: 55rem) {
+    grid-column: 2/3;
+    grid-row: 1/2;
+    border-radius: 50%;
     margin: 0 ${rhythm(1)};
     width: ${rhythm(4)};
     height: ${rhythm(4)};
@@ -79,8 +87,7 @@ const Logo = styled.div`
 const Social = styled.div`
   justify-self: start;
   align-self: center;
-  grid-column: 3/4;
-  grid-row: 1/2;
+  display: none;
   ul {
     display: flex;
     list-style: none;
@@ -108,6 +115,9 @@ const Social = styled.div`
     height: ${rhythm(3 / 4)};
   }
   @media (min-width: 55rem) {
+    display: block;
+    grid-column: 3/4;
+    grid-row: 1/2;
     li {
       margin-right: ${rhythm(1)};
     }
