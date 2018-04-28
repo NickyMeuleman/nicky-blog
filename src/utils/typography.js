@@ -16,7 +16,7 @@ oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
   'a:hover': {
     background: '#bbeffd',
   },
-  'code.language-text': {
+  ':not(pre) > code[class*="language-"]': {
     borderRadius: '3px',
     padding: '0 0.2rem',
     paddingTop: '0.1em',

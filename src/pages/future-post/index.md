@@ -7,15 +7,15 @@ date: "2222-04-08"
 
 Laboris nisi ut aliquip ex ea commodo consequat. Ut enim ad minim veniam, quis nostrud exercitation ullamco. Quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.
 
-__nventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.__ *Laboris nisi ut aliquip ex ea commodo consequat.* Accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo.
+**nventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.** _Laboris nisi ut aliquip ex ea commodo consequat._ Accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo.
 
 ## Et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque.
 
 Totam rem aperiam. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam. Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae.
 
-1. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.
-2. Architecto beatae vitae dicta sunt explicabo.
-3. Totam rem aperiam.
+1.  Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.
+2.  Architecto beatae vitae dicta sunt explicabo.
+3.  Totam rem aperiam.
 
 ### Lorem ipsum dolor sit amet, consectetur adipisicing elit.
 
