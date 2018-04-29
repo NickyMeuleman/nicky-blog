@@ -8,7 +8,7 @@ const Container = styled.header`
   display: grid;
   grid-template-columns: minmax(${rhythm(1 / 3)}, 1fr) auto minmax(${rhythm(1 / 3)}, 1fr);
   grid-template-rows: ${rhythm(3)} 1fr ${rhythm(3)};
-  background-image: linear-gradient(120deg, #155799, #159957);
+  background-image: linear-gradient(120deg, ${props => props.theme.primary}, ${props => props.theme.secondary});
   color: #999;
   margin-bottom: ${rhythm(1)};
   a {
@@ -27,7 +27,7 @@ const Container = styled.header`
 const Pattern = styled.div`
   grid-column: 1/4;
   grid-row: 1/4;
-  opacity: 0.1;
+  opacity: 0.05;
   background-image: ${props =>
     props.coverSizes
       ? 'none'

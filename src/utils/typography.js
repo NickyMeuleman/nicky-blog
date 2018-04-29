@@ -1,20 +1,20 @@
 import Typography from 'typography';
-// import kirkhamTheme from 'typography-theme-kirkham';
 import oceanBeachTheme from 'typography-theme-ocean-beach';
+import theme from './theme';
 
 oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
   a: {
     color: 'inherit',
     fontWeight: 700,
     textDecoration: 'none',
-    borderBottom: '1px solid #bbeffd',
-    boxShadow: 'inset 0 -2px 0px 0px #bbeffd',
+    borderBottom: `1px solid ${theme.primaryLighter}`,
+    boxShadow: `inset 0 -2px 0px 0px ${theme.primaryLighter}`,
     textShadow: 'none',
     backgroundImage: 'none',
     transition: 'all 100ms cubic-bezier(0.4, 0, 0.2, 1)',
   },
   'a:hover': {
-    background: '#bbeffd',
+    background: theme.primaryLighter,
   },
   ':not(pre) > code[class*="language-"]': {
     borderRadius: '3px',

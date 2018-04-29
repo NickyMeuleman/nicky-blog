@@ -1,8 +1,9 @@
-import React, { Component } from 'react';
+import React from 'react';
 import Link from 'gatsby-link';
 import Img from 'gatsby-image';
 import styled from 'styled-components';
 import { rhythm } from '../../utils/typography';
+import theme from '../../utils/theme';
 
 const LinkU = styled(Link)`
   border-bottom: none;
@@ -17,7 +18,10 @@ const LinkU = styled(Link)`
 const Card = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: 250px 100px;
+  grid-template-rows: 150px 100px;
+  @media (min-width: 55rem) {
+    grid-template-rows: 250px 100px;
+  }
 `;
 const Top = styled.div`
   grid-column: 1/2;
@@ -39,9 +43,12 @@ const Bottom = styled.div`
   grid-column: 1/2;
   grid-row: 2/3;
   background: #fff;
-  padding: ${rhythm(0.5)};
+  padding: ${rhythm(0.25)};
   & h2 {
     margin: 0;
+  }
+  @media (min-width: 55rem) {
+    padding: ${rhythm(0.5)};
   }
 `;
 
@@ -53,35 +60,33 @@ const Info = styled.div`
   }
 `;
 
-export default class PostCard extends Component {
-  render() {
-    return (
-      <Card>
-        <Top>
-          <LinkU to={this.props.url}>
-            {this.props.coverSizes ? (
-              <Img sizes={this.props.coverSizes} />
-            ) : (
-              <div
-                style={{
-                  height: '100%',
-                  backgroundImage: 'linear-gradient(120deg, #155799, #159957)',
-                  opacity: '0.95',
-                }}
-              />
-            )}
-          </LinkU>
-        </Top>
-        <Bottom>
-          <LinkU to={this.props.url}>
-            <h2>{this.props.title}</h2>
-          </LinkU>
-          <Info>
-            <p>{this.props.author}</p>
-            <p>{this.props.date}</p>
-          </Info>
-        </Bottom>
-      </Card>
-    );
-  }
-}
+const PostCard = props => (
+  <Card>
+    <Top>
+      <LinkU to={props.url}>
+        {props.coverSizes ? (
+          <Img sizes={props.coverSizes} />
+        ) : (
+          <div
+            style={{
+              height: '100%',
+              backgroundImage: `linear-gradient(120deg, ${theme.primary}, ${theme.secondary})`,
+              opacity: '0.95',
+            }}
+          />
+        )}
+      </LinkU>
+    </Top>
+    <Bottom>
+      <LinkU to={props.url}>
+        <h2>{props.title}</h2>
+      </LinkU>
+      <Info>
+        <p>{props.author}</p>
+        <p>{props.date}</p>
+      </Info>
+    </Bottom>
+  </Card>
+);
+
+export default PostCard;

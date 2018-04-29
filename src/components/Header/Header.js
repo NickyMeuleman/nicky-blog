@@ -47,7 +47,7 @@ const Nav = styled.div`
   .is-active,
   a:hover {
     color: #eee;
-    border-bottom: 5px solid #61dafb;
+    border-bottom: 5px solid ${props => props.theme.primaryLight};
   }
   @media (min-width: 55rem) {
     grid-column: 1/2;
