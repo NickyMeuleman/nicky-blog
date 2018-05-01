@@ -2,6 +2,8 @@ import React from 'react';
 import styled from 'styled-components';
 import Img from 'gatsby-image';
 import { rhythm } from '../../utils/typography';
+import { scaleSC } from '../../utils/scale';
+import TypedStrings from '../TypedStrings/TypedStrings';
 
 const Container = styled.header`
   height: 100%;
@@ -11,6 +13,7 @@ const Container = styled.header`
   background-image: linear-gradient(120deg, ${props => props.theme.primary}, ${props => props.theme.secondary});
   color: #999;
   margin-bottom: ${rhythm(1)};
+
   a {
     text-shadow: none;
     background-image: none;
@@ -36,7 +39,8 @@ const Pattern = styled.div`
 
 const Content = styled.div`
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   justify-content: center;
   z-index: 30;
   grid-column: 2/3;
@@ -44,14 +48,34 @@ const Content = styled.div`
   & > h1 {
     color: #f5f5f5;
     padding: 0;
-    margin: 0;
+    margin-top: 0;
+    margin-bottom: ${rhythm(0.1)};
+  }
+  .type-wrap {
+    color: #f5f5f5;
+    ${scaleSC(2 / 3)};
+  }
+  .typed-cursor {
+    color: ${props => props.theme.primaryLighter};
+    opacity: 1;
+    animation: typedjsBlink 0.7s infinite;
+    -webkit-animation: typedjsBlink 0.7s infinite;
+    animation: typedjsBlink 0.7s infinite;
+  }
+  @keyframes typedjsBlink {
+    50% {
+      opacity: 0;
+    }
   }
 `;
 
 const Hero = props => (
   <Container>
     {props.coverSizes ? <Img sizes={props.coverSizes} /> : <Pattern />}
-    <Content>{props.title && !props.coverSizes && <h1>{props.title}</h1>}</Content>
+    <Content>
+      {props.title && !props.coverSizes && <h1>{props.title}</h1>}
+      {props.typedStrings && <TypedStrings strings={props.typedStrings} />}
+    </Content>
   </Container>
 );
 

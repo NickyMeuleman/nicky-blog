@@ -30,7 +30,8 @@ const ArticleContainer = styled.div`
     }
   }
   @media (min-width: 70rem) {
-    grid-template-columns: ${rhythm(4)} 1fr ${rhythm(4)};
+    grid-template-columns: ${rhythm(4)} minmax(auto, 66em) ${rhythm(4)};
+    justify-content: center;
     & > article {
       padding: ${rhythm(3)};
     }

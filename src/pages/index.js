@@ -4,7 +4,10 @@ import Hero from '../components/Hero/Hero';
 
 const IndexPage = ({ data }) => (
   <div>
-    <Hero title="Building for the modern web" />
+    <Hero
+      title="Building for the modern web"
+      typedStrings={['Web applications', 'Landing pages', 'Responsive designs', 'Static websites']}
+    />
     <h4>{data.allMarkdownRemark.totalCount} Posts</h4>
     {data.allMarkdownRemark.edges.map(({ node }) => (
       <div key={node.id}>

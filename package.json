@@ -26,6 +26,7 @@
     "react-dom": "^16.3.1",
     "react-helmet": "^5.2.0",
     "styled-components": "^3.2.5",
+    "typed.js": "^2.0.6",
     "typography-theme-ocean-beach": "^0.15.11"
   },
   "keywords": ["gatsby"],
