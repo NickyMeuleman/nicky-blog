@@ -125,4 +125,61 @@ Now Emmet will expand snippets correctly `.js` files
 </div>
 ```
 
+## Setting up SSH and Github
+
+Along with using git locally, I'm saving my codebase (repository) online on [Github]()
+We will set up a way to securely communicate with Github via the command line.
+I'll follow [this guide](https://help.github.com/articles/connecting-to-github-with-ssh/) on how to set up an SSH keypair with Github.
+
+The short version of the information there, for Windows (OSX and Linux have their own entries in the guide):
+in git-bash:
+
+```bash
+ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+```
+
+on completion, you should be able to see the keys you just created by entering
+```bash
+ls -a ~/.ssh
+```
+If you chose the standard names by entering through the first prompt after the previous step
+they will be called `id_rsa` for the private one and `id_rsa.pub` for the public one.
+
+Next we'll configure which SSH-key to use when communicating with Github
+
+* Start the SSH-agent.
+This command will start it if it's not already running (which it isn't, I'm on a fresh install)
+```bash
+eval $(ssh-agent -s)
+```
+* Add your private key
+```bash
+ssh-add ~/.ssh/id_rsa
+```
+
+Now we can give our public key to Github.
+First copy the contents of the public key to the clipboard.
+On Windows:
+```bash
+clip < ~/.ssh/id_rsa.pub
+```
+* Go to your Github settings.
+* Choose the SSH and GPG keys option
+* Click add a new SSH key
+* Enter a title for the key and paste what you just copied into the key area
+
+After clicking the big green Add SSH key button you are ready to comunicate with Github through SSH!
+
+Let's test it out!
+```bash
+ssh -T git@github.com
+```
+It will ask you to connect since it's doesn't know this domain yet, type yes and enter.
+You should now see your personal equivalent of this message:
+```bash
+# Hi NickyMeuleman! You've successfully authenticated, but GitHub does not provide shell access.
+```
+Success!
+
+
 Work in progress, more to come.
