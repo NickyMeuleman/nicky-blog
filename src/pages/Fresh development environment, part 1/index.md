@@ -139,20 +139,25 @@ ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
 ```
 
 on completion, you should be able to see the keys you just created by entering
+
 ```bash
 ls -a ~/.ssh
 ```
+
 If you chose the standard names by entering through the first prompt after the previous step
 they will be called `id_rsa` for the private one and `id_rsa.pub` for the public one.
 
 Next we'll configure which SSH-key to use when communicating with Github
 
 * Start the SSH-agent.
-This command will start it if it's not already running (which it isn't, I'm on a fresh install)
+  This command will start it if it's not already running (which it isn't, I'm on a fresh install)
+
 ```bash
 eval $(ssh-agent -s)
 ```
+
 * Add your private key
+
 ```bash
 ssh-add ~/.ssh/id_rsa
 ```
@@ -160,9 +165,11 @@ ssh-add ~/.ssh/id_rsa
 Now we can give our public key to Github.
 First copy the contents of the public key to the clipboard.
 On Windows:
+
 ```bash
 clip < ~/.ssh/id_rsa.pub
 ```
+
 * Go to your Github settings.
 * Choose the SSH and GPG keys option
 * Click add a new SSH key
@@ -171,15 +178,55 @@ clip < ~/.ssh/id_rsa.pub
 After clicking the big green Add SSH key button you are ready to comunicate with Github through SSH!
 
 Let's test it out!
+
 ```bash
 ssh -T git@github.com
 ```
+
 It will ask you to connect since it's doesn't know this domain yet, type yes and enter.
 You should now see your personal equivalent of this message:
+
 ```bash
 # Hi NickyMeuleman! You've successfully authenticated, but GitHub does not provide shell access.
 ```
+
 Success!
 
+### Cloning a repository from Github
+
+Let's use our brand spanking new SSH-keys to clone a repo we own from github and set it up to receive changes we made locally.
+
+* Open your terminal in the directory you want the repository to be saved
+* Go to the Github repo you want to clone and copy the SSH-link
+  ![SSH-link on Github](./SSHlink.png)
+* clone the link you just copied
+
+```bash
+git clone git@github.com:Username/Reponame.git
+```
+
+If you don't already have a git remote set up in the project, you will need to add one.
+You can check the remotes by entering this in the console.
+
+```bash
+git remote -v
+# origin  git@github.com:Username/Reponame.git (fetch)
+# origin  git@github.com:Username/Reponame.git (push)
+```
+
+if nothing shows up, we will add the `origin` remote to the repository
+
+```bash
+git remote add origin git@github.com:Username/Reponame.git
+```
+
+After making some changes and committing them, we can now push our commits up to Github!
+The very first time we push, we need to pass the `-u` flag. This will create the association between our local code and the repository on Github.
+
+```bash
+git push -u origin master
+```
+
+Our changes are now also on Github, hooray!
 
 Work in progress, more to come.
