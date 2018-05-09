@@ -33,6 +33,7 @@ module.exports = {
               aliases: {},
             },
           },
+          'gatsby-remark-copy-linked-files',
         ],
       },
     },

@@ -75,6 +75,6 @@ Here is my favourite:
 git config --global alias.s "status -s"
 ```
 
-![git status -s](./git-status-silent.gif)
+![alias for git status in silent mode](git-status-silent.gif)
 
 up next: VSCode extensions!
