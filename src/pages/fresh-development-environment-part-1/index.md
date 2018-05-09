@@ -1,6 +1,7 @@
 ---
 title: Setting up a fresh development environment, part 1
 date: "2018-05-03"
+author: "Nicky Meuleman"
 ---
 
 Sometimes you just want to start from a clean slate.
@@ -229,4 +230,4 @@ git push -u origin master
 
 Our changes are now also on Github, hooray!
 
-Work in progress, more to come.
+More in [part 2](../fresh-development-environment-part-2)

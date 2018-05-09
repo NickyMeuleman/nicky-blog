@@ -25,27 +25,24 @@ const Container = styled.div`
   }
 `;
 
-const PostsPage = ({ data }) => {
-  console.log('postpage:', data);
-  return (
-    <div>
-      <Hero title="Writing things down" />
-      <h4>{data.allMarkdownRemark.totalCount} Posts</h4>
-      <Container>
-        {data.allMarkdownRemark.edges.map(({ node }) => (
-          <PostCard
-            key={node.id}
-            url={`/blog${node.fields.slug}`}
-            title={node.frontmatter.title}
-            date={node.frontmatter.date}
-            author={node.frontmatter.author}
-            coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.sizes : null}
-          />
-        ))}
-      </Container>
-    </div>
-  );
-};
+const PostsPage = ({ data }) => (
+  <div>
+    <Hero title="Writing things down" />
+    <h4>{data.allMarkdownRemark.totalCount} Posts</h4>
+    <Container>
+      {data.allMarkdownRemark.edges.map(({ node }) => (
+        <PostCard
+          key={node.id}
+          url={`/blog${node.fields.slug}`}
+          title={node.frontmatter.title}
+          date={node.frontmatter.date}
+          author={node.frontmatter.author}
+          coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.sizes : null}
+        />
+      ))}
+    </Container>
+  </div>
+);
 
 export default PostsPage;
 
