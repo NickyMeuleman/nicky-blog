@@ -77,4 +77,45 @@ git config --global alias.s "status -s"
 
 ![alias for git status in silent mode](git-status-silent.gif)
 
-up next: VSCode extensions!
+### VSCode extensions
+
+The extension support VSCode has is very powerful.
+We are able to improve our workflow massively by taking advantage of this.
+I'll list a few of my favourites here. Let's go!
+
+#### [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
+
+Linters are a must-have tool for every programmer.
+Having a linter find errors in your code before you even try to run it is invaluable and will save you a large amount of time.
+As most things I use, ESLint is focussed on JavaScript, but linters exist for nearly every programming language.
+
+#### [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+
+Everybody dislikes [bikeshedding](https://en.wikipedia.org/wiki/Law_of_triviality).
+Good news, because no longer do you have to hold long debates with yourself over spaces, indentation and other code style decisions.
+Prettier is an opinionated code formatter that makes those choices for you.
+
+#### [Bracket Pair Colorizer](https://marketplace.visualstudio.com/items?itemName=CoenraadS.bracket-pair-colorizer)
+
+Keeping track of matching brackets is hard.
+Bracket Pair Colorizer makes it easier by allowing you to identify matching brackets by color.
+
+#### [GraphQL for VSCode](https://marketplace.visualstudio.com/items?itemName=kumar-harsh.graphql-for-vscode)
+
+Among other neat features, this extension will add syntax-highlighting, linting and autocomplete to your GraphQL code!
+
+#### [vscode-styled-components](https://marketplace.visualstudio.com/items?itemName=jpoissonnier.vscode-styled-components)
+
+Similar to the GraphQL pick, this adds syntax highlighting for styled-components.
+
+#### [DotENV](https://marketplace.visualstudio.com/items?itemName=mikestead.dotenv)
+
+DotEnv adds syntax highlighting for `.env` files (are you noticing a pattern?)
+
+#### [ES7 React/Redux/GraphQL/React-Native snippets](https://marketplace.visualstudio.com/items?itemName=dsznajder.es7-react-js-snippets)
+
+Using code snippets is a great way to speed up development.
+Of course the best snippet-library is the one you wrote yourself.
+This collection has lots of very useful contractions in it I use often. _I'll never get tired of writing `rcc`, tabbing and having the complete boilerplate for a class-based React components appear_
+
+Work in progress, more to come!
