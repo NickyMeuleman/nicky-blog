@@ -115,7 +115,31 @@ DotEnv adds syntax highlighting for `.env` files (are you noticing a pattern?)
 #### [ES7 React/Redux/GraphQL/React-Native snippets](https://marketplace.visualstudio.com/items?itemName=dsznajder.es7-react-js-snippets)
 
 Using code snippets is a great way to speed up development.
-Of course the best snippet-library is the one you wrote yourself.
-This collection has lots of very useful contractions in it I use often. _I'll never get tired of writing `rcc`, tabbing and having the complete boilerplate for a class-based React components appear_
+Of course the best snippet-library is the one you wrote yourself, but this one has so many useful contractions in it I use it all the time.
+_I'll never get tired of writing `rcc`, tabbing and having the complete boilerplate for a class-based React components appear_
 
+#### [GitLens](https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens)
+
+GitLens allows you to see the history of files easily and gives you a git blame for every line.
+This extension does so much more and is very configurable.
+
+#### [Auto Close Tag](https://marketplace.visualstudio.com/items?itemName=formulahendry.auto-close-tag)
+
+Continuing with extensions that are nice to have. Auto close tag does exactly what it says on the box. It generates the closing pair of a tag when you type the opening tag.
+
+#### [Auto Rename Tag](https://marketplace.visualstudio.com/items?itemName=formulahendry.auto-rename-tag)
+
+Found hand in hand with Auto Close tag is Auto Rename Tag.
+No more having to type a tagname 2 times (opening and closing) when you want to swap it.
+
+#### [Polacode](https://marketplace.visualstudio.com/items?itemName=pnp.polacode)
+
+Taking screenshots of your code has been harder than it needs to be for a long time. Polacode, inspired by [Carbon](https://carbon.now.sh/) makes it easy to take beautiful screenshots of your code right in the editor.
+
+#### [Material Icon Theme](https://marketplace.visualstudio.com/items?itemName=PKief.material-icon-theme)
+
+Those icons in front of your files can be nice to recognize what type of file it is at a glance.
+There are a bunch of Icon-sets and editor themes to choose from. I settled on Material Icons and the standard Dark+ color theme.
+
+Coming soon: handy browser extensions for webdev.
 Work in progress, more to come!
