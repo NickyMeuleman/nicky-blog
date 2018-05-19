@@ -128,7 +128,7 @@ Now Emmet will expand snippets correctly `.js` files
 
 ## Setting up SSH and Github
 
-Along with using git locally, I'm saving my codebase (repository) online on [Github]()
+Along with using git locally, I'm saving my codebase (repository) online on [Github](https://github.com/)
 We will set up a way to securely communicate with Github via the command line.
 I'll follow [this guide](https://help.github.com/articles/connecting-to-github-with-ssh/) on how to set up an SSH keypair with Github.
 

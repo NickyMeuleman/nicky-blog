@@ -4,7 +4,7 @@ date: "2018-05-08"
 author: "Nicky Meuleman"
 ---
 
-### installing Yarn
+## installing Yarn
 
 Lots of projects use the [Yarn](https://yarnpkg.com/) package manager.
 To install it head to the [install section in their docs](https://yarnpkg.com/en/docs/install) and follow the instructions for you operating system.
@@ -141,5 +141,4 @@ Taking screenshots of your code has been harder than it needs to be for a long t
 Those icons in front of your files can be nice to recognize what type of file it is at a glance.
 There are a bunch of Icon-sets and editor themes to choose from. I settled on Material Icons and the standard Dark+ color theme.
 
-Coming soon: handy browser extensions for webdev.
-Work in progress, more to come!
+More in [part 3](../fresh-development-environment-part-3)
