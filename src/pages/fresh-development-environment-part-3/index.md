@@ -4,6 +4,8 @@ date: "2018-05-17"
 author: "Nicky Meuleman"
 ---
 
+This is part 3, please also check out [part 1](/blog/fresh-development-environment-part-1) and [part 2](/blog/fresh-development-environment-part-2)
+
 ## Useful browser extensions for (web)dev
 
 Most of the time I spend sitting behind a computer is dominated by 2 applications, the code editor and the browser.

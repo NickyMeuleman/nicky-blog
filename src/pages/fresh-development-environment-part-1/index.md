@@ -230,4 +230,4 @@ git push -u origin master
 
 Our changes are now also on Github, hooray!
 
-More in [part 2](../fresh-development-environment-part-2)
+More in [part 2](/blog/fresh-development-environment-part-2)
