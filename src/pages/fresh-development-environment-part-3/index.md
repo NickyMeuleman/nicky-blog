@@ -34,7 +34,7 @@ _[More info](https://github.com/apollographql/apollo-client/blob/master/docs/sou
 
 ### [aXe](https://chrome.google.com/webstore/detail/axe/lhdoppojpmngadmnindnejefpokejbdd?hl=en-US)
 
-Checking for accissibility issues is made easier by the aXe extension.
+Checking for accessibility issues is made easier by the aXe extension.
 Tip: use alongside the Chrome Lighthouse accessibility check.
 
 _[More info](https://github.com/dequelabs/axe-core)_
@@ -53,6 +53,15 @@ Wappylyzer attempts to answer that question.
 
 _[More info](https://www.wappalyzer.com/)_
 
+### [JSON Formatter](https://chrome.google.com/webstore/detail/json-formatter/bcjindcccaagfpapjjmafapmmgkkhgoa?hl=en)
+
+Often times the data you are working with is presented in the JSON format.
+Without formatting, finding what you are looking for in a large JSON-object feels like looking for a needle in a haystack.
+JSON Formatter displays JSON in a very readable way.
+It is now much easier to get to `MRData.RaceTable.Races[0].QualifyingResults[0]` in that giant object the [Ergast F1 API](https://ergast.com/mrd/) gave me to see my boy Danny Ric crushed qualifying in Monaco.
+
+_[More info](https://github.com/callumlocke/json-formatter)_
+
 ## Other setup not directly related to dev
 
 Over the course of 3 posts I told you what I did to setup my dev environment the way I like.
@@ -65,7 +74,7 @@ F.lux adapts your display to the time of day, warming the colors at night.
 The yellow color on your screen at night might seem a bit hash at first.
 Give it a fair shot, it's fantastic.
 
-### ShareX(https://getsharex.com/)
+### [ShareX](https://getsharex.com/)
 
 A great tools for taking screenshots. No matter if you onoly want to capture an area, your whole screen or the entire webpage, ShareX can handle it.
 You can configure the tool to automatically upload your screenshot to a multitude of online services.
@@ -80,3 +89,8 @@ An excellent open source password manager.
 A browser extension that makes changes and additions the reddit site.
 I didn't add it to the browser-extension list because it's not really webdev related.
 It can be. Here are some subreddits you can follow: [r/webdev](https://www.reddit.com/r/webdev/), [r/reactjs](https://www.reddit.com/r/reactjs/), [r/frontend](https://www.reddit.com/r/Frontend/), [r/javascript](https://www.reddit.com/r/javascript/)
+
+### [HWiNFO64](https://www.hwinfo.com/download.php)
+
+Do you like to keep an eye on your CPU-temperature at all times?
+I do and HWiNFO can also show me whatever other hardware information I would like to know about this machine.

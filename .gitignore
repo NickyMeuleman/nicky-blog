@@ -8,3 +8,5 @@ yarn-error.log
 
 *-test.*
 /*-test
+
+.vscode
