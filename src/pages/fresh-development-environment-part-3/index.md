@@ -2,6 +2,7 @@
 title: Setting up a fresh development environment, part 3
 date: "2018-05-17"
 author: "Nicky Meuleman"
+cover: './cover.jpeg'
 ---
 
 This is part 3, please also check out [part 1](/blog/fresh-development-environment-part-1) and [part 2](/blog/fresh-development-environment-part-2)
@@ -58,7 +59,7 @@ _[More info](https://www.wappalyzer.com/)_
 Often times the data you are working with is presented in the JSON format.
 Without formatting, finding what you are looking for in a large JSON-object feels like looking for a needle in a haystack.
 JSON Formatter displays JSON in a very readable way.
-It is now much easier to get to `MRData.RaceTable.Races[0].QualifyingResults[0]` in that giant object the [Ergast F1 API](https://ergast.com/mrd/) gave me to see my boy Danny Ric crushed qualifying in Monaco.
+It is now much easier to get to `MRData.RaceTable.Races[0].QualifyingResults[0]` in that giant object the [Ergast F1 API](https://ergast.com/mrd/) gave me to see my boy Danny Ric [crushed](https://www.formula1.com/en/latest/headlines/2018/5/qualifying-ricciardo-crushes-opposition-monaco-f1.html) qualifying in Monaco.
 
 _[More info](https://github.com/callumlocke/json-formatter)_
 

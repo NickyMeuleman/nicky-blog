@@ -2,6 +2,7 @@
 title: Reviving my laptop
 date: "2018-05-26"
 author: "Nicky Meuleman"
+cover: "./cover.jpg"
 ---
 
 A while ago I decided to start fresh and completely reïnstall this computer.

@@ -2,6 +2,7 @@
 title: Setting up a fresh development environment, part 1
 date: "2018-05-03"
 author: "Nicky Meuleman"
+cover: './cover.jpeg'
 ---
 
 Sometimes you just want to start from a clean slate.
