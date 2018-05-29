@@ -1,4 +1,5 @@
 import React from 'react';
+import Helmet from 'react-helmet';
 import styled from 'styled-components';
 import Hero from '../components/Hero/Hero';
 import { rhythm } from '../utils/typography';
@@ -61,28 +62,43 @@ const Section = styled.section`
 const BlogPostTemplate = ({ data }) => {
   const { markdownRemark: post } = data;
   return (
-    <Section>
-      <div>
-        <Hero
-          title={post.frontmatter.title}
-          coverSizes={post.frontmatter.cover ? post.frontmatter.cover.childImageSharp.sizes : null}
+    <React.Fragment>
+      <Helmet>
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={post.frontmatter.title} />
+        <meta
+          name="twitter:image"
+          content={data.site.siteMetadata.siteUrl + post.frontmatter.cover.childImageSharp.sizes.src}
         />
-      </div>
-      <div>
-        <ArticleContainer>
-          <article>
-            <h1>{post.frontmatter.title}</h1>
-            <div dangerouslySetInnerHTML={{ __html: post.html }} />
-          </article>
-        </ArticleContainer>
-      </div>
-    </Section>
+      </Helmet>
+      <Section>
+        <div>
+          <Hero
+            title={post.frontmatter.title}
+            coverSizes={post.frontmatter.cover ? post.frontmatter.cover.childImageSharp.sizes : null}
+          />
+        </div>
+        <div>
+          <ArticleContainer>
+            <article>
+              <h1>{post.frontmatter.title}</h1>
+              <div dangerouslySetInnerHTML={{ __html: post.html }} />
+            </article>
+          </ArticleContainer>
+        </div>
+      </Section>
+    </React.Fragment>
   );
 };
 
 // eslint-disable-next-line
 export const query = graphql`
   query BlogPostQuery($slug: String!) {
+    site {
+      siteMetadata {
+        siteUrl
+      }
+    }
     markdownRemark(fields: { slug: { eq: $slug } }) {
       html
       frontmatter {
@@ -90,7 +106,13 @@ export const query = graphql`
         cover {
           childImageSharp {
             sizes(maxWidth: 1920) {
-              ...GatsbyImageSharpSizes_withWebp
+              base64
+              aspectRatio
+              src
+              srcSet
+              srcWebp
+              srcSetWebp
+              sizes
             }
           }
         }
