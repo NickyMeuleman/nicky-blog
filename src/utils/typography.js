@@ -29,6 +29,9 @@ oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
     top: '-1px',
     lineHeight: 'inherit',
   },
+  blockquote: {
+    borderLeft: `${rhythm(1 / 4)} solid ${theme.primary}`,
+  },
 });
 
 const typography = new Typography(oceanBeachTheme);
