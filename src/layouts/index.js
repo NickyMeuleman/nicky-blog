@@ -7,6 +7,9 @@ import Header from '../components/Header/Header';
 import Footer from '../components/Footer/Footer';
 import './index.css';
 
+require('typeface-roboto');
+require('typeface-roboto-slab');
+
 const TemplateWrapper = ({ children }) => (
   <ThemeProvider theme={theme}>
     <React.Fragment>
