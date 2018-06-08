@@ -25,6 +25,7 @@ const TemplateWrapper = ({ children }) => (
         <link rel="icon" type="image/png" sizes="96x96" href="/icons/icon-96x96.png" />
         <link rel="icon" type="image/png" sizes="144x144" href="/icons/icon-144x144.png" />
         <link rel="icon" type="image/png" sizes="256x256" href="/icons/icon-256x256.png" />
+        <html lang="en" />
       </Helmet>
       <Header />
       <main>{children()}</main>
