@@ -8,8 +8,8 @@ import theme from '../../utils/theme';
 const LinkU = styled(Link)`
   border-bottom: none;
   box-shadow: none;
-  height: 100%;
-  width: 100%;
+  height: auto;
+  width: auto;
   &:hover {
     background: inherit;
   }
@@ -18,9 +18,9 @@ const LinkU = styled(Link)`
 const Card = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: 150px 100px;
+  grid-template-rows: 150px 1fr;
   @media (min-width: 55rem) {
-    grid-template-rows: 250px 100px;
+    grid-template-rows: 250px 1fr;
   }
 `;
 const Top = styled.div`
@@ -40,6 +40,7 @@ const Top = styled.div`
 const Bottom = styled.div`
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   grid-column: 1/2;
   grid-row: 2/3;
   background: #fff;
@@ -55,6 +56,7 @@ const Bottom = styled.div`
 const Info = styled.div`
   display: flex;
   justify-content: space-between;
+  margin-top: ${rhythm(0.5)};
   & > p {
     margin: 0;
   }

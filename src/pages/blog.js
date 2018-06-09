@@ -9,6 +9,9 @@ const Container = styled.div`
   & > * {
     margin-bottom: ${rhythm(1)};
   }
+  & > p {
+    grid-column: 1/3;
+  }
   @media (min-width: 55rem) {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -28,8 +31,8 @@ const Container = styled.div`
 const PostsPage = ({ data }) => (
   <div>
     <Hero title="Writing things down" />
-    <h4>{data.allMarkdownRemark.totalCount} Posts</h4>
     <Container>
+      <p>{data.allMarkdownRemark.totalCount} Posts</p>
       {data.allMarkdownRemark.edges.map(({ node }) => (
         <PostCard
           key={node.id}

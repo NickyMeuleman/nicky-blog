@@ -2,7 +2,7 @@
 title: Manipulate text like a boss
 date: "2018-06-05"
 author: "Nicky Meuleman"
-cover: './cover.jpg'
+cover: './cover.jpeg'
 ---
 
 <!-- Photo by dylan nolte on Unsplash -->
