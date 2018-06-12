@@ -1,9 +1,11 @@
 import React from 'react';
 import Link from 'gatsby-link';
 import Img from 'gatsby-image';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { rhythm } from '../../utils/typography';
 import theme from '../../utils/theme';
+
+/* eslint-disable no-use-before-define */
 
 const LinkU = styled(Link)`
   border-bottom: none;
@@ -19,10 +21,28 @@ const Card = styled.div`
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: 150px 1fr;
+  // TODO: find best practice way to do this
+  ${props =>
+    props.featured &&
+    css`
+    @media (min-width:55rem) {
+      grid-template-columns: 2fr 1fr;
+      grid-template-rows: 415px;
+      ${Top} {
+        grid-column: 1/2;
+        grid-row: 1/2;
+      }
+      ${Bottom} {
+        grid-column: 2/3;
+        grid-row: 1/2;
+      }
+      `};
+    }
   @media (min-width: 55rem) {
-    grid-template-rows: 250px 1fr;
+    ${props => !props.featured && 'grid-template-rows: 250px 1fr'};
   }
 `;
+
 const Top = styled.div`
   grid-column: 1/2;
   grid-row: 1/2;
@@ -37,12 +57,11 @@ const Top = styled.div`
     filter: brightness(110%) contrast(120%);
   }
 `;
+
 const Bottom = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  grid-column: 1/2;
-  grid-row: 2/3;
   background: #fff;
   padding: ${rhythm(0.25)};
   & h2 {
@@ -60,10 +79,19 @@ const Info = styled.div`
   & > p {
     margin: 0;
   }
+  & > :last-child {
+    text-align: right;
+  }
 `;
 
+const Excerpt = styled.p`
+  margin-top: ${rhythm(0.5)};
+`;
+
+/* eslint-enable no-use-before-define */
+
 const PostCard = props => (
-  <Card>
+  <Card featured={props.featured}>
     <Top>
       <LinkU to={props.url}>
         {props.coverSizes ? (
@@ -80,9 +108,12 @@ const PostCard = props => (
       </LinkU>
     </Top>
     <Bottom>
-      <LinkU to={props.url}>
-        <h2>{props.title}</h2>
-      </LinkU>
+      <div>
+        <LinkU to={props.url}>
+          <h2>{props.title}</h2>
+        </LinkU>
+        {props.excerpt && <Excerpt>{props.excerpt}</Excerpt>}
+      </div>
       <Info>
         <p>{props.author}</p>
         <p>{props.date}</p>

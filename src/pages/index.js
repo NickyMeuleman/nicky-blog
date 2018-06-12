@@ -41,14 +41,16 @@ const IndexPage = ({ data }) => (
         </span>{' '}
         Recent posts ({data.allMarkdownRemark.totalCount} total)
       </p>
-      {data.allMarkdownRemark.edges.map(({ node }) => (
+      {data.allMarkdownRemark.edges.map(({ node }, i) => (
         <PostCard
           key={node.id}
+          featured={i === 0}
           url={`/blog${node.fields.slug}`}
           title={node.frontmatter.title}
           date={node.frontmatter.date}
           author={node.frontmatter.author}
           coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.sizes : null}
+          excerpt={node.excerpt}
         />
       ))}
     </Container>
@@ -64,6 +66,7 @@ export const query = graphql`
       totalCount
       edges {
         node {
+          excerpt(pruneLength: 250)
           id
           frontmatter {
             title
