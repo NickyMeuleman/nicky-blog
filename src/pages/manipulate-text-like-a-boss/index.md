@@ -97,8 +97,8 @@ Renaming a function/variable/... can be a chore, you don't want to miss a single
 
   ![add next match](add-next-match.gif)
 
-* `ctrl+/` (`ctrl+:` on azerty-keyboards)
-  Toggle comment for the current line/lines.
+* `ctrl+/` (`ctrl+:` on azerty-keyboards)  
+  Toggle comment(s) for the current line/lines.
 
 * `ctrl+i`  
   Select the current line.
