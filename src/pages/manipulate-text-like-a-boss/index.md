@@ -8,7 +8,7 @@ cover: './cover.jpeg'
 <!-- Photo by dylan nolte on Unsplash -->
 
 <!-- TODO: find better way to show shortcuts in action.
-the gifs load immediately on page load atm-->
+the gifs load immediately on page load/are big now-->
 
 When listening to the Syntax podcast [episode](https://syntax.fm/show/048/vs-code-round-two) on VSCode, using keyboard shortcuts came up. That inspired me to dig a little deeper and write about it!
 
@@ -19,8 +19,9 @@ I'm not advocating you ditch your mouse entirely and become a [vim-wizard/witch]
 
 ## The basics
 
-I wish someone told me to get **really** comfortable with these when I started learning how to code. They are not talked about often, because many people consider them _too_ basic. Using these until you can activate them from muscle memory will save you a lot of time.
-I was used to navigating text a single character at a time with the arrow keys.
+I wish someone told me to get **really** comfortable with these when I started learning how to code. They are not talked about often, because many people consider them _too_ basic.
+I was used to navigating text a single character at a time with the arrow keys. Knowing about most of these shortcuts didn't translate into using them, I was still using my mouse out of habit for most of these operations until recently.
+Using these until you can activate them from muscle memory will save you a lot of time.
 
 > Mac users: substitute ctrl for command
 
@@ -48,7 +49,10 @@ Use `shift` to select while your cursor moves.
 
 You can use the shortcuts above nearly everywhere.
 The next ones are more specific to the code editor.
-I'm using [VSCode](https://code.visualstudio.com/)(on Windows), but many of them are also available in other editors. You can view your keyboard shortcuts in VSCode by opening the command palette (`ctrl+shift+p`) and choosing "Preferences: open keyboard shortcuts"
+
+> The shortcuts listed here are the default ones, they might be different for you.
+
+I'm using [VSCode](https://code.visualstudio.com/)(on Windows), but many of them are also available in other editors. You can view your keyboard shortcuts in VSCode by opening the command palette (`ctrl+shift+p`) and choosing "Preferences: open keyboard shortcuts".
 Here you can search for and edit every keyboard shortcut for VSCode.
 
 There is a treasure trove of useful one right here for [Windows](https://code.visualstudio.com/shortcuts/keyboard-shortcuts-windows.pdf), [Mac](https://code.visualstudio.com/shortcuts/keyboard-shortcuts-macos.pdf) and [Linux](https://code.visualstudio.com/shortcuts/keyboard-shortcuts-linux.pdf)
@@ -63,7 +67,7 @@ Moving/copying a line up or down. (sick name [@wesbos](https://twitter.com/wesbo
 * `alt+up/down` moves your current line.
 * `shift+alt+up/down` duplicates your current line.
 
-> NOTE: You don't have to select the line for these to work.
+> NOTE: You don't have to select the entire line for these to work.
 
 ![Line bubbling](line-bubbling.gif)
 
@@ -92,6 +96,9 @@ Renaming a function/variable/... can be a chore, you don't want to miss a single
   Selects the next matching symbol when your cursor is in one.
 
   ![add next match](add-next-match.gif)
+
+* `ctrl+/` (`ctrl+:` on azerty-keyboards)
+  Toggle comment for the current line/lines.
 
 * `ctrl+i`  
   Select the current line.
