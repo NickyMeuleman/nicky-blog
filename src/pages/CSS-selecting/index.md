@@ -113,7 +113,7 @@ You could read that selector like this: "Select any div-element that follows a d
 
 ## Pseudo-class selectors
 
-If you want to apply CSS-rules based on the **state** of an element, or **structure** (only target every odd element) within that element, pseudo-classes are for you!
+If you want to apply CSS-rules based on the **state** of an element, or **structure** (eg: only target every odd element) within that element, pseudo-classes are for you!
 
 ```css
 a:hover {
@@ -133,6 +133,7 @@ We forgot to give the `.champion` above a special color.
 }
 ```
 
+Notice that space between `.final` and `:first-child`? It's the descendant selector we talked about earlier. It should be there because **pseudo-classes only target the element it is attached to**.  
 This selector is very specific, what if a different element appears above the `.champion`?
 
 ```html{4}
@@ -148,7 +149,7 @@ This selector is very specific, what if a different element appears above the `.
     </div>
 ```
 
-Gone is that glorious background-color for the champion. `:first-child` does exactly what it says, it selects the first child of the element the pseudoclass is attached to.
+Gone is that glorious background-color for the champion. `:first-child` does exactly what it says, it selects the element it is attached to if it is the first child. It's not attached to anything, you say? Think of it like it's written like this: `.final *:first-child`  
 Don't fear, we can select the first-child _of a certain type_ with `:first-of-type`
 
 ```css
@@ -158,17 +159,118 @@ Don't fear, we can select the first-child _of a certain type_ with `:first-of-ty
 ```
 
 It doesn't stop at the first of something. You also have to opposite: `:last-child` and `:last-of-type`.
-You can also select an element at a specific position with `:nth-child()` and `:n-th-of-type()`.
+You can also select an element at a specific position with `:nth-child()` and `:nth-of-type()`.
 
-What should be between those parenteses is a number. Or math that evaluates to a number.
+What should be between those parenteses is a number. Or simple math that evaluates to numbers.
 Every programmer should be delighted that CSS starts counting at 1, not 0. That is not a source of confusion at all.
 
 **insert arrays start at 0 joke here**
 
-TODO: Combinating, selecting by attribute, pseudo-selectors
+```css
+li:nth-child(2n + 1) {
+  font-weight: bold;
+}
+```
 
-Disclaimer: I'm reading a book on CSS and want to learn more by writing about what I read.
-sources:
+Will bold every odd element in a list. The browser runs that simple equation and enters 0,1,2,... in place of `n` and uses the resulting number.
+
+Those are only a couple examples, I encourage you to explore more about [pseudo-classes on MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/Pseudo-classes).  
+Another related part we haven't talked about yet are the [pseudo-element selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/pseudo-elements)
+
+## Attribute selectors
+
+You can also select elements based on their attributes and the values of their attributes. Which is really what you are already doing when using the ID(#) or class(.) selector if you think about it.
+
+```html
+    <div class="really-fast-drive lemans-winner tiny">
+        Fernando Alonso
+    </div>
+    <div class="really-slow-driver non-lemans-winner tall">
+        Nicky Meuleman
+    </div>
+```
+
+The simplest form is just checking if an attribute is present.
+
+```css
+div[class] {
+  /* Fernando Alonso is so tiny in real life */
+}
+```
+
+This will only target divs that have a class attribute.
+
+To match an element that has an exact value for an attribute
+
+```css
+span[class="really-fast-driver"] {
+  font-weight: bold;
+}
+```
+
+This would make Alonso bold right? Wrong! The value has to be exact, we are only specifying one class, not all of them (they also needed to be in exactly the right order for this to work.)
+
+```css
+div[class~="really-fast-driver"] {
+  font-weight: bold;
+}
+```
+
+This hits the spot.  
+The **tilde** selects any element with an attribute whose value is **within a space-seperated list**
+
+Let's select all elements that have a class attribute that starts with `really`
+
+```css
+div[class^="really"] {
+  color: red;
+}
+```
+
+The **up-caret** selects any element with an attribute that **starts with** the given value.
+Remember: this wouldn't work if any classes came before `really-fast-driver` and `really-slow-driver` respectively!
+
+```css
+div[class|="really"] {
+  color: red;
+}
+```
+
+The **pipe** selects any element with an attribute that **starts with** the given value, optionally **followed by a dash**.
+
+```css
+div[class$="driver"] {
+  background-color: black;
+}
+```
+
+The **dollar-sign** selects any element with an attribute that **ends with** the given value.
+
+```css
+div[class*="lemans"] {
+  border: 1px solid blue;
+}
+```
+
+The **asterisk** selects any element with an attribute that **contains** the **substring** of the given value.
+
+#### Case sensitivity
+
+Including an `i` before the closing bracket will make the selector insensitive to case.
+
+```css
+div[class*="LeMans" i] {
+  border: 1px solid blue;
+}
+```
+
+The selector above will match the same elements as the example without the capitals and the i.
+
+TODO: combinating, pseudo-classes.
+
+I'm reading a book on CSS and want to learn more by writing about what I read.
+
+Sources used:
 
 * [MDN docs](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors)
 * [CSS-tricks](https://css-tricks.com/)
