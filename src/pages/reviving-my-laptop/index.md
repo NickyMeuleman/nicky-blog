@@ -1,6 +1,6 @@
 ---
 title: Reviving my laptop
-date: "2018-05-26"
+date: "2018-06-02"
 author: "Nicky Meuleman"
 cover: "./cover.jpg"
 ---

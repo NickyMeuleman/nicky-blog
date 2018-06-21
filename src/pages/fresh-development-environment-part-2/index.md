@@ -1,6 +1,6 @@
 ---
 title: Setting up a fresh development environment, part 2
-date: "2018-05-08"
+date: "2018-05-21"
 author: "Nicky Meuleman"
 cover: './cover.jpeg'
 ---

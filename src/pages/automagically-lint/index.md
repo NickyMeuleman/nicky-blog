@@ -1,6 +1,6 @@
 ---
 title: Automagically lint and format your code
-date: "2018-04-08"
+date: "2018-05-04"
 author: "Nicky Meuleman"
 cover: './cover.png'
 ---

@@ -1,6 +1,6 @@
 ---
 title: Selecting in CSS
-date: "2018"
+date: "2018-06-21"
 author: "Nicky Meuleman"
 cover: './cover.jpg'
 ---
@@ -8,7 +8,7 @@ cover: './cover.jpg'
 <!-- Photo by Andrew Ridley on Unsplash -->
 
 Targeting a specific HTML-element doesn't have to cause headaches. Don't be afraid of CSS, it's here to help.
-Many are comfortable with selecting by class (with a dot `.`) or IDs (with thee octothorpe `#`). Those are far for the only tools in the CSS shed.
+Many are comfortable with selecting by class (with a dot `.`) or IDs (with the octothorpe `#`). Those are far for the only tools in the CSS shed.
 I hope after reading this blogpost your toolchest will be a little bit bigger!
 
 ## CSS family tree
