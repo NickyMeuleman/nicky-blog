@@ -8,6 +8,8 @@ cover: './cover.jpg'
 <!-- Photo by Andrew Ridley on Unsplash -->
 
 Targeting a specific HTML-element doesn't have to cause headaches. Don't be afraid of CSS, it's here to help.
+Many are comfortable with selecting by class (with a dot `.`) or IDs (with thee octothorpe `#`). Those are far for the only tools in the CSS shed.
+I hope after reading this blogpost your toolchest will be a little bit bigger!
 
 ## CSS family tree
 
@@ -47,7 +49,7 @@ The `runner-up` is the sibling of the `champion`.
 ## Combinator selectors
 
 These characteristics can be leveraged to select a certain element in CSS.
-Say you want to give all descendants of the quarter-finals a border. I could do something like
+Say you want to give all descendants of the quarter-finals a background color. You could do something like
 
 ```css
 .quarter-finals div {
@@ -81,7 +83,7 @@ We can select it with the adjacent **sibling combinator**.
 ```
 
 The **plus** between `.champion` and `div` is the **adjacent sibling combinator**.  
-You could read that selector like this: "Select any div-element that immediately follows a div-element with the class champion and has the same parent."
+You could read that selector like this: "Select any div-element that immediately follows an element with the class champion and has the same parent."
 
 <iframe height='265' scrolling='no' title='QxaLMP' src='//codepen.io/MrNime/embed/preview/QxaLMP/?height=265&theme-id=dark&default-tab=css,result&embed-version=2' frameborder='no' allowtransparency='true' allowfullscreen='true' style='width: 100%;'>See the Pen <a href='https://codepen.io/MrNime/pen/QxaLMP/'>QxaLMP</a> by Nicky (<a href='https://codepen.io/MrNime'>@MrNime</a>) on <a href='https://codepen.io'>CodePen</a>.
 </iframe>
@@ -109,11 +111,11 @@ This means our `.runner-up` will no longer have a yellow background. It doesn't 
 ```
 
 The **tilde** between `.champion` and `div` is the **general sibling combinator**.  
-You could read that selector like this: "Select any div-element that follows a div-element with the class champion and has the same parent."
+You could read that selector like this: "Select any div-element that follows an element with the class champion and has the same parent."
 
 ## Pseudo-class selectors
 
-If you want to apply CSS-rules based on the **state** of an element, or **structure** (eg: only target every odd element) within that element, pseudo-classes are for you!
+If you want to apply CSS-rules based on the **state** of an element, or **structure** (eg: only target every odd element) within that element, pseudo-classes are for you! You can recognize them by their colon `:`.
 
 ```css
 a:hover {
@@ -123,7 +125,7 @@ a:hover {
 
 The rule above only targets a-elements that are being hovered. It falls under the **state** part.
 
-If we want to select the first element in a list, we rely on a **structure** pseudoselector `:first-child`
+If we want to select the first element in a list, we rely on a **structure** pseudoselector, like `:first-child`
 
 We forgot to give the `.champion` above a special color.
 
@@ -140,7 +142,7 @@ This selector is very specific, what if a different element appears above the `.
     <div class="quarter-finals">
         <div class="semi-finals">
             <div class="final">
-                <span>In this match</span>
+                <span>in this match</span>
                 <div class="champion"></div>
                 <span>won against</span>
                 <div class="runner-up"></div>
@@ -150,7 +152,7 @@ This selector is very specific, what if a different element appears above the `.
 ```
 
 Gone is that glorious background-color for the champion. `:first-child` does exactly what it says, it selects the element it is attached to if it is the first child. It's not attached to anything, you say? Think of it like it's written like this: `.final *:first-child`  
-Don't fear, we can select the first-child _of a certain type_ with `:first-of-type`
+Don't fear for the champion, we can select the first-child _of a certain type_ with `:first-of-type`
 
 ```css
 .final div:first-of-type {
@@ -162,9 +164,10 @@ It doesn't stop at the first of something. You also have to opposite: `:last-chi
 You can also select an element at a specific position with `:nth-child()` and `:nth-of-type()`.
 
 What should be between those parenteses is a number. Or simple math that evaluates to numbers.
-Every programmer should be delighted that CSS starts counting at 1, not 0. That is not a source of confusion at all.
 
-**insert arrays start at 0 joke here**
+`li:nth-of-type(3)` will select the third list item. Not the fourth one like a lot of programmers who are accustomed to start counting at 0 would think!
+
+![arrays start at 0](http://i.imgur.com/VRSkSGd.jpg)
 
 ```css
 li:nth-child(2n + 1) {
@@ -174,12 +177,33 @@ li:nth-child(2n + 1) {
 
 Will bold every odd element in a list. The browser runs that simple equation and enters 0,1,2,... in place of `n` and uses the resulting number.
 
-Those are only a couple examples, I encourage you to explore more about [pseudo-classes on MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/Pseudo-classes).  
-Another related part we haven't talked about yet are the [pseudo-element selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/pseudo-elements)
+Those are only a couple examples, I encourage you to explore more about [pseudo-classes on MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/Pseudo-classes).
+
+## Pseudo-elements
+
+Closely related to the pseudo-classes are the pseudo-elements.  
+Where the **pseudo-classes** selected an **element**.  
+The **pseudo-elements** will select **part of an element**.
+
+The syntax is also very similar.  
+With pseudo-classes you use a single colon `:`.  
+With pseudo-elements you use two colons `::`
+
+Many browsers will let you get away with only using a single colon. Just because you _can_ doesn't mean you _should_.
+
+```css
+span::first-letter {
+  color: green;
+}
+```
+
+This bit of CSS would make the starting letters of our 2 `spans` in our example green.
+
+There are many more options, you can read/learn about them on [MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/pseudo-elements).
 
 ## Attribute selectors
 
-You can also select elements based on their attributes and the values of their attributes. Which is really what you are already doing when using the ID(#) or class(.) selector if you think about it.
+You can also select elements based on their attributes and the values of their attributes. Which is really what you are already doing when using the ID(`#`) or class(`.`) selector if you think about it.
 
 ```html
     <div class="really-fast-drive lemans-winner tiny">
@@ -228,7 +252,7 @@ div[class^="really"] {
 ```
 
 The **up-caret** selects any element with an attribute that **starts with** the given value.
-Remember: this wouldn't work if any classes came before `really-fast-driver` and `really-slow-driver` respectively!
+Remember: this wouldn't work if `really-fast-driver` and `really-slow-driver` weren't the first in the list of classes!
 
 ```css
 div[class|="really"] {
@@ -266,9 +290,27 @@ div[class*="LeMans" i] {
 
 The selector above will match the same elements as the example without the capitals and the i.
 
-TODO: combinating, pseudo-classes.
+## Combining
 
-I'm reading a book on CSS and want to learn more by writing about what I read.
+We already had a taste of combining when we used the descendant selector in the section about pseudo-classes.
+
+How would you go about selecting the label for a checkbox that is checked? You have this HTML to work with, the author didn't follow proper accessibility-guidelines and left off the [`for` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/label).
+
+```html
+<input type="checkbox">
+<label>Belgium wins the world cup</label>
+```
+
+A possible way to do that would be:
+
+```css
+input[type="checkbox"]:checked + label {
+  color: red;
+}
+```
+
+You could read that selector like this: "Select any `label` element that has an `input` immediately preceding it. That input should have `checkbox` as value for the `type` attribute and it should be checked."  
+The CSS-rule will only be applied when all these conditions are met!
 
 Sources used:
 
