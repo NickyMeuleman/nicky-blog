@@ -167,7 +167,7 @@ What should be between those parenteses is a number. Or simple math that evaluat
 
 `li:nth-of-type(3)` will select the third list item. Not the fourth one like a lot of programmers who are accustomed to start counting at 0 would think!
 
-![arrays start at 0](http://i.imgur.com/VRSkSGd.jpg)
+![arrays start at 0](https://i.imgur.com/VRSkSGd.jpg)
 
 ```css
 li:nth-child(2n + 1) {
@@ -311,6 +311,12 @@ input[type="checkbox"]:checked + label {
 
 You could read that selector like this: "Select any `label` element that has an `input` immediately preceding it. That input should have `checkbox` as value for the `type` attribute and it should be checked."  
 The CSS-rule will only be applied when all these conditions are met!
+
+## Even more tools
+
+CSS has many more useful features, you can come accross some symbols you don't recognize as being at home in CSS.
+You might even be looking at a CSS (pre)processor, like [SASS/SCSS](https://sass-lang.com/). A symbol you see very often there that's not available in regular CSS is the ampersand `&`. It is used to refer to the the parent selector (yes, nesting in CSS 🤯).
+CSS-tricks has a great [article](https://css-tricks.com/the-sass-ampersand/) that will help you understand it.
 
 Sources used:
 
