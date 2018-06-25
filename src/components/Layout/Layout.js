@@ -1,14 +1,14 @@
 import React from 'react';
 import Helmet from 'react-helmet';
 import { ThemeProvider } from 'styled-components';
-import theme from '../utils/theme';
+import 'typeface-roboto/index.css';
+import 'typeface-roboto-slab/index.css';
 
-import Header from '../components/Header/Header';
-import Footer from '../components/Footer/Footer';
-import './index.css';
+import theme from '../../utils/theme';
 
-require('typeface-roboto');
-require('typeface-roboto-slab');
+import Header from '../Header/Header';
+import Footer from '../Footer/Footer';
+import './Layout.css';
 
 const TemplateWrapper = ({ children }) => (
   <ThemeProvider theme={theme}>
@@ -28,7 +28,7 @@ const TemplateWrapper = ({ children }) => (
         <html lang="en" />
       </Helmet>
       <Header />
-      <main>{children()}</main>
+      <main>{children}</main>
       <Footer />
     </React.Fragment>
   </ThemeProvider>
