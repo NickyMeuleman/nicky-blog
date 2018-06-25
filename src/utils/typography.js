@@ -35,5 +35,6 @@ oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
 });
 
 const typography = new Typography(oceanBeachTheme);
+const { rhythm, scale } = typography;
 
-export default typography;
+export { rhythm, scale, typography as default };

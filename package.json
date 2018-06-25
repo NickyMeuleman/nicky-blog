@@ -5,35 +5,39 @@
   "author": "Nicky Meuleman",
   "dependencies": {
     "babel-plugin-styled-components": "^1.5.1",
-    "gatsby": "^1.9.259",
-    "gatsby-image": "^1.0.51",
-    "gatsby-link": "^1.6.44",
-    "gatsby-plugin-catch-links": "^1.0.22",
-    "gatsby-plugin-google-analytics": "^1.0.31",
-    "gatsby-plugin-manifest": "^1.0.21",
-    "gatsby-plugin-netlify": "^1.0.21",
-    "gatsby-plugin-offline": "^1.0.16",
-    "gatsby-plugin-react-helmet": "^2.0.11",
-    "gatsby-plugin-sharp": "^1.6.44",
-    "gatsby-plugin-sitemap": "^1.2.23",
-    "gatsby-plugin-styled-components": "^2.0.11",
-    "gatsby-plugin-typography": "^1.7.18",
-    "gatsby-remark-copy-linked-files": "^1.5.32",
-    "gatsby-remark-images": "^1.5.63",
-    "gatsby-remark-prismjs": "^1.2.24",
-    "gatsby-source-filesystem": "^1.5.35",
-    "gatsby-transformer-remark": "^1.7.40",
-    "gatsby-transformer-sharp": "^1.6.24",
-    "react": "^16.3.2",
-    "react-dom": "^16.3.2",
+    "gatsby": "next",
+    "gatsby-image": "next",
+    "gatsby-plugin-catch-links": "next",
+    "gatsby-plugin-google-analytics": "next",
+    "gatsby-plugin-manifest": "next",
+    "gatsby-plugin-netlify": "next",
+    "gatsby-plugin-offline": "next",
+    "gatsby-plugin-react-helmet": "next",
+    "gatsby-plugin-sharp": "next",
+    "gatsby-plugin-sitemap": "next",
+    "gatsby-plugin-styled-components": "next",
+    "gatsby-plugin-typography": "next",
+    "gatsby-remark-copy-linked-files": "next",
+    "gatsby-remark-images": "next",
+    "gatsby-remark-prismjs": "next",
+    "gatsby-source-filesystem": "next",
+    "gatsby-transformer-remark": "next",
+    "gatsby-transformer-sharp": "next",
+    "prismjs": "^1.15.0",
+    "react": "^16.4.1",
+    "react-dom": "^16.4.1",
     "react-helmet": "^5.2.0",
-    "styled-components": "^3.2.6",
+    "react-typography": "^0.16.13",
+    "styled-components": "^3.3.3",
     "typed.js": "^2.0.6",
     "typeface-roboto": "0.0.54",
     "typeface-roboto-slab": "0.0.54",
+    "typography": "^0.16.17",
     "typography-theme-ocean-beach": "^0.15.11"
   },
-  "keywords": ["gatsby"],
+  "keywords": [
+    "gatsby"
+  ],
   "license": "GNU GPLv3",
   "scripts": {
     "build": "gatsby build",
@@ -50,8 +54,14 @@
     }
   },
   "lint-staged": {
-    "*.{js,jsx}": ["eslint --fix", "git add"],
-    "*.{json,css}": ["prettier --write", "git add"]
+    "*.{js,jsx}": [
+      "eslint --fix",
+      "git add"
+    ],
+    "*.{json,css}": [
+      "prettier --write",
+      "git add"
+    ]
   },
   "devDependencies": {
     "@commitlint/cli": "^6.2.0",

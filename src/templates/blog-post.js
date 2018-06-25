@@ -1,4 +1,5 @@
 import React from 'react';
+import { graphql } from 'gatsby';
 import Helmet from 'react-helmet';
 import styled from 'styled-components';
 import Hero from '../components/Hero/Hero';
@@ -91,7 +92,6 @@ const BlogPostTemplate = ({ data }) => {
   );
 };
 
-// eslint-disable-next-line
 export const query = graphql`
   query BlogPostQuery($slug: String!) {
     site {

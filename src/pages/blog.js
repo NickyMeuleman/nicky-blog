@@ -1,8 +1,10 @@
 import React from 'react';
+import { graphql } from 'gatsby';
 import styled from 'styled-components';
 import Hero from '../components/Hero/Hero';
 import PostCard from '../components/PostCard/PostCard';
 import { rhythm } from '../utils/typography';
+import Layout from '../components/Layout/Layout';
 
 const Container = styled.div`
   margin: 0 ${rhythm(1)} ${rhythm(0.5)} ${rhythm(1)};
@@ -29,7 +31,7 @@ const Container = styled.div`
 `;
 
 const PostsPage = ({ data }) => (
-  <div>
+  <Layout>
     <Hero title="Writing things down" />
     <Container>
       <p>{data.allMarkdownRemark.totalCount} Posts</p>
@@ -40,16 +42,15 @@ const PostsPage = ({ data }) => (
           title={node.frontmatter.title}
           date={node.frontmatter.date}
           author={node.frontmatter.author}
-          coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.sizes : null}
+          coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.fluid : null}
         />
       ))}
     </Container>
-  </div>
+  </Layout>
 );
 
 export default PostsPage;
 
-// eslint-disable-next-line
 export const query = graphql`
   query PostsQuery {
     allMarkdownRemark(sort: { fields: [frontmatter___date], order: DESC }) {
@@ -63,8 +64,8 @@ export const query = graphql`
             author
             cover {
               childImageSharp {
-                sizes {
-                  ...GatsbyImageSharpSizes_withWebp
+                fluid {
+                  ...GatsbyImageSharpFluid_withWebp
                 }
               }
             }

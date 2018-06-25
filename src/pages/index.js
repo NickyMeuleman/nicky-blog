@@ -1,8 +1,10 @@
 import React from 'react';
+import { graphql } from 'gatsby';
 import styled from 'styled-components';
 import Hero from '../components/Hero/Hero';
 import PostCard from '../components/PostCard/PostCard';
 import { rhythm } from '../utils/typography';
+import Layout from '../components/Layout/Layout';
 
 const Container = styled.div`
   margin: 0 ${rhythm(1)} ${rhythm(0.5)} ${rhythm(1)};
@@ -29,7 +31,7 @@ const Container = styled.div`
 `;
 
 const IndexPage = ({ data }) => (
-  <div>
+  <Layout>
     <Hero
       title="Building for the modern web"
       typedStrings={['Web applications', 'Landing pages', 'Responsive designs', 'Static websites']}
@@ -49,17 +51,16 @@ const IndexPage = ({ data }) => (
           title={node.frontmatter.title}
           date={node.frontmatter.date}
           author={node.frontmatter.author}
-          coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.sizes : null}
+          coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.fluid : null}
           excerpt={node.excerpt}
         />
       ))}
     </Container>
-  </div>
+  </Layout>
 );
 
 export default IndexPage;
 
-// eslint-disable-next-line
 export const query = graphql`
   query IndexQuery {
     allMarkdownRemark(sort: { fields: [frontmatter___date], order: DESC }, limit: 3) {
@@ -74,7 +75,7 @@ export const query = graphql`
             author
             cover {
               childImageSharp {
-                sizes(maxWidth: 1920) {
+                fluid(maxWidth: 1920) {
                   base64
                   aspectRatio
                   src
