@@ -2,6 +2,7 @@ import React from 'react';
 import { graphql } from 'gatsby';
 import Helmet from 'react-helmet';
 import styled from 'styled-components';
+import Layout from '../components/Layout/Layout';
 import Hero from '../components/Hero/Hero';
 import { rhythm } from '../utils/typography';
 
@@ -63,7 +64,7 @@ const Section = styled.section`
 const BlogPostTemplate = ({ data }) => {
   const { markdownRemark: post } = data;
   return (
-    <React.Fragment>
+    <Layout>
       <Helmet>
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content={post.frontmatter.title} />
@@ -88,7 +89,7 @@ const BlogPostTemplate = ({ data }) => {
           </ArticleContainer>
         </div>
       </Section>
-    </React.Fragment>
+    </Layout>
   );
 };
 
