@@ -8,7 +8,7 @@ cover: './cover.jpg'
 <!-- Photo by Pietro De Grandi on Unsplash -->
 
 Gatsby has a great guide for upgrading from v1 to v2.
-This post describes how I upgraded this site from v1 to v2. If it reads almost identically to their [official guide](https://next.gatsbyjs.org/docs/migrating-from-v1-to-v2/), it's because it's awesome.
+This post describes how I upgraded this site from v1 to v2. If it reads almost identically to their [official guide](https://next.gatsbyjs.org/docs/migrating-from-v1-to-v2/), it's because their guide is awesome. _if it doesn't, their guide is still awesome_.
 
 Before I got started, I created a new branch in git where all changed would live.
 This branch will get merged into the master branch after this post 💪.
@@ -20,7 +20,7 @@ git checkout -b gatsby-v2
 ## Remove `gatsby-link` from your `package.json`
 
 You no longer need the `gatsby-link` package. Everything that used to be there now lives in the main `gatsby` dependency.
-We will fir our imports later to reflect this change.
+We will adjust our imports later to reflect this change.
 
 ## Update your dependencies
 
@@ -51,7 +51,7 @@ For this site that meant my `package.json` now looked like this:
   }
 ```
 
-at this point I also deleted my `node-modules` folder and my `package-lock.json` file.
+at this point I also deleted my `node-modules` folder and my lockfile `package-lock.json` (or `yarn.lock`).
 
 ## Install React
 
@@ -63,9 +63,15 @@ npm i react react-dom
 
 ## Install peer dependencies for your Gatsby plugins
 
-Many packages depend on other packages to be installed.
+Many packages depend on other packages to function correctly.
 Make sure those dependencies are there.
-If you don't know which packages you should install, go to the [Gatsby plugin browser](https://next.gatsbyjs.org/plugins/) and look at the line that tells you how to install the package. Also if you `npm install` it will warn you in the console about unmet peer dependencies.
+If you don't know which packages you should install, go to the [Gatsby plugin browser](https://next.gatsbyjs.org/plugins/) and look at the line of code that tells you how to install the plugin. They have a line for each package in their plugin brower that looks like this:
+
+```sh
+npm install --save gatsby-plugin-something optional-peer-dependency another-optional-dependency
+```
+
+Also if you forget to install the peer dependencies and run `npm install` it will warn you in the console about unmet peer dependencies.
 
 for me that meant:
 
@@ -76,11 +82,11 @@ npm i react helmet styled-components babel-plugin-styled-components react-typogr
 ## Update (and move) the layout file.
 
 `children()` now is no longer a function that has to be called, so remove those parentheses! Use `children` instead.
-The official docs also recommend moving the file into the components directory. My components directory was already had a folder for every component, so I moved the existing file at `src/layouts/index.js` into it's own folder too.
+The official docs also recommend moving the file into the components directory. My components directory already had a folder for every component, so I moved the existing file at `src/layouts/index.js` into it's own folder too.
 It now lives at `src/components/Layout/Layout.js` along with the accompanying `.css` file it had.
 Don't forget to update all places you import these files!
 The imports you use in the `Layout.js` file also have a high chace of needing edits.
-I could now delete the layouts folder (since it was empty).
+I could now delete the old layouts folder (since it is empty).
 
 ```diff
 - import theme from "../utils/theme";
@@ -127,7 +133,8 @@ Lets update all instances where we used `gatsby-link` to use `gatsby` instead.
 
 ## Add graphql imports
 
-In v1 you could export queries that used `graphql` without first importing it 😕. Gatsby would know what you meant, and everything would work. Here is [how](https://www.gatsbyjs.org/tutorial/part-four/#wait--where-did-the-graphql-tag-come-from).
+In v1 you could export queries that used `graphql` without first importing it 😕. Gatsby would know what you meant, and everything would work. The Gatsby docs explain [how it works](https://www.gatsbyjs.org/tutorial/part-four/#wait--where-did-the-graphql-tag-come-from). _or worked, since `graphql` is no longer there in v2 without first importing it._
+
 You should no longer export a graphql query without first importing `graphql` in v2.
 
 ```diff
@@ -157,7 +164,7 @@ frontmatter {
     cover {
       childImageSharp {
 -     sizes {
-+      fluid {
++     fluid {
 -        ...GatsbyImageSharpSizes_withWebp
 +        ...GatsbyImageSharpFluid_withWebp
         }
@@ -188,9 +195,9 @@ frontmatter {
 
 ## Use the same method importing/exporting
 
-A single file should use only ES6 modules (`import`) or only CommonJS (`require`), not a mix of both.
+A single file should use only ES6 modules (`import` syntax) or only CommonJS (`require` syntax), not a mix of both.
 
-The only place I had to change code was in my `Layout.js` file, where I required some fonts.
+The only place I had to change any code was in my `Layout.js` file, where I required some fonts.
 
 ```diff
 - require('typeface-roboto');
@@ -199,7 +206,7 @@ The only place I had to change code was in my `Layout.js` file, where I required
 + import 'typeface-roboto-slab';
 ```
 
-## Make remaining neccessary changes
+## Make remaining necessary changes
 
 I hit a snag because this site uses `typography`.
 `scale` and `rhythm` weren't explicity exported.
@@ -215,12 +222,15 @@ const typography = new Typography(oceanBeachTheme);
 edit: Made a [PR](https://github.com/gatsbyjs/gatsby/pull/6151) that adds this info to the [official migration guide](https://next.gatsbyjs.org/docs/migrating-from-v1-to-v2/)
 and it got accepted 🎉🎉🎉!
 
-This post didn't mention lots of other options that this site didn't need but are in that official documentation, please go check it out!
+This post didn't mention lots of other changes that this site didn't need, but are covered in the official documentation, please [go check it out](https://next.gatsbyjs.org/docs/migrating-from-v1-to-v2/)!
 
-## turn it on
+## Turn it on
 
 1.  delete the `.cache` and `public` directories
-2.  install all your dependencies: `npm i` or `yarn` in the terminal
-3.  run `gatsby develop` in the terminal
+2.  install all your dependencies: `npm i` or `yarn` depending on your preference.
+3.  run `gatsby develop`
 4.  cross your fingers
 5.  celebrate 🎉🎉🎉
+
+Congratulations, your blazingly fast website is now even faster than before! 🔥🔥🔥
+You can also use a bunch of [great new features](https://www.gatsbyjs.org/blog/2018-06-16-announcing-gatsby-v2-beta-launch/).
