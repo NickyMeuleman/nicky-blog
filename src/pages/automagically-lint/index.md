@@ -199,7 +199,7 @@ In our `.eslintrc.json` file
 
 Gatsby also supports the use of `graphql` while it's undefined. ESLint doesn't like that (more specifically the no-undef rule).
 More info available [here](https://www.gatsbyjs.org/tutorial/part-four/#wait--where-did-the-graphql-tag-come-from).
-In Gatsby v2 this won't be an issue anymore thanks to their own [ESLint webpack loader](https://github.com/gatsbyjs/gatsby/pull/4893).
+In Gatsby v2 this won't be an issue anymore.
 For now, I just disable the no-undef rule for one line.
 
 In the `layouts/index.js` file
