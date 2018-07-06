@@ -72,6 +72,7 @@ module.exports = {
       },
     },
     'gatsby-plugin-netlify-cache',
+    'gatsby-plugin-extract-schema',
     'gatsby-plugin-netlify', // keep as last in array
   ],
 };
