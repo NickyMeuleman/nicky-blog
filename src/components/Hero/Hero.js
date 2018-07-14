@@ -1,8 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import Img from 'gatsby-image';
-import { rhythm } from '../../utils/typography';
-import { scaleSC } from '../../utils/scale';
+import { rhythm, scale } from '../../utils/typography';
 import TypedStrings from '../TypedStrings/TypedStrings';
 
 const Container = styled.header`
@@ -53,7 +52,7 @@ const Content = styled.div`
   }
   .type-wrap {
     color: #f5f5f5;
-    ${scaleSC(2 / 3)};
+    ${scale(2 / 3)};
   }
   .typed-cursor {
     color: ${props => props.theme.primaryLighter};

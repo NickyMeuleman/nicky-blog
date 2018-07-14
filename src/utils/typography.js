@@ -45,6 +45,11 @@ oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
 });
 
 const typography = new Typography(oceanBeachTheme);
-const { rhythm, scale } = typography;
+const { rhythm, scale: scaleJS } = typography;
+
+const scale = num =>
+  Object.entries(scaleJS(num))
+    .map(([k, v]) => `${k.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}: ${v}`)
+    .join('\n');
 
 export { rhythm, scale, typography as default };
