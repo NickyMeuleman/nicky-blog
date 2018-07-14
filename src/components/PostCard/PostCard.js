@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'gatsby';
 import Img from 'gatsby-image';
 import styled, { css } from 'styled-components';
+import { TABLET_WIDTH } from 'typography-breakpoint-constants';
 import { rhythm } from '../../utils/typography';
 import theme from '../../utils/theme';
 
@@ -38,7 +39,7 @@ const Card = styled.div`
       }
       `};
     }
-  @media (min-width: 55rem) {
+  @media (min-width: ${TABLET_WIDTH}) {
     ${props => !props.featured && 'grid-template-rows: 250px 1fr'};
   }
 `;
@@ -67,7 +68,7 @@ const Bottom = styled.div`
   & h2 {
     margin: 0;
   }
-  @media (min-width: 55rem) {
+  @media (min-width: ${TABLET_WIDTH}) {
     padding: ${rhythm(0.5)};
   }
 `;

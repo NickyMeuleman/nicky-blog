@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'gatsby';
 import styled from 'styled-components';
+import { TABLET_WIDTH, LARGE_DISPLAY_WIDTH } from 'typography-breakpoint-constants';
 import { rhythm } from '../../utils/typography';
 import { scaleSC } from '../../utils/scale';
 
@@ -54,7 +55,7 @@ const Top = styled.div`
       font-weight: 700;
     }
   }
-  @media (min-width: 55rem) {
+  @media (min-width: ${TABLET_WIDTH}) {
     grid-template-columns: ${rhythm(2)} 1fr 1fr ${rhythm(2)};
     & > div {
       grid-column: 2/3;
@@ -66,7 +67,7 @@ const Top = styled.div`
       grid-row: 2/3;
     }
   }
-  @media (min-width: 70rem) {
+  @media (min-width: ${LARGE_DISPLAY_WIDTH}) {
     grid-template-columns: ${rhythm(4)} 1fr 1fr ${rhythm(4)};
   }
 `;
@@ -101,7 +102,7 @@ const Bottom = styled.div`
       margin-right:0;
     }
   }
-  @media (min-width: 55rem) {
+  @media (min-width: ${TABLET_WIDTH}) {
     grid-template-rows: ${rhythm(0.5)} 1fr ${rhythm(0.5)};
     grid-template-columns: ${rhythm(2)} 1fr 1fr ${rhythm(2)};
     & > nav {
@@ -116,7 +117,7 @@ const Bottom = styled.div`
     }
   }
   }
-  @media (min-width: 70rem) {
+  @media (min-width: ${LARGE_DISPLAY_WIDTH}) {
     grid-template-rows: ${rhythm(0.5)} 1fr ${rhythm(0.5)};
     grid-template-columns: ${rhythm(4)} 1fr 1fr ${rhythm(4)};
     & > nav {

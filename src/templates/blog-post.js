@@ -2,6 +2,7 @@ import React from 'react';
 import { graphql } from 'gatsby';
 import Helmet from 'react-helmet';
 import styled from 'styled-components';
+import { TABLET_WIDTH, LARGE_DISPLAY_WIDTH } from 'typography-breakpoint-constants';
 import Layout from '../components/Layout/Layout';
 import Hero from '../components/Hero/Hero';
 import { rhythm } from '../utils/typography';
@@ -19,7 +20,7 @@ const ArticleContainer = styled.div`
       margin-top: 0;
     }
   }
-  @media (min-width: 55rem) {
+  @media (min-width: ${TABLET_WIDTH}) {
     display: grid;
     grid-template-columns: ${rhythm(2)} 1fr ${rhythm(2)};
     grid-template-rows: ${rhythm(1)} 1fr ${rhythm(1)};
@@ -32,7 +33,7 @@ const ArticleContainer = styled.div`
       margin-right: -${rhythm(2)};
     }
   }
-  @media (min-width: 70rem) {
+  @media (min-width: ${LARGE_DISPLAY_WIDTH}) {
     grid-template-columns: ${rhythm(4)} minmax(auto, 66em) ${rhythm(4)};
     justify-content: center;
     & > article {
@@ -42,7 +43,7 @@ const ArticleContainer = styled.div`
 `;
 
 const Section = styled.section`
-  @media (min-width: 55rem) {
+  @media (min-width: ${TABLET_WIDTH}) {
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: ${rhythm(10)} ${rhythm(3)} 1fr;

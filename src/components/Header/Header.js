@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'gatsby';
 import styled from 'styled-components';
+import { TABLET_WIDTH } from 'typography-breakpoint-constants';
 import { rhythm } from '../../utils/typography';
 
 const Container = styled.header`
@@ -21,7 +22,7 @@ const Container = styled.header`
   a:hover {
     background: transparent;
   }
-  @media (min-width: 55rem) {
+  @media (min-width: ${TABLET_WIDTH}) {
     grid-template-columns: 1fr auto 1fr;
 
     grid-template-rows: ${rhythm(3)};
@@ -49,7 +50,7 @@ const Nav = styled.div`
     color: #eee;
     border-bottom: 5px solid ${props => props.theme.primaryLight};
   }
-  @media (min-width: 55rem) {
+  @media (min-width: ${TABLET_WIDTH}) {
     grid-column: 1/2;
     grid-row: 1/2;
     justify-self: end;
@@ -72,7 +73,7 @@ const Logo = styled.div`
   height: ${rhythm(2)};
   padding: ${rhythm(1 / 4)};
   margin: 0 ${rhythm(0.5)};
-  @media (min-width: 55rem) {
+  @media (min-width: ${TABLET_WIDTH}) {
     grid-column: 2/3;
     grid-row: 1/2;
     border-radius: 50%;
@@ -114,7 +115,7 @@ const Social = styled.div`
     width: ${rhythm(3 / 4)};
     height: ${rhythm(3 / 4)};
   }
-  @media (min-width: 55rem) {
+  @media (min-width: ${TABLET_WIDTH}) {
     display: block;
     grid-column: 3/4;
     grid-row: 1/2;

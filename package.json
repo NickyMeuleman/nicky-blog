@@ -36,6 +36,7 @@
     "typeface-roboto": "0.0.54",
     "typeface-roboto-slab": "0.0.54",
     "typography": "^0.16.17",
+    "typography-breakpoint-constants": "^0.15.10",
     "typography-theme-ocean-beach": "^0.15.11"
   },
   "keywords": [

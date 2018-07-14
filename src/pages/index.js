@@ -1,6 +1,7 @@
 import React from 'react';
 import { graphql } from 'gatsby';
 import styled from 'styled-components';
+import { TABLET_WIDTH, LARGE_DISPLAY_WIDTH } from 'typography-breakpoint-constants';
 import Hero from '../components/Hero/Hero';
 import PostCard from '../components/PostCard/PostCard';
 import { rhythm } from '../utils/typography';
@@ -14,7 +15,7 @@ const Container = styled.div`
   & > div:first-of-type {
     grid-column: 1/3;
   }
-  @media (min-width: 55rem) {
+  @media (min-width: ${TABLET_WIDTH}) {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto;
@@ -24,7 +25,7 @@ const Container = styled.div`
       margin-bottom: 0;
     }
   }
-  @media (min-width: 70rem) {
+  @media (min-width: ${LARGE_DISPLAY_WIDTH}) {
     grid-template-columns: 1fr 1fr;
     margin: 0 ${rhythm(3)} ${rhythm(2)} ${rhythm(3)};
   }
