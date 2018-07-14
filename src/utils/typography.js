@@ -16,6 +16,16 @@ oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
   'a:hover': {
     background: theme.primaryLighter,
   },
+  'a.anchor': {
+    color: `inherit`,
+    fill: theme.primaryLight,
+    textDecoration: `none`,
+    borderBottom: `none`,
+    boxShadow: `none`,
+  },
+  'a.anchor:hover': {
+    background: `none`,
+  },
   ':not(pre) > code[class*="language-"]': {
     borderRadius: '3px',
     padding: '0 0.2rem',
