@@ -26,7 +26,7 @@ const Card = styled.div`
   ${props =>
     props.featured &&
     css`
-    @media (min-width:55rem) {
+    @media (min-width: ${TABLET_WIDTH}) {
       grid-template-columns: 2fr 1fr;
       grid-template-rows: 415px;
       ${Top} {
