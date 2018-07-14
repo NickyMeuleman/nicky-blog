@@ -1,5 +1,6 @@
 import Typography from 'typography';
 import oceanBeachTheme from 'typography-theme-ocean-beach';
+import { MOBILE_MEDIA_QUERY } from 'typography-breakpoint-constants';
 import theme from './theme';
 
 oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
@@ -40,7 +41,12 @@ oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
     lineHeight: 'inherit',
   },
   blockquote: {
-    borderLeft: `${rhythm(1 / 4)} solid ${theme.primary}`,
+    borderLeft: `${rhythm(6 / 16)} solid ${theme.primary}`,
+  },
+  [MOBILE_MEDIA_QUERY]: {
+    blockquote: {
+      borderLeft: `${rhythm(3 / 16)} solid ${theme.primary}`,
+    },
   },
 });
 
