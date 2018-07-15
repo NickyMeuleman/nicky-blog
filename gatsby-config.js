@@ -72,6 +72,7 @@ module.exports = {
         respectDNT: true,
       },
     },
+    `gatsby-plugin-remove-trailing-slashes`,
     'gatsby-plugin-netlify-cache',
     'gatsby-plugin-extract-schema',
     'gatsby-plugin-netlify', // keep as last in array
