@@ -37,8 +37,8 @@ const Card = styled.div`
         grid-column: 2/3;
         grid-row: 1/2;
       }
-      `};
-    }
+    `};
+  }
   @media (min-width: ${TABLET_WIDTH}) {
     ${props => !props.featured && 'grid-template-rows: 250px 1fr'};
   }
