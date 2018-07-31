@@ -5,17 +5,15 @@ author: "Nicky Meuleman"
 cover: './cover.jpg'
 ---
 
-# THIS IS A DRAFT, it's already online, but not finished yet
-
 We'll set up linting and formatting for our styles.
 
-In a previous post I went over [how to lint and format you JavaScript](/blog/automagically-lint). Now, we'll obtain similar superpowers for our styles (CSS, SCSS, Less, sss, ...).
+In a previous post I went over [how to lint and format your JavaScript](/blog/automagically-lint). Now, we'll obtain similar superpowers for our styles (CSS, SCSS, Less, sss, ...).
 We'll use [Stylelint](https://stylelint.io) as our linting tool and [Prettier](https://prettier.io) as our (main) formatting tool.
 
 ## Initial Setup
 
 You don't need any fancy setup to start linting your styles.
-The tools we'll use are on [npm](https://www.npmjs.com/), so we'll define those in a `package.json` file, that's it. The rest of the demo-application consists of a single `index.html`, a `styles.css` file and a configuration file for Stylelint.
+The tools we'll use are on [npm](https://www.npmjs.com/), we'll define those in a `package.json` file. The rest of the demo-application I'm using for this consists of a single `index.html`, a `styles.css` and a configuration file for Stylelint.
 
 We'll generate a basic `package.json` so we can install the tools we want to use.
 
@@ -27,14 +25,14 @@ npm init -y
 npm i -D stylelint prettier
 ```
 
-We'll install with a [popular set of rules for stylelint](https://github.com/stylelint/stylelint-config-standard)
+We'll install a [popular set of rules for stylelint](https://github.com/stylelint/stylelint-config-standard)
 
 ```sh
 npm i -D stylelint-config-standard
 ```
 
-To configure StyleLint to use there rules,
-create a `.stylelintrc.json` file in the root directory and tell it to use the package you just installed.
+To configure StyleLint to use those rules,
+create a `.stylelintrc.json` file in the root directory and tell it which ruleset to extend.
 
 ```json
 {
@@ -44,7 +42,7 @@ create a `.stylelintrc.json` file in the root directory and tell it to use the p
 
 It works! 🎉
 Don't take my word for it, let's see.
-Add this line to you `package.json`
+Add this line to your `package.json`
 
 ```json{3}
   "scripts": {
@@ -55,7 +53,7 @@ Add this line to you `package.json`
 
 You can now run `npm run lint:css` in the terminal and stylelint will run for every `.css` file it finds.
 If it finds errors, you will see a bunch of `npm ERR!`s in the console, don't worry, that's expected, the linting errors it found are above them.
-If you would prefer not the have all those npm errors, you could also run that command without using that script we just declared.
+If you would prefer not to see all those npm errors, you could also run that command without using that script we just declared.
 
 ```sh
 ./node_modules/.bin/stylelint *.css
@@ -71,7 +69,7 @@ We'll set up Stylelint to report formatting issues that Prettier picks up.
 npm i -D stylelint-prettier
 ```
 
-We can now add it to our `.stylelintrc`
+And add it to `.stylelintrc`
 
 ```json{2-5}
 {
@@ -87,7 +85,7 @@ When you run `lint:css` now you'll see additional errors reported by the `pretti
 
 It's possible that the rules inside your `extends` array, or rules you define explicitly conflict with Prettier, causing a catch-22 situation.
 
-We'll turn off all Stylelint rules specific to formatting and let Prettier handle them by adding [`stylelint-config-prettier`](https://github.com/prettier/stylelint-config-prettier).
+We'll turn off all Stylelint rules specific to formatting and let Prettier handle them, by adding [`stylelint-config-prettier`](https://github.com/prettier/stylelint-config-prettier).
 
 ```sh
 npm i -D stylelint-config-prettier
@@ -126,9 +124,11 @@ The only thing that's needed is to add the `--fix` flag to our script.
   }
 ```
 
-When we run `npm run lint:css` now, stylelint will automatically try to fix every issue it can.
-This won't result in that PROBLEMS tab being empty now, but the list or problems will be much smaller.
+When we run `lint:css` now, stylelint will automatically try to fix every issue it can.
+This won't result in the PROBLEMS tab being empty now, but the list of problems will be much smaller.
 
 While it absolutely isn't, to me this feels like
 
 ![magic](https://i.imgur.com/YsbKHg1.gif).
+
+### Work in progress, more to be added
