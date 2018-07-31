@@ -1,11 +1,24 @@
 {
   "name": "nicky-blog",
   "description": "Nicky tries to blog",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Nicky Meuleman",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NickyMeuleman/nicky-blog.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NickyMeuleman/nicky-blog/issues"
+  },
+  "keywords": [
+    "blog",
+    "gatsby",
+    "web development"
+  ],
+  "homepage": "https://nickymeuleman.netlify.com/",
   "dependencies": {
     "babel-plugin-styled-components": "^1.5.1",
-    "gatsby": "next",
+    "gatsby": "^2.0.0-beta.63",
     "gatsby-image": "next",
     "gatsby-plugin-catch-links": "next",
     "gatsby-plugin-extract-schema": "0.0.4",
@@ -19,7 +32,7 @@
     "gatsby-plugin-sitemap": "next",
     "gatsby-plugin-styled-components": "next",
     "gatsby-plugin-typography": "next",
-    "gatsby-remark-autolink-headers": "next",
+    "gatsby-remark-autolink-headers": "^2.0.0-beta.5",
     "gatsby-remark-copy-linked-files": "next",
     "gatsby-remark-images": "next",
     "gatsby-remark-prismjs": "next",
@@ -39,10 +52,7 @@
     "typography-breakpoint-constants": "^0.15.10",
     "typography-theme-ocean-beach": "^0.15.11"
   },
-  "keywords": [
-    "gatsby"
-  ],
-  "license": "GNU GPLv3",
+  "license": "GPL-3.0-or-later",
   "scripts": {
     "build": "gatsby build",
     "serve": "gatsby serve",
