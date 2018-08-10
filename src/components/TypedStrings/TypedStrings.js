@@ -27,7 +27,7 @@ class TypedStrings extends Component {
     return (
       <div className="type-wrap">
         <span
-          style={{ whiteSpace: 'pre' }}
+          style={{ whiteSpace: 'pre', minHeight: '1em' }}
           ref={el => {
             this.el = el;
           }}

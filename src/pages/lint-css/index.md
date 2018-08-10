@@ -2,7 +2,7 @@
 title: Linting and formatting CSS
 date: "2018-07-27"
 author: "Nicky Meuleman"
-cover: './cover.jpg'
+cover: "./cover.jpg"
 ---
 
 We'll set up linting and formatting for our styles.
