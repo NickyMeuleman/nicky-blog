@@ -10,7 +10,7 @@ const Container = styled.div`
   display: grid;
   justify-content: center;
   grid-template-columns: minmax(5vw, 1fr) fit-content(60rem) minmax(5vw, 1fr);
-  grid-template-rows: 15vh 1fr minmax(${rhythm(1)}, 1fr);
+  grid-template-rows: 15vh auto minmax(${rhythm(1)}, 1fr);
 `;
 
 const Triangle = styled.div`
