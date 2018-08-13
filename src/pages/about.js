@@ -6,7 +6,6 @@ import syncSVG from '../assets/in_sync.svg';
 import codingSVG from '../assets/coding_headphones.svg';
 
 const Container = styled.div`
-  flex: 1 0 auto;
   display: grid;
   justify-content: center;
   grid-template-columns: minmax(5vw, 1fr) fit-content(60rem) minmax(5vw, 1fr);
