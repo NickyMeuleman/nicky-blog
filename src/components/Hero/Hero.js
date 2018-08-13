@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import Img from 'gatsby-image';
 import { rhythm, scale } from '../../utils/typography';
 import TypedStrings from '../TypedStrings/TypedStrings';
 
@@ -11,7 +12,7 @@ const Container = styled.header`
   background-image: linear-gradient(120deg, ${props => props.theme.primary}, ${props => props.theme.secondary});
   color: #999;
   margin-bottom: ${rhythm(1)};
-  clip-path: polygon(0 0, 100% 0, 100% 70%, 0% 100%);
+  /* clip-path: polygon(0 0, 100% 0, 100% 70%, 0% 100%); */
   a {
     text-shadow: none;
     background-image: none;
@@ -69,7 +70,7 @@ const Content = styled.div`
 
 const Hero = props => (
   <Container>
-    <Pattern />
+    {props.coverSizes ? <Img sizes={props.coverSizes} /> : <Pattern />}
     <Content>
       {props.title && !props.coverSizes && <h1>{props.title}</h1>}
       {props.typedStrings && <TypedStrings strings={props.typedStrings} />}

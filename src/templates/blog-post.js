@@ -10,8 +10,9 @@ import { rhythm } from '../utils/typography';
 const ArticleContainer = styled.div`
   display: block;
   & > article {
-    box-shadow: 0px 3px 25px #333;
-    background-color: #fff;
+    box-shadow: 0px 3px 3px #333;
+    background: none;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.85), #fff 25vh);
     grid-column: 2/3;
     grid-row: 2/3;
     border-radius: 5px;
@@ -38,6 +39,7 @@ const ArticleContainer = styled.div`
     justify-content: center;
     & > article {
       padding: ${rhythm(3)};
+      padding-top: ${rhythm(1)};
     }
   }
 `;
