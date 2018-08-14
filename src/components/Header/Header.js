@@ -134,7 +134,7 @@ const Header = () => (
     <Nav>
       <ul>
         <li>
-          <Link exact to="/" activeClassName="is-active">
+          <Link to="/" activeClassName="is-active">
             Home
           </Link>
         </li>
