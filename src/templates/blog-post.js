@@ -73,7 +73,10 @@ const BlogPostTemplate = ({ data }) => {
         <meta name="twitter:title" content={post.frontmatter.title} />
         <meta
           name="twitter:image"
-          content={data.site.siteMetadata.siteUrl + post.frontmatter.cover.childImageSharp.sizes.src}
+          content={
+            data.site.siteMetadata.siteUrl +
+            (post.frontmatter.cover ? post.frontmatter.cover.childImageSharp.sizes.src : '/icons/icon-256x256.png')
+          }
         />
       </Helmet>
       <Section>
