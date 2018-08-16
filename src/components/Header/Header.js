@@ -5,6 +5,7 @@ import { TABLET_WIDTH } from 'typography-breakpoint-constants';
 import { rhythm } from '../../utils/typography';
 
 const Container = styled.header`
+  position: relative;
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: ${rhythm(2)};
