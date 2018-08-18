@@ -17,9 +17,11 @@ Here is how to achieve that in [GatsbyJS](https://www.gatsbyjs.org/)
 
 Create a new file in `src/templates/` that will serve as a blueprint for every page that lists a few posts.
 
-If you already have one, often the current component you use to list all the posts can fulfill this role.
+If you already have one, the current component you use to list all the posts can often fulfill this role.
 
 Calculate the amount of pages you need to display all posts (`numPages`), with `postsPerPage` as a maximum amount of posts to display on a single page.
+
+In `gatsby-node.js` create that amount of pages with your template.
 
 The path for each page will be `/<number>`, with an exception for `/1`, that page will use `/` instead.
 
@@ -40,7 +42,7 @@ Array.from({ length: numPages }).forEach((_, i) => {
 
 ## Get data to your template-pages
 
-You can pass some data along with the pages you create in `context`.
+You can pass to the pages you create in `context`.
 
 ```js{7-12}
 // file: gatsby-node.js
@@ -61,8 +63,10 @@ Array.from({ length: numPages }).forEach((_, i) => {
 
 The `context` object will be available in the created pages on the `pageContext` prop in React. You will also be able to access the keys in your GraphQL query for those pages.
 
-```js{4}
+```jsx{6}
 // file: src/templates/blog-list.js
+
+import React from 'react'
 
 class BlogList extends React.component {
   console.log(this.props.pageContext)
@@ -73,9 +77,9 @@ class BlogList extends React.component {
 }
 ```
 
-## Only query GraphQL for wanted posts
+## Query GraphQL for wanted posts
 
-Use `limit` and `skip` to only fetch data for the posts you want in your GraphQL query for those pages.
+Use `limit` and `skip` to only fetch data for the posts you want.
 
 ```js{4-9}
 // file: src/templates/blog-list.js
@@ -103,9 +107,69 @@ export const pageQuery = graphql`
 
 ## Navigate to previous/next page
 
+You can use `currentPage` and `numPages` to determine the routes to the previous/next page.
+They also make it possible to only show those links if they exist.
+
+```jsx
+// file: src/templates/blog-list.js
+
+import React from 'react'
+import { Link } from 'gatsby'
+
+class BlogList extends React.component {
+  const { currentPage, numPages } = this.props.pageContext
+  const isFirst = currentPage === 1
+  const isLast = currentPage === numPages
+  const prevPage = currentPage - 1 === 1 ? "/" : (currentPage - 1).toString()
+  const nextPage = (currentPage + 1).toString()
+
+  render() {
+    return (
+       /* your code to display a list of posts */
+      {!isFirst && (
+        <Link to={prevPage} rel="prev">
+          ← Previous Page
+        </Link>
+      )}
+      {!isLast && (
+        <Link to={nextPage} rel="next">
+          Next Page →
+        </Link>
+      )}
+    )
+  }
+}
+```
+
 ## Add numbering
+
+Iterate over `numPages` and output a number with the relevant link.
+
+```jsx
+// file: src/templates/blog-list.js
+
+class BlogList extends React.component {
+  const { currentPage, numPages } = this.props.pageContext
+  // ...
+  render() {
+    return (
+      // ...
+      {Array.from({ length: numPages }, (_, i) => (
+        <Link key={`pagination-number${i + 1}`} to={`/${i === 0 ? "" : i + 1}`}>
+          {i + 1}
+        </Link>
+      ))}
+      // ...
+    )
+  }
+}
+```
+
+> Thanks to Wes Bos for [the hot tip](https://twitter.com/wesbos/status/993883756162404354) about `Array.from()`
 
 ## Example
 
 As an example, I converted the standard [gatsby-starter-blog](https://github.com/gatsbyjs/gatsby-starter-blog) [(demo)](http://gatsbyjs.github.io/gatsby-starter-blog/) to work with pagination.
 [gatsby-paginated-blog](https://github.com/NickyMeuleman/gatsby-paginated-blog) [(demo)](https://nickymeuleman.github.io/gatsby-paginated-blog/)
+
+![gatsby-paginated-blog](./paginated-blog.png)
