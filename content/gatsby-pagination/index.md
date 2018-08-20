@@ -10,8 +10,9 @@ cover: "./cover.jpg"
 A page that lists all your posts can get incredibly long as more posts are added.
 
 Pagination offers a solution to that problem.
-You can break up that long single page into multiple, smaller pages.
-Here is how to achieve that in [GatsbyJS](https://www.gatsbyjs.org/)
+You can break up that single, long page into multiple, smaller pages.
+
+This article will show you **how to add pagination** to your [GatsbyJS](https://www.gatsbyjs.org/) site.
 
 ## Create listing pages
 
@@ -40,9 +41,9 @@ Array.from({ length: numPages }).forEach((_, i) => {
 });
 ```
 
-## Get data to your template-pages
+## Get data to those listing pages
 
-You can pass to the pages you create in `context`.
+You can pass data to the pages you created via `context`.
 
 ```js{7-12}
 // file: gatsby-node.js
@@ -79,7 +80,7 @@ class BlogList extends React.component {
 
 ## Query GraphQL for wanted posts
 
-Use `limit` and `skip` to only fetch data for the posts you want.
+Use `limit` and `skip` to only fetch data for the posts you want to show.
 
 ```js{4-9}
 // file: src/templates/blog-list.js
