@@ -1,50 +1,102 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Link } from 'gatsby';
+import { navigate } from 'gatsby';
+import { MOBILE_WIDTH } from 'typography-breakpoint-constants';
 import PaginationLink from './PaginationLink';
 import { rhythm } from '../../utils/typography';
-
-const LinkU = styled(Link)`
-  border-bottom: none;
-  box-shadow: none;
-  height: 100%;
-  width: auto;
-  margin: 1rem;
-  &:hover {
-    background: inherit;
-  }
-`;
 
 const Pagination = styled.div`
   grid-column: 2/-2;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: ${rhythm(1)};
-`;
-const PaginationNumber = styled.span`
-  padding: ${rhythm(1 / 2)};
-  border-radius: 5px;
-  color: ${props => (props.current ? '#333' : null)};
-  border: 2px solid ${props => props.theme.primaryLighter};
-  background: ${props => (props.current ? props.theme.primaryLighter : '#f5f5f5')};
+  justify-content: space-between;
+  margin-bottom: ${rhythm(2)};
+  flex-direction: column;
+  @media (min-width: ${MOBILE_WIDTH}) {
+    flex-direction: row;
+  }
 `;
 
-export default ({ paginationObj }) => {
-  const { numPages, pageIndex, isFirst, isLast } = paginationObj;
-  const prevPageNum = pageIndex - 1 === 1 ? '' : pageIndex - 1;
-  const nextPageNum = pageIndex + 1;
-  const prevPageLink = isFirst ? null : `/blog/${prevPageNum}`;
-  const nextPageLink = isLast ? null : `/blog/${nextPageNum}`;
-  return (
-    <Pagination>
-      <PaginationLink to={prevPageLink}>Previous Page</PaginationLink>
-      {Array.from({ length: numPages }, (_, i) => (
-        <LinkU to={`blog/${i === 0 ? '' : i + 1}`} key={`pagination-number${i + 1}`}>
-          <PaginationNumber current={i + 1 === pageIndex}>{i + 1}</PaginationNumber>
-        </LinkU>
-      ))}
-      <PaginationLink to={nextPageLink}>Next Page</PaginationLink>
-    </Pagination>
-  );
-};
+const Links = styled.div`
+  display: flex;
+  margin: 0;
+  padding: 0;
+  justify-content: space-between;
+  margin-bottom: ${rhythm(1 / 2)};
+  @media (min-width: ${MOBILE_WIDTH}) {
+    width: 15rem;
+  }
+`;
+
+const PaginationLinkS = styled(PaginationLink)`
+  border-bottom: none;
+  box-shadow: none;
+  height: 100%;
+  width: auto;
+  &:hover {
+    background: inherit;
+  }
+  color: ${props => props.theme.primary};
+`;
+
+const Info = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+`;
+
+const PaginationPicker = styled.select`
+  appearance: none;
+  border: none;
+  padding: 0.5ch 2ch 0.5ch 0.5ch;
+  color: ${props => props.theme.primary};
+  font-weight: bold;
+`;
+
+const Arrow = styled.svg`
+  position: relative;
+  right: 1.5ch;
+  fill: ${props => props.theme.primary};
+  pointer-events: none;
+`;
+
+class PaginationClass extends React.Component {
+  changePage = e => {
+    navigate(e.target.value);
+  };
+  render() {
+    const { numPages, pageIndex, isFirst, isLast } = this.props.paginationObj;
+    const prevPageNum = pageIndex - 1 === 1 ? '' : pageIndex - 1;
+    const nextPageNum = pageIndex + 1;
+    const prevPageLink = isFirst ? null : `/blog/${prevPageNum}`;
+    const nextPageLink = isLast ? null : `/blog/${nextPageNum}`;
+    return (
+      <Pagination>
+        <Links>
+          <PaginationLinkS to={prevPageLink}>← Newer posts</PaginationLinkS>
+          <PaginationLinkS to={nextPageLink}>Older posts →</PaginationLinkS>
+        </Links>
+        <Info>
+          <span>Showing page &nbsp;</span>
+          <PaginationPicker onChange={this.changePage}>
+            {Array.from({ length: numPages }, (_, i) => (
+              <option
+                selected={pageIndex === i + 1}
+                value={`/blog/${i === 0 ? '' : i + 1}`}
+                key={`pagination-number${i + 1}`}
+              >
+                {i + 1}
+              </option>
+            ))}
+          </PaginationPicker>
+          <Arrow width="10" height="5" viewBox="0 0 10 5">
+            <path d="M0 0l5 4.998L10 0z" fillRule="evenodd" />
+          </Arrow>
+          <span>of &nbsp;</span>
+          <span style={{ fontWeight: 'bold' }}>{numPages}</span>
+        </Info>
+      </Pagination>
+    );
+  }
+}
+
+export default PaginationClass;
