@@ -9,7 +9,7 @@ import TypedStrings from '../components/TypedStrings/TypedStrings';
 
 const Container = styled.div`
   display: grid;
-  grid-template-columns: minmax(5vw, 1fr) fit-content(60rem) minmax(5vw, 1fr);
+  grid-template-columns: minmax(5vw, 1fr) minmax(auto, 60rem) minmax(5vw, 1fr);
   grid-template-rows: ${rhythm(8)} auto minmax(${rhythm(1)}, 1fr);
   background-color: #f5f5f5;
 `;
