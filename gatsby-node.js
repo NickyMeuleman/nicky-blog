@@ -38,7 +38,7 @@ exports.createPages = ({ graphql, actions }) => {
           },
         });
       });
-      const postsPerPage = 8;
+      const postsPerPage = 6;
       const numPages = Math.ceil(result.data.allMarkdownRemark.edges.length / postsPerPage);
       Array.from({ length: numPages }).forEach((_, i) => {
         createPage({
@@ -48,9 +48,7 @@ exports.createPages = ({ graphql, actions }) => {
             limit: postsPerPage,
             skip: i * postsPerPage,
             numPages,
-            pageIndex: i + 1,
-            isFirst: i === 0,
-            isLast: i === numPages - 1,
+            currentPage: i + 1,
           },
         });
       });

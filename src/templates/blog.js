@@ -32,7 +32,7 @@ const PostContainer = styled.div`
 
 const Container = styled.div`
   display: grid;
-  grid-template-columns: minmax(5vw, 1fr) fit-content(60rem) minmax(5vw, 1fr);
+  grid-template-columns: minmax(5vw, 1fr) minmax(auto, 60rem) minmax(5vw, 1fr);
   grid-template-rows: ${rhythm(2)} auto 1fr;
   background-color: #f5f5f5;
 `;
@@ -84,7 +84,7 @@ const PostsPage = ({ data, pageContext }) => (
           />
         ))}
       </PostContainer>
-      <Pagination paginationObj={pageContext} />
+      <Pagination context={pageContext} />
     </Container>
   </Layout>
 );
