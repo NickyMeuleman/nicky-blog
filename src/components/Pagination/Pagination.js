@@ -61,12 +61,14 @@ const Arrow = styled.svg`
 
 class PaginationClass extends React.Component {
   changePage = e => {
-    navigate(e.target.value);
+    navigate(`/blog/${e.target.value}`);
   };
   render() {
-    const { numPages, pageIndex, isFirst, isLast } = this.props.paginationObj;
-    const prevPageNum = pageIndex - 1 === 1 ? '' : pageIndex - 1;
-    const nextPageNum = pageIndex + 1;
+    const { numPages, currentPage } = this.props.context;
+    const isFirst = currentPage === 1;
+    const isLast = currentPage === numPages;
+    const prevPageNum = currentPage - 1 === 1 ? `` : (currentPage - 1).toString();
+    const nextPageNum = (currentPage + 1).toString();
     const prevPageLink = isFirst ? null : `/blog/${prevPageNum}`;
     const nextPageLink = isLast ? null : `/blog/${nextPageNum}`;
     return (
@@ -77,13 +79,9 @@ class PaginationClass extends React.Component {
         </Links>
         <Info>
           <span>Showing page &nbsp;</span>
-          <PaginationPicker onChange={this.changePage}>
+          <PaginationPicker onChange={this.changePage} value={currentPage === 1 ? '' : currentPage.toString()}>
             {Array.from({ length: numPages }, (_, i) => (
-              <option
-                selected={pageIndex === i + 1}
-                value={`/blog/${i === 0 ? '' : i + 1}`}
-                key={`pagination-number${i + 1}`}
-              >
+              <option value={`${i === 0 ? '' : i + 1}`} key={`pagination-number${i + 1}`}>
                 {i + 1}
               </option>
             ))}

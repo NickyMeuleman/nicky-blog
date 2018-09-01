@@ -84,7 +84,7 @@ const PostsPage = ({ data, pageContext }) => (
           />
         ))}
       </PostContainer>
-      <Pagination paginationObj={pageContext} />
+      <Pagination context={pageContext} />
     </Container>
   </Layout>
 );
