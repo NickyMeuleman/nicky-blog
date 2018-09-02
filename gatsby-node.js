@@ -1,6 +1,7 @@
 const path = require(`path`);
 const { createFilePath } = require(`gatsby-source-filesystem`);
 
+// Create slugs for pages
 exports.onCreateNode = ({ node, getNode, actions }) => {
   const { createNodeField } = actions;
   if (node.internal.type === 'MarkdownRemark') {
@@ -24,22 +25,39 @@ exports.createPages = ({ graphql, actions }) => {
               fields {
                 slug
               }
+              frontmatter {
+                title
+              }
             }
           }
         }
       }
     `).then(result => {
-      result.data.allMarkdownRemark.edges.forEach(({ node }) => {
+      if (result.errors) {
+        return reject(result.errors);
+      }
+      // filter drafts
+      const blogPosts = result.data.allMarkdownRemark.edges.filter(edge => !edge.node.frontmatter.draft);
+
+      // create blog-post pages
+      blogPosts.forEach(({ node }, i) => {
+        const next = i === 0 ? null : blogPosts[i - 1].node;
+        const prev = i === blogPosts.length - 1 ? null : blogPosts[i + 1].node;
+
         createPage({
           path: `/blog${node.fields.slug}`,
           component: path.resolve('./src/templates/blog-post.js'),
           context: {
             slug: node.fields.slug,
+            prev,
+            next,
           },
         });
       });
+
+      // create blog-list pages
       const postsPerPage = 6;
-      const numPages = Math.ceil(result.data.allMarkdownRemark.edges.length / postsPerPage);
+      const numPages = Math.ceil(blogPosts.length / postsPerPage);
       Array.from({ length: numPages }).forEach((_, i) => {
         createPage({
           path: i === 0 ? `/blog` : `/blog/${i + 1}`,
@@ -52,7 +70,7 @@ exports.createPages = ({ graphql, actions }) => {
           },
         });
       });
-      resolve();
+      return resolve();
     });
   });
 };
