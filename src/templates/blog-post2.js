@@ -2,6 +2,7 @@ import React from 'react';
 import { graphql } from 'gatsby';
 import Helmet from 'react-helmet';
 import styled from 'styled-components';
+import { TABLET_WIDTH, LARGE_DISPLAY_WIDTH } from 'typography-breakpoint-constants';
 import Layout from '../components/Layout/Layout';
 import { rhythm } from '../utils/typography';
 // import React from 'react';
@@ -14,24 +15,45 @@ import { rhythm } from '../utils/typography';
 // import { rhythm, scale } from '../utils/typography';
 
 const Container = styled.div`
+  /* Horizontal scrolling near tablet width */
+  /* overflow: hidden; */
+  background: #f5f5f5;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: ${rhythm(12)} ${rhythm(5)} auto 1fr;
   div:first-child {
-    height: ${rhythm(17)};
+    width: 100%;
+    height: 100%;
+    grid-column: 1/-1;
+    grid-row: 1 / 3;
   }
   article {
+    grid-column: 2 / -2;
+    grid-row: 2 / -2;
     background-image: linear-gradient(rgba(255, 255, 255, 0.75), #fff ${rhythm(5)});
     padding: ${rhythm(1)};
-    margin: ${rhythm(-5)} ${rhythm(2)} ${rhythm(2)} ${rhythm(2)};
     box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.34);
     h1:first-child {
       margin-top: 0;
     }
     .gatsby-highlight {
-      /* break code block out of container */
-      width: calc(100% + ${rhythm(2)});
       /* use negative margin instead of css grid to preserve margin collapsing */
       margin-left: -${rhythm(1)};
+      margin-right: -${rhythm(1)};
       border-radius: 0;
     }
+  }
+  div:last-child {
+    grid-column: 2/-2;
+    grid-row: -2/-1;
+  }
+
+  @media (min-width: ${TABLET_WIDTH}) {
+    grid-template-columns: ${rhythm(2)} 1fr ${rhythm(2)};
+    justify-content: center;
+  }
+  @media (min-width: ${LARGE_DISPLAY_WIDTH}) {
+    grid-template-columns: minmax(${rhythm(4)}, 1fr) minmax(auto, 66em) minmax(${rhythm(4)}, 1fr);
   }
 `;
 
@@ -68,7 +90,7 @@ const BlogPostTemplate = ({ data, pageContext }) => {
 };
 
 export const query = graphql`
-  query BlogPostQuery($slug: String!) {
+  query BlogPostQueryTwo($slug: String!) {
     site {
       siteMetadata {
         siteUrl
