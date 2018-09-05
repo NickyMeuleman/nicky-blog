@@ -18,43 +18,6 @@ const LinkU = styled(Link)`
   }
 `;
 
-const Container = styled.div`
-  .hero {
-    position: relative;
-    z-index: 1;
-    height: ${rhythm(17)};
-  }
-  article {
-    position: relative;
-    z-index: 5;
-    background-image: linear-gradient(rgba(255, 255, 255, 0.75), #fff ${rhythm(5)});
-    padding: ${rhythm(1)};
-    margin: 0 auto;
-    margin-top: ${rhythm(-5)};
-    box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.34);
-    h1:first-child {
-      margin-top: 0;
-    }
-    .gatsby-highlight {
-      /* break code block out of container */
-      width: calc(100% + ${rhythm(2)});
-      /* use negative margin instead of css grid to preserve margin collapsing */
-      margin-left: -${rhythm(1)};
-      border-radius: 0;
-    }
-    @media (min-width: ${TABLET_WIDTH}) {
-      max-width: 40rem;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    @media (min-width: ${LARGE_DISPLAY_WIDTH}) {
-      max-width: 60rem;
-      margin-left: auto;
-      margin-right: auto;
-    }
-  }
-`;
-
 const UnderPost = styled.div`
   margin: ${rhythm(1)};
   display: flex;
@@ -83,6 +46,44 @@ const UnderPost = styled.div`
   }
 `;
 
+const Container = styled.div`
+  & > div:first-child {
+    position: relative;
+    z-index: 1;
+    height: ${rhythm(15)};
+  }
+  article {
+    position: relative;
+    z-index: 30;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.75), #fff ${rhythm(5)});
+    padding: ${rhythm(1)};
+    margin: 0 auto;
+    margin-top: ${rhythm(-5)};
+
+    box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.34);
+    h1:first-child {
+      margin-top: 0;
+    }
+    .gatsby-highlight {
+      /* break code block out of container */
+      width: calc(100% + ${rhythm(2)});
+      /* use negative margin instead of css grid to preserve margin collapsing */
+      margin-left: -${rhythm(1)};
+      border-radius: 0;
+    }
+    @media (min-width: ${TABLET_WIDTH}) {
+      max-width: 40rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    @media (min-width: ${LARGE_DISPLAY_WIDTH}) {
+      max-width: 60rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+`;
+
 const BlogPostTemplate = ({ data, pageContext }) => {
   const { markdownRemark: post } = data;
   const { prev, next } = pageContext;
@@ -101,7 +102,6 @@ const BlogPostTemplate = ({ data, pageContext }) => {
       </Helmet>
       <Container>
         <Hero
-          className="hero"
           title={post.frontmatter.title}
           coverSizes={post.frontmatter.cover ? post.frontmatter.cover.childImageSharp.sizes : null}
         />
