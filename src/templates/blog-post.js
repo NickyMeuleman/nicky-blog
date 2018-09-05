@@ -1,71 +1,92 @@
 import React from 'react';
-import { graphql } from 'gatsby';
+import { Link, graphql } from 'gatsby';
 import Helmet from 'react-helmet';
 import styled from 'styled-components';
 import { TABLET_WIDTH, LARGE_DISPLAY_WIDTH } from 'typography-breakpoint-constants';
 import Layout from '../components/Layout/Layout';
 import Hero from '../components/Hero/Hero';
-import { rhythm } from '../utils/typography';
+import { rhythm, scale } from '../utils/typography';
 
-const ArticleContainer = styled.div`
-  display: block;
-  & > article {
-    box-shadow: 0px 3px 3px #333;
-    background: none;
-    background-image: linear-gradient(rgba(255, 255, 255, 0.85), #fff 25vh);
-    grid-column: 2/3;
-    grid-row: 2/3;
-    border-radius: 5px;
+const LinkU = styled(Link)`
+  border-bottom: none;
+  box-shadow: none;
+  height: auto;
+  width: auto;
+  color: ${props => props.theme.primary};
+  &:hover {
+    background: ${props => props.theme.primaryLighter};
+  }
+`;
+
+const UnderPost = styled.div`
+  margin: ${rhythm(1)};
+  display: flex;
+  justify-content: space-between;
+  & > * {
+    flex: 1;
+  }
+  h4 {
+    color: rgba(0, 0, 0, 0.54);
+    margin: 0;
+    ${scale(0)};
+    line-height: 1;
+  }
+  [data-next] {
+    text-align: right;
+  }
+
+  @media (min-width: ${TABLET_WIDTH}) {
+    max-width: calc(100vw - 3rem);
+    width: 40rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  @media (min-width: ${LARGE_DISPLAY_WIDTH}) {
+    width: 60rem;
+  }
+`;
+
+const Container = styled.div`
+  & > div:first-child {
+    position: relative;
+    z-index: 1;
+    height: ${rhythm(13)};
+  }
+  article {
+    position: relative;
+    z-index: 30;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.75), #fff ${rhythm(5)});
     padding: ${rhythm(1)};
+    margin: 0 auto;
+    margin-top: ${rhythm(-5)};
+
+    box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.34);
     h1:first-child {
       margin-top: 0;
     }
-  }
-  @media (min-width: ${TABLET_WIDTH}) {
-    display: grid;
-    grid-template-columns: ${rhythm(2)} 1fr ${rhythm(2)};
-    grid-template-rows: ${rhythm(1)} 1fr ${rhythm(1)};
-    & > article {
-      padding: ${rhythm(2)};
-    }
     .gatsby-highlight {
+      /* break code block out of container */
+      width: calc(100% + ${rhythm(2)});
       /* use negative margin instead of css grid to preserve margin collapsing */
-      margin-left: -${rhythm(2)};
-      margin-right: -${rhythm(2)};
+      margin-left: -${rhythm(1)};
+      border-radius: 0;
     }
-  }
-  @media (min-width: ${LARGE_DISPLAY_WIDTH}) {
-    grid-template-columns: ${rhythm(4)} minmax(auto, 66em) ${rhythm(4)};
-    justify-content: center;
-    & > article {
-      padding: ${rhythm(3)};
-      padding-top: ${rhythm(1)};
+    @media (min-width: ${TABLET_WIDTH}) {
+      max-width: 40rem;
+      margin-left: auto;
+      margin-right: auto;
     }
-  }
-`;
-
-const Section = styled.section`
-  @media (min-width: ${TABLET_WIDTH}) {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: ${rhythm(10)} ${rhythm(3)} 1fr;
-    & > div:first-child {
-      grid-row: 1/3;
-      grid-column: 1/2;
-      z-index: 20;
-    }
-    & > div:last-child {
-      grid-row: 2/4;
-      grid-column: 1/2;
-      z-index: 30;
+    @media (min-width: ${LARGE_DISPLAY_WIDTH}) {
+      max-width: 60rem;
+      margin-left: auto;
+      margin-right: auto;
     }
   }
 `;
 
-// TODO: accomplish overlap without divitis, maybe use styled(ReactComponent)
-
-const BlogPostTemplate = ({ data }) => {
+const BlogPostTemplate = ({ data, pageContext }) => {
   const { markdownRemark: post } = data;
+  const { prev, next } = pageContext;
   return (
     <Layout>
       <Helmet>
@@ -79,22 +100,38 @@ const BlogPostTemplate = ({ data }) => {
           }
         />
       </Helmet>
-      <Section>
-        <div>
-          <Hero
-            title={post.frontmatter.title}
-            coverSizes={post.frontmatter.cover ? post.frontmatter.cover.childImageSharp.sizes : null}
-          />
-        </div>
-        <div>
-          <ArticleContainer>
-            <article>
-              <h1>{post.frontmatter.title}</h1>
-              <div dangerouslySetInnerHTML={{ __html: post.html }} />
-            </article>
-          </ArticleContainer>
-        </div>
-      </Section>
+      <Container>
+        <Hero
+          title={post.frontmatter.title}
+          coverSizes={post.frontmatter.cover ? post.frontmatter.cover.childImageSharp.sizes : null}
+        />
+        <article>
+          <h1>{post.frontmatter.title}</h1>
+          <div dangerouslySetInnerHTML={{ __html: post.html }} />
+        </article>
+        <UnderPost>
+          <div>
+            {prev && (
+              <LinkU to={`/blog${prev.fields.slug}`}>
+                <h4>Older</h4>
+                <span data-prev style={{ width: '1rem', marginLeft: '-1rem' }}>
+                  ←
+                </span>
+                <span>{prev.frontmatter.title}</span>
+              </LinkU>
+            )}
+          </div>
+          <div data-next>
+            {next && (
+              <LinkU to={`/blog${next.fields.slug}`}>
+                <h4>Newer</h4>
+                <span>{next.frontmatter.title}</span>
+                <span style={{ width: '1rem', marginRight: '-1rem' }}>→</span>
+              </LinkU>
+            )}
+          </div>
+        </UnderPost>
+      </Container>
     </Layout>
   );
 };

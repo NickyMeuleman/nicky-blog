@@ -4,7 +4,7 @@ import Img from 'gatsby-image';
 import { rhythm, scale } from '../../utils/typography';
 import TypedStrings from '../TypedStrings/TypedStrings';
 
-const Container = styled.header`
+const Container = styled.div`
   height: 100%;
   display: grid;
   grid-template-columns: minmax(${rhythm(1 / 3)}, 1fr) auto minmax(${rhythm(1 / 3)}, 1fr);
