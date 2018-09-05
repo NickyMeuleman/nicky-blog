@@ -50,7 +50,7 @@ const Container = styled.div`
   & > div:first-child {
     position: relative;
     z-index: 1;
-    height: ${rhythm(15)};
+    height: ${rhythm(13)};
   }
   article {
     position: relative;
