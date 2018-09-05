@@ -1,26 +1,36 @@
 import React from 'react';
-import { graphql } from 'gatsby';
+import { Link, graphql } from 'gatsby';
 import Helmet from 'react-helmet';
 import styled from 'styled-components';
+import { TABLET_WIDTH, LARGE_DISPLAY_WIDTH } from 'typography-breakpoint-constants';
 import Layout from '../components/Layout/Layout';
-import { rhythm } from '../utils/typography';
-// import React from 'react';
-// import { Link, graphql } from 'gatsby';
-// import Helmet from 'react-helmet';
-// import styled from 'styled-components';
-// import { TABLET_WIDTH, LARGE_DISPLAY_WIDTH } from 'typography-breakpoint-constants';
-// import Layout from '../components/Layout/Layout';
-// import Hero from '../components/Hero/Hero';
-// import { rhythm, scale } from '../utils/typography';
+import Hero from '../components/Hero/Hero';
+import { rhythm, scale } from '../utils/typography';
+
+const LinkU = styled(Link)`
+  border-bottom: none;
+  box-shadow: none;
+  height: auto;
+  width: auto;
+  color: ${props => props.theme.primary};
+  &:hover {
+    background: ${props => props.theme.primaryLighter};
+  }
+`;
 
 const Container = styled.div`
-  div:first-child {
+  .hero {
+    position: relative;
+    z-index: 1;
     height: ${rhythm(17)};
   }
   article {
+    position: relative;
+    z-index: 5;
     background-image: linear-gradient(rgba(255, 255, 255, 0.75), #fff ${rhythm(5)});
     padding: ${rhythm(1)};
-    margin: ${rhythm(-5)} ${rhythm(2)} ${rhythm(2)} ${rhythm(2)};
+    margin: 0 auto;
+    margin-top: ${rhythm(-5)};
     box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.34);
     h1:first-child {
       margin-top: 0;
@@ -32,12 +42,50 @@ const Container = styled.div`
       margin-left: -${rhythm(1)};
       border-radius: 0;
     }
+    @media (min-width: ${TABLET_WIDTH}) {
+      max-width: 40rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    @media (min-width: ${LARGE_DISPLAY_WIDTH}) {
+      max-width: 60rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+`;
+
+const UnderPost = styled.div`
+  margin: ${rhythm(1)};
+  display: flex;
+  justify-content: space-between;
+  & > * {
+    flex: 1;
+  }
+  h4 {
+    color: rgba(0, 0, 0, 0.54);
+    margin: 0;
+    ${scale(0)};
+    line-height: 1;
+  }
+  [data-next] {
+    text-align: right;
+  }
+
+  @media (min-width: ${TABLET_WIDTH}) {
+    max-width: calc(100vw - 3rem);
+    width: 40rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  @media (min-width: ${LARGE_DISPLAY_WIDTH}) {
+    width: 60rem;
   }
 `;
 
 const BlogPostTemplate = ({ data, pageContext }) => {
   const { markdownRemark: post } = data;
-  // const { prev, next } = pageContext;
+  const { prev, next } = pageContext;
   return (
     <Layout>
       <Helmet>
@@ -52,16 +100,37 @@ const BlogPostTemplate = ({ data, pageContext }) => {
         />
       </Helmet>
       <Container>
-        <div style={{ background: 'green' }}>
-          {/* <img src="https://source.unsplash.com/random" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> */}
-        </div>
+        <Hero
+          className="hero"
+          title={post.frontmatter.title}
+          coverSizes={post.frontmatter.cover ? post.frontmatter.cover.childImageSharp.sizes : null}
+        />
         <article>
           <h1>{post.frontmatter.title}</h1>
           <div dangerouslySetInnerHTML={{ __html: post.html }} />
         </article>
-        <div style={{ background: 'blue' }}>
-          <p>under article</p>
-        </div>
+        <UnderPost>
+          <div>
+            {prev && (
+              <LinkU to={`/blog${prev.fields.slug}`}>
+                <h4>Older</h4>
+                <span data-prev style={{ width: '1rem', marginLeft: '-1rem' }}>
+                  ←
+                </span>
+                <span>{prev.frontmatter.title}</span>
+              </LinkU>
+            )}
+          </div>
+          <div data-next>
+            {next && (
+              <LinkU to={`/blog${next.fields.slug}`}>
+                <h4>Newer</h4>
+                <span>{next.frontmatter.title}</span>
+                <span style={{ width: '1rem', marginRight: '-1rem' }}>→</span>
+              </LinkU>
+            )}
+          </div>
+        </UnderPost>
       </Container>
     </Layout>
   );
