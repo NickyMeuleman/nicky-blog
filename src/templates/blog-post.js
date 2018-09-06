@@ -87,7 +87,7 @@ const Container = styled.div`
   }
 `;
 
-const BlogPostTemplate = ({ data, pageContext }) => {
+const BlogPostTemplate = ({ data, pageContext, location }) => {
   const { markdownRemark: post } = data;
   const { prev, next } = pageContext;
   return (
@@ -123,6 +123,7 @@ const BlogPostTemplate = ({ data, pageContext }) => {
         </article>
         <UnderPost>
           <applause-button
+            key={location}
             color="rgba(21,87,153,1)"
             style={{ width: '58px', height: '58px', zIndex: '9999', marginBottom: rhythm(1) }}
           />
