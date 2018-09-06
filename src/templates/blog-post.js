@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { TABLET_WIDTH, LARGE_DISPLAY_WIDTH } from 'typography-breakpoint-constants';
 import Layout from '../components/Layout/Layout';
 import Hero from '../components/Hero/Hero';
+import ClapButton from '../components/ClapButton/ClapButton';
 import { rhythm, scale } from '../utils/typography';
 
 const LinkU = styled(Link)`
@@ -87,7 +88,7 @@ const Container = styled.div`
   }
 `;
 
-const BlogPostTemplate = ({ data, pageContext }) => {
+const BlogPostTemplate = ({ data, pageContext, location }) => {
   const { markdownRemark: post } = data;
   const { prev, next } = pageContext;
   return (
@@ -102,15 +103,6 @@ const BlogPostTemplate = ({ data, pageContext }) => {
             (post.frontmatter.cover ? post.frontmatter.cover.childImageSharp.sizes.src : '/icons/icon-256x256.png')
           }
         />
-        <link
-          rel="stylesheet"
-          href="https://unpkg.com/applause-button/dist/applause-button.css
-"
-        />
-        <script
-          src="https://unpkg.com/applause-button/dist/applause-button.js
-"
-        />
       </Helmet>
       <Container>
         <Hero
@@ -122,10 +114,7 @@ const BlogPostTemplate = ({ data, pageContext }) => {
           <div dangerouslySetInnerHTML={{ __html: post.html }} />
         </article>
         <UnderPost>
-          <applause-button
-            color="rgba(21,87,153,1)"
-            style={{ width: '58px', height: '58px', zIndex: '9999', marginBottom: rhythm(1) }}
-          />
+          <ClapButton key={location.href} location={location} style={{ marginBottom: rhythm(1) }} />
           <Adjacent>
             <div>
               {prev && (
