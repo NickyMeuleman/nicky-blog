@@ -19,7 +19,20 @@ const LinkU = styled(Link)`
 `;
 
 const UnderPost = styled.div`
-  margin: ${rhythm(1)};
+  margin: ${rhythm(2)} ${rhythm(1)};
+
+  @media (min-width: ${TABLET_WIDTH}) {
+    max-width: calc(100vw - 3rem);
+    width: 40rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  @media (min-width: ${LARGE_DISPLAY_WIDTH}) {
+    width: 60rem;
+  }
+`;
+
+const Adjacent = styled.div`
   display: flex;
   justify-content: space-between;
   & > * {
@@ -33,16 +46,6 @@ const UnderPost = styled.div`
   }
   [data-next] {
     text-align: right;
-  }
-
-  @media (min-width: ${TABLET_WIDTH}) {
-    max-width: calc(100vw - 3rem);
-    width: 40rem;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  @media (min-width: ${LARGE_DISPLAY_WIDTH}) {
-    width: 60rem;
   }
 `;
 
@@ -99,6 +102,15 @@ const BlogPostTemplate = ({ data, pageContext }) => {
             (post.frontmatter.cover ? post.frontmatter.cover.childImageSharp.sizes.src : '/icons/icon-256x256.png')
           }
         />
+        <link
+          rel="stylesheet"
+          href="https://unpkg.com/applause-button/dist/applause-button.css
+"
+        />
+        <script
+          src="https://unpkg.com/applause-button/dist/applause-button.js
+"
+        />
       </Helmet>
       <Container>
         <Hero
@@ -110,26 +122,32 @@ const BlogPostTemplate = ({ data, pageContext }) => {
           <div dangerouslySetInnerHTML={{ __html: post.html }} />
         </article>
         <UnderPost>
-          <div>
-            {prev && (
-              <LinkU to={`/blog${prev.fields.slug}`}>
-                <h4>Older</h4>
-                <span data-prev style={{ width: '1rem', marginLeft: '-1rem' }}>
-                  ←
-                </span>
-                <span>{prev.frontmatter.title}</span>
-              </LinkU>
-            )}
-          </div>
-          <div data-next>
-            {next && (
-              <LinkU to={`/blog${next.fields.slug}`}>
-                <h4>Newer</h4>
-                <span>{next.frontmatter.title}</span>
-                <span style={{ width: '1rem', marginRight: '-1rem' }}>→</span>
-              </LinkU>
-            )}
-          </div>
+          <applause-button
+            color="rgba(21,87,153,1)"
+            style={{ width: '58px', height: '58px', zIndex: '9999', marginBottom: rhythm(1) }}
+          />
+          <Adjacent>
+            <div>
+              {prev && (
+                <LinkU to={`/blog${prev.fields.slug}`}>
+                  <h4>Older</h4>
+                  <span data-prev style={{ width: '1rem', marginLeft: '-1rem' }}>
+                    ←
+                  </span>
+                  <span>{prev.frontmatter.title}</span>
+                </LinkU>
+              )}
+            </div>
+            <div data-next>
+              {next && (
+                <LinkU to={`/blog${next.fields.slug}`}>
+                  <h4>Newer</h4>
+                  <span>{next.frontmatter.title}</span>
+                  <span style={{ width: '1rem', marginRight: '-1rem' }}>→</span>
+                </LinkU>
+              )}
+            </div>
+          </Adjacent>
         </UnderPost>
       </Container>
     </Layout>
