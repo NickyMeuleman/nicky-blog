@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { TABLET_WIDTH, LARGE_DISPLAY_WIDTH } from 'typography-breakpoint-constants';
 import Layout from '../components/Layout/Layout';
 import Hero from '../components/Hero/Hero';
+import ApplauseButton from '../components/ApplauseButton/ApplauseButton';
 import { rhythm, scale } from '../utils/typography';
 
 const LinkU = styled(Link)`
@@ -122,11 +123,7 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
           <div dangerouslySetInnerHTML={{ __html: post.html }} />
         </article>
         <UnderPost>
-          <applause-button
-            key={location}
-            color="rgba(21,87,153,1)"
-            style={{ width: '58px', height: '58px', zIndex: '9999', marginBottom: rhythm(1) }}
-          />
+          <ApplauseButton location={location} />
           <Adjacent>
             <div>
               {prev && (
