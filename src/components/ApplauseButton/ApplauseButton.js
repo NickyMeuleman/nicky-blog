@@ -15,11 +15,13 @@ export default class ApplauseButton extends Component {
   render() {
     return (
       <div key={this.props.location.href}>
-        <applause-button
-          multiclap
-          color="rgba(21,87,153,1)"
-          style={{ width: '58px', height: '58px', zIndex: '9999', marginBottom: rhythm(1) }}
-        />
+        {typeof window !== 'undefined' && (
+          <applause-button
+            multiclap
+            color="rgba(21,87,153,1)"
+            style={{ width: '58px', height: '58px', zIndex: '9999', marginBottom: rhythm(1) }}
+          />
+        )}
       </div>
     );
   }
