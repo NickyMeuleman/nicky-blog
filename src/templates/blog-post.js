@@ -114,7 +114,12 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
           <div dangerouslySetInnerHTML={{ __html: post.html }} />
         </article>
         <UnderPost>
-          <ClapButton key={location.href} location={location} style={{ marginBottom: rhythm(1) }} />
+          <ClapButton
+            key={location.href}
+            location={location}
+            style={{ marginBottom: rhythm(1), width: '58px', height: '58px' }}
+            color="rgba(21,87,153,1)"
+          />
           <Adjacent>
             <div>
               {prev && (
