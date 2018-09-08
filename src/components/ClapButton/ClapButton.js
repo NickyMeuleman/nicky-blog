@@ -1,62 +1,53 @@
 /* eslint-disable */
+import React, { Component } from "react";
+import _ from "lodash";
+import "./ClapButton.css";
 
-import React, { Component } from 'react';
-import _ from 'lodash';
-import './ClapButton.css';
-
-const API = 'https://jsonplaceholder.typicode.com';
-// const API = 'https://api.applause-button.com';
-
+const API = "https://api.applause-button.com";
 export default class ClapButton extends Component {
   constructor(props) {
     super(props);
     this.state = {
       error: null,
       isLoaded: !!props.initialClaps,
-      totalClaps: props.initialClaps,
+      totalClaps: props.initialClaps
     };
     this.userClaps = 0;
     this.bufferedClaps = 0;
-    this.MAX_CLAPS = props.maxClaps || 10;
+    this.MAX_CLAPS = props.maxClaps || 1;
   }
 
   componentDidMount() {
-    console.log('DID MOUNT', 'claps:', this.state.totalClaps);
     if (!this.state.totalClaps) {
-      this.getClaps(this.props.location.href).then(claps =>
-        this.setState({ totalClaps: Number(claps), isLoaded: true })
-      );
+      this.getClaps(this.props.location.href);
     }
-  }
-
-  shouldComponentUpdate(nextProps, nextState) {
-    console.log('SHOULD UPDATE', 'claps:', this.state.totalClaps, 'nextClaps:', nextState.totalClaps);
-    return nextState.totalClaps !== this.state.totalClaps;
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    console.log('DID UPDATE', 'claps:', this.state.totalClaps);
   }
 
   getClaps = url =>
-    fetch(`${API}/get-claps${url ? `?url=${url}` : ''}`, {
+    fetch(`${API}/get-claps${url ? `?url=${url}` : ""}`, {
       headers: {
-        'Content-Type': 'text/plain',
-      },
-    }).then(
-      response => response.text(),
-      error => {
-        this.setState({ error });
+        "Content-Type": "text/plain"
       }
-    );
+    })
+      .then(response => response.text())
+      .then(
+        claps =>
+          this.setState({
+            totalClaps: Number(claps) || 0,
+            isLoaded: true
+          }),
+        error => {
+          this.setState({ error, isLoaded: true });
+        }
+      );
 
   updateClapsAPI = (claps, url) =>
-    fetch(`${API}/update-claps${url ? `?url=${url}` : ''}`, {
-      method: 'POST',
+    fetch(`${API}/update-claps${url ? `?url=${url}` : ""}`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'text/plain',
+        "Content-Type": "text/plain"
       },
-      body: JSON.stringify(claps),
+      body: JSON.stringify(claps)
     }).then(
       response => response.text(),
       error => {
@@ -64,42 +55,29 @@ export default class ClapButton extends Component {
       }
     );
 
-  // updateClaps = _.debounce(() => {
-  //   console.log('updateclaps debounce');
-  //   if (this.userClaps < this.MAX_CLAPS) {
-  //     this.setState(
-  //       prevState => {
-  //         const increment = Math.min(this.bufferedClaps, this.MAX_CLAPS - this.userClaps);
-  //         this.userClaps += increment;
-  //         this.updateClapsAPI(increment, this.props.location.href);
-  //         return { totalClaps: prevState.totalClaps + increment };
-  //       },
-  //       () => {
-  //         this.bufferedClaps = 0;
-  //       }
-  //     );
-  //   }
-  // }, 2000);
-
-  updateClaps = () => {
-    if (this.userClaps < this.MAX_CLAPS) {
-      const increment = Math.min(this.bufferedClaps, this.MAX_CLAPS - this.userClaps);
-      this.userClaps += increment;
-      this.updateClapsAPI(increment, this.props.location.href);
-      this.bufferedClaps = 0;
-    }
-  };
+  updateClaps = _.debounce(() => {
+    const increment = Math.min(
+      this.bufferedClaps,
+      this.MAX_CLAPS - this.userClaps
+    );
+    this.updateClapsAPI(increment, this.props.location.href);
+    this.userClaps += increment;
+    this.bufferedClaps = 0;
+  }, 2000);
 
   clapClick = () => {
     this.bufferedClaps += 1;
-    this.setState(prevState => ({ totalClaps: prevState.totalClaps + 1 }));
-
-    _.debounce(this.updateClaps, 2000)();
+    if (this.userClaps < this.MAX_CLAPS) {
+      this.setState(prevState => ({
+        totalClaps: Number(prevState.totalClaps) + 1
+      }));
+      this.updateClaps();
+    }
   };
 
   render() {
     const { error, isLoaded, totalClaps } = this.state;
-    const { style } = this.props;
+    const { style, color } = this.props;
     if (error) {
       return <div>Error: {error.message}</div>;
     } else if (!isLoaded) {
@@ -111,15 +89,19 @@ export default class ClapButton extends Component {
           className="applause-button"
           onClick={this.clapClick}
           style={{
-            height: '58px',
-            width: '58px',
-            outline: 'unset',
-            padding: 'unset',
-            border: 'unset',
-            background: 'unset',
+            height: "58px",
+            width: "58px",
+            outline: "unset",
+            padding: "unset",
+            border: "unset",
+            background: "unset",
+            ...style
           }}
         >
-          <div className="style-root">
+          <div
+            className="style-root"
+            style={{ stroke: color, fill: color, color: color }}
+          >
             <div className="shockwave" />
             <div className="count">{totalClaps || 0}</div>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">
@@ -134,7 +116,9 @@ export default class ClapButton extends Component {
             </svg>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 20 20">
               <g className="sparkle">
-                {Array.from({ length: 5 }).map((_, i) => (
+                {Array.from({
+                  length: 5
+                }).map((el, i) => (
                   <g key={`sparkle-${i}`}>
                     <circle cx="0" cy="0" r="1" />
                   </g>
