@@ -117,8 +117,9 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
           <ClapButton
             key={location.href}
             location={location}
-            style={{ marginBottom: rhythm(1), width: '58px', height: '58px' }}
+            style={{ margin: '4rem', marginBottom: rhythm(1) }}
             color="rgba(21,87,153,1)"
+            initialClaps={10}
           />
           <Adjacent>
             <div>
