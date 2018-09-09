@@ -114,14 +114,17 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
           <div dangerouslySetInnerHTML={{ __html: post.html }} />
         </article>
         <UnderPost>
-          <ClapButton
-            key={location.href}
-            location={location}
-            style={{ marginBottom: rhythm(1) }}
-            color="rgba(21,87,153,1)"
-            maxClaps={10}
-            initialClaps={false}
-          />
+          <div
+            style={{ margin: `${rhythm(1)} 0`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <ClapButton
+              key={location.pathname}
+              url={data.site.siteMetadata.siteUrl + location.pathname}
+              color="rgba(21,87,153,1)"
+              maxClaps={10}
+            />
+            {/* <div>share section goes here</div> */}
+          </div>
           <Adjacent>
             <div>
               {prev && (
