@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import _ from 'lodash';
 import classes from './ClapButton.module.css';
 
-const API = 'https://api.applause-button.comm';
+const API = 'https://api.applause-button.com';
 export default class ClapButton extends Component {
   constructor(props) {
     super(props);
