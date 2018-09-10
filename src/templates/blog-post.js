@@ -6,6 +6,7 @@ import { TABLET_WIDTH, LARGE_DISPLAY_WIDTH } from 'typography-breakpoint-constan
 import Layout from '../components/Layout/Layout';
 import Hero from '../components/Hero/Hero';
 import ClapButton from '../components/ClapButton/ClapButton';
+import Share from '../components/Share/Share';
 import { rhythm, scale } from '../utils/typography';
 
 const LinkU = styled(Link)`
@@ -115,7 +116,12 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
         </article>
         <UnderPost>
           <div
-            style={{ margin: `${rhythm(1)} 0`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+            style={{
+              margin: `${rhythm(1)} 0`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
           >
             <ClapButton
               key={location.pathname}
@@ -123,7 +129,7 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
               color="rgba(21,87,153,1)"
               maxClaps={10}
             />
-            {/* <div>share section goes here</div> */}
+            <Share url={`${data.site.siteMetadata.siteUrl}/blog${pageContext.slug}`} title={post.frontmatter.title} />
           </div>
           <Adjacent>
             <div>

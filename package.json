@@ -45,6 +45,7 @@
     "react": "^16.4.2",
     "react-dom": "^16.4.2",
     "react-helmet": "^5.2.0",
+    "react-share": "^2.3.1",
     "react-typography": "^0.16.13",
     "styled-components": "^3.4.2",
     "typed.js": "^2.0.9",
