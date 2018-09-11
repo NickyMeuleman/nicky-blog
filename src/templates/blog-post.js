@@ -92,6 +92,8 @@ const Container = styled.div`
 const BlogPostTemplate = ({ data, pageContext, location }) => {
   const { markdownRemark: post } = data;
   const { prev, next } = pageContext;
+  const initialClaps = location.state ? location.state.initialClaps : null;
+
   return (
     <Layout>
       <Helmet>
@@ -128,6 +130,7 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
               url={data.site.siteMetadata.siteUrl + location.pathname}
               color="rgba(21,87,153,1)"
               maxClaps={10}
+              initialClaps={initialClaps}
             />
             <Share url={`${data.site.siteMetadata.siteUrl}/blog${pageContext.slug}`} title={post.frontmatter.title} />
           </div>

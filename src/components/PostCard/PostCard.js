@@ -94,7 +94,7 @@ const Excerpt = styled.p`
 const PostCard = props => (
   <Card featured={props.featured}>
     <Top>
-      <LinkU to={props.url}>
+      <LinkU to={props.url} state={{ initialClaps: props.claps }}>
         {props.coverSizes ? (
           <Img sizes={props.coverSizes} />
         ) : (
@@ -110,8 +110,9 @@ const PostCard = props => (
     </Top>
     <Bottom>
       <div>
-        <LinkU to={props.url}>
+        <LinkU to={props.url} state={{ initialClaps: props.claps }}>
           <h2>{props.title}</h2>
+          <span>claps: {props.claps}</span>
         </LinkU>
         {props.excerpt && <Excerpt>{props.excerpt}</Excerpt>}
       </div>
