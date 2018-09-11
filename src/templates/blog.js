@@ -92,13 +92,6 @@ class PostsPage extends React.Component {
 
   render() {
     const { data, pageContext } = this.props;
-    const testing =
-      this.state.isLoaded &&
-      this.state.claps.find(
-        el => el.url === normalizeUrl(`${this.props.data.site.siteMetadata.siteUrl}/blog/gatsby-pagination/`)
-      ).claps;
-    console.log(testing);
-
     return (
       <Layout>
         <Container>

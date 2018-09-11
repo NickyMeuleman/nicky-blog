@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { TABLET_WIDTH } from 'typography-breakpoint-constants';
 import PostCard from '../components/PostCard/PostCard';
 import { rhythm, scale } from '../utils/typography';
+import normalizeUrl from '../utils/clapButton';
 import Layout from '../components/Layout/Layout';
 import TypedStrings from '../components/TypedStrings/TypedStrings';
 
@@ -82,44 +83,94 @@ const Content = styled.div`
   }
 `;
 
-const IndexPage = ({ data }) => (
-  <Layout>
-    <Container>
-      <Triangle>
-        <Pattern />
-      </Triangle>
-      <HeroContent>
-        <h1>Building for the modern web</h1>
-        <TypedStrings strings={['Web applications', 'Landing pages', 'Responsive designs', 'Static websites']} />
-      </HeroContent>
-      <Content>
-        <p>
-          <span role="img" aria-label="sparkling star">
-            ✨
-          </span>{' '}
-          Recent posts ({data.allMarkdownRemark.totalCount} total)
-        </p>
-        {data.allMarkdownRemark.edges.map(({ node }, i) => (
-          <PostCard
-            key={node.id}
-            featured={i === 0}
-            url={`/blog${node.fields.slug}`}
-            title={node.frontmatter.title}
-            date={node.frontmatter.date}
-            author={node.frontmatter.author}
-            coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.fluid : null}
-            excerpt={node.excerpt}
-          />
-        ))}
-      </Content>
-    </Container>
-  </Layout>
-);
+class IndexPage extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { isLoaded: false, error: false, claps: [] };
+  }
+  componentDidMount() {
+    const { siteUrl } = this.props.data.site.siteMetadata;
+    const urlArr = this.props.data.allMarkdownRemark.edges.reduce(
+      (acc, el) => [...acc, `${siteUrl}/blog${el.node.fields.slug}`],
+      []
+    );
+    this.getMultipleClaps(urlArr).then(res => this.setState({ isLoaded: true, claps: JSON.parse(res) }));
+  }
+
+  getMultipleClaps = urlArr =>
+    fetch(`https://api.applause-button.com/get-multiple`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+      body: JSON.stringify(urlArr),
+    }).then(
+      response => response.text(),
+      error => {
+        this.setState({ error });
+      }
+    );
+  render() {
+    const { data } = this.props;
+    return (
+      <Layout>
+        <Container>
+          <Triangle>
+            <Pattern />
+          </Triangle>
+          <HeroContent>
+            <h1>Building for the modern web</h1>
+            <TypedStrings strings={['Web applications', 'Landing pages', 'Responsive designs', 'Static websites']} />
+          </HeroContent>
+          <Content>
+            <p>
+              <span role="img" aria-label="sparkling star">
+                ✨
+              </span>{' '}
+              Recent posts ({data.allMarkdownRemark.totalCount} total)
+            </p>
+            {data.allMarkdownRemark.edges.map(({ node }, i) => (
+              <PostCard
+                key={node.id}
+                featured={i === 0}
+                url={`/blog${node.fields.slug}`}
+                title={node.frontmatter.title}
+                date={node.frontmatter.date}
+                author={node.frontmatter.author}
+                coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.fluid : null}
+                excerpt={node.excerpt}
+                claps={
+                  !this.state.error &&
+                  this.state.isLoaded &&
+                  this.state.claps.find(
+                    el =>
+                      el.url === normalizeUrl(`${this.props.data.site.siteMetadata.siteUrl}/blog${node.fields.slug}`)
+                  )
+                    ? this.state.claps.find(
+                        el =>
+                          el.url ===
+                          normalizeUrl(`${this.props.data.site.siteMetadata.siteUrl}/blog${node.fields.slug}`)
+                      ).claps
+                    : 0
+                }
+              />
+            ))}
+          </Content>
+        </Container>
+      </Layout>
+    );
+  }
+}
 
 export default IndexPage;
 
 export const query = graphql`
   query IndexQuery {
+    site {
+      siteMetadata {
+        siteUrl
+      }
+    }
     allMarkdownRemark(sort: { fields: [frontmatter___date], order: DESC }, limit: 3) {
       totalCount
       edges {
