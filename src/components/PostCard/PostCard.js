@@ -78,7 +78,6 @@ const Info = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-top: ${rhythm(0.5)};
-  height: 100%;
   & > p {
     margin: 0;
   }
@@ -86,12 +85,10 @@ const Info = styled.div`
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    flex: 1;
+    margin-left: ${rhythm(1 / 2)};
     ${scale(-1 / 3)};
-    height: 70%;
     svg {
-      height: 100%;
-      width: auto;
+      height: ${rhythm(9 / 10)};
     }
   }
 `;
