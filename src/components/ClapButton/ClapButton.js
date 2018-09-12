@@ -2,9 +2,9 @@
 
 import React, { Component } from 'react';
 import _ from 'lodash';
+import { getClaps as getClapsAPI, updateClaps as updateClapsAPI } from '../../utils/clapButton';
 import classes from './ClapButton.module.css';
 
-const API = 'https://api.applause-button.com';
 export default class ClapButton extends Component {
   constructor(props) {
     super(props);
@@ -27,40 +27,25 @@ export default class ClapButton extends Component {
   }
 
   getClaps = url =>
-    fetch(`${API}/get-claps${url ? `?url=${url}` : ''}`, {
-      headers: {
-        'Content-Type': 'text/plain',
-      },
-    })
-      .then(response => response.text())
-      .then(
-        claps =>
-          this.setState({
-            totalClaps: Number(claps) || 0,
-            isLoaded: true,
-          }),
-        error => {
-          this.setState({ error, isLoaded: true });
-        }
-      );
-
-  updateClapsAPI = (claps, url) =>
-    fetch(`${API}/update-claps${url ? `?url=${url}` : ''}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain',
-      },
-      body: JSON.stringify(claps),
-    }).then(
-      response => response.text(),
+    getClapsAPI(url).then(
+      claps =>
+        this.setState({
+          totalClaps: Number(claps) || 0,
+          isLoaded: true,
+        }),
       error => {
-        this.setState({ error });
+        this.setState({ error, isLoaded: true });
       }
     );
 
   updateClaps = _.debounce(() => {
     const increment = Math.min(this.bufferedClaps, this.MAX_CLAPS - this.userClaps);
-    this.updateClapsAPI(increment, this.props.url);
+    updateClapsAPI(increment, this.props.url).then(
+      res => {},
+      error => {
+        this.setState({ error });
+      }
+    );
     this.userClaps += increment;
     this.bufferedClaps = 0;
   }, 2000);

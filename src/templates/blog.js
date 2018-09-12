@@ -6,7 +6,7 @@ import PostCard from '../components/PostCard/PostCard';
 import { rhythm } from '../utils/typography';
 import Layout from '../components/Layout/Layout';
 import Pagination from '../components/Pagination/Pagination';
-import normalizeUrl from '../utils/clapButton';
+import { getMultipleClaps as getMultipleClapsAPI, normalizeUrl } from '../utils/clapButton';
 
 const PostContainer = styled.div`
   z-index: 5;
@@ -73,22 +73,11 @@ class PostsPage extends React.Component {
       (acc, el) => [...acc, `${siteUrl}/blog${el.node.fields.slug}`],
       []
     );
-    this.getMultipleClaps(urlArr).then(res => this.setState({ isLoaded: true, claps: JSON.parse(res) }));
-  }
-
-  getMultipleClaps = urlArr =>
-    fetch(`https://api.applause-button.com/get-multiple`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain',
-      },
-      body: JSON.stringify(urlArr),
-    }).then(
-      response => response.text(),
-      error => {
-        this.setState({ error });
-      }
+    getMultipleClapsAPI(urlArr).then(
+      res => this.setState({ isLoaded: true, claps: JSON.parse(res) }),
+      error => this.setState({ error })
     );
+  }
 
   render() {
     const { data, pageContext } = this.props;
@@ -105,30 +94,22 @@ class PostsPage extends React.Component {
               </span>{' '}
               {data.allMarkdownRemark.totalCount} Posts total
             </p>
-            {data.allMarkdownRemark.edges.map(({ node }) => (
-              <PostCard
-                key={node.id}
-                url={`/blog${node.fields.slug}`}
-                title={node.frontmatter.title}
-                date={node.frontmatter.date}
-                author={node.frontmatter.author}
-                coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.fluid : null}
-                claps={
-                  !this.state.error &&
-                  this.state.isLoaded &&
-                  this.state.claps.find(
-                    el =>
-                      el.url === normalizeUrl(`${this.props.data.site.siteMetadata.siteUrl}/blog${node.fields.slug}`)
-                  )
-                    ? this.state.claps.find(
-                        el =>
-                          el.url ===
-                          normalizeUrl(`${this.props.data.site.siteMetadata.siteUrl}/blog${node.fields.slug}`)
-                      ).claps
-                    : 0
-                }
-              />
-            ))}
+            {data.allMarkdownRemark.edges.map(({ node }) => {
+              const clapObj = this.state.claps.find(
+                el => el.url === normalizeUrl(`${this.props.data.site.siteMetadata.siteUrl}/blog${node.fields.slug}`)
+              );
+              return (
+                <PostCard
+                  key={node.id}
+                  url={`/blog${node.fields.slug}`}
+                  title={node.frontmatter.title}
+                  date={node.frontmatter.date}
+                  author={node.frontmatter.author}
+                  coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.fluid : null}
+                  claps={!this.state.error && this.state.isLoaded && clapObj ? clapObj.claps : 0}
+                />
+              );
+            })}
           </PostContainer>
           <Pagination context={pageContext} />
         </Container>

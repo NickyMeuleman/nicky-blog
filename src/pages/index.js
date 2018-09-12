@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { TABLET_WIDTH } from 'typography-breakpoint-constants';
 import PostCard from '../components/PostCard/PostCard';
 import { rhythm, scale } from '../utils/typography';
-import normalizeUrl from '../utils/clapButton';
+import { getMultipleClaps as getMultipleClapsAPI, normalizeUrl } from '../utils/clapButton';
 import Layout from '../components/Layout/Layout';
 import TypedStrings from '../components/TypedStrings/TypedStrings';
 
@@ -94,22 +94,12 @@ class IndexPage extends React.Component {
       (acc, el) => [...acc, `${siteUrl}/blog${el.node.fields.slug}`],
       []
     );
-    this.getMultipleClaps(urlArr).then(res => this.setState({ isLoaded: true, claps: JSON.parse(res) }));
+    getMultipleClapsAPI(urlArr).then(
+      res => this.setState({ isLoaded: true, claps: JSON.parse(res) }),
+      error => this.setState({ error })
+    );
   }
 
-  getMultipleClaps = urlArr =>
-    fetch(`https://api.applause-button.com/get-multiple`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain',
-      },
-      body: JSON.stringify(urlArr),
-    }).then(
-      response => response.text(),
-      error => {
-        this.setState({ error });
-      }
-    );
   render() {
     const { data } = this.props;
     return (
@@ -129,32 +119,24 @@ class IndexPage extends React.Component {
               </span>{' '}
               Recent posts ({data.allMarkdownRemark.totalCount} total)
             </p>
-            {data.allMarkdownRemark.edges.map(({ node }, i) => (
-              <PostCard
-                key={node.id}
-                featured={i === 0}
-                url={`/blog${node.fields.slug}`}
-                title={node.frontmatter.title}
-                date={node.frontmatter.date}
-                author={node.frontmatter.author}
-                coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.fluid : null}
-                excerpt={node.excerpt}
-                claps={
-                  !this.state.error &&
-                  this.state.isLoaded &&
-                  this.state.claps.find(
-                    el =>
-                      el.url === normalizeUrl(`${this.props.data.site.siteMetadata.siteUrl}/blog${node.fields.slug}`)
-                  )
-                    ? this.state.claps.find(
-                        el =>
-                          el.url ===
-                          normalizeUrl(`${this.props.data.site.siteMetadata.siteUrl}/blog${node.fields.slug}`)
-                      ).claps
-                    : 0
-                }
-              />
-            ))}
+            {data.allMarkdownRemark.edges.map(({ node }, i) => {
+              const clapObj = this.state.claps.find(
+                el => el.url === normalizeUrl(`${this.props.data.site.siteMetadata.siteUrl}/blog${node.fields.slug}`)
+              );
+              return (
+                <PostCard
+                  key={node.id}
+                  featured={i === 0}
+                  url={`/blog${node.fields.slug}`}
+                  title={node.frontmatter.title}
+                  date={node.frontmatter.date}
+                  author={node.frontmatter.author}
+                  coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.fluid : null}
+                  excerpt={node.excerpt}
+                  claps={!this.state.error && this.state.isLoaded && clapObj ? clapObj.claps : 0}
+                />
+              );
+            })}
           </Content>
         </Container>
       </Layout>
