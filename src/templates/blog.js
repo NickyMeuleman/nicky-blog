@@ -68,6 +68,18 @@ class PostsPage extends React.Component {
   }
 
   componentDidMount() {
+    this.getClaps();
+  }
+
+  componentDidUpdate(prevProps) {
+    // best solution for performance, refetch here or force didMount to run again
+    // on navigation by giving this component a key-prop?
+    if (this.props.location.pathname !== prevProps.location.pathname) {
+      this.getClaps();
+    }
+  }
+
+  getClaps() {
     const { siteUrl } = this.props.data.site.siteMetadata;
     const urlArr = this.props.data.allMarkdownRemark.edges.reduce(
       (acc, el) => [...acc, `${siteUrl}/blog${el.node.fields.slug}`],
@@ -75,7 +87,7 @@ class PostsPage extends React.Component {
     );
     getMultipleClapsAPI(urlArr).then(
       res => this.setState({ isLoaded: true, claps: JSON.parse(res) }),
-      error => this.setState({ error })
+      error => this.setState({ isLoaded: true, error })
     );
   }
 
