@@ -131,4 +131,40 @@ While it absolutely isn't, to me this feels like
 
 ![magic](https://i.imgur.com/YsbKHg1.gif).
 
-### Work in progress, more to be added
+## Never forget to fix problems
+
+Very neat, but if you're anything like me, you'll forget to do this from time to time.
+That's why we'll set up a way to automatically run the command above.
+
+> This section assumes the project uses the git version control manager.
+
+We'll hook into git using a package called `husky` and tell it to run our command before each commit.
+This has the added benefit of that command running for _everyone_ that commits code.
+
+To minimize the time this takes, we only run the command for files that are currently staged in git.
+This is a huge time-saver (especially for larger projects).
+
+```sh
+npm i -D husky@next lint-staged
+```
+
+in `package.json`
+Tell `husky` to run `lint-staged` right before you commit code to your git-repository.
+Configure `lint-staged` to run `stylelint --fix` on any `.css` file that is going to be committed.
+This will (potentially) change that file, so remember to add it to `git` again afterwards!
+
+```json
+"husky": {
+  "hooks": {
+    "pre-commit": "lint-staged"
+  }
+},
+"lint-staged": {
+  "*.css*": [
+    "stylelint --fix",
+    "git add"
+  ]
+}
+```
+
+![The git hook at work](./hook.gif)
