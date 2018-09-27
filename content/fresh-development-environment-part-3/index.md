@@ -2,7 +2,8 @@
 title: Setting up a fresh development environment, part 3
 date: "2018-05-28"
 author: "Nicky Meuleman"
-cover: './cover.jpeg'
+cover: "./cover.jpeg"
+tags: ["howto", "DX"]
 ---
 
 This is part 3, please also check out [part 1](/blog/fresh-development-environment-part-1) and [part 2](/blog/fresh-development-environment-part-2)

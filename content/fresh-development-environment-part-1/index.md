@@ -2,7 +2,8 @@
 title: Setting up a fresh development environment, part 1
 date: "2018-05-15"
 author: "Nicky Meuleman"
-cover: './cover.jpeg'
+cover: "./cover.jpeg"
+tags: ["howto", "DX"]
 ---
 
 Sometimes you just want to start from a clean slate.
@@ -151,14 +152,14 @@ they will be called `id_rsa` for the private one and `id_rsa.pub` for the public
 
 Next we'll configure which SSH-key to use when communicating with Github
 
-* Start the SSH-agent.
+- Start the SSH-agent.
   This command will start it if it's not already running (which it isn't, I'm on a fresh install)
 
 ```bash
 eval $(ssh-agent -s)
 ```
 
-* Add your private key
+- Add your private key
 
 ```bash
 ssh-add ~/.ssh/id_rsa
@@ -172,10 +173,10 @@ On Windows:
 clip < ~/.ssh/id_rsa.pub
 ```
 
-* Go to your Github settings.
-* Choose the SSH and GPG keys option
-* Click add a new SSH key
-* Enter a title for the key and paste what you just copied into the key area
+- Go to your Github settings.
+- Choose the SSH and GPG keys option
+- Click add a new SSH key
+- Enter a title for the key and paste what you just copied into the key area
 
 After clicking the big green Add SSH key button you are ready to comunicate with Github through SSH!
 
@@ -198,10 +199,10 @@ Success!
 
 Let's use our brand spanking new SSH-keys to clone a repo we own from github and set it up to receive changes we made locally.
 
-* Open your terminal in the directory you want the repository to be saved
-* Go to the Github repo you want to clone and copy the SSH-link
+- Open your terminal in the directory you want the repository to be saved
+- Go to the Github repo you want to clone and copy the SSH-link
   ![SSH-link on Github](./SSHlink.png)
-* clone the link you just copied
+- clone the link you just copied
 
 ```bash
 git clone git@github.com:Username/Reponame.git

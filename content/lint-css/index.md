@@ -3,6 +3,7 @@ title: Linting and formatting CSS
 date: "2018-07-27"
 author: "Nicky Meuleman"
 cover: "./cover.jpg"
+tags: ["CSS", "lint", "format", "howto", "DX"]
 ---
 
 We'll set up linting and formatting for our styles.

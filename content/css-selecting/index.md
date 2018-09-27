@@ -2,7 +2,8 @@
 title: Selecting in CSS
 date: "2018-06-21"
 author: "Nicky Meuleman"
-cover: './cover.jpg'
+cover: "./cover.jpg"
+tags: ["CSS", "howto"]
 ---
 
 <!-- Photo by Andrew Ridley on Unsplash -->
@@ -320,6 +321,6 @@ CSS-tricks has a great [article](https://css-tricks.com/the-sass-ampersand/) tha
 
 Sources used:
 
-* [MDN docs](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors)
-* [CSS-tricks](https://css-tricks.com/)
-* [CSS: The definitive guide](http://shop.oreilly.com/product/0636920012726.do)
+- [MDN docs](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors)
+- [CSS-tricks](https://css-tricks.com/)
+- [CSS: The definitive guide](http://shop.oreilly.com/product/0636920012726.do)

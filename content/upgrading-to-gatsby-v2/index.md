@@ -2,7 +2,8 @@
 title: Upgrading to Gatsby v2
 date: "2018-06-28"
 author: "Nicky Meuleman"
-cover: './cover.jpg'
+cover: "./cover.jpg"
+tags: ["GatsbyJS", "howto"]
 ---
 
 <!-- Photo by Pietro De Grandi on Unsplash -->

@@ -9,13 +9,13 @@ html {
   box-sizing: inherit;
 }
 
-#___gatsby {
+#___gatsby > div:first-child {
   display: flex;
   min-height: 100vh;
   flex-direction: column;
 }
 
-#___gatsby > main {
+#___gatsby > div:first-child > main {
   flex: 1;
   background-color: #f5f5f5;
 }

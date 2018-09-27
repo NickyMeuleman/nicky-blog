@@ -1,5 +1,6 @@
 const path = require(`path`);
 const { createFilePath } = require(`gatsby-source-filesystem`);
+const _ = require('lodash');
 
 // Create slugs for pages
 exports.onCreateNode = ({ node, getNode, actions }) => {
@@ -27,6 +28,7 @@ exports.createPages = ({ graphql, actions }) => {
               }
               frontmatter {
                 title
+                tags
               }
             }
           }
@@ -58,18 +60,34 @@ exports.createPages = ({ graphql, actions }) => {
       // create blog-list pages
       const postsPerPage = 6;
       const numPages = Math.ceil(blogPosts.length / postsPerPage);
-      Array.from({ length: numPages }).forEach((_, i) => {
+      Array.from({ length: numPages }).forEach((item, index) => {
         createPage({
-          path: i === 0 ? `/blog` : `/blog/${i + 1}`,
+          path: index === 0 ? `/blog` : `/blog/${index + 1}`,
           component: path.resolve('./src/templates/blog.js'),
           context: {
             limit: postsPerPage,
-            skip: i * postsPerPage,
+            skip: index * postsPerPage,
             numPages,
-            currentPage: i + 1,
+            currentPage: index + 1,
           },
         });
       });
+
+      // create tag pages
+      const tagLists = blogPosts
+        .filter(post => _.get(post, `node.frontmatter.tags`))
+        .map(post => _.get(post, `node.frontmatter.tags`));
+
+      _.uniq(_.flatten(tagLists)).forEach(tag => {
+        createPage({
+          path: `/blog/tags/${_.kebabCase(tag.toLowerCase())}/`,
+          component: path.resolve('./src/templates/tag.js'),
+          context: {
+            tag,
+          },
+        });
+      });
+
       return resolve();
     });
   });

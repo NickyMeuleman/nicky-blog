@@ -2,15 +2,16 @@
 title: Automagically lint and format your code
 date: "2018-05-04"
 author: "Nicky Meuleman"
-cover: './cover.png'
+cover: "./cover.png"
+tags: ["JavaScript", "lint", "format", "howto", "DX"]
 ---
 
 We'll set up our editor to [lint](<https://en.wikipedia.org/wiki/Lint_(software)>) and format our code automatically, leaving us free to think about the functionality of our code. Not whether or not a variable is defined or if we should insert a space.
 
 To achieve this goal we'll use 2 powerful tools.
 
-* The linting part will be handled by [ESLint](https://eslint.org/)
-* The formatting part will be handled by [Prettier](https://prettier.io/)
+- The linting part will be handled by [ESLint](https://eslint.org/)
+- The formatting part will be handled by [Prettier](https://prettier.io/)
 
 On their own, those tools are very powerful.  
 Combined, they will make you feel like you have superpowers.
@@ -38,10 +39,10 @@ Before continuing, we'll set up VSCode to perform linting and formatting tasks e
 
 Go to the user-settings (`file > preferences > settings`)
 
-* Tell VSCode to format the document every time we save a file.
-* Explicitly disable fomatting for javascript files, as we will format through ESLint.
-* Run ESLint on each save (with the `--fix` flag).
-* Tell ESLint to always show us its status to stay informed.
+- Tell VSCode to format the document every time we save a file.
+- Explicitly disable fomatting for javascript files, as we will format through ESLint.
+- Run ESLint on each save (with the `--fix` flag).
+- Tell ESLint to always show us its status to stay informed.
 
 ```json
 "editor.formatOnSave": true,
@@ -75,13 +76,13 @@ Since ESLint is installed locally, we'll initialize it from the node modules fol
 ./node_modules/.bin/eslint --init
 ```
 
-* Answer `Use a popular style guide` to the question how you would like to configure ESLint
+- Answer `Use a popular style guide` to the question how you would like to configure ESLint
 
-* Choose `Airbnb` when asked which style guide
+- Choose `Airbnb` when asked which style guide
 
-* Enter `Y` when asked if you use React
+- Enter `Y` when asked if you use React
 
-* Lastly we'll create our rules-file in the `JSON` format
+- Lastly we'll create our rules-file in the `JSON` format
 
 This process will create a `.eslintrc.json` file in the root folder of your project. It will also install the dependencies needed for our chosen styleguide.
 
