@@ -109,7 +109,7 @@ class IndexPage extends React.Component {
             <Pattern />
           </Triangle>
           <HeroContent>
-            <h1>Building for the modern web</h1>
+            <h1>TESTING BRANCH</h1>
             <TypedStrings strings={['Web applications', 'Landing pages', 'Responsive designs', 'Static websites']} />
           </HeroContent>
           <Content>
