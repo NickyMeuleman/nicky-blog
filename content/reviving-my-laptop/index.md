@@ -3,6 +3,7 @@ title: Reviving my laptop
 date: "2018-06-02"
 author: "Nicky Meuleman"
 cover: "./cover.jpg"
+tags: ["Hardware"]
 ---
 
 A while ago I decided to start fresh and completely reïnstall this computer.
@@ -21,13 +22,13 @@ Luckily, I only needed a few tools.
 I used:
 ![the tools](./tools.jpg)
 
-* A screwdriver
-* A prying tool (it was a nail file, but shhhh)
-* Thermal paste
-* Cups to organize all the screws
-  * a pen to write labels for all those cups
-* Microfiber cloth to clean the old paste (I used coffee filters)
-* Pure alcohol to clean the old paste (I used some from the pharmacy)
+- A screwdriver
+- A prying tool (it was a nail file, but shhhh)
+- Thermal paste
+- Cups to organize all the screws
+  - a pen to write labels for all those cups
+- Microfiber cloth to clean the old paste (I used coffee filters)
+- Pure alcohol to clean the old paste (I used some from the pharmacy)
 
 First I removed the battery and opened up the service-panel on the back.
 
