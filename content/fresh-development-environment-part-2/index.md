@@ -2,7 +2,8 @@
 title: Setting up a fresh development environment, part 2
 date: "2018-05-21"
 author: "Nicky Meuleman"
-cover: './cover.jpeg'
+cover: "./cover.jpeg"
+tags: ["Howto", "DX"]
 ---
 
 This is part 2, please also check out [part 1](/blog/fresh-development-environment-part-1)
@@ -147,7 +148,7 @@ You can configure a few git aliases to execute some commands you use often in a 
 The options are nearly limitless (and go beyond git itself).
 Here is my favourite:
 
-* `git s` to run git status in short mode.
+- `git s` to run git status in short mode.
   The standard output you get from `git status` is very verbose. The output from short mode is a lot cleaner!
 
 ```sh

@@ -4,11 +4,15 @@ import styled from 'styled-components';
 import { TABLET_WIDTH } from 'typography-breakpoint-constants';
 import PostCard from '../components/PostCard/PostCard';
 import { rhythm, scale } from '../utils/typography';
-import { getMultipleClaps as getMultipleClapsAPI, normalizeUrl } from '../utils/clapButton';
+import {
+  getMultipleClaps as getMultipleClapsAPI,
+  normalizeUrl,
+} from '../utils/clapButton';
 import Layout from '../components/Layout/Layout';
 import TypedStrings from '../components/TypedStrings/TypedStrings';
 
 const Container = styled.div`
+  flex: 1;
   display: grid;
   grid-template-columns: minmax(5vw, 1fr) minmax(auto, 60rem) minmax(5vw, 1fr);
   grid-template-rows: ${rhythm(8)} auto minmax(${rhythm(1)}, 1fr);
@@ -18,7 +22,10 @@ const Container = styled.div`
 const Triangle = styled.div`
   grid-row: 1/-1;
   grid-column: 1/-1;
-  background: ${props => `linear-gradient(120deg, ${props.theme.primary} 5%, ${props.theme.secondary})`};
+  background: ${props =>
+    `linear-gradient(120deg, ${props.theme.primary} 5%, ${
+      props.theme.secondary
+    })`};
   clip-path: polygon(0 0, 100% 0, 100% ${rhythm(8)}, 0 ${rhythm(13)});
   z-index: 1;
   overflow: hidden;
@@ -110,7 +117,14 @@ class IndexPage extends React.Component {
           </Triangle>
           <HeroContent>
             <h1>Building for the modern web</h1>
-            <TypedStrings strings={['Web applications', 'Landing pages', 'Responsive designs', 'Static websites']} />
+            <TypedStrings
+              strings={[
+                'Web applications',
+                'Landing pages',
+                'Responsive designs',
+                'Static websites',
+              ]}
+            />
           </HeroContent>
           <Content>
             <p>
@@ -121,7 +135,13 @@ class IndexPage extends React.Component {
             </p>
             {data.allMarkdownRemark.edges.map(({ node }, i) => {
               const clapObj = this.state.claps.find(
-                el => el.url === normalizeUrl(`${this.props.data.site.siteMetadata.siteUrl}/blog${node.fields.slug}`)
+                el =>
+                  el.url ===
+                  normalizeUrl(
+                    `${this.props.data.site.siteMetadata.siteUrl}/blog${
+                      node.fields.slug
+                    }`
+                  )
               );
               return (
                 <PostCard
@@ -131,9 +151,17 @@ class IndexPage extends React.Component {
                   title={node.frontmatter.title}
                   date={node.frontmatter.date}
                   author={node.frontmatter.author}
-                  coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.fluid : null}
+                  coverSizes={
+                    node.frontmatter.cover
+                      ? node.frontmatter.cover.childImageSharp.fluid
+                      : null
+                  }
                   excerpt={node.excerpt}
-                  claps={!this.state.error && this.state.isLoaded && clapObj ? clapObj.claps : 0}
+                  claps={
+                    !this.state.error && this.state.isLoaded && clapObj
+                      ? clapObj.claps
+                      : 0
+                  }
                 />
               );
             })}
@@ -153,7 +181,10 @@ export const query = graphql`
         siteUrl
       }
     }
-    allMarkdownRemark(sort: { fields: [frontmatter___date], order: DESC }, limit: 3) {
+    allMarkdownRemark(
+      sort: { fields: [frontmatter___date], order: DESC }
+      limit: 3
+    ) {
       totalCount
       edges {
         node {

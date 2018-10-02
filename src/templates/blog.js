@@ -6,7 +6,10 @@ import PostCard from '../components/PostCard/PostCard';
 import { rhythm } from '../utils/typography';
 import Layout from '../components/Layout/Layout';
 import Pagination from '../components/Pagination/Pagination';
-import { getMultipleClaps as getMultipleClapsAPI, normalizeUrl } from '../utils/clapButton';
+import {
+  getMultipleClaps as getMultipleClapsAPI,
+  normalizeUrl,
+} from '../utils/clapButton';
 
 const PostContainer = styled.div`
   z-index: 5;
@@ -32,6 +35,7 @@ const PostContainer = styled.div`
 `;
 
 const Container = styled.div`
+  flex: 1;
   display: grid;
   grid-template-columns: minmax(5vw, 1fr) minmax(auto, 60rem) minmax(5vw, 1fr);
   grid-template-rows: ${rhythm(2)} auto 1fr;
@@ -41,7 +45,10 @@ const Container = styled.div`
 const Triangle = styled.div`
   grid-row: 1/-1;
   grid-column: 1/-1;
-  background: ${props => `linear-gradient(120deg, ${props.theme.primary} 5%, ${props.theme.secondary})`};
+  background: ${props =>
+    `linear-gradient(120deg, ${props.theme.primary} 5%, ${
+      props.theme.secondary
+    })`};
   clip-path: polygon(0 0, 100% 0, 100% ${rhythm(8)}, 0 ${rhythm(13)});
   z-index: 1;
   overflow: hidden;
@@ -108,7 +115,13 @@ class PostsPage extends React.Component {
             </p>
             {data.allMarkdownRemark.edges.map(({ node }) => {
               const clapObj = this.state.claps.find(
-                el => el.url === normalizeUrl(`${this.props.data.site.siteMetadata.siteUrl}/blog${node.fields.slug}`)
+                el =>
+                  el.url ===
+                  normalizeUrl(
+                    `${this.props.data.site.siteMetadata.siteUrl}/blog${
+                      node.fields.slug
+                    }`
+                  )
               );
               return (
                 <PostCard
@@ -117,8 +130,16 @@ class PostsPage extends React.Component {
                   title={node.frontmatter.title}
                   date={node.frontmatter.date}
                   author={node.frontmatter.author}
-                  coverSizes={node.frontmatter.cover ? node.frontmatter.cover.childImageSharp.fluid : null}
-                  claps={!this.state.error && this.state.isLoaded && clapObj ? clapObj.claps : 0}
+                  coverSizes={
+                    node.frontmatter.cover
+                      ? node.frontmatter.cover.childImageSharp.fluid
+                      : null
+                  }
+                  claps={
+                    !this.state.error && this.state.isLoaded && clapObj
+                      ? clapObj.claps
+                      : 0
+                  }
                 />
               );
             })}
@@ -139,7 +160,11 @@ export const query = graphql`
         siteUrl
       }
     }
-    allMarkdownRemark(sort: { fields: [frontmatter___date], order: DESC }, limit: $limit, skip: $skip) {
+    allMarkdownRemark(
+      sort: { fields: [frontmatter___date], order: DESC }
+      limit: $limit
+      skip: $skip
+    ) {
       totalCount
       edges {
         node {

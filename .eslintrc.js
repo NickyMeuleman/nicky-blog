@@ -40,6 +40,7 @@ module.exports = {
                 aspects: ["noHref", "invalidHref", "preferButton"]
             }
         ],
+        "no-param-reassign": 0,
         "graphql/template-strings": [
             "error",
             {
@@ -52,7 +53,6 @@ module.exports = {
             "error",
             {
                 singleQuote: true,
-                printWidth: 120,
                 trailingComma: "es5"
             }
         ]

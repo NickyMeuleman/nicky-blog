@@ -2,7 +2,11 @@ import React from 'react';
 import { Link, graphql } from 'gatsby';
 import Helmet from 'react-helmet';
 import styled from 'styled-components';
-import { TABLET_WIDTH, LARGE_DISPLAY_WIDTH } from 'typography-breakpoint-constants';
+import {
+  TABLET_WIDTH,
+  LARGE_DISPLAY_WIDTH,
+} from 'typography-breakpoint-constants';
+import _ from 'lodash';
 import Layout from '../components/Layout/Layout';
 import Hero from '../components/Hero/Hero';
 import ClapButton from '../components/ClapButton/ClapButton';
@@ -52,6 +56,7 @@ const Adjacent = styled.div`
 `;
 
 const Container = styled.div`
+  flex: 1;
   & > div:first-child {
     position: relative;
     z-index: 1;
@@ -60,7 +65,10 @@ const Container = styled.div`
   article {
     position: relative;
     z-index: 30;
-    background-image: linear-gradient(rgba(255, 255, 255, 0.75), #fff ${rhythm(5)});
+    background-image: linear-gradient(
+      rgba(255, 255, 255, 0.75),
+      #fff ${rhythm(5)}
+    );
     padding: ${rhythm(1)};
     margin: 0 auto;
     margin-top: ${rhythm(-5)};
@@ -103,18 +111,35 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
           name="twitter:image"
           content={
             data.site.siteMetadata.siteUrl +
-            (post.frontmatter.cover ? post.frontmatter.cover.childImageSharp.sizes.src : '/icons/icon-256x256.png')
+            (post.frontmatter.cover
+              ? post.frontmatter.cover.childImageSharp.sizes.src
+              : '/icons/icon-256x256.png')
           }
         />
       </Helmet>
       <Container>
         <Hero
           title={post.frontmatter.title}
-          coverSizes={post.frontmatter.cover ? post.frontmatter.cover.childImageSharp.sizes : null}
+          coverSizes={
+            post.frontmatter.cover
+              ? post.frontmatter.cover.childImageSharp.sizes
+              : null
+          }
         />
         <article>
           <h1>{post.frontmatter.title}</h1>
           <div dangerouslySetInnerHTML={{ __html: post.html }} />
+          <div>
+            Tags:{' '}
+            {post.frontmatter.tags.map(tag => (
+              <span>
+                <Link to={`/blog/tags/${_.kebabCase(tag.toLowerCase())}`}>
+                  {tag}
+                </Link>
+                &nbsp;
+              </span>
+            ))}
+          </div>
         </article>
         <UnderPost>
           <div
@@ -132,14 +157,20 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
               maxClaps={10}
               initialClaps={initialClaps}
             />
-            <Share url={`${data.site.siteMetadata.siteUrl}/blog${pageContext.slug}`} title={post.frontmatter.title} />
+            <Share
+              url={`${data.site.siteMetadata.siteUrl}/blog${pageContext.slug}`}
+              title={post.frontmatter.title}
+            />
           </div>
           <Adjacent>
             <div>
               {prev && (
                 <LinkU to={`/blog${prev.fields.slug}`}>
                   <h4>Older</h4>
-                  <span data-prev style={{ width: '1rem', marginLeft: '-1rem' }}>
+                  <span
+                    data-prev
+                    style={{ width: '1rem', marginLeft: '-1rem' }}
+                  >
                     ←
                   </span>
                   <span>{prev.frontmatter.title}</span>
@@ -173,6 +204,7 @@ export const query = graphql`
       html
       frontmatter {
         title
+        tags
         cover {
           childImageSharp {
             sizes(maxWidth: 1920) {
