@@ -40,7 +40,9 @@ exports.createPages = ({ graphql, actions }) => {
         return reject(result.errors);
       }
       // filter drafts
-      const blogPosts = result.data.allMarkdownRemark.edges.filter(edge => !edge.node.frontmatter.draft);
+      const blogPosts = result.data.allMarkdownRemark.edges.filter(
+        edge => !edge.node.frontmatter.draft
+      );
 
       // create blog-post pages
       blogPosts.forEach(({ node }, i) => {
@@ -75,11 +77,12 @@ exports.createPages = ({ graphql, actions }) => {
       });
 
       // create tag pages
-      const tagLists = blogPosts
-        .filter(post => _.get(post, `node.frontmatter.tags`))
-        .map(post => _.get(post, `node.frontmatter.tags`));
+      const tagList = blogPosts
+        .filter(post => post.node.frontmatter.tags)
+        .map(post => post.node.frontmatter.tags)
+        .reduce((acc, postTagArr) => acc.concat(postTagArr), []);
 
-      _.uniq(_.flatten(tagLists)).forEach(tag => {
+      new Set(tagList).forEach(tag => {
         createPage({
           path: `/blog/tags/${_.kebabCase(tag.toLowerCase())}/`,
           component: path.resolve('./src/templates/tag.js'),

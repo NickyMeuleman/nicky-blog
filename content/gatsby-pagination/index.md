@@ -3,7 +3,7 @@ title: Pagination in GatsbyJS
 date: "2018-08-16"
 author: "Nicky Meuleman"
 cover: "./cover.jpg"
-tags: ["GatsbyJS", "howto"]
+tags: ["GatsbyJS", "Howto"]
 ---
 
 <!-- Photo by Austris Augusts on Unsplash -->

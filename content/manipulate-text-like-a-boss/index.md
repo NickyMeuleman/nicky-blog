@@ -3,7 +3,7 @@ title: Manipulate text like a boss
 date: "2018-06-13"
 author: "Nicky Meuleman"
 cover: "./cover.jpeg"
-tags: ["tips", "DX"]
+tags: ["Tips", "DX"]
 ---
 
 <!-- Photo by dylan nolte on Unsplash -->

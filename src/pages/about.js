@@ -6,6 +6,7 @@ import syncSVG from '../assets/in_sync.svg';
 import codingSVG from '../assets/coding_headphones.svg';
 
 const Container = styled.div`
+  flex: 1;
   display: grid;
   justify-content: center;
   grid-template-columns: minmax(5vw, 1fr) minmax(auto, 60rem) minmax(5vw, 1fr);
@@ -15,7 +16,10 @@ const Container = styled.div`
 const Triangle = styled.div`
   grid-column: 1/-1;
   grid-row: 1/-1;
-  background: ${props => `linear-gradient(120deg, ${props.theme.primary} 5%, ${props.theme.secondary})`};
+  background: ${props =>
+    `linear-gradient(120deg, ${props.theme.primary} 5%, ${
+      props.theme.secondary
+    })`};
   clip-path: polygon(0 0, 0% 50vh, 70vw 0);
   z-index: 2;
   position: relative;
@@ -44,7 +48,14 @@ const Content = styled.div`
   img[alt='responsive'] {
     float: right;
     margin-top: -20vh;
-    shape-outside: polygon(-2.16% -31.67%, 103.01% -41.97%, 103.99% 49.05%, 93.43% 94.58%, 4.22% 98.57%, 2.28% 28.55%);
+    shape-outside: polygon(
+      -2.16% -31.67%,
+      103.01% -41.97%,
+      103.99% 49.05%,
+      93.43% 94.58%,
+      4.22% 98.57%,
+      2.28% 28.55%
+    );
   }
   img[alt='coding'] {
     float: left;
@@ -79,15 +90,20 @@ const AboutPage = () => (
       </Triangle>
       <Content>
         <img src={syncSVG} alt="responsive" />
-        Lorem ipsum dolor, sit amet consectetur adipisicing elit. Obcaecati dicta mollitia dolores deleniti officiis
-        autem laboriosam sequi delectus laborum, nesciunt ab adipisci, illo aliquam, fuga debitis. Sunt quod aliquam
-        adipisci voluptatem libero vitae, modi optio. Aut ipsam beatae voluptatem suscipit assumenda ratione dolor.
+        Lorem ipsum dolor, sit amet consectetur adipisicing elit. Obcaecati
+        dicta mollitia dolores deleniti officiis autem laboriosam sequi delectus
+        laborum, nesciunt ab adipisci, illo aliquam, fuga debitis. Sunt quod
+        aliquam adipisci voluptatem libero vitae, modi optio. Aut ipsam beatae
+        voluptatem suscipit assumenda ratione dolor.
         <img src={codingSVG} alt="coding" />
-        Rerum odit fuga doloribus sit, corporis exercitationem commodi ullam totam cupiditate pariatur facere eos porro
-        debitis alias ad voluptate! Assumenda vero maiores quasi sint ducimus nobis a qui eum non possimus, molestiae
-        eaque temporibus ipsam beatae! Magnam vero repudiandae repellat, ullam nesciunt quod ad exercitationem explicabo
-        ipsum voluptate dolorum maxime labore similique amet debitis eum obcaecati officia fuga ea, architecto, expedita
-        animi esse. Possimus, soluta velit! Rem pariatur nobis doloremque, odit alias repellat! Id debitis at
+        Rerum odit fuga doloribus sit, corporis exercitationem commodi ullam
+        totam cupiditate pariatur facere eos porro debitis alias ad voluptate!
+        Assumenda vero maiores quasi sint ducimus nobis a qui eum non possimus,
+        molestiae eaque temporibus ipsam beatae! Magnam vero repudiandae
+        repellat, ullam nesciunt quod ad exercitationem explicabo ipsum
+        voluptate dolorum maxime labore similique amet debitis eum obcaecati
+        officia fuga ea, architecto, expedita animi esse. Possimus, soluta
+        velit! Rem pariatur nobis doloremque, odit alias repellat! Id debitis at
         architecto!
       </Content>
     </Container>

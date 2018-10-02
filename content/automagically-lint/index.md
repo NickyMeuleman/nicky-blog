@@ -3,7 +3,7 @@ title: Automagically lint and format your code
 date: "2018-05-04"
 author: "Nicky Meuleman"
 cover: "./cover.png"
-tags: ["JavaScript", "lint", "format", "howto", "DX"]
+tags: ["JavaScript", "Lint", "Format", "Howto", "DX"]
 ---
 
 We'll set up our editor to [lint](<https://en.wikipedia.org/wiki/Lint_(software)>) and format our code automatically, leaving us free to think about the functionality of our code. Not whether or not a variable is defined or if we should insert a space.

@@ -16,6 +16,7 @@ html {
 }
 
 #___gatsby > div:first-child > main {
+  display: flex;
   flex: 1;
   background-color: #f5f5f5;
 }

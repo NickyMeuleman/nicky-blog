@@ -3,7 +3,7 @@ title: Reviving my laptop
 date: "2018-06-02"
 author: "Nicky Meuleman"
 cover: "./cover.jpg"
-tags: ["hardware"]
+tags: ["Hardware"]
 ---
 
 A while ago I decided to start fresh and completely reïnstall this computer.

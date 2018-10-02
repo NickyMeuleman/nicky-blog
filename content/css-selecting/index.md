@@ -3,7 +3,7 @@ title: Selecting in CSS
 date: "2018-06-21"
 author: "Nicky Meuleman"
 cover: "./cover.jpg"
-tags: ["CSS", "howto"]
+tags: ["CSS", "Howto"]
 ---
 
 <!-- Photo by Andrew Ridley on Unsplash -->

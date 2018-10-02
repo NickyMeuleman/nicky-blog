@@ -3,7 +3,7 @@ title: Setting up a fresh development environment, part 1
 date: "2018-05-15"
 author: "Nicky Meuleman"
 cover: "./cover.jpeg"
-tags: ["howto", "DX"]
+tags: ["Howto", "DX"]
 ---
 
 Sometimes you just want to start from a clean slate.
