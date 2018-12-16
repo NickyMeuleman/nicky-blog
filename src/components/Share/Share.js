@@ -1,5 +1,9 @@
 import React from 'react';
-import { FacebookShareButton, TwitterShareButton, RedditShareButton } from 'react-share';
+import {
+  FacebookShareButton,
+  TwitterShareButton,
+  RedditShareButton,
+} from 'react-share';
 import styled from 'styled-components';
 import { TABLET_WIDTH, MOBILE_WIDTH } from 'typography-breakpoint-constants';
 import { rhythm } from '../../utils/typography';
@@ -73,7 +77,12 @@ const Share = ({ url, title }) => (
   <Container>
     <Facebook url={url} quote={title}>
       {/* Icon from fontawesome, https://fontawesome.com/license */}
-      <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 264 512">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+        role="img"
+        viewBox="0 0 264 512"
+      >
         <path
           fill="currentColor"
           d="M76.7 512V283H0v-91h76.7v-71.7C76.7 42.4 124.3 0 193.8 0c33.3 0 61.9 2.5 70.2 3.6V85h-48.2c-37.8 0-45.1 18-45.1 44.3V192H256l-11.7 91h-73.6v229"
@@ -83,7 +92,12 @@ const Share = ({ url, title }) => (
     </Facebook>
     <Twitter url={url} title={title} via="NMeuleman">
       {/* Icon from https://github.com/konpa/devicon/blob/158fbb74b56f26b37c63c5118d58f6f6d6121e6a/icons/twitter/twitter-original.svg */}
-      <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 126.24 102.59">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+        role="img"
+        viewBox="0 0 126.24 102.59"
+      >
         <path
           d="M40.58,115.3c47.64,0,73.69-39.47,73.69-73.69,0-1.12,0-2.24-.07-3.35a52.7,52.7,0,0,0,12.92-13.41,51.7,51.7,0,0,1-14.87,4.08A26,26,0,0,0,123.63,14.6a51.9,51.9,0,0,1-16.45,6.29A25.92,25.92,0,0,0,63.05,44.51,73.53,73.53,0,0,1,9.67,17.45a25.92,25.92,0,0,0,8,34.58A25.71,25.71,0,0,1,6,48.78c0,.11,0,.22,0,.33A25.91,25.91,0,0,0,26.73,74.5a25.86,25.86,0,0,1-11.7.44,25.93,25.93,0,0,0,24.2,18A52,52,0,0,1,7.06,104a52.72,52.72,0,0,1-6.18-.36,73.32,73.32,0,0,0,39.7,11.63"
           transform="translate(-0.88 -12.7)"
@@ -92,7 +106,12 @@ const Share = ({ url, title }) => (
       <span>Twitter</span>
     </Twitter>
     <Reddit url={url} title={title}>
-      <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="-4.771 0.104 53.521 44.858">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+        role="img"
+        viewBox="-4.771 0.104 53.521 44.858"
+      >
         <path
           fill="#fff"
           d="M29.909 35.89c-1.999 1.997-5.218 2.382-7.921 2.382-2.7 0-5.922-.385-7.918-2.382M36.021 4.276L25.899 1.894l-3.93 11.996L25.9 1.894m18.241 3.201a3.99 3.99 0 1 1-7.98 0 3.991 3.991 0 0 1 7.98 0zm.661 23.906c0 8.262-10.263 14.961-22.922 14.961-12.66 0-22.922-6.698-22.922-14.961 0-8.262 10.262-14.961 22.922-14.961 12.659 0 22.922 6.698 22.922 14.961zM-.744 26.676a5.061 5.061 0 0 1-3.027-4.636 5.06 5.06 0 0 1 8.935-3.257m33.568.103a5.061 5.061 0 0 1 9.018 3.154 5.064 5.064 0 0 1-3.23 4.72"

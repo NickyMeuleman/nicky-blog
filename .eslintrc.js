@@ -49,6 +49,7 @@ module.exports = {
                 tagName: "graphql"
             }
         ],
+        "react/destructuring-assignment":0,
         "prettier/prettier": [
             "error",
             {

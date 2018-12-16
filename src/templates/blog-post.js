@@ -132,7 +132,7 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
           <div>
             Tags:{' '}
             {post.frontmatter.tags.map(tag => (
-              <span>
+              <span key={tag}>
                 <Link to={`/blog/tags/${_.kebabCase(tag.toLowerCase())}`}>
                   {tag}
                 </Link>

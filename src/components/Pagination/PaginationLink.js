@@ -9,5 +9,5 @@ export default ({ to, children, ...props }) => {
       </Link>
     );
   }
-  return <span>{children}</span>;
+  return <span {...props}>{children}</span>;
 };
