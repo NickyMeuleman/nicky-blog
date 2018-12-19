@@ -1,6 +1,6 @@
 ---
 title: JSON-schemas are awesome
-date: "2018-12-17"
+date: "2018-12-19"
 author: "Nicky Meuleman"
 cover: "./cover.jpeg"
 tags: ["Lint", "Howto", "DX"]
@@ -10,38 +10,35 @@ tags: ["Lint", "Howto", "DX"]
 
 Did those words make you feel (a bit of) dread?
 
-You are not alone, writing a configuration object/file is pretty low on most developers list of favorite passtimes.
+You are not alone, writing a configuration object/file is pretty low on most developers' list of favorite pastimes.
 
-When writing these files (for example a `.eslintrc.json`) spelling is one of your worst enemies.
-Was it `no-unused-vars`, `noUnusedVars`, `no-unused-var` or something else?
+When writing these files (for example a `.eslintrc.json`) spelling is one of your worst enemies.  
+_Was it `no-unused-vars`, `noUnusedVars`, `no-unused-var` or something else?_
 
 **Many hours of devtime have been lost to spelling**
 
-Remembering what that specific option expects to receive is another one of those enemies.
+Remembering what a certain key expects to receive as value is another one of those enemies.  
+_Does this expect an array or an object, I don't remember_ 😰
 
-_Does this expect an array or an object, I don't remember 😰_
-
-One will work, the other grants a one way ticket to crypticError town.
-
-For those reasons (and more) having the docs open while you write your configuration is an absolute _must_
+One will work, the other grants a one way ticket to crypticError town.  
+For those reasons (and more), having the docs open while you write your configuration is an absolute _must_
 
 ## There is a better way
 
 The solution? Laziness
 
-I'm half kidding, the solution is the title of this blog-post, JSON-schemas.
+I'm kidding, partly. The solution is the title of this blogpost, JSON-schemas.
+Leveraging one of those means you can rely on the intelligent autocompletion and error detection to do the heavy lifting for you!
 
-Leveraging one of those means you can lean on intelligent auto-complete and error-detection to do the heavy lifting for you!
-
-To get started with the least amount of effort, you can use VSCode, which has builtin support for JSON-schema. Start a file that is listed at [schemastore.org](http://schemastore.org/json/) and trigger the autocomplete in the editor (ctrl/cmd + space)
+To get started with the least amount of effort, you can use [VSCode](https://code.visualstudio.com/), which has [builtin support for JSON-schema](https://json-schema.org/implementations.html#editors). Create a file that is listed at [schemastore.org](http://schemastore.org/json/) and trigger the autocomplete in the editor (ctrl/cmd + space)
 
 ![empty .babelrc file](./empty-babelrc.png)
 
 Hitting `tab` on an option in that list and automatically getting empty straight brackets if that key expects an array as value is **so helpful**.
-Play around with your configuration file of choice, if the schema supports it, the amount of nesting doesn't matter, your editor will know what can fit there.
+Play around with your configuration file of choice. If the schema supports it, the amount of nesting doesn't matter, your editor will know what can fit there.
 
 You can define the exact schema you want to use in your editor's workspace settings.
-When I wrote this, I knew you _could_, but not _how_.
+When I wrote this, I knew you _could_ do that, but not _how_.
 Luckily for me the autocomplete powered by, you guessed it, a JSON-schema, told me exactly what it expected.
 
 ```json
@@ -58,7 +55,7 @@ Luckily for me the autocomplete powered by, you guessed it, a JSON-schema, told 
 
 ## Your own schema
 
-A schema doesn't need to be remote. You can link you file of choice to a (local) schema you wrote yourself.
+A schema doesn't need to be remote. You can link your file of choice to a (local) schema.
 
 In this `json` file, we point to the schema used to validate against.
 
@@ -69,7 +66,7 @@ In this `json` file, we point to the schema used to validate against.
 }
 ```
 
-The file `$schema` points to is in the same directory
+The `$schema` value points to a file in the same directory
 
 ```json
 // drivers.schema.json
@@ -78,7 +75,7 @@ The file `$schema` points to is in the same directory
 }
 ```
 
-The value for `$schema` defines which version of the JSON-schema spec is being used.
+The `$schema` value here defines which version of the JSON-schema spec is being used.
 
 An empty file is boring, the code beneath adds a few contraints to our `driver.json`
 
@@ -113,26 +110,14 @@ Here I tried to specify the season as `"2018"`
 
 ![incorrect type error](expected-integer.png)
 
-Now for a taste of something more complex.
+Now: a taste of something more complex.
 
 ```json
 // drivers.schema.json
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
-  "title": "Drivers",
-  "description": "Formula 1 drivers",
-  "type": "object",
-  "additionalProperties": false,
+  // ...
   "properties": {
-    "$schema": {
-      "type": "string"
-    },
-    "series": {
-      "type": "string"
-    },
-    "season": {
-      "type": "integer"
-    },
+    // ...
     "driverList": {
       "type": "array",
       "items": {
@@ -148,60 +133,35 @@ Now for a taste of something more complex.
         "raceNumber": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 99
+          "maximum": 99,
+          "description": "number this driver races with"
         },
         "code": {
           "type": "string",
           "minLength": 3,
-          "maxLength": 3
+          "maxLength": 3,
+          "description": "3 letter abbreviation"
         },
-        "firstName": {
-          "type": "string"
-        },
-        "lastName": {
-          "type": "string"
-        },
-        "dateOfBirth": {
-          "type": "string",
-          "format": "date",
-          "description": "dateOfBirth in YYYY-MM-DD format",
-          "default": "YYYY-MM-DD"
-        },
-        "nationality": {
-          "type": "string"
-        },
+        // ...,
         "team": {
           "$ref": "#/definitions/team"
-        },
-        "quotes": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "uniqueItems": true
         }
+        // ...
       },
       "required": ["raceNumber", "code", "team"]
     },
     "team": {
       "enum": [
-        "MCLAREN",
-        "FERRARI",
-        "REDBULL",
-        "TOROROSSO",
-        "MERCEDES",
-        "RENAULT",
-        "HAAS",
-        "FORCEINDIA",
-        "SAUBER",
-        "WILLIAMS"
+        // ...
       ]
     }
   }
 }
 ```
 
-This is an example that would satisfy the schema
+The entire file is available [in this gist](https://gist.github.com/NickyMeuleman/f18b70684e12697d71b4178ad1403988#file-drivers-schema-json)
+
+This is an example of a file that would satisfy that schema
 
 ```json
 // drivers.json
@@ -232,4 +192,25 @@ This is an example that would satisfy the schema
 }
 ```
 
-Work In Progress, more soon.
+## Not just JSON
+
+These JSON-schemas can also apply to other filetypes, like `YML`
+
+Install the [YML support extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) by Red Hat.
+
+Linking a remote schema to a file can be done in your workspace settings.
+
+```json
+{
+  "yaml.schemas": {
+    "http://json.schemastore.org/prisma": "prisma.yml"
+  }
+}
+```
+
+Now my `prisma.yml` file is ready to go!
+
+![prisma.yml with working schema](prismayml.png)
+
+The top level `"type": "object"` we had in our `drivers.schema.json` can be another value now.
+For example `"array"` for a `drivers.yml` that contains one big top level list.
