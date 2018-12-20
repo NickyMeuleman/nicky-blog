@@ -10,9 +10,9 @@ tags: ["Lint", "Howto", "DX"]
 
 Did those words make you feel (a bit of) dread?
 
-You are not alone, writing a configuration object/file is pretty low on most developers' list of favorite pastimes.
+You are not alone, writing a configuration files is pretty low on most developers' list of favorite pastimes.
 
-When writing these files (for example a `.eslintrc.json`) spelling is one of your worst enemies.  
+When writing these files (for example a `.eslintrc.json`) spelling is one of your greatest enemies.  
 _Was it `no-unused-vars`, `noUnusedVars`, `no-unused-var` or something else?_
 
 **Many hours of devtime have been lost to spelling**
@@ -27,7 +27,7 @@ For those reasons (and more), having the docs open while you write your configur
 
 The solution? Laziness
 
-I'm kidding, partly. The solution is the title of this blogpost, JSON-schemas.
+I'm kidding, partly. The solution is a JSON-schema.
 Leveraging one of those means you can rely on the intelligent autocompletion and error detection to do the heavy lifting for you!
 
 To get started with the least amount of effort, you can use [VSCode](https://code.visualstudio.com/), which has [builtin support for JSON-schema](https://json-schema.org/implementations.html#editors). Create a file that is listed at [schemastore.org](http://schemastore.org/json/) and trigger the autocomplete in the editor (ctrl/cmd + space)
@@ -55,7 +55,7 @@ Luckily for me the autocomplete powered by, you guessed it, a JSON-schema, told 
 
 ## Your own schema
 
-A schema doesn't need to be remote. You can link your file of choice to a (local) schema.
+A schema doesn't need to be remote. You can link your file of choice to a self written and/or local schema too.
 
 In this `json` file, we point to the schema used to validate against.
 
@@ -66,7 +66,7 @@ In this `json` file, we point to the schema used to validate against.
 }
 ```
 
-The `$schema` value points to a file in the same directory
+The `$schema` value points to a schema file in the same directory
 
 ```json
 // drivers.schema.json
@@ -77,7 +77,7 @@ The `$schema` value points to a file in the same directory
 
 The `$schema` value here defines which version of the JSON-schema spec is being used.
 
-An empty file is boring, the code beneath adds a few contraints to our `driver.json`
+A bare-bones file is boring, the code beneath adds a few contraints to `driver.json`
 
 ```json
 // drivers.schema.json
@@ -104,13 +104,13 @@ An empty file is boring, the code beneath adds a few contraints to our `driver.j
 - Title and description are meant to describe the file that follows this schema.
 - The entire file should be of the type `object` (which isn't a problem, since it's `json`)
 - Only the (top-level) properties/keys we declare are accepted.
-- Each one of those properties should be of a specified type.
+- Each one of those properties should be of the specified type.
 
-Here I tried to specify the season as `"2018"`
+Here I tried to define the season as `"2018"`
 
 ![incorrect type error](expected-integer.png)
 
-Now: a taste of something more complex.
+Now: something more complex.
 
 ```json
 // drivers.schema.json
@@ -191,6 +191,13 @@ This is an example of a file that would satisfy that schema
   ]
 }
 ```
+
+All information can be found in the [official specification docs](https://json-schema.org/specification.html).  
+The various options you can provide are listed in [their schema validation document](https://json-schema.org/latest/json-schema-validation.html) specifically.  
+That's a tough read. No need to worry if that isn't your cup of tea, because JSON-schema has that intelligent autocompletion and error handling itself!
+The information you get in your editor while working on a schema-file is excellent.
+
+![autocomplete while writing a schema](writing-schema.png)
 
 ## Not just JSON
 
