@@ -2,6 +2,10 @@ module.exports = {
   siteMetadata: {
     title: 'Nicky blogs',
     siteUrl: 'https://nickymeuleman.netlify.com',
+    description: 'Nicky tries to blog',
+    social: {
+      twitter: '@NMeuleman',
+    },
   },
   plugins: [
     'gatsby-plugin-react-helmet',

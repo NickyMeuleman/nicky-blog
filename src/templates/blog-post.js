@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link, graphql } from 'gatsby';
-import Helmet from 'react-helmet';
 import styled from 'styled-components';
 import {
   TABLET_WIDTH,
@@ -8,6 +7,7 @@ import {
 } from 'typography-breakpoint-constants';
 import _ from 'lodash';
 import Layout from '../components/Layout/Layout';
+import SEO from '../components/SEO/SEO';
 import Hero from '../components/Hero/Hero';
 import ClapButton from '../components/ClapButton/ClapButton';
 import Share from '../components/Share/Share';
@@ -104,19 +104,16 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
 
   return (
     <Layout>
-      <Helmet>
-        <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content={post.frontmatter.title} />
-        <meta
-          name="twitter:image"
-          content={
-            data.site.siteMetadata.siteUrl +
-            (post.frontmatter.cover
-              ? post.frontmatter.cover.childImageSharp.sizes.src
-              : '/icons/icon-256x256.png')
-          }
-        />
-      </Helmet>
+      <SEO
+        title={post.frontmatter.title}
+        description={post.excerpt}
+        slug={post.fields.slug}
+        image={
+          post.frontmatter.cover
+            ? post.frontmatter.cover.childImageSharp.sizes.src
+            : '/icons/icon-256x256.png'
+        }
+      />
       <Container>
         <Hero
           title={post.frontmatter.title}
@@ -202,6 +199,7 @@ export const query = graphql`
     }
     markdownRemark(fields: { slug: { eq: $slug } }) {
       html
+      excerpt
       frontmatter {
         title
         tags
@@ -218,6 +216,9 @@ export const query = graphql`
             }
           }
         }
+      }
+      fields {
+        slug
       }
     }
   }
