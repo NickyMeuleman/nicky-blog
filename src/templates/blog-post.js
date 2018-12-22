@@ -57,6 +57,7 @@ const Adjacent = styled.div`
 
 const Container = styled.div`
   flex: 1;
+  max-width: 100%;
   & > div:first-child {
     position: relative;
     z-index: 1;
