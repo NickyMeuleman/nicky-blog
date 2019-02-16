@@ -62,7 +62,7 @@ const Nav = styled.div`
         0.035
       ); /* easeInExpo */
       left: 0%;
-      margin-top: ${rhythm(3 / 4)};
+      bottom: -${rhythm(1 / 8)};
     }
     &:hover,
     &:focus,
