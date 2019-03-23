@@ -8,21 +8,21 @@ tags: ['React']
 
 <!-- Cover photo of two reference monitors. A funny joke, as you will undoubtedly agree. -->
 
-> TL;DR: In function components, pick `useRef`, otherwise, pick `createRef`
+> TL;DR: Refs are simple objects of the form `{ current: //something }`. In function components, pick `useRef`, otherwise, pick `createRef`.
 
 In React, a ref is an object with a mutable `current` property.
-That's it. You can see the [implementations](#implementations) below but they boil down to this: `ref = { current: //something }`  
-That `current` property is often set to hold a _reference_ to a DOM-element, like an `<audio>`-element
+That's it. You can view the [implementations](#implementations) below but they boil down to this: `ref = { current: //something }`  
+That `current` property is often set to hold a _reference_ to a DOM Element, like an `<audio>`tag
 
 Getting a reference to an element allows you to directly give it commands.
 This is useful for controlling media playback, managing focus and more.
 
 It might be tempting to do this everywhere, but [resist](https://reactjs.org/docs/refs-and-the-dom.html#dont-overuse-refs) that temptation.
 
-## Basic usage: DOM Refs
+## Basic usage
 
-The goal is to get a reference to an `<audio>`-element.
-This will allow you to directly call `.play()` and `.pause()` on that element.
+The goal is to get a reference to an `<audio>`tag.
+This will allow you to call `.play()` and `.pause()` on that element.
 
 There are quite a few ways of achieving the same goal.  
 The steps are always the same however.
@@ -33,15 +33,15 @@ Several examples can be viewed in this [codesandbox demo](https://codesandbox.io
 
 - Create the ref object
 
-```js
+```jsx
 // inside the constructor
 this.audioRef = React.createRef();
 // this.audioRef = { current: null }
 ```
 
-- Attach a reference to a DOM-element to that ref object
+- Attach a reference to a DOM Element to that ref object
 
-```js
+```jsx
 // inside the render() method
 <audio ref={this.audioRef} />
 // this.audioRef = { current: <audio /> }
@@ -49,7 +49,7 @@ this.audioRef = React.createRef();
 
 - Use it
 
-```js
+```jsx
 handlePlay = () => {
   this.audioRef.play();
 };
@@ -59,16 +59,16 @@ handlePlay = () => {
 
 ### Referring to React Components
 
-The examples above showed how to get a reference to a DOM-node.
-That's not the only thing refs are good for. They can also point to a React-Component
+The examples above showed how to get a reference to a DOM Element.
+That's not the only thing refs are good for. They can also point to a React Component object.
 
 [Codesandbox demo](https://codesandbox.io/s/9jxqj20wqo?expanddevtools=1&fontsize=14&module=%2Fsrc%2FParentComponent.js&moduleview=1)
 
-Important note: you can **only** reference **class based components** this way
+Important note: you can **only** reference **class based** components this way
 
-### Referring to a DOM-element inside a React Component
+### Referring to a DOM Element inside a React Component
 
-What about when you made yourself a fancy `Input` component and want a ref to point directly at the html `<input>`, so you can call `inputRef.current.focus()`?
+What about when you made yourself a fancy `Input` component and want a ref to point directly at the `<input>`tag so you can call `inputRef.current.focus()`?
 
 ```jsx
 <Input ref={inputRef} />
@@ -82,8 +82,40 @@ That _big fat error_ is actually really helpful:
 Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
 ```
 
+`React.forwardRef` receives a function that gets called with the props and the ref your component received. It returns what your component would normally return. There, you can attach that ref to the specific DOM Element you want.
+
+```jsx
+// in the file you want to use the ref
+import Input from './Input';
+
+function App() {
+  const inputRef = React.useRef();
+
+  // ...
+
+  return (
+    <div>
+      <Input />
+      {/* attach the ref to our Input component */}
+      <Input ref={inputRef} />
+      <Input />
+    </div>
+  );
+}
+
+// in your Input.js file
+export default React.forwardRef((props, ref) => {
+  return (
+    // ...
+    // forward the ref our Input component received to the HTML <input/>tag
+    <input ref={ref} placeholder={props.placeholder} />
+    // ...
+  );
+});
+```
+
 This [Codesandbox demo](https://codesandbox.io/s/pyqq0o9mk7) shows three `Input` components.
-One is focussed through a ref.
+One `<input/>tag` is focussed through a ref a component received and forwarded using `React.forwardRef`.
 
 Having to wrap your function component in `React.forwardRef` can become quite tedious.
 In the future, this usage of `forwardRef` might become [default behaviour](https://twitter.com/dan_abramov/status/1109512531209584640)
@@ -91,10 +123,46 @@ In the future, this usage of `forwardRef` might become [default behaviour](https
 ## createRef vs. useRef
 
 While `createRef` and `useRef` are **very** similar. There are some subtle differences.
-`useRef` creates an object `{current : initialValue}` and returns it the first time it gets called. If that object already exists, `useRef` will return the existing one instead.
-`createRef` will create an object `{current : null}` each time it is called.
 
-## implementations
+`useRef` is a so called [hook](https://reactjs.org/docs/hooks-intro.html) and is only available in function based components.
+
+```js
+// in a function component
+const myRef = React.useRef('my initial value');
+```
+
+`useRef` creates an object `{ current : initialValue }` and returns it the first time it gets called. If that object already exists, `useRef` will return that existing object instead.
+
+`createRef` will create an object `{ current : null }` each time it is called.
+
+```js
+// in the constructor of a class based component
+this.myRef = React.createRef();
+// even in a function based component
+const myRef = React.createRef();
+```
+
+### Instance variables
+
+In class based components, if you want a value that can change but doesn't trigger a render cycle. An instance variable is what you want. eg: `this.palindrome = 'racecar'` and later `this.palindrome='pullup'`
+
+In function components, `useRef` can fill that role!  
+Since `useRef(initialValue)` returns an object with a mutable `current` property.
+There is nothing stopping us from using it like an instance variable.
+
+```js
+const palindrome = useRef('racecar');
+// const palindrome = { current: 'racecar' }
+// ...
+palindrome.current = 'pullup';
+// const palindrome = { current: 'pullup' }
+```
+
+This [codesandbox](https://codesandbox.io/s/vmwxjnv433) uses `useRef` to point to the `<form>` DOM element **and** to an internal count variable.
+
+## Implementations
+
+The implementation of both `createRef` and `useRef` in the official [React codebase](https://github.com/facebook/react) is surprisingly simple.
 
 ### createRef
 
