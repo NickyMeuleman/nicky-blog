@@ -105,6 +105,9 @@ module.exports = {
       resolve: `gatsby-plugin-sitemap`,
     },
     {
+      resolve: `gatsby-plugin-feed`,
+    },
+    {
       resolve: `gatsby-plugin-google-analytics`,
       options: {
         trackingId: 'UA-117805994-1',
