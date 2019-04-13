@@ -14,7 +14,9 @@ If the result of rendering would be exactly the same as the previous time the co
 ### `shouldComponentUpdate`
 
 In class components, the method `shouldComponentUpdate` allows this.
-It's a [lifecycle method](https://reactjs.org/docs/react-component.html#commonly-used-lifecycle-methods) that is called before [`render()`](http://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/). The method returns a boolean. That boolean tells React if `render()` can be skipped. When `true`, the `render()` will be executed like it normally would. When `false`, that tells React it **can** skip executing the `render()`.
+It's a [lifecycle method](https://reactjs.org/docs/react-component.html#commonly-used-lifecycle-methods) that is called before [`render()`](http://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/). The method returns a boolean. That boolean tells React if `render()` can be skipped.  
+When `true`, the `render()` will be executed like it normally would.  
+When `false`, that tells React it **can** skip executing the `render()`.
 
 `shouldComponentUpdate()` is called with the next props and the next state. This allows complex logic where the current props/state are compared to the previous props/state in order to determine if the output would be different and thus, the _component should update_.
 
@@ -47,12 +49,12 @@ _😢 I just wanted to check if **any** props or state changed, why is that so h
 `React.PureComponent` does exactly that! 😎
 
 `PureComponent` performs a shallow comparison of props and state (by using [Object.is](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is)).
-This reduces the chance that you’ll skip a necessary update.
+This reduces the chance that you’ll skip a necessary update (e.g. when you add a new prop).  
 Unless you are confident you need a custom `shouldComponentUpdate`, prefer `PureComponent`.
 
 That means these two snippets are equivalent
 
-```js
+```jsx
 class Driver extends React.Component {
   shouldComponentUpdate() {
     // a shallow comparison of all the props and state
@@ -63,7 +65,7 @@ class Driver extends React.Component {
 }
 ```
 
-```js
+```jsx
 class Driver extends React.PureComponent {
   render() {
     <p>{this.props.name}</p>;
@@ -75,7 +77,7 @@ class Driver extends React.PureComponent {
 
 When trying to apply that same optimization to function components instead of class based ones, a problem rears its head. Function components can't really skip that render step. The function component (which is really just a function) is either executed or it isn't.
 
-This is where [memoization](https://en.wikipedia.org/wiki/Memoization) helps.
+This is where [memoization](https://en.wikipedia.org/wiki/Memoization) helps.  
 Memoization is basically technobabble for _remembering something for later_.
 
 React can't just remember pieces of data for later, it can remember _entire components_.
@@ -88,7 +90,7 @@ What the previous two examples were for class based components, `React.memo` is 
 
 Instead of skipping the render-step like in class based components, `React.memo` will reuse the last rendered result instead of calculating a new result.
 
-```js
+```jsx
 // the function component
 const Driver = function(props) {
   return <p>{props.name}</p>;
@@ -109,15 +111,15 @@ By default `React.memo` is comparable to `React.PureComponent` as it performs a 
 If you want more control and be in charge of that comparison, `React.memo` accepts a second argument, a comparison function. This makes it comparable to `shouldComponentUpdate` in class based components.
 
 The comparison function also returns a boolean.
-That boolean tells React if it should use the previous result of the component instead of calculating a new one.
-When `false` the function component will be executed like it normally would.
-When `true` the function component will not be executed and the previous result will be used instead.
+That boolean tells React if it should use the previous result of the component instead of calculating a new one.  
+When `false`, the function component will be executed like it normally would.  
+When `true`, the function component will not be executed and the previous result will be used instead.
 
 > Watch out! This is the opposite from `shouldComponentUpdate`!
 
 The comparison function is called with the previous props and the next props. This allows complex logic where the current props are compared to the previous props in order to determine if the output would be different and thus, the _remembered result/memo of the component should be used_.
 
-```js
+```jsx
 // the function component
 const Driver = function(props) {
   return <p>{props.name}</p>;
@@ -144,13 +146,13 @@ The components that have one of the optimizations bescribed above will only rend
 
 ## `React.memo` vs `React.useMemo`
 
-While **`React.memo`** is a [higher-order component](https://reactjs.org/docs/higher-order-components.html) as it accepts a component and returns the new/memoized **component**.
+While **`React.memo`** is a [higher-order component](https://reactjs.org/docs/higher-order-components.html) as it accepts a component and returns the new/memoized **component**.  
 **`React.useMemo`** is a [hook](https://reactjs.org/docs/hooks-intro.html)(which is a function). It accepts a function and returns the memoized return **value** of the function you passed.
 
 ### `React.useMemo`
 
 ```js
-const memoizedValue = useMemo(() => computeExpensiveValue(a, b), [a, b]);
+const memoizedValue = React.useMemo(() => computeExpensiveValue(a, b), [a, b]);
 ```
 
 `React.useMemo` accepts a function as first argument. The value this function returns is the value that `React.useMemo` will return. It will only be calculated again if it has to. `React.useMemo` will return the memoized/remembered value if it doesn't.
@@ -164,7 +166,7 @@ The React team has created an ESLint package, [`eslint-plugin-react-hooks`](http
 
 ### Example
 
-```js
+```jsx
 import React from 'react';
 
 function calculatePodiums(name) {
@@ -199,10 +201,10 @@ const Driver = function(props) {
 
 This is a shortcut for a specific `React.useMemo` usage.
 
-`React.useMemo` returns a memoized **value**
+`React.useMemo` returns a memoized **value**  
 `React.useCallback` returns a memoized **function**
 
-_But a value can totally be a function!_
+_🤔 But a value can totally be a function!_
 
 Correct!
 That means these two snippets are equivalent
@@ -216,7 +218,7 @@ const memoizedFunction = React.useMemo(function() {
 }, [a, b])
 ```
 
-This memoizes the value the first argument (a function) returns, which is a function called `doTheThing`.
+⬆ This memoizes the value the first argument (a function) returns, which is a function called `doTheThing`.
 
 ```js
 const memoizedFunction = React.useCallback(function doTheThing(a, b) {
@@ -225,7 +227,7 @@ const memoizedFunction = React.useCallback(function doTheThing(a, b) {
 }, [a, b])
 ```
 
-This memoizes the first argument, which is a function called `doTheThing`.
+⬆ This memoizes the first argument, which is a function called `doTheThing`.
 
 Like `React.useMemo`, the second argument is an array of dependencies.
 The function `React.useCallback` returns will only change when something in that array changes.
