@@ -16,6 +16,8 @@ oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
   },
   'a:hover': {
     background: theme.primaryLighter,
+    borderBottom: `1px solid ${theme.primaryLight}`,
+    boxShadow: `inset 0 -2px 0px 0px ${theme.primaryLight}`,
   },
   'a.anchor': {
     color: `inherit`,
@@ -43,6 +45,10 @@ oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
   blockquote: {
     borderLeft: `${rhythm(6 / 16)} solid ${theme.primary}`,
   },
+  '::selection': {
+    backgroundColor: `${theme.primary}`,
+    color: '#f5f5f5',
+  },
   [MOBILE_MEDIA_QUERY]: {
     blockquote: {
       borderLeft: `${rhythm(3 / 16)} solid ${theme.primary}`,
@@ -55,7 +61,9 @@ const { rhythm, scale: scaleJS } = typography;
 
 const scale = num =>
   Object.entries(scaleJS(num))
-    .map(([k, v]) => `${k.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}: ${v}`)
+    .map(
+      ([k, v]) => `${k.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}: ${v}`
+    )
     .join('\n');
 
 export { rhythm, scale, typography as default };

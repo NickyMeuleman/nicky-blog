@@ -114,6 +114,11 @@ const Logo = styled.div`
     padding: ${rhythm(1 / 2)};
     transform: translateY(25%);
   }
+  a:hover {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
 `;
 
 const Social = styled.div`
