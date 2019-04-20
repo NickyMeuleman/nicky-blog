@@ -37,7 +37,7 @@ button:disabled {
   height: 100%;
 }
 
-.gatsby-highlight pre[class*="language-"] {
+.gatsby-highlight pre[class*='language-'] {
   background-color: transparent;
   margin: 0;
   padding: 0;
@@ -73,11 +73,11 @@ button:disabled {
  * @author Joe Gibson (@gibsjose)
  */
 
-code[class*="language-"],
-pre[class*="language-"] {
+code[class*='language-'],
+pre[class*='language-'] {
   color: #c5c8c6;
   text-shadow: 0 1px rgba(0, 0, 0, 0.3);
-  font-family: Inconsolata, Monaco, Consolas, "Courier New", Courier, monospace;
+  font-family: Inconsolata, Monaco, Consolas, 'Courier New', Courier, monospace;
   direction: ltr;
   text-align: left;
   white-space: pre;
@@ -96,7 +96,7 @@ pre[class*="language-"] {
 }
 
 /* Code blocks */
-pre[class*="language-"] {
+pre[class*='language-'] {
   padding: 1em;
   margin: 0.5em 0;
   overflow: auto;
@@ -104,7 +104,7 @@ pre[class*="language-"] {
 }
 
 /* Inline code */
-:not(pre) > code[class*="language-"] {
+:not(pre) > code[class*='language-'] {
   text-shadow: none;
   color: inherit;
 }

@@ -12,16 +12,20 @@ const Container = styled.header`
   background: #333;
   color: #bbb;
   z-index: 100;
-  a {
-    text-shadow: none;
-    background-image: none;
-    text-decoration: none;
-    color: inherit;
-    border: none;
-    box-shadow: none;
-  }
-  a:hover {
-    background: transparent;
+  && {
+    a {
+      text-shadow: none;
+      background-image: none;
+      text-decoration: none;
+      color: inherit;
+      border: none;
+      box-shadow: none;
+    }
+    a:hover {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+    }
   }
   @media (min-width: ${TABLET_WIDTH}) {
     grid-template-columns: 1fr auto 1fr;
@@ -45,39 +49,41 @@ const Nav = styled.div`
     margin: 0;
     margin-left: ${rhythm(1 / 2)};
   }
-  a {
-    position: relative;
-    &:after {
-      height: 3px;
-      background: ${props => props.theme.primaryLight};
-      content: '';
-      width: 0;
-      position: absolute;
-      /* hover OFF */
-      transition: width 0.3s;
-      transition-timing-function: cubic-bezier(
-        0.95,
-        0.05,
-        0.795,
-        0.035
-      ); /* easeInExpo */
-      left: 0%;
-      bottom: -${rhythm(1 / 8)};
-    }
-    &:hover,
-    &:focus,
-    &.is-active {
-      color: #eee;
-      outline: none;
+  && {
+    a {
+      position: relative;
       &:after {
-        /* hover ON */
-        width: 100%;
+        height: 3px;
+        background: ${props => props.theme.primaryLight};
+        content: '';
+        width: 0;
+        position: absolute;
+        /* hover OFF */
+        transition: width 0.3s;
         transition-timing-function: cubic-bezier(
-          0.19,
-          1,
-          0.22,
-          1
-        ); /* easeOutExpo */
+          0.95,
+          0.05,
+          0.795,
+          0.035
+        ); /* easeInExpo */
+        left: 0%;
+        bottom: -${rhythm(1 / 8)};
+      }
+      &:hover,
+      &:focus,
+      &.is-active {
+        color: #eee;
+        outline: none;
+        &:after {
+          /* hover ON */
+          width: 100%;
+          transition-timing-function: cubic-bezier(
+            0.19,
+            1,
+            0.22,
+            1
+          ); /* easeOutExpo */
+        }
       }
     }
   }

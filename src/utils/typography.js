@@ -4,32 +4,44 @@ import { MOBILE_MEDIA_QUERY } from 'typography-breakpoint-constants';
 import theme from './theme';
 
 oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
-  '.light a': {
+  a: {
     color: 'inherit',
     fontWeight: 700,
     textDecoration: 'none',
-    borderBottom: `1px solid ${theme.light.primaryLighter}`,
-    boxShadow: `inset 0 -2px 0px 0px ${theme.light.primaryLighter}`,
     textShadow: 'none',
     backgroundImage: 'none',
     transition: 'all 100ms cubic-bezier(0.4, 0, 0.2, 1)',
+    borderBottom: `1px solid ${theme.light.primaryLighter}`,
+    boxShadow: `inset 0 -2px 0px 0px ${theme.light.primaryLighter}`,
   },
-  '.light a:hover': {
+  '.dark a': {
+    borderBottom: `1px solid ${theme.dark.primaryLighter}`,
+    boxShadow: `inset 0 -2px 0px 0px ${theme.dark.primaryLighter}`,
+  },
+  'a:hover': {
     background: theme.light.primaryLighter,
     borderBottom: `1px solid ${theme.light.primaryLight}`,
     boxShadow: `inset 0 -2px 0px 0px ${theme.light.primaryLight}`,
   },
-  '.light a.anchor': {
+  '.dark a:hover': {
+    background: theme.dark.primaryLighter,
+    borderBottom: `1px solid ${theme.dark.primaryLight}`,
+    boxShadow: `inset 0 -2px 0px 0px ${theme.dark.primaryLight}`,
+  },
+  'a.anchor': {
     color: `inherit`,
     fill: theme.light.primaryLight,
     textDecoration: `none`,
     borderBottom: `none`,
     boxShadow: `none`,
   },
-  '.light a.anchor:hover': {
+  '.dark a.anchor': {
+    fill: theme.dark.primaryLight,
+  },
+  'a.anchor:hover': {
     background: `none`,
   },
-  '.light :not(pre) > code[class*="language-"]': {
+  ':not(pre) > code[class*="language-"]': {
     borderRadius: '3px',
     padding: '0 0.2rem',
     paddingTop: '0.1em',
@@ -42,16 +54,29 @@ oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
     top: '-1px',
     lineHeight: 'inherit',
   },
-  '.light blockquote': {
+  '.dark :not(pre) > code[class*="language-"]': {
+    background: '#000',
+  },
+  blockquote: {
     borderLeft: `${rhythm(6 / 16)} solid ${theme.light.primary}`,
   },
-  '.light ::selection': {
+  '.dark blockquote': {
+    borderLeft: `${rhythm(6 / 16)} solid ${theme.light.primary}`,
+  },
+  '::selection': {
     backgroundColor: `${theme.light.primary}`,
     color: '#f5f5f5',
   },
+  '.dark ::selection': {
+    backgroundColor: `${theme.dark.primary}`,
+    color: '#f5f5f5',
+  },
   [MOBILE_MEDIA_QUERY]: {
-    '.light blockquote': {
+    blockquote: {
       borderLeft: `${rhythm(3 / 16)} solid ${theme.light.primary}`,
+    },
+    '.dark blockquote': {
+      borderLeft: `${rhythm(3 / 16)} solid ${theme.dark.primary}`,
     },
   },
 });
