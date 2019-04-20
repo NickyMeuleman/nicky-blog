@@ -4,32 +4,32 @@ import { MOBILE_MEDIA_QUERY } from 'typography-breakpoint-constants';
 import theme from './theme';
 
 oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
-  a: {
+  '.light a': {
     color: 'inherit',
     fontWeight: 700,
     textDecoration: 'none',
-    borderBottom: `1px solid ${theme.primaryLighter}`,
-    boxShadow: `inset 0 -2px 0px 0px ${theme.primaryLighter}`,
+    borderBottom: `1px solid ${theme.light.primaryLighter}`,
+    boxShadow: `inset 0 -2px 0px 0px ${theme.light.primaryLighter}`,
     textShadow: 'none',
     backgroundImage: 'none',
     transition: 'all 100ms cubic-bezier(0.4, 0, 0.2, 1)',
   },
-  'a:hover': {
-    background: theme.primaryLighter,
-    borderBottom: `1px solid ${theme.primaryLight}`,
-    boxShadow: `inset 0 -2px 0px 0px ${theme.primaryLight}`,
+  '.light a:hover': {
+    background: theme.light.primaryLighter,
+    borderBottom: `1px solid ${theme.light.primaryLight}`,
+    boxShadow: `inset 0 -2px 0px 0px ${theme.light.primaryLight}`,
   },
-  'a.anchor': {
+  '.light a.anchor': {
     color: `inherit`,
-    fill: theme.primaryLight,
+    fill: theme.light.primaryLight,
     textDecoration: `none`,
     borderBottom: `none`,
     boxShadow: `none`,
   },
-  'a.anchor:hover': {
+  '.light a.anchor:hover': {
     background: `none`,
   },
-  ':not(pre) > code[class*="language-"]': {
+  '.light :not(pre) > code[class*="language-"]': {
     borderRadius: '3px',
     padding: '0 0.2rem',
     paddingTop: '0.1em',
@@ -42,16 +42,16 @@ oceanBeachTheme.overrideThemeStyles = ({ rhythm }, options) => ({
     top: '-1px',
     lineHeight: 'inherit',
   },
-  blockquote: {
-    borderLeft: `${rhythm(6 / 16)} solid ${theme.primary}`,
+  '.light blockquote': {
+    borderLeft: `${rhythm(6 / 16)} solid ${theme.light.primary}`,
   },
-  '::selection': {
-    backgroundColor: `${theme.primary}`,
+  '.light ::selection': {
+    backgroundColor: `${theme.light.primary}`,
     color: '#f5f5f5',
   },
   [MOBILE_MEDIA_QUERY]: {
-    blockquote: {
-      borderLeft: `${rhythm(3 / 16)} solid ${theme.primary}`,
+    '.light blockquote': {
+      borderLeft: `${rhythm(3 / 16)} solid ${theme.light.primary}`,
     },
   },
 });

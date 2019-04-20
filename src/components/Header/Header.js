@@ -165,7 +165,7 @@ const Social = styled.div`
   }
 `;
 
-const Header = () => (
+const Header = props => (
   <Container>
     <Nav>
       <ul>
@@ -234,6 +234,9 @@ const Header = () => (
         </li>
       </ul>
     </Social>
+    <button type="button" onClick={props.toggleTheme}>
+      TOGGLE THEME
+    </button>
   </Container>
 );
 
