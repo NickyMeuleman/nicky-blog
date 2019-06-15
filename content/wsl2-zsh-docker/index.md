@@ -11,24 +11,27 @@ Compromises are great. When it comes to technology, having your cake and eating 
 The machine I normally use for development broke.
 The Windows Subsystem for Linux version 2 just came out, so I decided to set up another machine with that. When all was said and done, it was nothing short of awesome. I just booted a full-stack application that uses docker from an Oh My ZSH terminal window inside of VSCode. It booted faster than it ever had natively on Windows. I'm using Windows 10 Home, that means the hyper-V virtualization technology normally isn't available. But WSL2 lets you take advantage of it anyway (if your hardware supports it).
 
+This post describes the steps I went through to set that up.
+It's going to be a long one, so buckle up! 💪
+
 ## Install the Insider preview
 
 As of writing, WSL2 is available in the latest release of the insider preview.
 If it's not installed, doing so is fairly straightforward.
 
-Look for the insider programma and follow the steps to activate it.
+- Look for the insider programma and follow the steps to activate it.
 
 > As of writing, choose the fast ring of updates when prompted for a choice.
 
-![insider programma](./insider.png)
+![insider programma](insider.png)
 
-Run Windows update
+- Run Windows update
 
-![Windows update installing the insiders build](./windows-update.png)
+![Windows update installing the insiders build](windows-update.png)
 
 After a minor test of your patience and a few reboots. A watermark that displays the version you just installed is visible in the lower right of your desktop
 
-![watermark](./insider-watermark.png)
+![watermark](insider-watermark.png)
 
 ## Activate optional features
 
@@ -38,11 +41,11 @@ This is possible through a GUI, by going to "turn Windows features on or off" or
 
 - The GUI option:
 
-![Turn Windows features on or off](./features-search.png)
+![Turn Windows features on or off](features-search.png)
 
 To use WSL, enable the aptly-named "Windows Subsystem for Linux" feature.
 
-![Windows Subsystem for Linux feature](./feature-wsl.png)
+![Windows Subsystem for Linux feature](feature-wsl.png)
 
 - Through Powershell:
 
@@ -52,7 +55,7 @@ Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-L
 
 Irregardless of the option you chose, a reboot is required.
 
-### WSL2 features
+### Feature for WSL2
 
 That was enough for WSL1.
 To use WSL2, first make sure virtualization is enabled in your BIOS.
@@ -68,7 +71,7 @@ The option to enable is called the "virtual machine platform".
 
 - GUI
 
-![virtual machine platform feature](./feature-virtual-machine-platform.png)
+![virtual machine platform feature](feature-virtual-machine-platform.png)
 
 - Powershell
 
@@ -80,11 +83,11 @@ Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform
 
 Once that reboot is done, you can go to the Microsoft store and install your favourite linux distribution. I went with Ubuntu, because a lot of install instructions and other documentation are written for that distro.
 
-![Ubuntu in the Microsoft store](./store-ubuntu.png)
+![Ubuntu in the Microsoft store](store-ubuntu.png)
 
 On the first boot of the distro you just installed (which presents itself as a terminal window), you'll be asked to enter a password for when you want to do stuff as a super user (sudo).
 
-## WSL2
+## WSL1 to WSL2
 
 To check which version of WSL is installed you can run a command in Powershell
 
@@ -98,7 +101,7 @@ If the number for the version is 2, all systems go!
 
 If not, convert that puppy from 1 to 2
 
-```
+```sh
 wsl --set-version <distro-name> 2
 # in my case
 wsl --set-version Ubuntu 2
@@ -107,16 +110,29 @@ wsl --set-version Ubuntu 2
 The output will tell you that this operation might take a while.
 It's not one of those that says that only to finish 5 seconds later. It took about 10 minutes here.
 
-![Converting a distro from WSL1 to WSL2](./wsl-set-version.png)
+![Converting a distro from WSL1 to WSL2](wsl-set-version.png)
 
 At this point, WSL2 is ready to go.
 Opening the distro you installed will show a bash prompt.
 
-> list WSL2 features here -IO speed, files from windows, real kernel, docker, zsh,...
+Windows Subsystem for Linux 2 comes with a real linux kernel.
+Previously there was a kernel compatibility layer that could not quite do as much.
+
+In the words of a certain wooden puppet, it is now a _real boy_.
+
+![Pinocchio is a real boy](https://i.imgur.com/fLW42gG.jpg)
+
+Users of WSL2 are encouraged to place their files inside the linux root file system.
+That way they benefit from file performance increases compared to WSL1.
+
+In WSL2 you can now access files from linux in Windows and the other way around.
+Modifying linux files from from Windows in WSL1 was always warned against, as this could cause _bad things_ to happen. Whoooo, spooky 👻 (but, really, it was a bad idea.)
+
+more details on changes are available in Microsoft's [WSL2 release blogpost](https://devblogs.microsoft.com/commandline/wsl-2-is-now-available-in-windows-insiders/)
 
 ## Installing tools
 
-Let's start loading up the linux environment with all the needed tools.
+Let's start loading up our environment with some needed tools.
 A few tools still need to be installed on the Windows side, the rest are all linux tools.
 
 The two I'll install for Windows are: [VSCode](https://code.visualstudio.com/) and [git for Windows](https://git-scm.com/)
@@ -128,8 +144,9 @@ Remember to set the autocrlf setting to input for git. VSCode handles it well.
 git config --global core.autocrlf input
 ```
 
-To kick off the process of installing linux tools, we'll start by updating it.
-From this point, the action happens in your linux terminal!
+Before beginning to install linux tools, we'll update our already installed packages.
+
+> From this point on, the action happens in your linux terminal!
 
 ```sh
 sudo apt update
@@ -157,7 +174,7 @@ Especially setting the autocrlf setting to input is important here.
 git config --global core.autocrlf input
 ```
 
-## node
+### node
 
 You can install it as a standalone package.
 Now we can harness all those linux-y tools, I'll use `nvm` to make using different versions easier.
@@ -175,7 +192,8 @@ To confirm the installation was successfull, run
 command -v nvm
 ```
 
-It should return `nvm`
+It should return: `nvm`  
+That's all, no version number, just that string.
 
 To install the latest the latest stable version of node
 
@@ -185,7 +203,7 @@ nvm install node # "node" is an alias for the latest version
 
 When node releases a new version, you can run that same command again.
 
-You'll need to tell NVM which version of node you want to use.
+You'll need to tell nvm which version of node you want to use.
 So next time you boot your linux distro, you'll have to use.
 
 ```sh
@@ -202,6 +220,78 @@ nvm use
 
 Having to do that manually seems annoying right?
 Many solutions to this annoyance exist, later in this post that will be "fixed".
+
+### Docker
+
+- Kick things off by updating the packages index and installing dependencies.
+
+```sh
+sudo apt update
+sudo apt install apt-transport-https ca-certificates curl software-properties-common
+```
+
+- Add Dockers's official GPG-key
+
+```sh
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+```
+
+- Verify this by running
+
+```sh
+sudo apt-key fingerprint 0EBFCD88
+```
+
+You should see `9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88` in the output.
+
+- Add the Docker repository to your list of repositories
+
+```sh
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+```
+
+- Update the list of repositories again and install Docker CE
+
+```sh
+sudo apt update
+sudo apt install docker-ce
+```
+
+Normally, the docker engine starts automatically after the install.
+For me that was not the case so I started it manually.
+
+```sh
+sudo service docker start
+```
+
+- Verify Docker CE was installed correcly by booting up their hello-world container.
+
+```sh
+sudo docker run hello-world
+```
+
+### Docker Compose
+
+As a handy tool for managing docker containers, `docker-compose` is frequently installed alongside `docker-ce`.
+
+- Download the current stable release and place it in the `/usr/local/bin` folder.
+
+```sh
+sudo curl -L "https://github.com/docker/compose/releases/download/1.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+```
+
+- Make the file executable
+
+```sh
+sudo chmod +x /usr/local/bin/docker-compose
+```
+
+- Verify the installation
+
+```sh
+docker-compose --version
+# output: docker-compose version 1.24.0, build 0aa59064
+```
 
 ## A better terminal
 
@@ -221,6 +311,8 @@ Let's use the brand new linux shell in there.
 
 When opening the integrated terminal, you can choose wich one to use by default.
 Select WSL from the resulting list of options and you are done!
+
+![select terminal in Visual Studio Code](terminal-select.png)
 
 Alternatively, edit the `settings.json` to include the correct location.
 
@@ -248,7 +340,7 @@ zsh
 The first time this launches a quick configuration wizard will be shown.
 The choice here doesn't matter all that much, sinc the resulting file `.zshrc` will be overwritten when we install oh-my-zsh. I chose the option `2` anyway and went with the defaults.
 
-![zsh-install](./zsh-install.png)
+![zsh-install](zsh-install.png)
 
 Typing `zsh` into bash every time we launch it gets old quick.
 
@@ -268,7 +360,7 @@ fi
 
 ### Oh My ZSH
 
-This extension to zsh has one of the best URLs out there: [ohmyz.sh](https://ohmyz.sh/)
+This extension to zsh has one of the best URLs out there: [ohmyz.sh](https://ohmyz.sh/)  
 It will also enable a huge list of nice features, which is more important.
 
 Installing oh-my-zsh is a oneliner.
@@ -278,6 +370,7 @@ sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/i
 ```
 
 This will also replace that `.zshrc` file we initialised earlier.
+
 Enjoy the cool ASCII art signalling a successful installation!
 
 #### Theme oh-my-zsh
@@ -304,7 +397,7 @@ restart your terminal for it to take effect.
 
 Aaaaaaaaaah, it's ... broken.
 
-![ugly oh my ZSH](./ugly-oh-my-zsh.png)
+![ugly oh my ZSH](ugly-oh-my-zsh.png)
 
 That's partly because this is a fancy prompt that needs a [Powerline-patched font](https://github.com/powerline/fonts) to render correctly.
 
@@ -361,6 +454,8 @@ eval `dircolors ~/.dircolors`
 
 Much better, it looks great now!
 
+![pretty-terminal](pretty-terminal.png)
+
 ### Plugins for oh-my-zsh
 
 By itself, oh-my-zsh is already feature-rich. For further productivity increases, plugins are there to help.
@@ -397,7 +492,7 @@ source <path-to-the-script>
 source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 ```
 
-#### More
+#### pre-installed plugins
 
 A list of the plugins that ship with oh-my-zsh can be viewed on this [Github page](https://github.com/robbyrussell/oh-my-zsh/tree/master/plugins)
 
@@ -417,15 +512,18 @@ plugins=(
 )
 ```
 
-The plugin I would like to call out here is `z`.
+The plugin I would like to call out here is [z](https://github.com/robbyrussell/oh-my-zsh/tree/master/plugins/z).
 It make navigating to _frecent_ folders easy.
 
 You read that right, it's not a typo.
 It's a contraction of frequent and recent.
-Folders you use often, or folders that you used recently are frecent.
 
 For example, my blog is located at `~/projects/nicky-blog`
-If I type `z blog`, my terminal will take me there.
+If I type `z blog`, z will take me there.
 
-WIP
-to add: docker and docker-compose
+## Result
+
+Whew! That was quite the journey 💦  
+The result is very powerful, and it looks good too! 🎊🎉🎉🎉🎊
+
+![the end result](end-result.png)
