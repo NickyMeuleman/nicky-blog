@@ -214,6 +214,20 @@ Good news: they are coming out with [a new one](https://youtu.be/8gw0rXPMMPE) an
 
 In anticipation of that release, I'm not going to change much there. I'll use the one that's integrated into VSCode most of the time anyway.
 
+### Change integrated VSCode terminal
+
+VSCode's integrated terminal is a great productivity booster.
+Let's use the brand new linux shell in there.
+
+When opening the integrated terminal, you can choose wich one to use by default.
+Select WSL from the resulting list of options and you are done!
+
+Alternatively, edit the `settings.json` to include the correct location.
+
+```json
+"terminal.integrated.shell.windows": "C:\\WINDOWS\\System32\\wsl.exe"
+```
+
 ### ZSH
 
 I chose ZSH to replace the standard bash shell that opens when clicking the ubuntu icon in the start menu.
@@ -257,7 +271,7 @@ fi
 This extension to zsh has one of the best URLs out there: [ohmyz.sh](https://ohmyz.sh/)
 It will also enable a huge list of nice features, which is more important.
 
-Installing oh-my-zsh is also a oneliner.
+Installing oh-my-zsh is a oneliner.
 
 ```sh
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
@@ -286,6 +300,8 @@ ZSH_THEME="agnoster"
 
 restart your terminal for it to take effect.
 
+#### Powerline fonts
+
 Aaaaaaaaaah, it's ... broken.
 
 ![ugly oh my ZSH](./ugly-oh-my-zsh.png)
@@ -294,7 +310,7 @@ That's partly because this is a fancy prompt that needs a [Powerline-patched fon
 
 You can either download the specific font you want and install it that way (double clicking on the file and hitting the install button) or use the install script to install them all at once.
 
-To install them all first clone that repo (through windows or linux, doesn't matter).
+To install them all first clone that repo.
 Then open an elevated Powershell window.
 To be able to execute the `install.ps1` file, we need to open up the execution policy temporarily.
 
@@ -313,5 +329,103 @@ You'll see the same thing happening as you would when downloading and installing
 Don't forget to close down the execution policy again immediately after!
 
 ```sh
-et-ExecutionPolicy Default
+Set-ExecutionPolicy Default
 ```
+
+After installing the fonts, setting them in your terminal application changes the weird boxes to icons.
+
+Note that the standard terminal in Windows still doesn't work quite right after that.
+It has many limitations, this not working completely is just one of them.
+As stated before, I'm mainly going to use the terminal inside VSCode anyway, so I'm leaving the standard terminal behind.
+After setting the terminal font in VSCode, all icons show up beautifully.
+
+The colors when listing directories and files with the `ls` command still look, euuuhm, suboptimal.
+
+#### dircolors
+
+To replace those ugly colors, something called dircolors may be used.
+I'll install the popular [solarized dircolors](https://github.com/seebi/dircolors-solarized)
+
+Pick the theme you want and download the file to your home directory
+
+```sh
+curl https://raw.githubusercontent.com/seebi/dircolors-solarized/master/dircolors.ansi-dark --output ~/.dircolors
+```
+
+Add a line to the bottom of your zsh configuration file to use what you just downloaded.
+
+```sh
+# load dircolors
+eval `dircolors ~/.dircolors`
+```
+
+Much better, it looks great now!
+
+### Plugins for oh-my-zsh
+
+By itself, oh-my-zsh is already feature-rich. For further productivity increases, plugins are there to help.
+
+Many of those plugins ship alongside oh-my-zsh, making installing them as easy as adding a line to `.zshrc`.
+Others require a bit more effort, let's start with those!
+
+#### Syntax Highlighting
+
+[zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting) is a handy plugin that prevents syntax errors by highlighting valid commands in green and invalid ones in red.
+
+To install the plugin first clone [the repo](https://github.com/zsh-users/zsh-syntax-highlighting)
+Then add the script to your `.zshrc`
+
+```sh
+# inside .zshrc add
+source <path-to-the-script>
+# I cloned the repo to the .zsh folder, so for me it was
+source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+```
+
+#### Auto Suggestions
+
+[zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) makes typing the same command over and over much quicker by suggesting what you could type next. These suggestions are based on command history.
+
+Installing it follows the same pattern as the plugin we installed above.
+
+First clone the repo, then add a line to `.zshrc`
+
+```sh
+# .zshrc
+source <path-to-the-script>
+# I cloned the repo to the .zsh folder, so for me it was
+source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
+```
+
+#### More
+
+A list of the plugins that ship with oh-my-zsh can be viewed on this [Github page](https://github.com/robbyrussell/oh-my-zsh/tree/master/plugins)
+
+Each one should have a `README.md` that tells you more about what it does and how to activate the plugin.
+Most of the time, activating the plugin requires you to add it to the list of plugins in `.zshrc`.
+
+This is what I ended up with
+
+```sh
+plugins=(
+    git
+    node
+    npm
+    npx
+    nvm
+    z
+)
+```
+
+The plugin I would like to call out here is `z`.
+It make navigating to _frecent_ folders easy.
+
+You read that right, it's not a typo.
+It's a contraction of frequent and recent.
+Folders you use often, or folders that you used recently are frecent.
+
+For example, my blog is located at `~/projects/nicky-blog`
+If I type `z blog`, my terminal will take me there.
+
+WIP
+to add: docker and docker-compose
