@@ -1,10 +1,12 @@
 ---
-title: WSL2, zsh and docker. Linux through Windows.
-date: '2019-06-16'
+title: WSL2, zsh, and docker. Linux through Windows.
+date: '2019-06-15'
 author: 'Nicky Meuleman'
 cover: './cover.jpg'
 tags: ['Howto', 'DX']
 ---
+
+<!-- Photo by Javier Allegue Barros on Unsplash -->
 
 Compromises are great. When it comes to technology, having your cake and eating it too is better.
 
