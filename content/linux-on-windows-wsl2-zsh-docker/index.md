@@ -159,7 +159,7 @@ More preparation, installing build tools for [node-gyp](https://github.com/nodej
 sudo apt install build-essential
 ```
 
-### git
+### Git
 
 This one should also be installed on the linux side.
 
@@ -174,10 +174,10 @@ Especially setting the autocrlf setting to input is important here.
 git config --global core.autocrlf input
 ```
 
-### node
+### Node
 
 You can install it as a standalone package.
-Now we can harness all those linux-y tools, I'll use `nvm` to make using different versions easier.
+Now we can harness all those linux-y tools, I'll use `nvm` instead to make using different versions easier.
 
 [The nvm repo](https://github.com/nvm-sh/nvm) has excellent installation instructions.
 
@@ -291,6 +291,37 @@ sudo chmod +x /usr/local/bin/docker-compose
 ```sh
 docker-compose --version
 # output: docker-compose version 1.24.0, build 0aa59064
+```
+
+### Yarn
+
+Yarn is a package manager for JavaScript made by Facebook.
+
+- Add their gpg key.
+
+```sh
+curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+```
+
+- Add their repository.
+
+```sh
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+```
+
+- Update the list of repositories and install Yarn
+
+> Skip installing node with `--no-install-recommends` because we are using `nvm`
+
+```sh
+sudo apt update
+sudo apt install --no-install-recommends yarn
+```
+
+- Verify the installation
+
+```sh
+yarn --version
 ```
 
 ## A better terminal
@@ -518,12 +549,12 @@ It make navigating to _frecent_ folders easy.
 You read that right, it's not a typo.
 It's a contraction of frequent and recent.
 
-For example, my blog is located at `~/projects/nicky-blog`
+For example, my blog is located at `~/projects/nicky-blog`  
 If I type `z blog`, z will take me there.
 
 ## Result
 
-Whew! That was quite the journey 💦  
+Whew! That was quite the journey 😅💦  
 The result is very powerful, and it looks good too! 🎊🎉🎉🎉🎊
 
 ![the end result](end-result.png)
