@@ -128,7 +128,7 @@ Users of WSL2 are encouraged to place their files inside the Linux root file sys
 That way they benefit from file performance increases compared to WSL1.
 
 In WSL2 you can now access files from Linux in Windows and the other way around.  
-Modifying Linux files from from Windows in WSL1 was always warned against, as this could cause _bad things_ to happen. Whoooo, spooky 👻 (but, really, it was a bad idea.)
+Modifying Linux files from Windows in WSL1 was always warned against, as this could cause _bad things_ to happen. Whoooo, spooky 👻 (but, really, it was a bad idea.)
 
 More details on changes are available in Microsoft's [WSL2 release blogpost](https://devblogs.microsoft.com/commandline/wsl-2-is-now-available-in-windows-insiders/)
 
