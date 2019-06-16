@@ -87,7 +87,7 @@ Once that reboot is done, you can go to the Microsoft store and install your fav
 
 ![Ubuntu in the Microsoft store](store-ubuntu.png)
 
-On the first boot of the distro you just installed (which presents itself as a terminal window), you'll be asked to enter a password for when you want to _do_ stuff as a \_su_per user (`sudo`).
+On the first boot of the distro you just installed (which presents itself as a terminal window), you'll be asked to enter a password for when you want to **do** stuff as a **su**per user (`sudo`).
 
 ## WSL1 to WSL2
 
