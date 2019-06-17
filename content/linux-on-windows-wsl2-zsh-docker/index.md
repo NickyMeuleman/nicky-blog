@@ -380,7 +380,7 @@ The choice here doesn't matter all that much, sinc the resulting file `.zshrc` w
 ![zsh-install](zsh-install.png)
 
 Typing `zsh` into bash every time we launch it gets old quick.  
-Time to change zsh to be the default shell!
+Time to change the default shell to zsh!
 
 ```sh
 chsh -s $(which zsh)
