@@ -379,21 +379,14 @@ The choice here doesn't matter all that much, sinc the resulting file `.zshrc` w
 
 ![zsh-install](zsh-install.png)
 
-Typing `zsh` into bash every time we launch it gets old quick.
+Typing `zsh` into bash every time we launch it gets old quick.  
+Time to change zsh to be the default shell!
 
 ```sh
-cd $home #navigate to your home directory on Linux
-code .bashrc #open the bash configuration file in visual studio code
+chsh -s $(which zsh)
 ```
 
-To automatically launch `zsh` when you open the terminal, add this to your `.bashrc`
-
-```sh
-# Launch Zsh
-if test -t 1; then
-exec zsh
-fi
-```
+_Thanks to Reddit user_ [bhramchari](https://www.reddit.com/r/bashonubuntuonwindows/comments/c1fy1c/stock_win10_to_wsl2_ubuntu_with_zsh_and_docker/erdckwe/) _for suggesting this method!_
 
 ### Oh My ZSH
 
@@ -469,6 +462,8 @@ As stated before, I'm mainly going to use the terminal inside VSCode anyway, so 
 After setting the terminal font in VSCode, all icons show up beautifully.
 
 The colors when listing directories and files with the `ls` command still look, euuuhm, suboptimal.
+
+![ugly dircolors](ugly-dircolors.png)
 
 #### dircolors
 
