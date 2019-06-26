@@ -375,7 +375,7 @@ zsh
 ```
 
 The first time this launches a quick configuration wizard will be shown.  
-The choice here doesn't matter all that much, sinc the resulting file `.zshrc` will be overwritten when we install oh-my-zsh. I chose the option `2` anyway and went with the defaults.
+The choice here doesn't matter all that much, since the resulting file `.zshrc` will be overwritten when we install oh-my-zsh. I chose the option `2` anyway and went with the defaults.
 
 ![zsh-install](zsh-install.png)
 
