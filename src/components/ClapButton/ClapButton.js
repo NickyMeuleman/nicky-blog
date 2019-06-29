@@ -2,7 +2,10 @@
 
 import React, { Component } from 'react';
 import _ from 'lodash';
-import { getClaps as getClapsAPI, updateClaps as updateClapsAPI } from '../../utils/clapButton';
+import {
+  getClaps as getClapsAPI,
+  updateClaps as updateClapsAPI,
+} from '../../utils/clapButton';
 import classes from './ClapButton.module.css';
 
 export default class ClapButton extends Component {
@@ -39,7 +42,10 @@ export default class ClapButton extends Component {
     );
 
   updateClaps = _.debounce(() => {
-    const increment = Math.min(this.bufferedClaps, this.MAX_CLAPS - this.userClaps);
+    const increment = Math.min(
+      this.bufferedClaps,
+      this.MAX_CLAPS - this.userClaps
+    );
     updateClapsAPI(increment, this.props.url).then(
       res => {},
       error => {
@@ -71,7 +77,8 @@ export default class ClapButton extends Component {
     const applauseClasses = [
       classes.applauseButton,
       clapped && classes.clapped,
-      this.userClaps + this.bufferedClaps >= this.MAX_CLAPS && classes.clapLimitExceeded,
+      this.userClaps + this.bufferedClaps >= this.MAX_CLAPS &&
+        classes.clapLimitExceeded,
       clap && classes.clap,
       !isLoaded && classes.loading,
     ].filter(Boolean);
@@ -84,6 +91,7 @@ export default class ClapButton extends Component {
     return (
       <div>
         <button
+          type="button"
           className={applauseClasses.join(' ')}
           onClick={this.clapClick}
           style={{
@@ -98,7 +106,9 @@ export default class ClapButton extends Component {
         >
           <div className={classes.styleRoot} style={inlineStyleRoot}>
             <div className={classes.shockwave} />
-            <div className={classes.count}>{error ? 'Error' : totalClaps || 0}</div>
+            <div className={classes.count}>
+              {error ? 'Error' : totalClaps || 0}
+            </div>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">
               <g className={classes.flat}>
                 <path d="M57.0443547 6.86206897C57.6058817 6.46227795 57.7389459 5.67962382 57.3416215 5.11431557 56.9442971 4.54900731 56.1672933 4.41483804 55.6055588 4.81504702L52.4950525 7.030721C51.9335255 7.43051202 51.8004613 8.21316614 52.1977857 8.7784744 52.4404567 9.12371996 52.8251182 9.30825496 53.2153846 9.30825496 53.4640757 9.30825496 53.7152578 9.23343783 53.9338485 9.07753396L57.0443547 6.86206897zM48.8035059 6.1414838C48.94778 6.19623824 49.0959982 6.22215256 49.2415177 6.22215256 49.7455426 6.22215256 50.2198824 5.91201672 50.4075424 5.40898642L51.7485642 1.81818182C51.9906124 1.17011494 51.664906.447021944 51.0209664.203343783 50.3772345-.0405433647 49.6587706.287774295 49.4167224.93584117L48.0757006 4.52664577C47.83386 5.17471264 48.1595664 5.89780564 48.8035059 6.1414838zM58.5931726 11.6219436C58.5846615 11.6219436 58.5761504 11.6219436 58.5674317 11.6219436L54.7579749 11.6541275C54.0702341 11.6681296 53.5240687 12.1985371 53.5379772 12.8909091 53.551678 13.5745037 54.1065621 14.1297806 54.7828855 14.1297806 54.7913966 14.1297806 54.7999077 14.1297806 54.8086265 14.1297806L58.6180833 14.0643678C59.305824 14.0501567 59.8519894 13.4934169 59.838081 12.8010449 59.8243801 12.1174504 59.269496 11.6219436 58.5931726 11.6219436z" />
