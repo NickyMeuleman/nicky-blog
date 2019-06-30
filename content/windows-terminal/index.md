@@ -1,6 +1,6 @@
 ---
-title: WSL2, zsh, and docker. Linux through Windows.
-date: '2019-06-29'
+title: The new Windows Terminal
+date: '2019-06-30'
 author: 'Nicky Meuleman'
 cover: './cover.jpg'
 tags: ['Howto', 'DX']
