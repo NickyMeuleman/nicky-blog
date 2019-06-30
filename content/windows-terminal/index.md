@@ -6,7 +6,7 @@ cover: './cover.png'
 tags: ['Howto', 'DX']
 ---
 
-Microsoft is working on new command line application called [Windows Terminal](https://devblogs.microsoft.com/commandline/introducing-windows-terminal/).
+Microsoft is working on a new command line application called [Windows Terminal](https://devblogs.microsoft.com/commandline/introducing-windows-terminal/).
 
 [The promo video](https://www.youtube.com/watch?v=8gw0rXPMMPE) looks very promising, let's hope it lives up to expectations.
 
