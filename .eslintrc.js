@@ -25,6 +25,8 @@ module.exports = {
             }
         ],
         "react/prop-types": 0,
+        "react/destructuring-assignment":0,
+        "react/sort-comp": 0,
         "no-unused-vars": [
             "error",
             {
@@ -49,7 +51,6 @@ module.exports = {
                 tagName: "graphql"
             }
         ],
-        "react/destructuring-assignment":0,
         "prettier/prettier": [
             "error",
             {
