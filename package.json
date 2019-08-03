@@ -63,7 +63,7 @@
     "build": "gatsby build",
     "serve": "gatsby serve",
     "getip": "ip route show default | grep -Po 'via \\K\\S+'",
-    "dev": "gatsby develop -H 0.0.0.0",
+    "dev": "gatsby develop",
     "format": "prettier --write 'src/**/*.js'",
     "commit": "commit"
   },
