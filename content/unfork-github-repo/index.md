@@ -53,7 +53,7 @@ The git history is still there. 👍
 The locally cloned project does not have to be touched.  
 Pushing a change should work without intervention, since the remote url is the same as before.
 
-Since this is technically a brand new repository, some things (specific the the GitHub web UI) were lost.
+Since this is technically a brand new repository, some things (specific to the GitHub web UI) were lost.
 For example: pull requests, a description, the provided website url.
 
 ![an empty header for a description and website](empty-description.png)
