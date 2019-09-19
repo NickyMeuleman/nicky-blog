@@ -32,22 +32,22 @@ You can use something called an [X-server](https://en.wikipedia.org/wiki/X.Org_S
 
 For this I used the free program [VcXsrc](https://sourceforge.net/projects/vcxsrv/).
 
-The first time you run that program, allow "Public networks, such as those in airports and coffee shops" when the Window firewall pops up.
+The first time you run that program, allow "Public networks, such as those in airports and coffee shops" when the Windows firewall pops up.
 
 To display programs that launch on the WSL side of the machine as seperate windows. I chose the options "Multiple windows" and "Start no client".
 
 On the page that lets you enable extra settings, be sure to disable access control.
 By default it only allows the local IP 127.0.0.1.
-Since WSL has it's own IP address, which changes often, allow connections from any host.
+Since WSL has its own IP address, which changes often, allow connections from all clients.
 
 ![disable access control](disable-access-control.png)
 
 ### Cypress
 
 You can replace this with whatever GUI you would like to run.
-In my case, it was Cypress, so I made sure to set it up.
+In my case, it was [Cypress](https://www.cypress.io/), so I made sure to set it up.
 
-After installing Cypress in a project and adding a way to launch it in `package.json`.
+After installing Cypress in a project, I added a way to launch it in `package.json`.
 
 ```json
 {
@@ -67,8 +67,8 @@ Luckily, it was a helpful error message that points to [a docs page with the sol
 sudo apt install libgtk-3-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2
 ```
 
-Trying to run `cy:open` now doesn't error anymore.
-It doesn't do anything else either, only show the `opening Cypress` message forever.
+After installing those packages, trying to run `cy:open` doesn't error anymore.
+It doesn't do anything else either, only show the `Opening Cypress` message forever.
 
 ![stuck on opening then launching Cypress](stuck-on-opening.png)
 
@@ -87,8 +87,8 @@ export DISPLAY=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2; exit;}
 
 When you start WSL2, it gets its own IP address.
 That long command will evaluate to the IP that WSL2 set.
-The `DISPLAY` variable has the format `<host>:<display>.<screen>`.
-Both `<display>` and `<screen>` are set to 0 here so that line will evaluate to something like `export DISPLAY=172.17.224.1:0.0`, with the `<host>` changing to the correct IP every time that line is evaluated.
+The `DISPLAY` variable has the format `<host>:<display>.<screen>`.  
+Both `<display>` and `<screen>` are set to 0 here so that line will evaluate to something like `export DISPLAY=172.17.224.1:0.0`, with the `<host>` changing to the correct IP.
 
 To confirm this worked, print out the variable you just set in the terminal.
 
@@ -113,35 +113,36 @@ sudo /etc/init.d/dbus start &> /dev/null
 
 We need a `soduers` file to grant our linux user access to `dbus` without a password.
 
-To accomplish this, use the `[visido](http://manpages.ubuntu.com/manpages/precise/en/man8/visudo.8.html)` command.
-This best practice will ensure you don't lock yourself out of the system. The `sudoers` file doesn't play arounud, like the `README` in `/etc/sudoers.d/README` will tell you.
+To accomplish this, use the [`visido` command](http://manpages.ubuntu.com/manpages/precise/en/man8/visudo.8.html).  
+This best practice will ensure you don't lock yourself out of the system. The `sudoers` file doesn't play around, like the `README` in `/etc/sudoers.d/README` will tell you.
 
 ```bash
 sudo visudo -f /etc/sudoers.d/dbus
 ```
 
-A Nano editor will launch. Enter the following line, where `<your_username>` is replaced by - drumroll please - _your username_.
+A Nano editor will launch. Enter the following line, where `<your_username>` is replaced by -🥁drumroll please🥁- _your username_.
+
 If you aren't sure what the name of your linux user is, running `whoami` in the terminal will tell you.
 
 ```bash
 <your_username> ALL = (root) NOPASSWD: /etc/init.d/dbus
 ```
 
-Writing is file in the Nano editor is almost as hard as quitting VIM.
-Press `CTRL+O` to save, then press `Enter` to confirm. Finally, press `CTRL+X` to close the Nano editor.
+Writing a file in the Nano editor is almost as hard as quitting VIM.
+Press `CTRL+O` to save, then press `Enter` to confirm. Finally, press `CTRL+X` to close the editor.
 
 ## Launch your GUI app
 
 Close your terminal and open up a new one in the location you want to open the GUI app.
 
 Open the VcXsrv program in Windows (called XLaunch).
-Be sure to disable access control when you open an instance.
+Be sure to disable access control.
 
 Launch the program in Linux.
 
 ```bash
 # in the directory I installed Cypress and set up the command to launch it
-npm run cy:open
+yarn run cy:open
 ```
 
 BOOM, a window opens running a Linux app, on Windows 🎉
