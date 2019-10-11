@@ -62,7 +62,7 @@
   "scripts": {
     "build": "gatsby build",
     "serve": "gatsby serve",
-    "dev": "gatsby develop",
+    "dev": "gatsby develop -H 0.0.0.0",
     "format": "prettier --write 'src/**/*.js'",
     "commit": "commit",
     "clean": "gatsby clean"
