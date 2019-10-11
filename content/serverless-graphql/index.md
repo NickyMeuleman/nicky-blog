@@ -1,12 +1,12 @@
 ---
 title: From zero to a serverless GraphQL endpoint in a flash
-date: '2019-10-10'
+date: '2019-10-11'
 author: 'Nicky Meuleman'
-cover: './cover.png'
+cover: './cover.jpg'
 tags: ['serverless, GraphQL, Howto']
 ---
 
-<!-- TODO: find a fitting cover image -->
+<!-- Cover photo by Jay on Unsplash -->
 
 Serverless GraphQL.
 
@@ -73,7 +73,6 @@ exports.handler = function(event, context, callback) {
 
 Use the `callback` parameter to either return an error or a response from the function.
 
-Let's create you first serverless function.
 Inside the `functions` directory create a `hello.js` file.
 
 ```js
@@ -88,7 +87,7 @@ exports.handler = (event, context, callback) => {
 };
 ```
 
-You could pick an other Pokemon here, but you'd be wrong 🤷‍♂
+You could pick another Pokemon here, but you'd be wrong 🤷‍♂
 
 To see it in action, run `netlify dev`
 
@@ -97,6 +96,7 @@ netlify dev
 ```
 
 Open the URL and go to `/.netlify/functions/hello`
+
 🎉 TADA, there is the response.
 
 ## Serverless GraphQL using a single file
@@ -122,7 +122,7 @@ const { ApolloServer, gql } = require('apollo-server-lambda');
 There are 2 big parts to the GraphQL server that will live in this file.
 The schema (or typeDefs) and the resolvers.
 
-The **schema** define **WHAT** the operations you can do are, and WHAT the data that's used looks like.  
+The **schema** defines **WHAT** the operations you can do are, and WHAT the data that's used looks like.  
 The **resolvers** are functions that define **HOW** those operations are done.
 
 [Schema: WHAT, resolvers: HOW](https://twitter.com/NMeuleman/status/1163554727952564224)
@@ -149,22 +149,22 @@ fieldName(obj, args, context, info) { result }
 
 For more information on resolvers, [the apollo docs](https://www.apollographql.com/docs/graphql-tools/resolvers/#resolver-function-signature) have a wealth of information.
 
-In that `graphql.js` file, define an object called `resolvers` that corresponds to your schema.
+In that `graphql.js` file, define an object called `resolvers` that corresponds with your schema.  
 In this case, that means a single function under the `Query` key named `hello`.
 The schema calls for a `string` type as result, so that's what we'll return from the resolver.
 
 ```js
 const resolvers = {
   Query: {
-    hello: (root, args, context) => {
+    hello: (obj, args, context) => {
       return 'Hello, world!';
     }
   }
 };
 ```
 
-Great! The file now holds 2 variables, but they are not being used yet.
-This is where you feed those variables you just created to the `ApolloServer` you imported from `apollo-server-lambda` at the top of the file.
+Great! The file now holds 2 variables, but they are not being used yet.  
+This is where you feed the variables you just created to the `ApolloServer` you imported from `apollo-server-lambda` at the top of the file.
 
 For illustration purposes, add `playground: true, introspection: true` to open it up and make sure you see something useful when you visit `/.netlify/functions/graphql`.
 
@@ -186,7 +186,8 @@ exports.handler = server.createHandler();
 ```
 
 Ready for liftoff 🚀.
-Run `netlify dev` and visit `/.netlify/functions/graphql` to interact with the serverless GraphQL endpoint you just created using the [GraphQL playground](https://github.com/prisma-labs/graphql-playground) at that url!
+
+Run `netlify dev` and visit `/.netlify/functions/graphql` to interact with the serverless GraphQL endpoint you just created using the [GraphQL playground](https://github.com/prisma-labs/graphql-playground) at that URL!
 
 ![hello query](hello-query.png)
 
@@ -225,7 +226,7 @@ I'll refer back to [those apollo schema docs](https://www.apollographql.com/docs
 
 #### Database
 
-To support what we want to do like we defined in the schema, a database is needed!
+To support what we want to do, a database is needed!
 
 To keep things simple, we'll add a JavaScript array to our file.
 
@@ -284,44 +285,22 @@ const resolvers = {
 };
 ```
 
-#### Conclusion
+#### Trying out the additions
 
-Running `netlify dev` and visiting the GraphQL playground again, now you can interact with a GraphQL endpoint that's a little more fleshed out.
+Running `netlify dev` and visiting the GraphQL playground again, you can interact with a GraphQL endpoint that's a little more fleshed out.
 
 ![create pokemon](create-pokemon.png)
 
 Remember, since that super hightech database is a JavaScript array, any changes you make to it will disappear when the serverless-function shuts down and boots up again!
 
-TODO:
+## Conclusion
 
-## Serverless GraphQL using multiple files
+This really excited me, so I used it in a sideproject that's basically a runaway joke.
 
-## Using FaunaDB as serverless database
+It has a serverless GraphQL endpoint talks to [FaunaDB](https://fauna.com/), is written in [TypeScript](https://www.typescriptlang.org/) and has a small [Gatsby](https://www.gatsbyjs.org/) frontend.
 
-```bash
-CreateIndex({
-  name: "pokemonSortById",
-  source: Collection("Pokemon"),
-  values: [
-    { field: ["data", "id"] },
-    { field: ["ref"] }
-  ]
-})
-```
+[The JaSON API](https://twitter.com/NMeuleman/status/1180164722466971648)
 
-2 objects in the values array, so 2 variables to use in Lambda
+In the next part of this blogpost, we'll explore how to use multiple files to create our GraphQL endpoint and replace our placeholder database with [FaunaDB](https://fauna.com/).
 
-```js
-    allPokemon: (obj, args, { client, query: q }) => {
-      return client
-        .query(
-          q.Map(
-            q.Paginate(q.Match(q.Index("pokemonSortById")), { size: 256 }),
-            q.Lambda(["id", "ref"], q.Get(q.Var("ref")))
-          )
-        )
-        .then(result => {
-          return result.data.map(item => item.data);
-        });
-    },
-```
+For a sneak peak, feel free to look at [the code for the examples](https://github.com/NickyMeuleman/serverless-graphql).
