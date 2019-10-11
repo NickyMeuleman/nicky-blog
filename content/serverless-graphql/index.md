@@ -8,13 +8,13 @@ tags: ['serverless, GraphQL, Howto']
 
 <!-- Cover photo by Jay on Unsplash -->
 
-Serverless GraphQL.
+## Serverless GraphQL.
 
 Does the combinatiton of those 2 words set off your _buzzword detector_?
 That must be hard, right?
 
 I'm here to tell you it's not!
-We'll set one up during this blogpost and I promise, it's easier to do than you might think.
+We'll create [a serverless GraphQL endpoint](https://serverless-pokemon.netlify.com/.netlify/functions/base) during this blogpost and I promise, it's easier to do than you might think.
 
 ## Preparation
 
