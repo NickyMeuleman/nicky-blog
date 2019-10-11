@@ -295,12 +295,12 @@ Remember, since that super hightech database is a JavaScript array, any changes 
 
 ## Conclusion
 
-This really excited me, so I used it in a sideproject that's basically a runaway joke.
+This really excited me, so I used it in [a sideproject](https://jason-api.netlify.com/) that's basically a runaway joke.
 
-It has a serverless GraphQL endpoint talks to [FaunaDB](https://fauna.com/), is written in [TypeScript](https://www.typescriptlang.org/) and has a small [Gatsby](https://www.gatsbyjs.org/) frontend.
+It has a serverless GraphQL endpoint that talks to [FaunaDB](https://fauna.com/), is written in [TypeScript](https://www.typescriptlang.org/) and has a small [Gatsby](https://www.gatsbyjs.org/) frontend.
 
 [The JaSON API](https://twitter.com/NMeuleman/status/1180164722466971648)
 
-In the next part of this blogpost, we'll explore how to use multiple files to create our GraphQL endpoint and replace our placeholder database with [FaunaDB](https://fauna.com/).
+In the next part of this blogpost, we'll explore how to use multiple files to create our GraphQL endpoint and replace our database with [FaunaDB](https://fauna.com/).
 
 For a sneak peak, feel free to look at [the code for the examples](https://github.com/NickyMeuleman/serverless-graphql).
