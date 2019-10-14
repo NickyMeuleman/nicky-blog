@@ -16,21 +16,21 @@ Ready? Let's go! 🚀
 
 We left off at a point where the entire serverless GraphQL endpoint was contained in one file.
 
-That's cool, but a larger API would cause that file to become absolutely colossal. Let's split our singular `graphql.js` file into multiple files. Each with their own concern.
+That's cool, but a larger API than we have currently would cause that file to become absolutely colossal. Let's split our singular `graphql.js` file into multiple files. Each with their own concern.
 
 Each serverless function file that gets sent to Netlify should include everything it needs, since it is going to run on [AWS Lambda](https://aws.amazon.com/lambda/) as its own, self-contained thing.
 
 Combining that with the fact I told you every `.js` file inside the `functions` folder would become a serverless function. How do we split the logic of a serverless function over multiple files? 🤔
 
-It turns out Netlify supports another format of creating a serverless function.
+It turns out Netlify supports another method of creating a serverless function.
 
 It might not surprise you, but it's a folder... The solution is a folder.
 
-Only the `.js` file inside that folder with the same name as the folder will become a serverless function. The rest of the folder can be filled with supporting files that function can use.
+Only the `.js` file inside that folder with the same name as the folder will become a serverless function. The rest of the folder can be filled with supporting files the function can use.
 
 Following that logic, move `functions/graphql.js` to `functions/graphql/graphql.js`
 
-It's time to start pulling parts from that file, placing them in their own file, and importing that part into `functions/graphql/graphql.js`
+It's time to start pulling parts from that file and placing them in their own file.
 
 First is the schema, or our `typeDefs` variable.
 Move it to `functions/graphql/schema.js` and export that variable.
@@ -148,7 +148,7 @@ In practice what that means is if you query for
 Every time that query finds a Pokemon the information for that single Pokemon is sent along for the ride to the `isVeryBest` resolver.
 If that Pokemon is Mr. Mime, the `obj` parameter will be `{ id: 122, name: "Mr. Mime" }`
 
-That checking wheter of not a Pokemon is Mr. Mime now seems easy, since the `id` is available at `obj.id`.
+That checking whether or not a Pokemon is Mr. Mime now seems easy, since the `id` is available at `obj.id`.
 
 Also remove all the other references to `isVeryBest` from your resolvers!
 
@@ -212,8 +212,43 @@ The database will finally be populated with more pokemon, without doing a bunch 
 
 For a sneak peak of what the next blogpost will contain, feel free to look at [the code for the examples](https://github.com/NickyMeuleman/serverless-graphql).
 
-If you can't wait for FaunaDB content, [Chris Biscardi](https://twitter.com/chrisbiscardi) has some very useful content in his [The Complete Guide to FaunaDB](https://egghead.io/playlists/the-complete-guide-to-faunadb-74bef44b) course on Egghead.
+If you can't wait for FaunaDB content, [Chris :party-corgi: Biscardi](https://twitter.com/chrisbiscardi) has some very useful content in his [The Complete Guide to FaunaDB](https://egghead.io/playlists/the-complete-guide-to-faunadb-74bef44b) course on Egghead.
 
-If you can wait, I highly encourage you to check it out anyway, it's free! 🆓
+If you can wait, I highly encourage you to check it out anyway. Did I mention it's free? 🆓
 
-As something to look forward to, little ~~birdie~~ corgi told me more content is coming to that course!
+As something to look forward to, a _little_ ~~birdie~~ corgi told me more content is coming to that course!
+
+Get it? Corgi? That's Chris. Chris is tall 🙈
+
+## Optional explanation
+
+Did you try to include files from outside of the `functions` directory into your serverless function?
+
+That won't work, at least not without some extra effort.
+
+Earlier in this blogpost, I mentioned every `.js` file that turns into a serverless function should include everything it needs.
+Without that extra effort, _everything it needs_ should live in the `functions` directory.
+
+The `.js` files we created in our `functions` directory turning into a working serverless function has a layer of _magic_ to it.
+
+On Netlify, that layer is called [zip it and ship it](https://github.com/netlify/zip-it-and-ship-it).
+Netlify runs it before publishing your site, to package up _everything it needs_ and put it in a neat `.zip` archive 📦.
+
+When you look at the Deploys log when Netlify builds your site, you'll see it in action.
+
+![Netlify using zip it and ship it during the build](netlify-build-functions.png)
+
+### Build step
+
+The extra effort mentioned above is a build step.
+That build step will gather the _everything it needs_.
+
+That's not all it can do for you.
+If configured correctly, that build step can also convert languages that normally wouldn't be supported.
+
+[Netlify Lambda](https://github.com/netlify/netlify-lambda) is a package that can perform such a build step for you.
+
+For the [JaSON API](https://github.com/NickyMeuleman/jason-api), the source code for the functions lives in `src/lambda` and is written in TypeScript.  
+Before Netlify publishes the site, the build step runs and eventually writes out `.js` files that include _everything they need_.
+
+Those `.js` files then get picked up by [zip it and ship it](https://github.com/netlify/zip-it-and-ship-it), and off to [AWS Lambda](https://aws.amazon.com/lambda/) they go 🚀.
