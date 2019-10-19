@@ -1,9 +1,9 @@
 ---
 title: Pagination in GatsbyJS
-date: "2018-08-16"
-author: "Nicky Meuleman"
-cover: "./cover.jpg"
-tags: ["GatsbyJS", "Howto"]
+date: '2018-08-16'
+author: 'Nicky Meuleman'
+cover: './cover.jpg'
+tags: ['GatsbyJS', 'Howto']
 ---
 
 <!-- Photo by Austris Augusts on Unsplash -->
@@ -37,7 +37,7 @@ const numPages = Math.ceil(posts.length / postsPerPage);
 Array.from({ length: numPages }).forEach((_, i) => {
   createPage({
     path: i === 0 ? `/` : `/${i + 1}`,
-    component: path.resolve("./src/templates/blog-list.js")
+    component: path.resolve('./src/templates/blog-list.js')
   });
 });
 ```
@@ -46,13 +46,13 @@ Array.from({ length: numPages }).forEach((_, i) => {
 
 You can pass data to the pages you created via `context`.
 
-```js{7-12}
+```js
 // file: gatsby-node.js
 
 Array.from({ length: numPages }).forEach((_, i) => {
   createPage({
     path: i === 0 ? `/` : `/${i + 1}`,
-    component: path.resolve("./src/templates/blog-list.js"),
+    component: path.resolve('./src/templates/blog-list.js'),
     context: {
       limit: postsPerPage,
       skip: i * postsPerPage,
@@ -65,14 +65,13 @@ Array.from({ length: numPages }).forEach((_, i) => {
 
 The `context` object will be available in the created pages on the `pageContext` prop in React. You will also be able to access the keys in your GraphQL query for those pages.
 
-```jsx{6}
+```jsx
 // file: src/templates/blog-list.js
 
 import React from 'react'
 
 class BlogList extends React.component {
   console.log(this.props.pageContext)
-
   render() {
     return ( /* your code to display a list of posts */)
   }
@@ -83,7 +82,7 @@ class BlogList extends React.component {
 
 Use `limit` and `skip` to only fetch data for the posts you want to show.
 
-```js{4-9}
+```js
 // file: src/templates/blog-list.js
 
 export const pageQuery = graphql`
@@ -119,13 +118,13 @@ import React from 'react'
 import { Link } from 'gatsby'
 
 class BlogList extends React.component {
-  const { currentPage, numPages } = this.props.pageContext
-  const isFirst = currentPage === 1
-  const isLast = currentPage === numPages
-  const prevPage = currentPage - 1 === 1 ? "/" : (currentPage - 1).toString()
-  const nextPage = (currentPage + 1).toString()
-
   render() {
+    const { currentPage, numPages } = this.props.pageContext
+    const isFirst = currentPage === 1
+    const isLast = currentPage === numPages
+    const prevPage = currentPage - 1 === 1 ? "/" : (currentPage - 1).toString()
+    const nextPage = (currentPage + 1).toString()
+
     return (
        /* your code to display a list of posts */
       {!isFirst && (
@@ -151,9 +150,10 @@ Iterate over `numPages` and output a number with the relevant link.
 // file: src/templates/blog-list.js
 
 class BlogList extends React.component {
-  const { currentPage, numPages } = this.props.pageContext
   // ...
   render() {
+    const { currentPage, numPages } = this.props.pageContext
+
     return (
       // ...
       {Array.from({ length: numPages }, (_, i) => (
