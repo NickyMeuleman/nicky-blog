@@ -2,6 +2,9 @@ const path = require(`path`);
 const { createFilePath } = require(`gatsby-source-filesystem`);
 const _ = require('lodash');
 
+// Get all BlogPost documents from FaunaDB
+// const allFaunaBlogPosts = {};
+
 // Create slugs for pages
 exports.onCreateNode = ({ node, getNode, actions }) => {
   const { createNodeField } = actions;
@@ -48,7 +51,9 @@ exports.createPages = ({ graphql, actions }) => {
       blogPosts.forEach(({ node }, i) => {
         const next = i === 0 ? null : blogPosts[i - 1].node;
         const prev = i === blogPosts.length - 1 ? null : blogPosts[i + 1].node;
-
+        // if (!allClaps.find(clap => clap.slug === node.fields.slug)) {
+        //   // Create FaunaDB document if needed
+        // }
         createPage({
           path: `/blog${node.fields.slug}`,
           component: path.resolve('./src/templates/blog-post.js'),

@@ -1,9 +1,9 @@
 ---
 title: Linting and formatting CSS
-date: "2018-07-27"
-author: "Nicky Meuleman"
-cover: "./cover.jpg"
-tags: ["CSS", "Lint", "Format", "Howto", "DX"]
+date: '2018-07-27'
+author: 'Nicky Meuleman'
+cover: './cover.jpg'
+tags: ['CSS', 'Lint', 'Format', 'Howto', 'DX']
 ---
 
 We'll set up linting and formatting for our styles.
@@ -18,17 +18,17 @@ The tools we'll use are on [npm](https://www.npmjs.com/), we'll define those in 
 
 We'll generate a basic `package.json` so we can install the tools we want to use.
 
-```sh
+```bash
 npm init -y
 ```
 
-```sh
+```bash
 npm i -D stylelint prettier
 ```
 
 We'll install a [popular set of rules for stylelint](https://github.com/stylelint/stylelint-config-standard)
 
-```sh
+```bash
 npm i -D stylelint-config-standard
 ```
 
@@ -56,7 +56,7 @@ You can now run `npm run lint:css` in the terminal and stylelint will run for ev
 If it finds errors, you will see a bunch of `npm ERR!`s in the console, don't worry, that's expected, the linting errors it found are above them.
 If you would prefer not to see all those npm errors, you could also run that command without using that script we just declared.
 
-```sh
+```bash
 ./node_modules/.bin/stylelint *.css
 ```
 
@@ -66,7 +66,7 @@ Our styles should have consistent formatting, that will make them easier to read
 We'll set up Stylelint to report formatting issues that Prettier picks up.
 [stylelint-prettier](https://github.com/BPScott/stylelint-prettier) does exactly that.
 
-```sh
+```bash
 npm i -D stylelint-prettier
 ```
 
@@ -88,7 +88,7 @@ It's possible that the rules inside your `extends` array, or rules you define ex
 
 We'll turn off all Stylelint rules specific to formatting and let Prettier handle them, by adding [`stylelint-config-prettier`](https://github.com/prettier/stylelint-config-prettier).
 
-```sh
+```bash
 npm i -D stylelint-config-prettier
 ```
 
@@ -145,7 +145,7 @@ This has the added benefit of that command running for _everyone_ that commits c
 To minimize the time this takes, we only run the command for files that are currently staged in git.
 This is a huge time-saver (especially for larger projects).
 
-```sh
+```bash
 npm i -D husky@next lint-staged
 ```
 

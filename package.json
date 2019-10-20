@@ -17,7 +17,10 @@
   ],
   "homepage": "https://nickymeuleman.netlify.com/",
   "dependencies": {
+    "apollo-server-lambda": "^2.9.6",
     "babel-plugin-styled-components": "^1.10.0",
+    "dotenv": "^8.2.0",
+    "faunadb": "^2.9.2",
     "gatsby": "^2.10.5",
     "gatsby-image": "^2.0.29",
     "gatsby-plugin-catch-links": "^2.0.11",
@@ -44,6 +47,7 @@
     "gatsby-transformer-remark": "^2.2.5",
     "gatsby-transformer-sharp": "^2.1.13",
     "lodash": "^4.17.11",
+    "netlify-lambda": "^1.6.3",
     "prismjs": "^1.15.0",
     "react": "^16.8.2",
     "react-dom": "^16.8.2",
@@ -56,11 +60,17 @@
     "typeface-roboto-slab": "0.0.72",
     "typography": "^0.16.18",
     "typography-breakpoint-constants": "^0.16.18",
-    "typography-theme-ocean-beach": "^0.16.18"
+    "typography-theme-ocean-beach": "^0.16.18",
+    "webpack-node-externals": "^1.7.2"
   },
   "license": "GPL-3.0-or-later",
   "scripts": {
-    "build": "gatsby build",
+    "build": "run-p build:*",
+    "build:app": "gatsby build",
+    "build:lambda": "netlify-lambda build src/lambda --config webpack.functions.js",
+    "start": "run-p start:*",
+    "start:app": "gatsby develop -H 0.0.0.0",
+    "start:lambda": "netlify-lambda serve src/lambda --config webpack.functions.js",
     "serve": "gatsby serve",
     "dev": "gatsby develop -H 0.0.0.0",
     "format": "prettier --write 'src/**/*.js'",
@@ -96,8 +106,10 @@
     "eslint-plugin-jsx-a11y": "^6.2.1",
     "eslint-plugin-prettier": "^3.0.1",
     "eslint-plugin-react": "^7.12.4",
+    "http-proxy-middleware": "^0.20.0",
     "husky": "^2.4.1",
     "lint-staged": "^8.1.4",
+    "npm-run-all": "^4.1.5",
     "prettier": "^1.16.4"
   }
 }

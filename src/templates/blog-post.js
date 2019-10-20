@@ -102,6 +102,7 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
   const { markdownRemark: post } = data;
   const { prev, next } = pageContext;
   const initialClaps = location.state ? location.state.initialClaps : null;
+  console.log(JSON.stringify(post.fields, null, 2));
 
   return (
     <Layout>
@@ -127,17 +128,19 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
         <article>
           <h1>{post.frontmatter.title}</h1>
           <div dangerouslySetInnerHTML={{ __html: post.html }} />
-          <div>
-            Tags:{' '}
-            {post.frontmatter.tags.map(tag => (
-              <span key={tag}>
-                <Link to={`/blog/tags/${_.kebabCase(tag.toLowerCase())}`}>
-                  {tag}
-                </Link>
-                &nbsp;
-              </span>
-            ))}
-          </div>
+          {post.frontmatter.tags && (
+            <div>
+              Tags:{' '}
+              {post.frontmatter.tags.map(tag => (
+                <span key={tag}>
+                  <Link to={`/blog/tags/${_.kebabCase(tag.toLowerCase())}`}>
+                    {tag}
+                  </Link>
+                  &nbsp;
+                </span>
+              ))}
+            </div>
+          )}
         </article>
         <UnderPost>
           <div

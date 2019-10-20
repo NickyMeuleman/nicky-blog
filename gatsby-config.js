@@ -1,3 +1,6 @@
+/* eslint-disable import/no-extraneous-dependencies */
+const proxy = require('http-proxy-middleware');
+
 module.exports = {
   siteMetadata: {
     title: 'Nicky blogs',
@@ -6,6 +9,14 @@ module.exports = {
     social: {
       twitter: '@NMeuleman',
     },
+  },
+  developMiddleware: app => {
+    app.use(
+      `/.netlify/functions/`,
+      proxy({
+        target: `http://localhost:9000`,
+      })
+    );
   },
   plugins: [
     'gatsby-plugin-react-helmet',
