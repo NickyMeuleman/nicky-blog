@@ -10,6 +10,9 @@ const server = new ApolloServer({
     client: faunaContext.client,
     q: faunaContext.q,
   }),
+  cors: {
+    origin: '*',
+  },
   playground: true,
   introspection: true,
 });
