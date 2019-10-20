@@ -2,10 +2,6 @@
 
 import React, { Component } from 'react';
 import _ from 'lodash';
-import {
-  getClaps as getClapsAPI,
-  updateClaps as updateClapsAPI,
-} from '../../utils/clapButton';
 import classes from './ClapButton.module.css';
 
 export default class ClapButton extends Component {
@@ -25,33 +21,82 @@ export default class ClapButton extends Component {
 
   componentDidMount() {
     if (!this.state.totalClaps) {
-      this.getClaps(this.props.url);
+      this.getClaps(this.props.slug);
     }
   }
 
-  getClaps = url =>
-    getClapsAPI(url).then(
-      claps =>
-        this.setState({
-          totalClaps: Number(claps) || 0,
-          isLoaded: true,
-        }),
-      error => {
-        this.setState({ error, isLoaded: true });
-      }
-    );
+  // getClaps = url =>
+  //   getClapsAPI(url).then(
+  //     claps =>
+  //       this.setState({
+  //         totalClaps: Number(claps) || 0,
+  //         isLoaded: true,
+  //       }),
+  //     error => {
+  //       this.setState({ error, isLoaded: true });
+  //     }
+  //   );
+
+  getClaps = slug => {
+    if (typeof window !== 'undefined') {
+      fetch(
+        'https://5dacb04558d17900085e5c0c--nickymeuleman.netlify.com/.netlify/functions/graphql',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: `{
+               blogPostBySlug(slug:"test3") {
+                likes
+              }
+            }`,
+          }),
+        }
+      )
+        .then(res => res.json())
+        .then(res => console.log('GET CLAPS', res.data));
+    }
+  };
+
+  // updateClaps = _.debounce(() => {
+  //   const increment = Math.min(
+  //     this.bufferedClaps,
+  //     this.MAX_CLAPS - this.userClaps
+  //   );
+  //   updateClapsAPI(increment, this.props.url).then(
+  //     res => {},
+  //     error => {
+  //       this.setState({ error });
+  //     }
+  //   );
+  //   this.userClaps += increment;
+  //   this.bufferedClaps = 0;
+  // }, 2000);
 
   updateClaps = _.debounce(() => {
     const increment = Math.min(
       this.bufferedClaps,
       this.MAX_CLAPS - this.userClaps
     );
-    updateClapsAPI(increment, this.props.url).then(
-      res => {},
-      error => {
-        this.setState({ error });
-      }
-    );
+    if (typeof window !== 'undefined') {
+      fetch(
+        'https://5dacb04558d17900085e5c0c--nickymeuleman.netlify.com/.netlify/functions/graphql',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: `mutation {
+              updateBlogPost(slug:"test3",updates:{likes:5}){
+                slug
+                likes
+              }
+            }`,
+          }),
+        }
+      )
+        .then(res => res.json())
+        .then(res => console.log('GET CLAPS', res.data));
+    }
     this.userClaps += increment;
     this.bufferedClaps = 0;
   }, 2000);

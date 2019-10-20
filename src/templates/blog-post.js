@@ -102,7 +102,6 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
   const { markdownRemark: post } = data;
   const { prev, next } = pageContext;
   const initialClaps = location.state ? location.state.initialClaps : null;
-  console.log(JSON.stringify(post.fields, null, 2));
 
   return (
     <Layout>
@@ -153,7 +152,7 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
           >
             <ClapButton
               key={location.pathname}
-              url={data.site.siteMetadata.siteUrl + location.pathname}
+              slug={pageContext.slug}
               color="rgba(21,87,153,1)"
               maxClaps={10}
               initialClaps={initialClaps}
