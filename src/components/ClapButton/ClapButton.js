@@ -42,7 +42,7 @@ const ClapButton = props => {
     if (!props.initialClaps) {
       getClaps();
     }
-  }, [props.initialClaps]);
+  }, [props.slug]);
 
   const applauseClasses = [
     classes.applauseButton,
@@ -74,7 +74,7 @@ const ClapButton = props => {
   const clapClick = () => {
     bufferedClapsRef.current += 1;
     if (userClapsRef.current + bufferedClapsRef.current <= MAX_CLAPS) {
-      setTotalClaps(prev => Number(prev) + 1);
+      setTotalClaps(prev => (Number(prev) || 0) + 1);
       setClapped(true);
       setClapping(true);
       setTimeout(() => {

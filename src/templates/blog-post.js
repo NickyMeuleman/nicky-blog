@@ -151,7 +151,7 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
             }}
           >
             <ClapButton
-              key={location.pathname}
+              key={pageContext.slug}
               slug={pageContext.slug}
               color="rgba(21,87,153,1)"
               maxClaps={10}

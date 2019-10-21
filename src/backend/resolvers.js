@@ -53,6 +53,7 @@ const resolvers = {
     },
     addClaps: (root, args, { client, q }) => {
       console.log('ADD CLAPS');
+      // TODO: Improve query, find way to use Index with slug and likes
       return client.query(
         q.Update(
           q.Select(
