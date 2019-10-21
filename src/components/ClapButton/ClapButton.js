@@ -8,8 +8,8 @@ import classes from './ClapButton.module.css';
 
 const ClapButton = props => {
   const [clapMutation] = useMutation(gql`
-    mutation clapMutation($increment: Int!) {
-      addClaps(slug: "test3", increment: $increment) {
+    mutation clapMutation($slug: String!, $increment: Int!) {
+      addClaps(slug: $slug, increment: $increment) {
         likes
       }
     }
@@ -17,7 +17,9 @@ const ClapButton = props => {
 
   const [clapped, setClapped] = React.useState(false);
   const [clapping, setClapping] = React.useState(false);
-  const [totalClaps, setTotalClaps] = React.useState(props.initialClaps);
+  const [totalClaps, setTotalClaps] = React.useState(
+    Number(props.initialClaps) || 0
+  );
   const { style, color } = props;
   const userClapsRef = React.useRef(0);
   const bufferedClapsRef = React.useRef(0);
@@ -25,22 +27,22 @@ const ClapButton = props => {
 
   const [getClaps, { error, loading }] = useLazyQuery(
     gql`
-      {
-        blogPostBySlug(slug: "test3") {
+      query getClaps($slug: String!) {
+        blogPostBySlug(slug: $slug) {
           likes
         }
       }
     `,
     {
       onCompleted: res => {
-        setTotalClaps(res.blogPostBySlug.likes);
+        setTotalClaps(Number(res.blogPostBySlug.likes) || 0);
       },
     }
   );
 
   React.useEffect(() => {
     if (!props.initialClaps) {
-      getClaps();
+      getClaps({ variables: { slug: props.slug } });
     }
   }, [props.slug]);
 
@@ -50,7 +52,7 @@ const ClapButton = props => {
     userClapsRef.current + bufferedClapsRef.current >= MAX_CLAPS &&
       classes.clapLimitExceeded,
     clapping && classes.clap,
-    (loading || !totalClaps) && classes.loading,
+    (loading || totalClaps === null || undefined) && classes.loading,
   ].filter(Boolean);
   const inlineStyleRoot = {
     stroke: error ? '#CE2D4F' : color,
@@ -64,7 +66,7 @@ const ClapButton = props => {
         bufferedClapsRef.current,
         MAX_CLAPS - userClapsRef.current
       );
-      clapMutation({ variables: { increment } });
+      clapMutation({ variables: { slug: props.slug, increment } });
       userClapsRef.current += increment;
       bufferedClapsRef.current = 0;
     }, 2000),

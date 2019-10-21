@@ -1,9 +1,13 @@
 const path = require(`path`);
 const { createFilePath } = require(`gatsby-source-filesystem`);
 const _ = require('lodash');
+const faunadb = require('faunadb');
+require('dotenv').config();
 
-// Get all BlogPost documents from FaunaDB
-// const allFaunaBlogPosts = {};
+const client = new faunadb.Client({
+  secret: process.env.FAUNADB_SERVER_SECRET,
+});
+const q = faunadb.query;
 
 // Create slugs for pages
 exports.onCreateNode = ({ node, getNode, actions }) => {
@@ -37,11 +41,18 @@ exports.createPages = ({ graphql, actions }) => {
             }
           }
         }
+        NickyDB {
+          allBlogPosts {
+            likes
+            slug
+          }
+        }
       }
     `).then(result => {
       if (result.errors) {
         return reject(result.errors);
       }
+      const nickyDBBlogPosts = result.data.NickyDB.allBlogPosts;
       // filter drafts
       const blogPosts = result.data.allMarkdownRemark.edges.filter(
         edge => !edge.node.frontmatter.draft
@@ -51,9 +62,19 @@ exports.createPages = ({ graphql, actions }) => {
       blogPosts.forEach(({ node }, i) => {
         const next = i === 0 ? null : blogPosts[i - 1].node;
         const prev = i === blogPosts.length - 1 ? null : blogPosts[i + 1].node;
-        // if (!allClaps.find(clap => clap.slug === node.fields.slug)) {
-        //   // Create FaunaDB document if needed
-        // }
+
+        if (!nickyDBBlogPosts.find(item => item.slug === node.fields.slug)) {
+          // Create FaunaDB document for missing entries
+          client.query(
+            q.Create(q.Collection('BlogPost'), {
+              data: {
+                slug: node.fields.slug,
+                likes: 0,
+              },
+            })
+          );
+        }
+
         createPage({
           path: `/blog${node.fields.slug}`,
           component: path.resolve('./src/templates/blog-post.js'),

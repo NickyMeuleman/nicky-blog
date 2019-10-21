@@ -4,10 +4,6 @@ import styled from 'styled-components';
 import { TABLET_WIDTH } from 'typography-breakpoint-constants';
 import PostCard from '../components/PostCard/PostCard';
 import { rhythm, scale } from '../utils/typography';
-import {
-  getMultipleClaps as getMultipleClapsAPI,
-  normalizeUrl,
-} from '../utils/clapButton';
 import Layout from '../components/Layout/Layout';
 import TypedStrings from '../components/TypedStrings/TypedStrings';
 
@@ -23,9 +19,7 @@ const Triangle = styled.div`
   grid-row: 1/-1;
   grid-column: 1/-1;
   background: ${props =>
-    `linear-gradient(120deg, ${props.theme.primary} 5%, ${
-      props.theme.secondary
-    })`};
+    `linear-gradient(120deg, ${props.theme.primary} 5%, ${props.theme.secondary})`};
   clip-path: polygon(0 0, 100% 0, 100% ${rhythm(8)}, 0 ${rhythm(13)});
   z-index: 1;
   overflow: hidden;
@@ -95,6 +89,7 @@ class IndexPage extends React.Component {
     super(props);
     this.state = { isLoaded: false, error: false, claps: [] };
   }
+
   componentDidMount() {
     const { siteUrl } = this.props.data.site.siteMetadata;
     const urlArr = this.props.data.allMarkdownRemark.edges.reduce(
@@ -138,9 +133,7 @@ class IndexPage extends React.Component {
                 el =>
                   el.url ===
                   normalizeUrl(
-                    `${this.props.data.site.siteMetadata.siteUrl}/blog${
-                      node.fields.slug
-                    }`
+                    `${this.props.data.site.siteMetadata.siteUrl}/blog${node.fields.slug}`
                   )
               );
               return (

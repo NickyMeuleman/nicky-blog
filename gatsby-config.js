@@ -27,6 +27,14 @@ module.exports = {
         path: `${__dirname}/content/`,
       },
     },
+    {
+      resolve: `gatsby-source-graphql`,
+      options: {
+        typeName: `NICKYDB`,
+        fieldName: `NickyDB`,
+        url: `http://localhost:9000/.netlify/functions/graphql`,
+      },
+    },
     `gatsby-transformer-sharp`,
     `gatsby-plugin-sharp`,
     {
