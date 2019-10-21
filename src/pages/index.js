@@ -1,5 +1,7 @@
 import React from 'react';
 import { graphql } from 'gatsby';
+import { useQuery } from '@apollo/react-hooks';
+import gql from 'graphql-tag';
 import styled from 'styled-components';
 import { TABLET_WIDTH } from 'typography-breakpoint-constants';
 import PostCard from '../components/PostCard/PostCard';
@@ -84,86 +86,72 @@ const Content = styled.div`
   }
 `;
 
-class IndexPage extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { isLoaded: false, error: false, claps: [] };
-  }
-
-  componentDidMount() {
-    const { siteUrl } = this.props.data.site.siteMetadata;
-    const urlArr = this.props.data.allMarkdownRemark.edges.reduce(
-      (acc, el) => [...acc, `${siteUrl}/blog${el.node.fields.slug}`],
-      []
-    );
-    getMultipleClapsAPI(urlArr).then(
-      res => this.setState({ isLoaded: true, claps: JSON.parse(res) }),
-      error => this.setState({ error })
-    );
-  }
-
-  render() {
-    const { data } = this.props;
-    return (
-      <Layout>
-        <Container>
-          <Triangle>
-            <Pattern />
-          </Triangle>
-          <HeroContent>
-            <h1>Building for the modern web</h1>
-            <TypedStrings
-              strings={[
-                'Web applications',
-                'Landing pages',
-                'Responsive designs',
-                'Static websites',
-              ]}
-            />
-          </HeroContent>
-          <Content>
-            <p>
-              <span role="img" aria-label="sparkling star">
-                ✨
-              </span>{' '}
-              Recent posts ({data.allMarkdownRemark.totalCount} total)
-            </p>
-            {data.allMarkdownRemark.edges.map(({ node }, i) => {
-              const clapObj = this.state.claps.find(
-                el =>
-                  el.url ===
-                  normalizeUrl(
-                    `${this.props.data.site.siteMetadata.siteUrl}/blog${node.fields.slug}`
-                  )
-              );
-              return (
-                <PostCard
-                  key={node.id}
-                  featured={i === 0}
-                  url={`/blog${node.fields.slug}`}
-                  title={node.frontmatter.title}
-                  date={node.frontmatter.date}
-                  author={node.frontmatter.author}
-                  coverSizes={
-                    node.frontmatter.cover
-                      ? node.frontmatter.cover.childImageSharp.fluid
-                      : null
-                  }
-                  excerpt={node.excerpt}
-                  claps={
-                    !this.state.error && this.state.isLoaded && clapObj
-                      ? clapObj.claps
-                      : 0
-                  }
-                />
-              );
-            })}
-          </Content>
-        </Container>
-      </Layout>
-    );
-  }
-}
+const IndexPage = ({ data }) => {
+  // TODO: only get data for shown posts
+  const { data: clapData, loading, error } = useQuery(
+    gql`
+      query allClaps {
+        allBlogPosts {
+          slug
+          likes
+        }
+      }
+    `
+  );
+  return (
+    <Layout>
+      <Container>
+        <Triangle>
+          <Pattern />
+        </Triangle>
+        <HeroContent>
+          <h1>Building for the modern web</h1>
+          <TypedStrings
+            strings={[
+              'Web applications',
+              'Landing pages',
+              'Responsive designs',
+              'Static websites',
+            ]}
+          />
+        </HeroContent>
+        <Content>
+          <p>
+            <span role="img" aria-label="sparkling star">
+              ✨
+            </span>{' '}
+            Recent posts ({data.allMarkdownRemark.totalCount} total)
+          </p>
+          {data.allMarkdownRemark.edges.map(({ node }, i) => {
+            let claps = 0;
+            if (!error && !loading) {
+              claps = clapData.allBlogPosts.find(
+                el => el.slug === node.fields.slug
+              ).likes;
+            }
+            return (
+              <PostCard
+                key={node.id}
+                featured={i === 0}
+                url={`/blog${node.fields.slug}`}
+                title={node.frontmatter.title}
+                date={node.frontmatter.date}
+                author={node.frontmatter.author}
+                coverSizes={
+                  node.frontmatter.cover
+                    ? node.frontmatter.cover.childImageSharp.fluid
+                    : null
+                }
+                excerpt={node.excerpt}
+                claps={claps}
+              />
+            );
+          })}
+        </Content>
+      </Container>
+    </Layout>
+  );
+};
 
 export default IndexPage;
 
