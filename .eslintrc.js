@@ -51,6 +51,7 @@ module.exports = {
                 tagName: "graphql"
             }
         ],
+        "import/prefer-default-export": 0,
         "prettier/prettier": [
             "error",
             {

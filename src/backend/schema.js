@@ -10,6 +10,7 @@ const typeDefs = gql`
     updateBlogPost(slug: String!, updates: UpdateBlogPostInput!): BlogPost
     createBlogPost(slug: String!): BlogPost
     deleteBlogPost(slug: String!): BlogPost
+    addClaps(slug: String!, increment: Int!): BlogPost
   }
   type BlogPost {
     slug: String!

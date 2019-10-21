@@ -1,7 +1,10 @@
 import React from 'react';
 import { Link } from 'gatsby';
 import styled from 'styled-components';
-import { TABLET_WIDTH, LARGE_DISPLAY_WIDTH } from 'typography-breakpoint-constants';
+import {
+  TABLET_WIDTH,
+  LARGE_DISPLAY_WIDTH,
+} from 'typography-breakpoint-constants';
 import { rhythm, scale } from '../../utils/typography';
 
 const Container = styled.footer`
@@ -136,7 +139,10 @@ const Footer = () => (
   <Container>
     <Top>
       <div>
-        <p>Is there something awesome related to JavaScript you want to talk about?</p>
+        <p>
+          Is there something awesome related to JavaScript you want to talk
+          about?
+        </p>
         <p>Do you want to write a blogpost for this site?</p>
         <p>Excited about racecars?</p>
         <p>
@@ -160,12 +166,20 @@ const Footer = () => (
           <Link to="/about">Contact</Link>
           <ul>
             <li>
-              <a href="https://github.com/NickyMeuleman" target="_blank" rel="noopener noreferrer">
+              <a
+                href="https://github.com/NickyMeuleman"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Github
               </a>
             </li>
             <li>
-              <a href="https://twitter.com/NMeuleman" target="_blank" rel="noopener noreferrer">
+              <a
+                href="https://twitter.com/NMeuleman"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Twitter
               </a>
             </li>
@@ -181,13 +195,21 @@ const Footer = () => (
         <ul>
           <li>
             Powered by{' '}
-            <a href="https://www.gatsbyjs.org/" target="_blank" rel="noopener noreferrer">
+            <a
+              href="https://www.gatsbyjs.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Gatsby
             </a>
           </li>
           <li>
             Hosted on{' '}
-            <a href="https://www.netlify.com/" target="_blank" rel="noopener noreferrer">
+            <a
+              href="https://www.netlify.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Netlify
             </a>
           </li>

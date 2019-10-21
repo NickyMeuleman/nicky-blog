@@ -51,6 +51,28 @@ const resolvers = {
     deleteBlogPost: (root, args, { client, q }) => {
       console.log('DELET');
     },
+    addClaps: (root, args, { client, q }) => {
+      console.log('ADD CLAPS');
+      return client.query(
+        q.Update(
+          q.Select(
+            'ref',
+            q.Get(q.Match(q.Index('unique_BlogPost_slug'), args.slug))
+          ),
+          {
+            data: {
+              likes: q.Add(
+                args.increment,
+                q.Select(
+                  ['data', 'likes'],
+                  q.Get(q.Match(q.Index('unique_BlogPost_slug'), args.slug))
+                )
+              ),
+            },
+          }
+        )
+      );
+    },
   },
 };
 
