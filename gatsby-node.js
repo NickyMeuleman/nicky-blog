@@ -9,6 +9,8 @@ const graphqlEndpoint =
     ? process.env.GRAPHQL_ENDPOINT
     : 'http://localhost:9000/.netlify/functions/graphql';
 
+console.log('endpoint used:', graphqlEndpoint);
+
 // Create slugs for pages
 exports.onCreateNode = ({ node, getNode, actions }) => {
   const { createNodeField } = actions;
