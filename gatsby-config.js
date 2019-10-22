@@ -1,5 +1,11 @@
 /* eslint-disable import/no-extraneous-dependencies */
 const proxy = require('http-proxy-middleware');
+require('dotenv').config();
+
+const graphqlEndpoint =
+  process.env.NODE_ENV === 'production'
+    ? process.env.GRAPHQL_ENDPOINT
+    : 'http://localhost:9000/.netlify/functions/graphql';
 
 module.exports = {
   siteMetadata: {
@@ -32,7 +38,7 @@ module.exports = {
       options: {
         typeName: `NICKYDB`,
         fieldName: `NickyDB`,
-        url: `http://localhost:9000/.netlify/functions/graphql`,
+        url: graphqlEndpoint,
       },
     },
     `gatsby-transformer-sharp`,

@@ -1,13 +1,13 @@
 const path = require(`path`);
 const { createFilePath } = require(`gatsby-source-filesystem`);
 const _ = require('lodash');
-const faunadb = require('faunadb');
+require('isomorphic-fetch');
 require('dotenv').config();
 
-const client = new faunadb.Client({
-  secret: process.env.FAUNADB_SERVER_SECRET,
-});
-const q = faunadb.query;
+const graphqlEndpoint =
+  process.env.NODE_ENV === 'production'
+    ? process.env.GRAPHQL_ENDPOINT
+    : 'http://localhost:9000/.netlify/functions/graphql';
 
 // Create slugs for pages
 exports.onCreateNode = ({ node, getNode, actions }) => {
@@ -22,7 +22,7 @@ exports.onCreateNode = ({ node, getNode, actions }) => {
   }
 };
 
-exports.createPages = ({ graphql, actions }) => {
+exports.createPages = ({ graphql, actions, reporter }) => {
   const { createPage } = actions;
   return new Promise((resolve, reject) => {
     graphql(`
@@ -65,14 +65,28 @@ exports.createPages = ({ graphql, actions }) => {
 
         if (!nickyDBBlogPosts.find(item => item.slug === node.fields.slug)) {
           // Create FaunaDB document for missing entries
-          client.query(
-            q.Create(q.Collection('BlogPost'), {
-              data: {
-                slug: node.fields.slug,
-                likes: 0,
-              },
-            })
-          );
+          fetch(graphqlEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              query: `
+              mutation ($slug: String!) {
+                createBlogPost(slug: $slug) {
+                  slug
+                }
+              }`,
+              variables: { slug: node.fields.slug },
+            }),
+          })
+            .then(res => res.json())
+            .then(mutationres =>
+              reporter.info(
+                `Blogpost written to database: ${mutationres.data.createBlogPost.slug}`
+              )
+            )
+            .catch(error =>
+              reporter.error("Couldn't write new blogpost to database", error)
+            );
         }
 
         createPage({

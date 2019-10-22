@@ -1,0 +1,11 @@
+{
+  "name": "lambda",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "apollo-server-lambda": "^2.9.7",
+    "dotenv": "^8.2.0",
+    "faunadb": "^2.9.2"
+  }
+}

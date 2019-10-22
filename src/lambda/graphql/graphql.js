@@ -1,7 +1,7 @@
 import { ApolloServer } from 'apollo-server-lambda';
-import resolvers from '../backend/resolvers';
-import faunaContext from '../backend/db';
-import typeDefs from '../backend/schema';
+import resolvers from './resolvers';
+import faunaContext from './db';
+import typeDefs from './schema';
 
 const server = new ApolloServer({
   typeDefs,
