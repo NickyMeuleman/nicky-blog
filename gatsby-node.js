@@ -41,18 +41,12 @@ exports.createPages = ({ graphql, actions, reporter }) => {
             }
           }
         }
-        NickyDB {
-          allBlogPosts {
-            likes
-            slug
-          }
-        }
       }
     `).then(result => {
       if (result.errors) {
         return reject(result.errors);
       }
-      const nickyDBBlogPosts = result.data.NickyDB.allBlogPosts;
+      // const nickyDBBlogPosts = result.data.NickyDB.allBlogPosts;
       // filter drafts
       const blogPosts = result.data.allMarkdownRemark.edges.filter(
         edge => !edge.node.frontmatter.draft
@@ -63,31 +57,31 @@ exports.createPages = ({ graphql, actions, reporter }) => {
         const next = i === 0 ? null : blogPosts[i - 1].node;
         const prev = i === blogPosts.length - 1 ? null : blogPosts[i + 1].node;
 
-        if (!nickyDBBlogPosts.find(item => item.slug === node.fields.slug)) {
-          // Create FaunaDB document for missing entries
-          fetch(`${graphqlEndpoint}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              query: `
-              mutation ($slug: String!) {
-                createBlogPost(slug: $slug) {
-                  slug
-                }
-              }`,
-              variables: { slug: node.fields.slug },
-            }),
-          })
-            .then(res => res.json())
-            .then(mutationres =>
-              reporter.info(
-                `Blogpost written to database: ${mutationres.data.createBlogPost.slug}`
-              )
-            )
-            .catch(error =>
-              reporter.error("Couldn't write new blogpost to database", error)
-            );
-        }
+        // if (!nickyDBBlogPosts.find(item => item.slug === node.fields.slug)) {
+        //   // Create FaunaDB document for missing entries
+        //   fetch(`${graphqlEndpoint}`, {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify({
+        //       query: `
+        //       mutation ($slug: String!) {
+        //         createBlogPost(slug: $slug) {
+        //           slug
+        //         }
+        //       }`,
+        //       variables: { slug: node.fields.slug },
+        //     }),
+        //   })
+        //     .then(res => res.json())
+        //     .then(mutationres =>
+        //       reporter.info(
+        //         `Blogpost written to database: ${mutationres.data.createBlogPost.slug}`
+        //       )
+        //     )
+        //     .catch(error =>
+        //       reporter.error("Couldn't write new blogpost to database", error)
+        //     );
+        // }
 
         createPage({
           path: `/blog${node.fields.slug}`,
