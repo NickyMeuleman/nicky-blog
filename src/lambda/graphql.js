@@ -1,7 +1,9 @@
+// Function invocation failed: Error: Cannot find module 'core-js/features/array/flat'
+import 'core-js';
 import { ApolloServer } from 'apollo-server-lambda';
-import resolvers from './resolvers';
-import faunaContext from './db';
-import typeDefs from './schema';
+import resolvers from './utils/resolvers';
+import faunaContext from './utils/db';
+import typeDefs from './utils/schema';
 
 const server = new ApolloServer({
   typeDefs,

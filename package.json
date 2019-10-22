@@ -47,6 +47,7 @@
     "gatsby-source-graphql": "^2.1.20",
     "gatsby-transformer-remark": "^2.2.5",
     "gatsby-transformer-sharp": "^2.1.13",
+    "glob": "^7.1.5",
     "graphql-tag": "^2.10.1",
     "isomorphic-fetch": "^2.2.1",
     "lodash": "^4.17.11",
@@ -63,22 +64,22 @@
     "typeface-roboto-slab": "0.0.72",
     "typography": "^0.16.18",
     "typography-breakpoint-constants": "^0.16.18",
-    "typography-theme-ocean-beach": "^0.16.18",
-    "webpack-node-externals": "^1.7.2"
+    "typography-theme-ocean-beach": "^0.16.18"
   },
   "license": "GPL-3.0-or-later",
   "scripts": {
     "build": "run-p build:*",
     "build:app": "gatsby build",
-    "build:lambda": "netlify-lambda build src/lambda --config webpack.functions.js",
+    "build:lambda": "netlify-lambda build 'src/lambda' --config 'src/lambda/utils/webpack.functions.js'",
     "start": "run-p start:*",
     "start:app": "gatsby develop -H 0.0.0.0",
-    "start:lambda": "netlify-lambda serve src/lambda --config webpack.functions.js",
+    "start:lambda": "netlify-lambda serve './src/lambda' --config 'src/lambda/utils/webpack.functions.js'",
     "serve": "gatsby serve",
     "dev": "gatsby develop -H 0.0.0.0",
     "format": "prettier --write 'src/**/*.js'",
     "commit": "commit",
-    "clean": "gatsby clean"
+    "clean": "gatsby clean",
+    "postinstall": "netlify-lambda install 'src/lambda'"
   },
   "husky": {
     "hooks": {
