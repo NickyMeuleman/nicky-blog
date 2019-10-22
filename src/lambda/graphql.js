@@ -1,5 +1,3 @@
-// Function invocation failed: Error: Cannot find module 'core-js/features/array/flat'
-import 'core-js';
 import { ApolloServer } from 'apollo-server-lambda';
 import resolvers from './utils/resolvers';
 import faunaContext from './utils/db';

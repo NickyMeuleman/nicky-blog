@@ -19,8 +19,10 @@
   "dependencies": {
     "@apollo/react-hooks": "^3.1.3",
     "apollo-boost": "^0.4.4",
+    "apollo-server-lambda": "^2.9.7",
     "babel-plugin-styled-components": "^1.10.0",
     "dotenv": "^8.2.0",
+    "faunadb": "^2.9.2",
     "gatsby": "^2.10.5",
     "gatsby-image": "^2.0.29",
     "gatsby-plugin-catch-links": "^2.0.11",
@@ -64,7 +66,8 @@
     "typeface-roboto-slab": "0.0.72",
     "typography": "^0.16.18",
     "typography-breakpoint-constants": "^0.16.18",
-    "typography-theme-ocean-beach": "^0.16.18"
+    "typography-theme-ocean-beach": "^0.16.18",
+    "webpack-node-externals": "^1.7.2"
   },
   "license": "GPL-3.0-or-later",
   "scripts": {
@@ -78,8 +81,7 @@
     "dev": "gatsby develop -H 0.0.0.0",
     "format": "prettier --write 'src/**/*.js'",
     "commit": "commit",
-    "clean": "gatsby clean",
-    "postinstall": "netlify-lambda install 'src/lambda'"
+    "clean": "gatsby clean"
   },
   "husky": {
     "hooks": {
