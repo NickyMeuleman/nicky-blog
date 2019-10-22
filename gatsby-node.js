@@ -65,7 +65,7 @@ exports.createPages = ({ graphql, actions, reporter }) => {
 
         if (!nickyDBBlogPosts.find(item => item.slug === node.fields.slug)) {
           // Create FaunaDB document for missing entries
-          fetch(graphqlEndpoint, {
+          fetch(`${graphqlEndpoint}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

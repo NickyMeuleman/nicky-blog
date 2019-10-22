@@ -38,7 +38,7 @@ module.exports = {
       options: {
         typeName: `NICKYDB`,
         fieldName: `NickyDB`,
-        url: graphqlEndpoint,
+        url: `${graphqlEndpoint}`,
       },
     },
     `gatsby-transformer-sharp`,
