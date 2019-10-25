@@ -4,13 +4,6 @@ const _ = require('lodash');
 require('isomorphic-fetch');
 require('dotenv').config();
 
-// const graphqlEndpoint =
-//   process.env.NODE_ENV === 'production'
-//     ? process.env.GRAPHQL_ENDPOINT
-//     : 'http://localhost:9000/.netlify/functions/graphql';
-
-// console.log('endpoint used:', graphqlEndpoint);
-
 // Create slugs for pages
 exports.onCreateNode = ({ node, getNode, actions }) => {
   const { createNodeField } = actions;
@@ -67,7 +60,7 @@ exports.createPages = ({ graphql, actions, reporter }) => {
 
         if (!nickyDBBlogPosts.find(item => item.slug === node.fields.slug)) {
           // Create FaunaDB document for missing entries
-          fetch('http://localhost:9000/.netlify/functions/graphql', {
+          fetch(process.env.GRAPHQL_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

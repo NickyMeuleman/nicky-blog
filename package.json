@@ -71,8 +71,7 @@
   },
   "license": "GPL-3.0-or-later",
   "scripts": {
-    "build": "run-s build:lambda start:lambda build:app",
-    "build:netlify": "run-s build:lambda start:lambda build:app",
+    "build": "run-p build:lambda start:lambda build:app",
     "build:app": "gatsby build",
     "build:lambda": "netlify-lambda build 'src/lambda' --config 'src/lambda/utils/webpack.functions.js'",
     "start": "run-p start:*",

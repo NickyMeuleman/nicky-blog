@@ -2,11 +2,6 @@
 const proxy = require('http-proxy-middleware');
 require('dotenv').config();
 
-// const graphqlEndpoint =
-//   process.env.NODE_ENV === 'production'
-//     ? process.env.GRAPHQL_ENDPOINT
-//     : 'http://localhost:9000/.netlify/functions/graphql';
-
 module.exports = {
   siteMetadata: {
     title: 'Nicky blogs',
@@ -38,7 +33,7 @@ module.exports = {
       options: {
         typeName: `NICKYDB`,
         fieldName: `NickyDB`,
-        url: 'http://localhost:9000/.netlify/functions/graphql',
+        url: process.env.GRAPHQL_ENDPOINT,
       },
     },
     `gatsby-transformer-sharp`,
