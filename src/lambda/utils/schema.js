@@ -5,6 +5,7 @@ const typeDefs = gql`
     hello: String
     allBlogPosts: [BlogPost]!
     blogPostBySlug(slug: String!): BlogPost
+    blogPostsBySlug(slugs: [String!]!): [BlogPost]
   }
   type Mutation {
     updateBlogPost(slug: String!, updates: UpdateBlogPostInput!): BlogPost

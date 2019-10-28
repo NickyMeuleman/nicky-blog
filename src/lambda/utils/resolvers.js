@@ -2,7 +2,6 @@ const resolvers = {
   Query: {
     hello: (root, args, context) => `Hello, world!`,
     allBlogPosts: (root, args, { client, q }) => {
-      console.log('ALLOFTHEM');
       return client
         .query(
           q.Map(
@@ -13,15 +12,27 @@ const resolvers = {
         .then(res => res.data.map(item => item.data));
     },
     blogPostBySlug: (root, args, { client, q }) => {
-      console.log('BYSLUG');
       return client
         .query(q.Get(q.Match(q.Index('unique_BlogPost_slug'), args.slug)))
         .then(res => res.data);
     },
+    blogPostsBySlug: (root, args, { client, q }) => {
+      // TODO: optimize queries. Gather references first, do a single Get? less X-ops?
+      return client
+        .query(
+          q.Map(
+            args.slugs,
+            q.Lambda(
+              'slug',
+              q.Get(q.Match(q.Index('unique_BlogPost_slug'), q.Var('slug')))
+            )
+          )
+        )
+        .then(res => res.map(item => item.data));
+    },
   },
   Mutation: {
     updateBlogPost: (root, args, { client, q }) => {
-      console.log('UPDEET');
       return client
         .query(
           q.Update(
@@ -35,7 +46,6 @@ const resolvers = {
         .then(res => res.data);
     },
     createBlogPost: (root, args, { client, q }) => {
-      console.log('CREAAAT');
       // unique constraint in FaunaDB on slug prevents duplicates
       return client
         .query(
@@ -49,10 +59,9 @@ const resolvers = {
         .then(res => res.data);
     },
     deleteBlogPost: (root, args, { client, q }) => {
-      console.log('DELET');
+      console.log('DELETE');
     },
     addClaps: (root, args, { client, q }) => {
-      console.log('ADD CLAPS');
       // TODO: Improve query, find way to use Index with slug and likes
       return client.query(
         q.Update(

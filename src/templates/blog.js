@@ -2,12 +2,11 @@ import React from 'react';
 import { graphql } from 'gatsby';
 import styled from 'styled-components';
 import { TABLET_WIDTH } from 'typography-breakpoint-constants';
-import { useQuery } from '@apollo/react-hooks';
-import gql from 'graphql-tag';
 import PostCard from '../components/PostCard/PostCard';
 import { rhythm } from '../utils/typography';
 import Layout from '../components/Layout/Layout';
 import Pagination from '../components/Pagination/Pagination';
+import useClaps from '../hooks/useClaps';
 
 const PostContainer = styled.div`
   z-index: 5;
@@ -65,18 +64,10 @@ const Pattern = styled.div`
 `;
 
 const PostsPage = ({ data, pageContext }) => {
-  // TODO: only get data for shown posts
-  const { data: clapData, loading, error } = useQuery(
-    gql`
-      query allClaps {
-        allBlogPosts {
-          slug
-          likes
-        }
-      }
-    `
+  const slugs = data.allMarkdownRemark.edges.map(
+    ({ node }) => node.fields.slug
   );
-
+  const { data: clapData, loading, error } = useClaps(slugs);
   return (
     <Layout>
       <Container>
@@ -93,7 +84,7 @@ const PostsPage = ({ data, pageContext }) => {
           {data.allMarkdownRemark.edges.map(({ node }) => {
             let claps = 0;
             if (!error && !loading) {
-              claps = clapData.allBlogPosts.find(
+              claps = clapData.blogPostsBySlug.find(
                 el => el.slug === node.fields.slug
               ).likes;
             }
