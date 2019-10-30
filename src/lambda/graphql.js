@@ -12,6 +12,9 @@ const server = new ApolloServer({
   }),
   playground: process.env.NODE_ENV !== 'production',
   introspection: process.env.NODE_ENV !== 'production',
+});
+
+const handler = server.createHandler({
   cors: {
     origin: [
       'http://localhost',
@@ -21,8 +24,6 @@ const server = new ApolloServer({
     credentials: true,
   },
 });
-
-const handler = server.createHandler();
 
 /* eslint-disable import/prefer-default-export */
 export { handler };
