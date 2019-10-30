@@ -10,8 +10,16 @@ const server = new ApolloServer({
     client: faunaContext.client,
     q: faunaContext.q,
   }),
-  playground: true,
-  introspection: true,
+  playground: process.env.NODE_ENV !== 'production',
+  introspection: process.env.NODE_ENV !== 'production',
+  cors: {
+    origin: [
+      'http://localhost',
+      'https://nickymeuleman.netlify.com',
+      'http://nickymeuleman.netlify.com',
+    ],
+    credentials: true,
+  },
 });
 
 const handler = server.createHandler();

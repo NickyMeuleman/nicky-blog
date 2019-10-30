@@ -73,7 +73,7 @@
   "scripts": {
     "build": "run-p build:lambda start:lambda build:app",
     "build:app": "gatsby build",
-    "build:lambda": "netlify-lambda build 'src/lambda' --config 'src/lambda/utils/webpack.functions.js'",
+    "build:lambda": "netlify-lambda build './src/lambda' --config 'src/lambda/utils/webpack.functions.js'",
     "start": "run-p start:*",
     "start:app": "gatsby develop -H 0.0.0.0",
     "start:lambda": "netlify-lambda serve './src/lambda' --config 'src/lambda/utils/webpack.functions.js'",

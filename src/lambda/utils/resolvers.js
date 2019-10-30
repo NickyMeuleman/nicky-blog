@@ -1,6 +1,8 @@
 const resolvers = {
   Query: {
-    hello: (root, args, context) => `Hello, world!`,
+    hello: (root, args, context) => {
+      return `Hello, world!`;
+    },
     allBlogPosts: (root, args, { client, q }) => {
       return client
         .query(
@@ -59,7 +61,14 @@ const resolvers = {
         .then(res => res.data);
     },
     deleteBlogPost: (root, args, { client, q }) => {
-      console.log('DELETE');
+      return client.query(
+        q.Delete(
+          q.Select(
+            'ref',
+            q.Get(q.Match(q.Index('unique_BlogPost_slug'), args.slug))
+          )
+        )
+      );
     },
     addClaps: (root, args, { client, q }) => {
       // TODO: Improve query, find way to use Index with slug and likes
