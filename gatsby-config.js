@@ -34,6 +34,9 @@ module.exports = {
         typeName: `NICKYDB`,
         fieldName: `NickyDB`,
         url: process.env.GRAPHQL_ENDPOINT,
+        headers: {
+          Authorization: process.env.BUILD_JWT,
+        },
       },
     },
     `gatsby-transformer-sharp`,

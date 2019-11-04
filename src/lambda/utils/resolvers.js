@@ -1,6 +1,9 @@
+import { sameOrigin } from './helpers';
+
 const resolvers = {
   Query: {
     hello: (root, args, context) => {
+      sameOrigin(context.headers);
       return `Hello, world!`;
     },
     allBlogPosts: (root, args, { client, q }) => {
@@ -34,7 +37,8 @@ const resolvers = {
     },
   },
   Mutation: {
-    updateBlogPost: (root, args, { client, q }) => {
+    updateBlogPost: (root, args, { client, q, headers }) => {
+      sameOrigin(headers);
       return client
         .query(
           q.Update(
@@ -47,7 +51,8 @@ const resolvers = {
         )
         .then(res => res.data);
     },
-    createBlogPost: (root, args, { client, q }) => {
+    createBlogPost: (root, args, { client, q, headers }) => {
+      sameOrigin(headers);
       // unique constraint in FaunaDB on slug prevents duplicates
       return client
         .query(
@@ -60,7 +65,8 @@ const resolvers = {
         )
         .then(res => res.data);
     },
-    deleteBlogPost: (root, args, { client, q }) => {
+    deleteBlogPost: (root, args, { client, q, headers }) => {
+      sameOrigin(headers);
       return client.query(
         q.Delete(
           q.Select(

@@ -62,7 +62,10 @@ exports.createPages = ({ graphql, actions, reporter }) => {
           // Create FaunaDB document for missing entries
           fetch(process.env.GRAPHQL_ENDPOINT, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `${process.env.BUILD_JWT}`,
+            },
             body: JSON.stringify({
               query: `
               mutation ($slug: String!) {
