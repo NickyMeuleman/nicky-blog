@@ -127,17 +127,19 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
         <article>
           <h1>{post.frontmatter.title}</h1>
           <div dangerouslySetInnerHTML={{ __html: post.html }} />
-          <div>
-            Tags:{' '}
-            {post.frontmatter.tags.map(tag => (
-              <span key={tag}>
-                <Link to={`/blog/tags/${_.kebabCase(tag.toLowerCase())}`}>
-                  {tag}
-                </Link>
-                &nbsp;
-              </span>
-            ))}
-          </div>
+          {post.frontmatter.tags && (
+            <div>
+              Tags:{' '}
+              {post.frontmatter.tags.map(tag => (
+                <span key={tag}>
+                  <Link to={`/blog/tags/${_.kebabCase(tag.toLowerCase())}`}>
+                    {tag}
+                  </Link>
+                  &nbsp;
+                </span>
+              ))}
+            </div>
+          )}
         </article>
         <UnderPost>
           <div
@@ -149,8 +151,8 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
             }}
           >
             <ClapButton
-              key={location.pathname}
-              url={data.site.siteMetadata.siteUrl + location.pathname}
+              key={pageContext.slug}
+              slug={pageContext.slug}
               color="rgba(21,87,153,1)"
               maxClaps={10}
               initialClaps={initialClaps}

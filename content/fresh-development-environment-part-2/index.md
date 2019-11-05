@@ -1,9 +1,9 @@
 ---
 title: Setting up a fresh development environment, part 2
-date: "2018-05-21"
-author: "Nicky Meuleman"
-cover: "./cover.jpeg"
-tags: ["Howto", "DX"]
+date: '2018-05-21'
+author: 'Nicky Meuleman'
+cover: './cover.jpeg'
+tags: ['Howto', 'DX']
 ---
 
 This is part 2, please also check out [part 1](/blog/fresh-development-environment-part-1)
@@ -110,14 +110,14 @@ What if we could do these things faster/easier/...
 
 Let's start with the basics again and configure a few global settings.
 
-```sh
+```bash
 git config --global user.name "Daniel Ricciardo"
 git config --global user.email "john@doe.com"
 ```
 
 You can look at your configuration like this:
 
-```sh
+```bash
 git config --global --list
 ```
 
@@ -127,7 +127,7 @@ Did it ever look like someone changed every single line in a file, but when you 
 Windows uses CRLF where Unix uses LF to signal the end of a line.
 That is why we are going to configure the `autocrlf` setting
 
-```sh
+```bash
 # for Windows:
 git config --global core.autocrlf true
 # for Linux/Mac
@@ -138,7 +138,7 @@ When you do a `git pull` you are actually doing a `git fetch` and a `git merge`.
 We want to rebase on pull instead of merge, so `git pull --rebase`.
 Luckily, there's a configuration option to do that automatically so you don't have to remember the --rebase part every time.
 
-```sh
+```bash
 git config --global pull.rebase true
 ```
 
@@ -151,7 +151,7 @@ Here is my favourite:
 - `git s` to run git status in short mode.
   The standard output you get from `git status` is very verbose. The output from short mode is a lot cleaner!
 
-```sh
+```bash
 git config --global alias.s "status -s"
 ```
 

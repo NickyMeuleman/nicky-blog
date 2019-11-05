@@ -51,7 +51,7 @@ To use WSL, enable the aptly named "Windows Subsystem for Linux" feature.
 
 - Through Powershell:
 
-```sh
+```bash
 Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux
 ```
 
@@ -77,7 +77,7 @@ The option to enable is called the "virtual machine platform".
 
 - Powershell
 
-```sh
+```bash
 Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform
 ```
 
@@ -93,7 +93,7 @@ On the first boot of the distro you just installed (which presents itself as a t
 
 To check which version of WSL is installed you can run a command in Powershell.
 
-```sh
+```bash
 wsl --list --verbose
 # or
 wsl -l -v
@@ -103,7 +103,7 @@ If the number for the version is 2, all systems go!
 
 If not, convert that puppy from 1 to 2.
 
-```sh
+```bash
 wsl --set-version <distro-name> 2
 # in my case
 wsl --set-version Ubuntu 2
@@ -142,7 +142,7 @@ Remember to set the autocrlf setting to input for git. VSCode handles it well.
 
 > Open a terminal in Windows!
 
-```sh
+```bash
 git config --global core.autocrlf input
 ```
 
@@ -150,14 +150,14 @@ Before beginning to install Linux tools, we'll update our already installed pack
 
 > From this point on, the action happens in your Linux terminal!
 
-```sh
+```bash
 sudo apt update
 sudo apt upgrade
 ```
 
 More preparation, installing build tools for [node-gyp](https://github.com/nodejs/node-gyp)
 
-```sh
+```bash
 sudo apt install build-essential
 ```
 
@@ -165,14 +165,14 @@ sudo apt install build-essential
 
 This one should also be installed on the Linux side.
 
-```sh
+```bash
 sudo apt install git
 ```
 
 After installing git, remember to [configure it](/blog/fresh-development-environment-part-2/#configuration).  
 Especially setting the autocrlf setting to input is important here.
 
-```sh
+```bash
 git config --global core.autocrlf input
 ```
 
@@ -183,14 +183,14 @@ Now we can harness all those Linux-y tools, I'll use <abbr title="node version m
 
 [The nvm repo](https://github.com/nvm-sh/nvm) has excellent installation instructions.
 
-```sh
+```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
 ```
 
 Restart your terminal after the install.  
 To confirm the installation was successfull:
 
-```sh
+```bash
 command -v nvm
 ```
 
@@ -199,7 +199,7 @@ That's all, no version number, just that string.
 
 To install the latest the latest stable version of node:
 
-```sh
+```bash
 nvm install node # "node" is an alias for the latest version
 ```
 
@@ -208,13 +208,13 @@ When node releases a new version, you can run that same command again.
 You'll need to tell nvm which version of node you want to use.  
 So next time you boot your Linux distro, you'll have to use.
 
-```sh
+```bash
 nvm use node
 ```
 
 When the project you are working on requires a different version of node, specify that one.
 
-```sh
+```bash
 nvm use v<version number>
 # or if the project has a valid .nvmrc file
 nvm use
@@ -227,38 +227,38 @@ Many solutions to this annoyance exist. Later in this post the annoyance will be
 
 - Kick things off by updating the packages index and installing dependencies.
 
-```sh
+```bash
 sudo apt update
 sudo apt install apt-transport-https ca-certificates curl software-properties-common
 ```
 
 - Add Dockers's official GPG-key.
 
-```sh
+```bash
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 ```
 
 - Verify this by running:
 
-```sh
+```bash
 sudo apt-key fingerprint 0EBFCD88
 ```
 
 You should see the full key in the output.
 
-```sh
+```bash
 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88
 ```
 
 - Add the Docker repository to your list of repositories.
 
-```sh
+```bash
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 ```
 
 - Update the list of repositories again and install Docker CE.
 
-```sh
+```bash
 sudo apt update
 sudo apt install docker-ce
 ```
@@ -266,13 +266,13 @@ sudo apt install docker-ce
 Normally, the docker engine starts automatically after the install.  
 For me that was not the case so I started it manually.
 
-```sh
+```bash
 sudo service docker start
 ```
 
 - Verify Docker CE was installed correcly by booting up their hello-world container.
 
-```sh
+```bash
 sudo docker run hello-world
 ```
 
@@ -282,19 +282,19 @@ As a handy tool for managing docker containers, `docker-compose` is frequently i
 
 - Download the current stable release and place it in the `/usr/local/bin` folder.
 
-```sh
+```bash
 sudo curl -L "https://github.com/docker/compose/releases/download/1.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 ```
 
 - Make the file executable.
 
-```sh
+```bash
 sudo chmod +x /usr/local/bin/docker-compose
 ```
 
 - Verify the installation.
 
-```sh
+```bash
 docker-compose --version
 # output: docker-compose version 1.24.0, build 0aa59064
 ```
@@ -305,13 +305,13 @@ Yarn is a package manager for JavaScript made by Facebook.
 
 - Add their gpg key.
 
-```sh
+```bash
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
 ```
 
 - Add their repository.
 
-```sh
+```bash
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
 ```
 
@@ -319,14 +319,14 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/source
 
 > Skip installing node with `--no-install-recommends` when using `nvm`
 
-```sh
+```bash
 sudo apt update
 sudo apt install --no-install-recommends yarn
 ```
 
 - Verify the installation.
 
-```sh
+```bash
 yarn --version
 ```
 
@@ -363,14 +363,14 @@ I chose [ZSH](https://en.wikipedia.org/wiki/Z_shell) to replace the standard bas
 
 Installing it is a oneliner thanks to the package manager in Ubuntu.
 
-```sh
+```bash
 sudo apt install zsh
 ```
 
 When you launch Ubuntu, you'll still see the usual bash prompt.  
 To enter the zsh shell from that familiar bash prompt:
 
-```sh
+```bash
 zsh
 ```
 
@@ -382,7 +382,7 @@ The choice here doesn't matter all that much, since the resulting file `.zshrc` 
 Typing `zsh` into bash every time we launch it gets old quick.  
 Time to change the default shell to zsh!
 
-```sh
+```bash
 chsh -s $(which zsh)
 ```
 
@@ -395,7 +395,7 @@ It will also enable a huge list of nice features, which is more important.
 
 Installing oh-my-zsh is a oneliner.
 
-```sh
+```bash
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 ```
 
@@ -413,7 +413,7 @@ I like the agnoster one, so that's what I'll go with.
 Edit the `.zshrc` file to enable it.  
 This file is also located in your Linux home directory (`cd $home` to go there).
 
-```sh
+```bash
 # .zshrc
 # change the default theme
 ZSH_THEME="robbyrussell"
@@ -437,13 +437,13 @@ To install them all at once first clone that repo.
 Then open an elevated Powershell window.  
 To be able to execute the `install.ps1` file, we need to open up the execution policy temporarily.
 
-```sh
+```bash
 Set-ExecutionPolicy Bypass
 ```
 
 Now navigate to the cloned repo and execute the install script.
 
-```sh
+```bash
 .\install.ps1
 ```
 
@@ -451,7 +451,7 @@ You'll see the same thing happening as you would when downloading and installing
 
 Don't forget to close down the execution policy again immediately after!
 
-```sh
+```bash
 Set-ExecutionPolicy Default
 ```
 
@@ -472,13 +472,13 @@ I'll install the popular [solarized dircolors](https://github.com/seebi/dircolor
 
 Pick the theme you want and download the file to your home directory.
 
-```sh
+```bash
 curl https://raw.githubusercontent.com/seebi/dircolors-solarized/master/dircolors.ansi-dark --output ~/.dircolors
 ```
 
 Add a line to the bottom of your zsh configuration file to use what you just downloaded.
 
-```sh
+```bash
 # load dircolors
 eval `dircolors ~/.dircolors`
 ```
@@ -501,7 +501,7 @@ Others require a bit more effort, let's start with those!
 To install the plugin first clone [the repo](https://github.com/zsh-users/zsh-syntax-highlighting).  
 Then add the script to your `.zshrc`.
 
-```sh
+```bash
 # inside .zshrc add
 source <path-to-the-script>
 # I cloned the repo to the .zsh folder, so for me it was
@@ -516,7 +516,7 @@ Installing it follows the same pattern as the plugin we installed above.
 
 First clone the repo, then add a line to `.zshrc`
 
-```sh
+```bash
 # .zshrc
 source <path-to-the-script>
 # I cloned the repo to the .zsh folder, so for me it was
@@ -532,7 +532,7 @@ Most of the time, activating the plugin requires you to add it to the list of pl
 
 This is what I ended up with:
 
-```sh
+```bash
 plugins=(
     git
     node

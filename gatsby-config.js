@@ -1,3 +1,7 @@
+/* eslint-disable import/no-extraneous-dependencies */
+const proxy = require('http-proxy-middleware');
+require('dotenv').config();
+
 module.exports = {
   siteMetadata: {
     title: 'Nicky blogs',
@@ -7,6 +11,14 @@ module.exports = {
       twitter: '@NMeuleman',
     },
   },
+  developMiddleware: app => {
+    app.use(
+      `/.netlify/functions/`,
+      proxy({
+        target: `http://localhost:9000`,
+      })
+    );
+  },
   plugins: [
     'gatsby-plugin-react-helmet',
     {
@@ -14,6 +26,17 @@ module.exports = {
       options: {
         name: `pages`,
         path: `${__dirname}/content/`,
+      },
+    },
+    {
+      resolve: `gatsby-source-graphql`,
+      options: {
+        typeName: `NICKYDB`,
+        fieldName: `NickyDB`,
+        url: process.env.GRAPHQL_ENDPOINT,
+        headers: {
+          Authorization: process.env.BUILD_JWT,
+        },
       },
     },
     `gatsby-transformer-sharp`,

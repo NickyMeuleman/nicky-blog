@@ -1,9 +1,9 @@
 ---
 title: Upgrading to Gatsby v2
-date: "2018-06-28"
-author: "Nicky Meuleman"
-cover: "./cover.jpg"
-tags: ["GatsbyJS", "Howto"]
+date: '2018-06-28'
+author: 'Nicky Meuleman'
+cover: './cover.jpg'
+tags: ['GatsbyJS', 'Howto']
 ---
 
 <!-- Photo by Pietro De Grandi on Unsplash -->
@@ -14,7 +14,7 @@ This post describes how I upgraded this site from v1 to v2. If it reads almost i
 Before I got started, I created a new branch in git where all changed would live.
 This branch will get merged into the master branch after this post 💪.
 
-```sh
+```bash
 git checkout -b gatsby-v2
 ```
 
@@ -58,7 +58,7 @@ at this point I also deleted my `node-modules` folder and my lockfile `package-l
 
 In v1 `react` and `react-dom` were included in the main `gatsby` dependency. This is no longer the case.
 
-```sh
+```bash
 npm i react react-dom
 ```
 
@@ -68,7 +68,7 @@ Many packages depend on other packages to function correctly.
 Make sure those dependencies are there.
 If you don't know which packages you should install, go to the [Gatsby plugin browser](https://next.gatsbyjs.org/plugins/) and look at the line of code that tells you how to install the plugin. They have a line for each package in their plugin brower that looks like this:
 
-```sh
+```bash
 npm install --save gatsby-plugin-something optional-peer-dependency another-optional-dependency
 ```
 
@@ -76,7 +76,7 @@ Also if you forget to install the peer dependencies and run `npm install` it wil
 
 for me that meant:
 
-```sh
+```bash
 npm i react helmet styled-components babel-plugin-styled-components react-typography typography
 ```
 

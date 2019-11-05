@@ -78,7 +78,7 @@ There is a problem! It either points to the React Component object if your `Inpu
 
 That _big fat error_ is actually really helpful:
 
-```error
+```
 Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
 ```
 

@@ -29,7 +29,7 @@ npm install netlify-cli -g
 
 Create a new directory for this new, awesome project and do some ~~busywork~~ initial setup
 
-```bsg
+```bash
 git init
 npm init -y
 ```

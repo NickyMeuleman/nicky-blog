@@ -1,9 +1,9 @@
 ---
 title: Automagically lint and format your code
-date: "2018-05-04"
-author: "Nicky Meuleman"
-cover: "./cover.png"
-tags: ["JavaScript", "Lint", "Format", "Howto", "DX"]
+date: '2018-05-04'
+author: 'Nicky Meuleman'
+cover: './cover.png'
+tags: ['JavaScript', 'Lint', 'Format', 'Howto', 'DX']
 ---
 
 We'll set up our editor to [lint](<https://en.wikipedia.org/wiki/Lint_(software)>) and format our code automatically, leaving us free to think about the functionality of our code. Not whether or not a variable is defined or if we should insert a space.
@@ -27,7 +27,7 @@ Let's try this on a [GatsbyJS](https://www.gatsbyjs.org/) project.
 
 After bootstrapping our project, open VSCode in the newly created directory and delete some files we won't use: `yarn.lock` (we'll use `npm`) and `.prettierrc` (those options will live inside an other configuration file)
 
-```sh
+```bash
 gatsby new automagically-lint
 cd automagically-lint
 code .
@@ -64,7 +64,7 @@ We'll install everything we need locally, so the machine we develop on doesn't m
 
 Start with installing our main linting package, [ESLint](https://www.npmjs.com/package/eslint)
 
-```sh
+```bash
 npm i eslint -D
 ```
 
@@ -72,7 +72,7 @@ We don't need to install our main formatting package, [Prettier](https://www.npm
 
 Since ESLint is installed locally, we'll initialize it from the node modules folder, we'll use a popular set of rules, the [Airbnb Style Guide](https://github.com/airbnb/javascript) configuration.
 
-```sh
+```bash
 ./node_modules/.bin/eslint --init
 ```
 
@@ -93,7 +93,7 @@ The problem we are faced with if we want to combine ESLint and Prettier is that 
 To prevent the conflicts we'll install and configure the [Prettier config package for ESLint](https://github.com/prettier/eslint-config-prettier).
 This package disables all formatting-related ESLint rules.
 
-```sh
+```bash
 npm i eslint-config-prettier -D
 ```
 
@@ -108,7 +108,7 @@ It now looks like this
 
 next up is the [Prettier plugin package for ESLint](https://github.com/prettier/eslint-plugin-prettier)
 
-```sh
+```bash
 npm i eslint-plugin-prettier -D
 ```
 

@@ -1,9 +1,9 @@
 ---
 title: Setting up a fresh development environment, part 1
-date: "2018-05-15"
-author: "Nicky Meuleman"
-cover: "./cover.jpeg"
-tags: ["Howto", "DX"]
+date: '2018-05-15'
+author: 'Nicky Meuleman'
+cover: './cover.jpeg'
+tags: ['Howto', 'DX']
 ---
 
 Sometimes you just want to start from a clean slate.
@@ -23,7 +23,7 @@ Things I installed:
 
 When you are done your terminal should successfully return the versions of what you just installed when you ask for them.
 
-```sh
+```bash
 node --version
 # v8.11.1
 npm --version

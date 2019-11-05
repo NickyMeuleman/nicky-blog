@@ -1,6 +1,8 @@
 const path = require(`path`);
 const { createFilePath } = require(`gatsby-source-filesystem`);
 const _ = require('lodash');
+require('isomorphic-fetch');
+require('dotenv').config();
 
 // Create slugs for pages
 exports.onCreateNode = ({ node, getNode, actions }) => {
@@ -15,7 +17,7 @@ exports.onCreateNode = ({ node, getNode, actions }) => {
   }
 };
 
-exports.createPages = ({ graphql, actions }) => {
+exports.createPages = ({ graphql, actions, reporter }) => {
   const { createPage } = actions;
   return new Promise((resolve, reject) => {
     graphql(`
@@ -34,11 +36,18 @@ exports.createPages = ({ graphql, actions }) => {
             }
           }
         }
+        NickyDB {
+          allBlogPosts {
+            likes
+            slug
+          }
+        }
       }
     `).then(result => {
       if (result.errors) {
         return reject(result.errors);
       }
+      const nickyDBBlogPosts = result.data.NickyDB.allBlogPosts;
       // filter drafts
       const blogPosts = result.data.allMarkdownRemark.edges.filter(
         edge => !edge.node.frontmatter.draft
@@ -48,6 +57,35 @@ exports.createPages = ({ graphql, actions }) => {
       blogPosts.forEach(({ node }, i) => {
         const next = i === 0 ? null : blogPosts[i - 1].node;
         const prev = i === blogPosts.length - 1 ? null : blogPosts[i + 1].node;
+
+        if (!nickyDBBlogPosts.find(item => item.slug === node.fields.slug)) {
+          // Create FaunaDB document for missing entries
+          fetch(process.env.GRAPHQL_ENDPOINT, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `${process.env.BUILD_JWT}`,
+            },
+            body: JSON.stringify({
+              query: `
+              mutation ($slug: String!) {
+                createBlogPost(slug: $slug) {
+                  slug
+                }
+              }`,
+              variables: { slug: node.fields.slug },
+            }),
+          })
+            .then(res => res.json())
+            .then(mutationres =>
+              reporter.info(
+                `Blogpost written to database: ${mutationres.data.createBlogPost.slug}`
+              )
+            )
+            .catch(error =>
+              reporter.error("Couldn't write new blogpost to database", error)
+            );
+        }
 
         createPage({
           path: `/blog${node.fields.slug}`,

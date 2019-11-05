@@ -4,12 +4,9 @@ import styled from 'styled-components';
 import { TABLET_WIDTH } from 'typography-breakpoint-constants';
 import PostCard from '../components/PostCard/PostCard';
 import { rhythm, scale } from '../utils/typography';
-import {
-  getMultipleClaps as getMultipleClapsAPI,
-  normalizeUrl,
-} from '../utils/clapButton';
 import Layout from '../components/Layout/Layout';
 import TypedStrings from '../components/TypedStrings/TypedStrings';
+import useClaps from '../hooks/useClaps';
 
 const Container = styled.div`
   flex: 1;
@@ -23,9 +20,7 @@ const Triangle = styled.div`
   grid-row: 1/-1;
   grid-column: 1/-1;
   background: ${props =>
-    `linear-gradient(120deg, ${props.theme.primary} 5%, ${
-      props.theme.secondary
-    })`};
+    `linear-gradient(120deg, ${props.theme.primary} 5%, ${props.theme.secondary})`};
   clip-path: polygon(0 0, 100% 0, 100% ${rhythm(8)}, 0 ${rhythm(13)});
   z-index: 1;
   overflow: hidden;
@@ -90,87 +85,66 @@ const Content = styled.div`
   }
 `;
 
-class IndexPage extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { isLoaded: false, error: false, claps: [] };
-  }
-  componentDidMount() {
-    const { siteUrl } = this.props.data.site.siteMetadata;
-    const urlArr = this.props.data.allMarkdownRemark.edges.reduce(
-      (acc, el) => [...acc, `${siteUrl}/blog${el.node.fields.slug}`],
-      []
-    );
-    getMultipleClapsAPI(urlArr).then(
-      res => this.setState({ isLoaded: true, claps: JSON.parse(res) }),
-      error => this.setState({ error })
-    );
-  }
+const IndexPage = ({ data }) => {
+  const slugs = data.allMarkdownRemark.edges.map(
+    ({ node }) => node.fields.slug
+  );
+  const { data: clapData, loading, error } = useClaps(slugs);
 
-  render() {
-    const { data } = this.props;
-    return (
-      <Layout>
-        <Container>
-          <Triangle>
-            <Pattern />
-          </Triangle>
-          <HeroContent>
-            <h1>Building for the modern web</h1>
-            <TypedStrings
-              strings={[
-                'Web applications',
-                'Landing pages',
-                'Responsive designs',
-                'Static websites',
-              ]}
-            />
-          </HeroContent>
-          <Content>
-            <p>
-              <span role="img" aria-label="sparkling star">
-                ✨
-              </span>{' '}
-              Recent posts ({data.allMarkdownRemark.totalCount} total)
-            </p>
-            {data.allMarkdownRemark.edges.map(({ node }, i) => {
-              const clapObj = this.state.claps.find(
-                el =>
-                  el.url ===
-                  normalizeUrl(
-                    `${this.props.data.site.siteMetadata.siteUrl}/blog${
-                      node.fields.slug
-                    }`
-                  )
-              );
-              return (
-                <PostCard
-                  key={node.id}
-                  featured={i === 0}
-                  url={`/blog${node.fields.slug}`}
-                  title={node.frontmatter.title}
-                  date={node.frontmatter.date}
-                  author={node.frontmatter.author}
-                  coverSizes={
-                    node.frontmatter.cover
-                      ? node.frontmatter.cover.childImageSharp.fluid
-                      : null
-                  }
-                  excerpt={node.excerpt}
-                  claps={
-                    !this.state.error && this.state.isLoaded && clapObj
-                      ? clapObj.claps
-                      : 0
-                  }
-                />
-              );
-            })}
-          </Content>
-        </Container>
-      </Layout>
-    );
-  }
-}
+  return (
+    <Layout>
+      <Container>
+        <Triangle>
+          <Pattern />
+        </Triangle>
+        <HeroContent>
+          <h1>Building for the modern web</h1>
+          <TypedStrings
+            strings={[
+              'Web applications',
+              'Landing pages',
+              'Responsive designs',
+              'Static websites',
+            ]}
+          />
+        </HeroContent>
+        <Content>
+          <p>
+            <span role="img" aria-label="sparkling star">
+              ✨
+            </span>{' '}
+            Recent posts ({data.allMarkdownRemark.totalCount} total)
+          </p>
+          {data.allMarkdownRemark.edges.map(({ node }, i) => {
+            let claps = 0;
+            if (!error && !loading) {
+              claps = clapData.blogPostsBySlug.find(
+                el => el.slug === node.fields.slug
+              ).likes;
+            }
+            return (
+              <PostCard
+                key={node.id}
+                featured={i === 0}
+                url={`/blog${node.fields.slug}`}
+                title={node.frontmatter.title}
+                date={node.frontmatter.date}
+                author={node.frontmatter.author}
+                coverSizes={
+                  node.frontmatter.cover
+                    ? node.frontmatter.cover.childImageSharp.fluid
+                    : null
+                }
+                excerpt={node.excerpt}
+                claps={claps}
+              />
+            );
+          })}
+        </Content>
+      </Container>
+    </Layout>
+  );
+};
 
 export default IndexPage;
 
