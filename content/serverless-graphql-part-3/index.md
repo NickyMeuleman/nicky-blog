@@ -275,7 +275,7 @@ exports.resolvers = {
     pokemonByName: (obj, args, context) => {
       const { client, query: q } = context;
       return client
-        .query(q.Get(q.Match(q.Index('pokemonByName'), args.id)))
+        .query(q.Get(q.Match(q.Index('pokemonByName'), args.name)))
         .then(result => result.data);
     }
   },
@@ -351,5 +351,64 @@ CreateIndex({
   terms: [{ field: ["data", "name"] }]
 })
 ```
+
+All done! 🎉
+Time to check out the endpoint again at `/.netlify/functions/graphql`
+after running
+
+```bash
+netlify dev
+```
+
+## Bonus
+
+### Sorting the `allPokemon` query
+
+Keen eyed people who are following along might have noticed our Pokemon don't return in order when we query for `allPokemon`.
+
+Guess what can be used to rectify that?
+
+One imaginary internet cookie for you if you guessed an Index!
+
+https://twitter.com/NMeuleman/status/1182020349866762240
+
+Instead of specifying the `terms`, we will create an Index (remember, that's a group of data) with `values`. The `id` and the `ref`. The `id` will be sorted from low to high. The `ref` can then be used to retrieve the Pokemon with that `id` from the database.
+
+In the FQL shell
+
+```
+CreateIndex({
+  name: "allPokemonSortById",
+  source: Collection("Pokemon"),
+  values: [
+    { field: ["data", "id"] },
+    { field: ["ref"] }
+  ]
+})
+```
+
+And in the `allPokemon` resolver
+
+```js
+exports.resolvers = {
+  Query: {
+    allPokemon: (obj, args, context) => {
+      const { client, query: q } = context;
+      return client
+        .query(
+          q.Map(
+            q.Paginate(q.Match(q.Index('allPokemonSortById')), {
+              size: 256
+            }),
+            q.Lambda(['id', 'ref'], q.Select(['data'], q.Get(q.Var('ref'))))
+          )
+        )
+        .then(result => result.data);
+    }
+  }
+};
+```
+
+### Authentication
 
 THIS POST IS A WORK IN PROGRESS
