@@ -41,7 +41,7 @@ Fauna has a handy way to interact with the database in many coding languages, th
 npm install --save faunadb
 ```
 
-Instead of storing the entire database in the GraphQL context, like we did with the `pokemons` array. We will store the connection to, and method to interact with, the database in the `context`.
+Instead of storing the entire database in the GraphQL context, like we did with the `pokemons` array. We will store the connection to, and methods to interact with, the database instead.
 
 > I know the plural is pokemon, don't judge me.
 
@@ -73,17 +73,17 @@ When creating that Collection, something called an [Index](https://docs.fauna.co
 That Index helps you browse all the `Pokemon` inside that Collection.
 
 By default, Fauna uses [snake_case](https://en.wikipedia.org/wiki/Snake_case) to name things.
-That's perfectly fine. To keep things uniform with the JavaScript code, my first order of business was to rename the created `all_pokemon` index to `allPokemon` by going to Settings when that index is selected.
+That's perfectly fine. To keep things uniform with the JavaScript code, my first order of business was to rename the created `all_pokemon` Index to `allPokemon` by going to Settings after selecting that Index.
 
 ![renaming the Index](index-settings.png)
 
 ### Connecting to the database
 
-To make the connection to the database, Fauna requires us to provide a secret key.
+To make the connection to the database using that [JavaScript driver](https://docs.fauna.com/fauna/current/drivers/javascript), Fauna requires us to provide a secret key.
 In the Fauna dashboard, add a new key.
 
 This is found under the security tab.
-A Server-key is what we want here, it will allow us to manipulate the database we just created, but not other.
+A Server-key is what we want here, it will allow us to manipulate the database we just created, but not other ones.
 
 ![new key](new-key.png)
 
@@ -156,6 +156,200 @@ const server = new ApolloServer({
 });
 
 exports.handler = server.createHandler();
+```
+
+## Populating the database for the first time
+
+Let's take a small step back before changing the GraphQL-resolvers to talk to the database.
+
+Our placeholder database only had a couple, manually entered, pokemon.
+Let's fill our database with a lot more. For this example, the [first generation](https://en.wikipedia.org/wiki/List_of_generation_I_Pok%C3%A9mon) pokemon. All 151 of them.
+
+The [PokéAPI](https://pokeapi.co/) provides convenient access to that information.
+
+To get all those Pokemon into the database. I created a file meant to be used a single time.
+
+It requests the first 151 Pokemon from the PokeAPI.
+The received data is then lightly adjusted and each individual Pokemon is stored in our database, under our `Pokemon` collection.
+
+```js
+// This file was run once (using node) to populate the fauna database
+// Be sure to install node-fetch first!
+
+const fetch = require('node-fetch');
+const { client, query } = require('./functions/graphql/db');
+const q = query;
+const pokeAPI = 'https://pokeapi.co/api/v2/pokemon?limit=151';
+
+fetch(pokeAPI)
+  .then(res => res.json())
+  .then(res => {
+    const pokemonArr = res.results.map((pokemon, index) => ({
+      id: index + 1,
+      name: pokemon.name
+    }));
+
+    client
+      .query(
+        q.Map(
+          pokemonArr,
+          q.Lambda(
+            'pokemon',
+            q.Create(q.Collection('Pokemon'), { data: q.Var('pokemon') })
+          )
+        )
+      )
+      .then(console.log('wrote Pokemon to FaunaDB'))
+      .catch(error => console.log('Failed to save Pokemon to FaunaDB', error));
+  });
+```
+
+Alright, that's a lot to take in all at once, let's break it down.
+
+I created a file called `seed.js` in the root of the project.
+Then ran `npm install node-fetch`.
+
+Because we will use the functions under `query` often, I renamed that variable to `q` for optimal #lazyDev benefits, have to save those precious keystrokes somehow 🤷‍♂. [Missing the point](https://keysleft.com/) of the [KeysLeft idea](https://www.hanselman.com/blog/DoTheyDeserveTheGiftOfYourKeystrokes.aspx).
+
+Speaking of those functions on the `q` variable. That funky looking piece of code inside `client.query()` is called [Fauna Query Language, or FQL](https://docs.fauna.com/fauna/current/api/fql/). Well, at least that JavaScript driver's implementation of FQL.
+
+FQL is the way we are going to construct the instructions to send to our Fauna database.
+You can [compare it](https://docs.fauna.com/fauna/current/start/fql_for_sql_users) to how you talk to many relational databases using SQL, kinda.
+
+While FQL is not a general-popose programming language (like Python, or JavaScript), it is possible to do many things with that you would use these languages for. Like [adding two numbers together](https://docs.fauna.com/fauna/current/api/fql/functions/add).
+
+Every function on the `q` variable returns a value. That value can then be used in another function, which can then be used in another function, until we arrive at the completed instruction we want to send to Fauna. [It's functions all the way down](<https://en.wikipedia.org/wiki/Turtles_All_the_Way_Down_(novel)>).
+
+The Fauna documentation has an [overview of the available FQL commands](https://docs.fauna.com/fauna/current/api/fql/functions/). This has been, without a doubt, the most visited page of their entire documentation site for me.
+
+Back to our one-off file that fills the database for the first time.
+
+After sending a `fetch` request to the PokeAPI and constructing an array of Pokemon objects.
+We send our request to the database using `client.query`.
+All methods on `client` return [Promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), so we print something to the console when it's done.
+
+Directing our attention to the FQL inside of `client.query`.
+We loop over ever single Pokemon in the `pokemonArr` (using [Map](https://docs.fauna.com/fauna/current/api/fql/functions/map)). We execute a function, a [Lambda](https://docs.fauna.com/fauna/current/api/fql/functions/lambda) for every item in that array (which we called `"pokemon"`). Inside that function, we [Create](https://docs.fauna.com/fauna/current/api/fql/functions/create) a new [Document](https://docs.fauna.com/fauna/current/concepts/glossary#Document) in the `"Pokemon"` [Collection](https://docs.fauna.com/fauna/current/concepts/glossary#Collection). Specifically, we store the data we received in that function under the `data` key in that new Document we Create.
+
+> Note that to turn the `"pokemon"` we passed to the Lambda back into the object our database will store, and not the string "pokemon", we used the [Var](https://docs.fauna.com/fauna/current/api/fql/functions/var) function.
+
+Running this one-off file can be done from the command line
+
+```bash
+node seed.js
+```
+
+## Adjusting our resolvers
+
+The time has come to change the resolvers to use the variables we stored in the GraphQL context.
+
+I'm not going to lie, spending a lot of time on the Fauna documentation, especially the [FQL Overview Page](https://docs.fauna.com/fauna/current/api/fql/functions/) was part of this process.
+
+This is how the `resolvers.js` file eventually looked
+
+```js
+exports.resolvers = {
+  Query: {
+    hello: (obj, args, context) => {
+      return 'Hello, FaunaDB world!';
+    },
+    allPokemon: (obj, args, context) => {
+      const { client, query: q } = context;
+      return client
+        .query(
+          q.Map(
+            q.Paginate(q.Match(q.Index('allPokemon')), {
+              size: 256
+            }),
+            q.Lambda('ref', q.Select(['data'], q.Get(q.Var('ref'))))
+          )
+        )
+        .then(result => result.data);
+    },
+    pokemonById: (obj, args, context) => {
+      const { client, query: q } = context;
+      return client
+        .query(q.Get(q.Match(q.Index('pokemonById'), args.id)))
+        .then(result => result.data);
+    },
+    pokemonByName: (obj, args, context) => {
+      const { client, query: q } = context;
+      return client
+        .query(q.Get(q.Match(q.Index('pokemonByName'), args.id)))
+        .then(result => result.data);
+    }
+  },
+  Mutation: {
+    createPokemon: (obj, args, context) => {
+      const { client, query: q } = context;
+      return client
+        .query(
+          q.Create(q.Collection('Pokemon'), {
+            data: { id: args.id, name: args.name }
+          })
+        )
+        .then(result => result.data);
+    },
+    updatePokemon: (obj, args, context) => {
+      const { client, query: q } = context;
+      return client
+        .query(
+          q.Update(
+            q.Select(['ref'], q.Get(q.Match(q.Index('pokemonById'), args.id))),
+            { data: { name: args.name } }
+          )
+        )
+        .then(result => result.data);
+    },
+    deletePokemon: (obj, args, context) => {
+      const { client, query: q } = context;
+      return client
+        .query(
+          q.Delete(
+            q.Select(['ref'], q.Get(q.Match(q.Index('pokemonById'), args.id)))
+          )
+        )
+        .then(result => result.data);
+    }
+  },
+  Pokemon: {
+    isVeryBest: (obj, args, context) => {
+      // is it Mr. Mime?
+      return obj.id === 122;
+    }
+  }
+};
+```
+
+The file uses some [Indexes](https://docs.fauna.com/fauna/current/concepts/glossary#Index) to query for a pokemon by name or by id that do not exist yet.
+
+An Index is like a group of your data that can be used to [get a lot of work done](https://docs.fauna.com/fauna/current/api/fql/indexes), like looking up a Pokemon by their `id`.
+
+Indexes can be created via FQL or using the graphical interface on the Fauna dashboard.
+
+Let's use both, just to get a feel for the possibilities.
+
+We'll use the graphical interface to create the Index that will allow us to search for a Pokemon using their `id`.
+
+![new index](new-index.png)
+
+As name I chose `pokemonById`. The `terms` (aka "Lookup terms") are fields by which you want to search the Documents that are part of the Collection you specify.
+Enter `id` for "field".
+
+Notice how it automatically changed to `data.id`? The Document for a single Pokemon can be thought of as a JavaScript object. It has a few fields. Like the `ref` one, that stores an identifier to that specific document. The data we stored lives under the `data` key.
+
+Next up is the Index that allows us to search for a Pokemon by their `name`. Let's create this Index via FQL.
+
+The Fauna dashboard has an area called "shell" where you can enter FQL queries and see the results.
+
+The [CreateIndex](https://docs.fauna.com/fauna/current/api/fql/functions/createindex) function is what we used before. Only we used it through the <abbr title="Graphical User Interface">GUI</abbr>.
+
+```
+CreateIndex({
+  name: "pokemonByName",
+  source: Collection("Pokemon"),
+  terms: [{ field: ["data", "name"] }]
+})
 ```
 
 THIS POST IS A WORK IN PROGRESS
