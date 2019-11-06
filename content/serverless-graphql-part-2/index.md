@@ -252,3 +252,5 @@ For the [JaSON API](https://github.com/NickyMeuleman/jason-api), the source code
 Before Netlify publishes the site, the build step runs and eventually writes out `.js` files that include _everything they need_.
 
 Those `.js` files then get picked up by [zip it and ship it](https://github.com/netlify/zip-it-and-ship-it), and off to [AWS Lambda](https://aws.amazon.com/lambda/) they go 🚀.
+
+Edit: [part 3](/blog/serverless-graphql-part3) is now available!
