@@ -3,7 +3,7 @@ title: From zero to a serverless GraphQL endpoint in a flash
 date: '2019-10-11'
 author: 'Nicky Meuleman'
 cover: './cover.jpg'
-tags: ['serverless, GraphQL, Howto']
+tags: ['serverless', 'GraphQL', 'Howto']
 ---
 
 <!-- Cover photo by Jay on Unsplash -->

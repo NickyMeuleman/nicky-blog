@@ -1,9 +1,9 @@
 ---
 title: Serverless GraphQL - the third
-date: '2019-11-05'
+date: '2019-11-07'
 author: 'Nicky Meuleman'
 cover: './cover.jpg'
-tags: ['serverless, GraphQL, Howto']
+tags: ['serverless', 'GraphQL', 'Howto']
 ---
 
 <!-- Photo by frank mckenna on Unsplash -->
