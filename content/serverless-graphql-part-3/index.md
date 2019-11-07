@@ -32,8 +32,8 @@ By using a serverless-database, I just ensured my database is working as well as
 
 I chose [Fauna](https://fauna.com/).
 
-Fauna is both fast _and_ accurate. They can [scientifically back this up](https://fauna.com/blog/faunadbs-official-jepsen-results).
-[Their documentation](https://docs.fauna.com/) and [Chris Biscardi](https://twitter.com/chrisbiscardi) talking about it on his stream, and even making an [Egghead course](https://egghead.io/playlists/the-complete-guide-to-faunadb-74bef44b) about Fauna pushed me towards picking it.
+Fauna is both fast _and_ accurate. They can [scientifically back this up](https://fauna.com/blog/faunadbs-official-jepsen-results).  
+[Their documentation](https://docs.fauna.com/) combined with [Chris Biscardi](https://twitter.com/chrisbiscardi) talking about it, and even making an [Egghead course](https://egghead.io/playlists/the-complete-guide-to-faunadb-74bef44b) about Fauna pushed me towards picking it.
 
 ## Adding the database connection to the GraphQL context
 
@@ -49,7 +49,7 @@ npm install --save faunadb
 
 Instead of storing the entire database in the GraphQL context, like we did with the `pokemons` array, we will store the database connection, and interaction methods instead.
 
-> I know the plural is pokemon, don't judge me.
+> I know the plural is Pokémon, don't judge me.
 
 ### Preparation
 
@@ -57,15 +57,15 @@ After creating a [Fauna](https://fauna.com/) account, log into their dashboard a
 
 ![new database](new-database.png)
 
-Our data will consist of a bunch of Pokemon, so create a [collection](https://docs.fauna.com/fauna/current/concepts/glossary#Collection) called `Pokemon`.
+Our data will consist of a bunch of Pokémon so create a [collection](https://docs.fauna.com/fauna/current/concepts/glossary#Collection) called `Pokemon`.
 
 ![create a collection](create-collection.png)
 
 Leave all the default options and save.
 
-The `Pokemon` collection will hold all our individual Pokemon.
+The `Pokemon` collection will hold all our individual Pokémon.
 
-An example of a single, _very interesting_, `Pokemon`:
+An example of a single, _very interesting_, Pokémon:
 
 ```json
 {
@@ -76,7 +76,7 @@ An example of a single, _very interesting_, `Pokemon`:
 
 When creating that collection, something called a [collection index](https://docs.fauna.com/fauna/current/concepts/glossary#Index) was also created if you left the defaults.
 
-That collection index helps you browse all the `Pokemon` inside that collection.
+That collection index helps you browse all the Pokémon inside that collection.
 
 By default, Fauna uses [snake_case](https://en.wikipedia.org/wiki/Snake_case) to name things.
 That's perfectly fine. To keep things uniform with the JavaScript code, my first order of business was to rename the created `all_pokemon` Index to `allPokemon` by going to Settings after selecting that index.
@@ -98,7 +98,7 @@ Save this key somewhere safe as it will only be shown once!
 
 You could absolutely provide this key as a literal string whenever it is required.
 
-It is considered good practice, however, to store secrets like this in their own `.env` file and reference them from there.
+It is considered good practice, however, to store secrets like this in a `.env` file and reference them from there.
 
 This will allow the code in which those secrets are used to be public, while the actual secrets are not shared and kept private.
 
@@ -108,7 +108,9 @@ Create a new file called `.env` and add the key you just created under a descrip
 FAUNADB_SERVER_SECRET=fnADcc6pGYACAkNS77iyW0_3LRlgTj-jq7pkZli1
 ```
 
-> Don't get any ideas about using this particular key, it's already been revoked
+> Don't get any ideas about using this particular key; it's already been revoked
+
+> If using `git`, add `.env` to the `.gitignore` file to prevent uploading that file! Keep your secrets, secret 👮
 
 To reference that secret key in our code, we'll use a small package called [dotenv](https://github.com/motdotla/dotenv)
 
@@ -169,15 +171,15 @@ exports.handler = server.createHandler();
 
 Let's take a small step back before changing the GraphQL-resolvers to talk to the database.
 
-Our placeholder database only had a couple of manually entered Pokemon.
-Let's fill our database with a lot more. For this example, the [first generation](https://en.wikipedia.org/wiki/List_of_generation_I_Pok%C3%A9mon) pokemon. All 151 of them.
+Our placeholder database only had a couple of manually entered Pokémon.
+Let's fill our database with a lot more. For this example, the [first generation](https://en.wikipedia.org/wiki/List_of_generation_I_Pok%C3%A9mon) Pokémon. All 151 of them.
 
 The [PokéAPI](https://pokeapi.co/) provides convenient access to that information.
 
-To get all those Pokemon into the database, I created a file meant to be used a single time.
+To get all those Pokémon into the database, I created a file meant to be used a single time.
 
-It requests the first 151 Pokemon from the PokeAPI.
-The received data is then lightly adjusted and each individual Pokemon is stored in our database, under our `Pokemon` collection.
+It requests the first 151 Pokémon from the PokeAPI.
+The received data is then lightly adjusted and each individual Pokémon is stored in our database, under our `Pokemon` collection.
 
 ```js
 // This file was run once (using node) to populate the fauna database
@@ -215,6 +217,8 @@ Alright, that's a lot to take in all at once. Let's break it down.
 
 I created a file called `seed.js` in the root of the project, then ran `npm install node-fetch`.
 
+![Final folder structure](final-folder-structure.png)
+
 Because we will use the functions under `query` often, I renamed that variable to `q` for optimal #lazyDev benefits. Have to save those precious keystrokes somehow 🤷‍♂. [Missing the point](https://keysleft.com/) of the [KeysLeft idea](https://www.hanselman.com/blog/DoTheyDeserveTheGiftOfYourKeystrokes.aspx).
 
 Speaking of those functions on the `q` variable, that funky-looking piece of code inside `client.query()` is called [Fauna Query Language, or FQL](https://docs.fauna.com/fauna/current/api/fql/). FQL is an [embedded domain-specific language (or, eDSL)](https://en.wikipedia.org/wiki/Domain-specific_language), which means it is a _domain-specific_ language (in this case, used for querying, like SQL) that is _embedded_ in a more general-purpose programming language (in this case, the JavaScript driver).
@@ -230,10 +234,10 @@ The Fauna documentation has an [overview of the available FQL commands](https://
 
 Back to our one-off file that fills the database for the first time.
 
-After sending a `fetch` request to the PokeAPI and constructing an array of Pokemon objects, we send our request to the database using `client.query`.
+After sending a `fetch` request to the PokéAPI and constructing an array of Pokémon objects, we send our request to the database using `client.query`.
 All methods on `client` return [Promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), so we print something to the console when it's done.
 
-Directing our attention to the FQL inside of `client.query`, we loop over every single Pokemon in the `pokemonArr` (using [Map](https://docs.fauna.com/fauna/current/api/fql/functions/map)). We execute a [Lambda](https://docs.fauna.com/fauna/current/api/fql/functions/lambda) (which is an anonymous function) for every item in that array (we named a single item `"pokemon"`). Inside that function, we [Create](https://docs.fauna.com/fauna/current/api/fql/functions/create) a new [document](https://docs.fauna.com/fauna/current/concepts/glossary#Document) in the `"Pokemon"` [collection](https://docs.fauna.com/fauna/current/concepts/glossary#Collection). Specifically, we store the data we received in that function under the `data` key in that new document we create.
+Directing our attention to the FQL inside of `client.query`, we loop over every single Pokémon in the `pokemonArr` (using [Map](https://docs.fauna.com/fauna/current/api/fql/functions/map)). We execute a [Lambda](https://docs.fauna.com/fauna/current/api/fql/functions/lambda) (which is an anonymous function) for every item in that array (we named a single item `"pokemon"`). Inside that function, we [Create](https://docs.fauna.com/fauna/current/api/fql/functions/create) a new [document](https://docs.fauna.com/fauna/current/concepts/glossary#Document) in the `"Pokemon"` [collection](https://docs.fauna.com/fauna/current/concepts/glossary#Collection). Specifically, we store the data we received in that function under the `data` key in that new document we create.
 
 > Note that to turn the `"pokemon"` we passed to the Lambda back into the object our database will store, and not the string "pokemon", we used the [Var](https://docs.fauna.com/fauna/current/api/fql/functions/var) function.
 
@@ -325,15 +329,15 @@ exports.resolvers = {
 };
 ```
 
-The file uses some [indexes](https://docs.fauna.com/fauna/current/concepts/glossary#Index) to query for a Pokemon by `name` or by `id` that do not exist yet.
+The file uses some [indexes](https://docs.fauna.com/fauna/current/concepts/glossary#Index) to query for a Pokémon by `name` or by `id` that do not exist yet.
 
-An Index is like a filtered view of your data that can be used to [get a lot of work done](https://docs.fauna.com/fauna/current/api/fql/indexes), like looking up a Pokemon by their `id`.
+An Index is like a filtered view of your data that can be used to [get a lot of work done](https://docs.fauna.com/fauna/current/api/fql/indexes), like looking up a Pokémon by their `id`.
 
 Indexes can be created via FQL or using the graphical interface on the Fauna dashboard.
 
 Let's use both, just to get a feel for the possibilities.
 
-We'll use the graphical interface to create the Index that will allow us to search for a Pokemon using its `id`.
+We'll use the graphical interface to create the Index that will allow us to search for a Pokémon using its `id`.
 
 ![new index](new-index.png)
 
@@ -341,9 +345,9 @@ As a name for this index, I chose `pokemonById`. The `terms` (aka "Lookup terms"
 
 Enter `id` for "field".
 
-Notice how it automatically changed to `data.id`? The Document for a single Pokemon can be thought of as a JavaScript object. It has a few fields. Like the `ref` one, that stores an identifier to that specific document. The data we stored lives under the `data` key.
+Notice how it automatically changed to `data.id`? The Document for a single Pokémon can be thought of as a JavaScript object. It has a few fields. Like the `ref` one, that stores an identifier to that specific document. The data we stored lives under the `data` key.
 
-Next up is the index that allows us to search for a Pokemon by their `name`. Let's create this index via FQL.
+Next up is the index that allows us to search for a Pokémon by their `name`. Let's create this index via FQL.
 
 The Fauna dashboard has an area called "shell" where you can enter FQL queries and see the results.
 
@@ -365,19 +369,17 @@ after running
 netlify dev
 ```
 
-## Bonus
+## Bonus: Sorting the `allPokemon` query
 
-### Sorting the `allPokemon` query
-
-Keen-eyed people who are following along might have noticed our Pokemon don't return in order when we query for `allPokemon`.
+Keen-eyed people who are following along might have noticed our Pokémon don't return in order when we query for `allPokemon`.
 
 Guess what can be used to rectify that?
 
-One imaginary internet cookie for you if you guessed an index!
+One imaginary internet cookie for you if you guessed an index! 🍪
 
 https://twitter.com/NMeuleman/status/1182020349866762240
 
-Instead of specifying the `terms`, we will create an index (remember, that's a filtered view of data) with `values` of `id` and the `ref`. The `id` will be sorted from low to high. The `ref` can be used to retrieve the Pokemon with that `id` from the database.
+Instead of specifying the `terms`, we will create an index (remember, that's a filtered view of data) with `values` of `id` and the `ref`. The `id` will be sorted from low to high. The `ref` can be used to retrieve the Pokémon with that `id` from the database.
 
 In the FQL shell, run the following query:
 
