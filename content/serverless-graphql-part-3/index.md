@@ -13,6 +13,10 @@ This is the third post in a series of blogposts about serverless GraphQL. It is 
 That being said, I would appreciate it if you checked them out first.
 To get up to speed completely, please start at [From zero to a serverless GraphQL endpoint in a flash](/blog/serverless-graphql).
 
+_Ok, but show me the code up front, please._
+
+https://github.com/NickyMeuleman/serverless-graphql
+
 Ready? Let's go! 🚀
 
 ## A real database
