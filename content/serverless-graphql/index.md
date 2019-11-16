@@ -204,13 +204,13 @@ const typeDefs = gql`
   type Query {
     hello: String!
     allPokemon: [Pokemon]!
-    pokemonById(id: Int!): Pokemon
+    pokemonById(id: ID!): Pokemon
     pokemonByName(name: String!): Pokemon
   }
   type Mutation {
-    createPokemon(id: Int!, name: String!, isVeryBest: Boolean!): Pokemon
-    deletePokemon(id: Int!): Pokemon
-    updatePokemon(id: Int!, name: String, isVeryBest: Boolean): Pokemon
+    createPokemon(id: ID!, name: String!, isVeryBest: Boolean!): Pokemon
+    deletePokemon(id: ID!): Pokemon
+    updatePokemon(id: ID!, name: String, isVeryBest: Boolean): Pokemon
   }
   type Pokemon {
     id: ID!
@@ -233,9 +233,9 @@ To keep things simple, we'll add a JavaScript array to our file.
 ```js
 // I know the plural is Pokemon, don't judge me
 const pokemons = [
-  { id: 122, name: 'Mr. Mime', isVeryBest: true },
-  { id: 25, name: 'Pikachu', isVeryBest: false },
-  { id: 7, name: 'Squirtle', isVeryBest: false }
+  { id: '122', name: 'Mr. Mime', isVeryBest: true },
+  { id: '25', name: 'Pikachu', isVeryBest: false },
+  { id: '7', name: 'Squirtle', isVeryBest: false }
 ];
 ```
 

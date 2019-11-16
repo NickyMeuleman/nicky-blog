@@ -73,7 +73,7 @@ An example of a single, _very interesting_, Pokémon:
 
 ```json
 {
-  "id": 122,
+  "id": "122",
   "name": "mr-mime"
 }
 ```
@@ -198,7 +198,7 @@ fetch(pokeAPI)
   .then(res => res.json())
   .then(res => {
     const pokemonArr = res.results.map((pokemon, index) => ({
-      id: index + 1,
+      id: (index + 1).toString(),
       name: pokemon.name
     }));
 
@@ -327,7 +327,7 @@ exports.resolvers = {
   Pokemon: {
     isVeryBest: (obj, args, context) => {
       // is it Mr. Mime?
-      return obj.id === 122;
+      return obj.id === '122';
     }
   }
 };

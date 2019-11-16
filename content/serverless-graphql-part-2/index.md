@@ -42,13 +42,13 @@ exports.typeDefs = gql`
   type Query {
     hello: String!
     allPokemon: [Pokemon]!
-    pokemonById(id: Int!): Pokemon
+    pokemonById(id: ID!): Pokemon
     pokemonByName(name: String!): Pokemon
   }
   type Mutation {
-    createPokemon(id: Int!, name: String!, isVeryBest: Boolean!): Pokemon
-    deletePokemon(id: Int!): Pokemon
-    updatePokemon(id: Int!, name: String, isVeryBest: Boolean): Pokemon
+    createPokemon(id: ID!, name: String!, isVeryBest: Boolean!): Pokemon
+    deletePokemon(id: ID!): Pokemon
+    updatePokemon(id: ID!, name: String, isVeryBest: Boolean): Pokemon
   }
   type Pokemon {
     id: ID!
@@ -146,7 +146,7 @@ In practice what that means is if you query for
 ```
 
 Every time that query finds a Pokemon the information for that single Pokemon is sent along for the ride to the `isVeryBest` resolver.
-If that Pokemon is Mr. Mime, the `obj` parameter will be `{ id: 122, name: "Mr. Mime" }`
+If that Pokemon is Mr. Mime, the `obj` parameter will be `{ id: "122", name: "Mr. Mime" }`
 
 That checking whether or not a Pokemon is Mr. Mime now seems easy, since the `id` is available at `obj.id`.
 
@@ -189,7 +189,7 @@ exports.resolvers = {
   Pokemon: {
     isVeryBest: (obj, args, context) => {
       // is it Mr. Mime?
-      return obj.id === 122;
+      return obj.id === '122';
     }
   }
 };
