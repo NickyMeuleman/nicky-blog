@@ -351,6 +351,11 @@ Enter `id` for "field".
 
 Notice how it automatically changed to `data.id`? The Document for a single Pokémon can be thought of as a JavaScript object. It has a few fields. Like the `ref` one, that stores an identifier to that specific document. The data we stored lives under the `data` key.
 
+Since, in this app, every Pokémon in the `Pokemon` collection has a unique `id`. Check the box that marks this index as unique.
+This enforces a uniqueness constraint on the entries of this index.
+
+> Note: If you mark an index as unique, it will not remove existing duplicates, only prevent future ones.
+
 Next up is the index that allows us to search for a Pokémon by their `name`. Let's create this index via FQL.
 
 The Fauna dashboard has an area called "shell" where you can enter FQL queries and see the results.
@@ -361,6 +366,7 @@ The [CreateIndex](https://docs.fauna.com/fauna/current/api/fql/functions/createi
 CreateIndex({
   name: "pokemonByName",
   source: Collection("Pokemon"),
+  unique: true,
   terms: [{ field: ["data", "name"] }]
 })
 ```
