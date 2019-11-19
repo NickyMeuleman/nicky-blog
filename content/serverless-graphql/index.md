@@ -305,4 +305,4 @@ In the next part of this blogpost, we'll explore how to use multiple files to cr
 
 For a sneak peak, feel free to look at [the code for the examples](https://github.com/NickyMeuleman/serverless-graphql).
 
-Edit: [part 2](/blog/serverless-graphql-part2) and [part 3](/blog/serverless-graphql-part3) are now available!
+Edit: [part 2](/blog/serverless-graphql-part-2) and [part 3](/blog/serverless-graphql-part-3) are now available!

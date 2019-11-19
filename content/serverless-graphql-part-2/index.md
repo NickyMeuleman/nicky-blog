@@ -253,4 +253,4 @@ Before Netlify publishes the site, the build step runs and eventually writes out
 
 Those `.js` files then get picked up by [zip it and ship it](https://github.com/netlify/zip-it-and-ship-it), and off to [AWS Lambda](https://aws.amazon.com/lambda/) they go 🚀.
 
-Edit: [part 3](/blog/serverless-graphql-part3) is now available!
+Edit: [part 3](/blog/serverless-graphql-part-3) is now available!
