@@ -6,15 +6,17 @@ cover: './cover.png'
 tags: ['Howto', 'DX']
 ---
 
+> Updated 06 december 2019
+
 Microsoft is working on a new command line application called [Windows Terminal](https://devblogs.microsoft.com/commandline/introducing-windows-terminal/).
 
 [The promo video](https://www.youtube.com/watch?v=8gw0rXPMMPE) looks very promising, let's hope it lives up to expectations.
 
-The Windows Terminal recently got released in a preview version on the [Windows Store](https://www.microsoft.com/en-us/p/windows-terminal-preview/9n0dx20hk701).
+A preview version of the Windows Terminal is available on the [Windows Store](https://www.microsoft.com/en-us/p/windows-terminal-preview/9n0dx20hk701).
 
 ![store listing](store.png)
 
-The old, well known, often despised, `cmd` application is not very feature rich. It's main goal is to remain backwards compatible, preventing many features from being added.
+The old, well known, often despised, `cmd` application is not very feature rich. Its main goal is to remain backwards compatible, preventing many features from being added.
 
 The new Windows Terminal, however, has a lot of bells and whistles.
 
@@ -31,6 +33,7 @@ From their `README.md`:
 Many additional features **are** coming.
 
 f.e: [keybinding like copy&paste](https://github.com/microsoft/terminal/pull/1093#event-2438652452), [panes like tmux](https://github.com/microsoft/terminal/pull/825), ...  
+> These features are now (6 december 2019) available.
 For a full(ler) look at what they have planned and should be there for the 1.0 release, have a gander at the [milestones](https://github.com/microsoft/terminal/milestone/6).
 
 Even more features are on the developers' nice-to-have list and **may** be coming.
@@ -47,6 +50,8 @@ This happens in a `profiles.json` file.
 While not as fancy as using a <abbr title="Graphical user interface">GUI</abbr>, it is quite an enjoyable method.  
 Especially if that file has a JSON-schema attached to it.  
 I hope they add one soon, because [JSON-schemas are awesome](/blog/json-schema/).
+
+> Edit: They did 🎉! It was added in [version 1909](https://devblogs.microsoft.com/commandline/windows-terminal-preview-1909/). This brings me [great joy](https://twitter.com/NMeuleman/status/1176829617128247296).
 
 When you first install the application, it will present you with a PowerShell window.
 
@@ -91,7 +96,7 @@ My projects are located on the Linux side, so I want the shell to open in my Ubu
 }
 ```
 
-After some more tweaking, my terminal now looks pretty sweet.  
+After some more tweaking, I think my terminal looks pretty sweet.  
 I saved my `profiles.json` to a public [gist](https://gist.github.com/NickyMeuleman/42c032b0991202864160faec57886954).
 
 ![Windows Terminal](pretty.gif)
@@ -101,7 +106,7 @@ A developer named [Chris Duck](https://twitter.com/gpduck) made a PowerShell mod
 Remember the dev that thought using iTerm color scheme files would be neat? Yeah, this module makes that possible. 🤯  
 Chris lists using schemes from [iterm2colorschemes.com](https://iterm2colorschemes.com/) as an [example](https://github.com/gpduck/MSTerminalSettings?WT.mc_id=-blog-scottha#examples) of what his module can do.
 
-[Scott Hanselman](https://twitter.com/shanselman) and [Tyler Leonhardt](https://twitter.com/TylerLeonhardt) immediately used it for the best of reasons, shennanigans.
+[Scott Hanselman](https://twitter.com/shanselman) and [Tyler Leonhardt](https://twitter.com/TylerLeonhardt) immediately used it for the best of reasons, shenanigans.
 
 They made [Terminal Attract Mode](https://github.com/shanselman/TerminalAttractMode). The self proclaimed "greatest PowerShell script ever written, today" places animated gifs as the background of your terminal. It's glorious. 🤣
 
