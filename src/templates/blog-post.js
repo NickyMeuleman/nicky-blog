@@ -109,11 +109,7 @@ const BlogPostTemplate = ({ data, pageContext, location }) => {
         title={post.frontmatter.title}
         description={post.excerpt}
         slug={post.fields.slug}
-        image={
-          post.frontmatter.cover
-            ? post.frontmatter.cover.childImageSharp.sizes.src
-            : '/icons/icon-256x256.png'
-        }
+        date={post.frontmatter.date || ''}
       />
       <Container>
         <Hero
@@ -206,6 +202,7 @@ export const query = graphql`
       frontmatter {
         title
         tags
+        date
         cover {
           childImageSharp {
             sizes(maxWidth: 1920) {

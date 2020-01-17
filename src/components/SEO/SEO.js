@@ -1,6 +1,7 @@
 import React from 'react';
 import Helmet from 'react-helmet';
 import { StaticQuery, graphql } from 'gatsby';
+import getSocialImage from '../../utils/og-image';
 
 const query = graphql`
   query GetSiteMetadata {
@@ -17,13 +18,20 @@ const query = graphql`
   }
 `;
 
-const SEO = ({ meta, image, title, description, slug }) => (
+const SEO = ({ meta, title, description, slug, date }) => (
   <StaticQuery
     query={query}
     render={data => {
       const { siteMetadata } = data.site;
       const metaDescription = description || siteMetadata.description;
-      const metaImage = image ? `${siteMetadata.siteUrl}${image}` : null;
+      const metaImage = getSocialImage({
+        title,
+        date: new Date(date).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+      });
       const url = `${siteMetadata.siteUrl}${slug}`;
       return (
         <Helmet
