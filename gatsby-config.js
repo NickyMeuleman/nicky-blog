@@ -9,17 +9,18 @@ module.exports = {
   },
   plugins: [
     {
-      resolve: `@nickymeuleman/gatsby-theme-blog`,
+      resolve: '@nickymeuleman/gatsby-theme-blog',
       options: {
-        contentPath: `posts`,
-        assetPath: `data`,
-        basePath: `blog`,
+        contentPath: 'posts',
+        assetPath: 'data',
+        basePath: 'blog',
         pagination: {
           postsPerPage: 10,
-          prefixPath: `page`,
+          prefixPath: 'page',
         },
       },
     },
-    `gatsby-plugin-extract-schema`,
+    'gatsby-plugin-theme-ui',
+    'gatsby-plugin-extract-schema',
   ],
 };
