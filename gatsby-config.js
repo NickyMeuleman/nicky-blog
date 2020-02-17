@@ -11,9 +11,9 @@ module.exports = {
     {
       resolve: '@nickymeuleman/gatsby-theme-blog',
       options: {
-        contentPath: 'posts',
-        assetPath: 'data',
         basePath: 'blog',
+        contentPath: 'data/posts',
+        assetPath: 'data/assets',
         pagination: {
           postsPerPage: 10,
           prefixPath: 'page',
