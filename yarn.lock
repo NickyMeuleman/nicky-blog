@@ -1704,9 +1704,9 @@
     glob-to-regexp "^0.3.0"
 
 "@nickymeuleman/gatsby-theme-blog@^1.2.0":
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/@nickymeuleman/gatsby-theme-blog/-/gatsby-theme-blog-1.5.0.tgz#702358faa376c995af233f557841217d3040b570"
-  integrity sha512-8TYFs29IzPr87PE4Oykq+HwTsjCpeD2W/uEHdag91jmKYo0A4gM9TSnxbyfeFGmJ6adYUFtuA6/9Q/CYLtbBGQ==
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/@nickymeuleman/gatsby-theme-blog/-/gatsby-theme-blog-1.5.1.tgz#270f058263c979a61564ef8b379d5f507a274e8f"
+  integrity sha512-FO5q8BrbFHnfd8APraZIEt8V+v0XBjJ8yS1kTA18592Q38ran+HCTEhD43/QZjacnA23RGSgAi9YNAapljzV3w==
   dependencies:
     "@emotion/styled" "^10.0.14"
     "@mdx-js/mdx" "^1.1.0"
