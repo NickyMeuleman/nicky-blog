@@ -26,7 +26,8 @@ import merge from 'deepmerge';
 const theme = merge(themeConfig, {
   colors: {
     text: '#f6f6f6',
-    mutedText: `#e0e0e0e0`,
+    mutedText: `#DFE5F3`,
+    // mutedText: `#e0e0e0e0`,
     // mutedText: `#c1c1c1c1`,
     background: '#222b40',
     mutedBackground: '#425c86',
@@ -60,6 +61,14 @@ const theme = merge(themeConfig, {
       color: `text`,
       borderBottom: `3px solid`,
       borderColor: `mutedPrimary`,
+    },
+    PostExtra: {
+      borderColor: '#4E608C',
+    },
+    PostCard: {
+      '.date': {
+        color: '#99A8CF',
+      },
     },
     pre: {
       ...nightOwl,
