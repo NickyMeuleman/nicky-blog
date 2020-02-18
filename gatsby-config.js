@@ -14,10 +14,6 @@ module.exports = {
         basePath: 'blog',
         contentPath: 'data/posts',
         assetPath: 'data/assets',
-        pagination: {
-          postsPerPage: 10,
-          prefixPath: 'page',
-        },
       },
     },
     'gatsby-plugin-theme-ui',
