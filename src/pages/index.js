@@ -51,7 +51,10 @@ const IndexPage = ({ data }) => {
               gridRow: '1/1',
               justifySelf: 'end',
               display: 'flex',
-              gap: 4,
+              //   Chrome doesn't support "gap" for flexbox yet, sadface
+              span: {
+                marginLeft: 4,
+              },
             }}
           >
             <span>
@@ -187,8 +190,7 @@ const IndexPage = ({ data }) => {
         <div
           sx={{
             gridColumn: '2/3',
-            display: 'flex',
-            flexDirection: 'column',
+            display: 'grid',
             gap: 4,
             fontSize: 1,
           }}
