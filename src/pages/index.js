@@ -1,13 +1,11 @@
 /** @jsx jsx */
-// import React from 'react';
 import { jsx } from 'theme-ui';
 import { Link, graphql } from 'gatsby';
 import { PostCard } from '@nickymeuleman/gatsby-theme-blog';
 
 const IndexPage = ({ data }) => {
-  console.log(data);
-
   const posts = data.allBlogPost.nodes;
+  const blogPath = data.nickyThemeBlogConfig.basePath;
   return (
     <div
       sx={{
@@ -16,10 +14,6 @@ const IndexPage = ({ data }) => {
     >
       <div
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          height: '40vh',
-          minHeight: '20rem',
           backgroundColor: 'mutedBackground',
         }}
       >
@@ -29,7 +23,7 @@ const IndexPage = ({ data }) => {
             gridTemplateColumns:
               'minmax(1rem, 1fr) minmax(20ch, 70ch)  minmax(1rem, 1fr)',
             fontSize: 3,
-            py: 3,
+            py: 4,
           }}
         >
           <span
@@ -112,7 +106,6 @@ const IndexPage = ({ data }) => {
         </header>
         <div
           sx={{
-            flex: 1,
             display: 'grid',
             gridTemplateColumns:
               'minmax(1rem, 1fr) minmax(20ch, 70ch)  minmax(1rem, 1fr)',
@@ -120,7 +113,16 @@ const IndexPage = ({ data }) => {
             fontSize: 3,
           }}
         >
-          <div sx={{ gridColumn: '2/3', alignSelf: 'end' }}>
+          <div
+            sx={{
+              gridColumn: '2/3',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'flex-end',
+              mt: 5,
+              mb: 4,
+            }}
+          >
             <h2
               sx={{
                 fontSize: 4,
@@ -134,8 +136,7 @@ const IndexPage = ({ data }) => {
             <h1
               sx={{
                 fontSize: 7,
-                mt: 0,
-                mb: 5,
+                my: 0,
                 lineHeight: 1,
                 fontWeight: 'normal',
               }}
@@ -199,7 +200,7 @@ const IndexPage = ({ data }) => {
             return (
               <PostCard
                 key={post.id}
-                url="/"
+                url={`/${blogPath}/${post.slug}`}
                 title={post.title}
                 date={post.date}
                 authors={post.authors}
@@ -217,6 +218,9 @@ const IndexPage = ({ data }) => {
 
 export const indexQuery = graphql`
   query IndexQuery {
+    nickyThemeBlogConfig {
+      basePath
+    }
     allBlogPost(
       sort: { order: DESC, fields: date }
       limit: 3
