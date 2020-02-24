@@ -1,218 +1,140 @@
 /** @jsx jsx */
+import React from 'react';
 import { jsx } from 'theme-ui';
 import { Link, graphql } from 'gatsby';
 import { PostCard } from '@nickymeuleman/gatsby-theme-blog';
+import GlobalStyles from '../components/GlobalStyles';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const IndexPage = ({ data }) => {
   const posts = data.allBlogPost.nodes;
   const blogPath = data.nickyThemeBlogConfig.basePath;
   return (
-    <div
-      sx={{
-        minHeight: '100vh',
-      }}
-    >
+    <React.Fragment>
+      <GlobalStyles />
       <div
         sx={{
-          backgroundColor: 'mutedBackground',
+          minHeight: '100vh',
         }}
       >
-        <header
+        <div
           sx={{
-            display: 'grid',
-            gridTemplateColumns:
-              'minmax(1rem, 1fr) minmax(20ch, 70ch)  minmax(1rem, 1fr)',
-            fontSize: 3,
-            py: 4,
+            backgroundColor: 'mutedBackground',
           }}
         >
-          <span
-            sx={{ gridColumn: '2/3', gridRow: '1/1', justifySelf: 'start' }}
-          >
-            <Link
-              to="/"
-              sx={{
-                textDecoration: 'none',
-                color: 'text',
-              }}
-            >
-              NickyMeuleman
-            </Link>
-          </span>
-          <nav
+          <Header
+            passedSx={{ backgroundColor: 'transparent', border: 'none' }}
+          />
+          <div
             sx={{
-              gridColumn: '2/3',
-              gridRow: '1/1',
-              justifySelf: 'end',
-              display: 'flex',
-              //   Chrome doesn't support "gap" for flexbox yet, sadface
-              span: {
-                marginLeft: 4,
-              },
+              display: 'grid',
+              gridTemplateColumns:
+                'minmax(1rem, 1fr) minmax(20ch, 70ch)  minmax(1rem, 1fr)',
+              gridTemplateRows: '1fr',
             }}
           >
-            <span>
-              <Link
-                to="/"
+            <div
+              sx={{
+                gridColumn: '2/3',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-end',
+                mt: 5,
+                mb: 4,
+              }}
+            >
+              <h2
                 sx={{
-                  variant: 'styles.a',
-                  border: 'none',
-                  '&.is-active': {
-                    borderBottomWidth: `2px`,
-                    borderBottomStyle: `solid`,
-                    borderBottomColor: `mutedPrimary`,
-                  },
+                  fontSize: [2, null, 3],
+                  my: 0,
+                  lineHeight: 1,
+                  fontWeight: 'normal',
                 }}
-                activeClassName="is-active"
               >
-                Home
-              </Link>
-            </span>
-            <span>
-              <Link
-                to="/uses"
+                Hey!
+              </h2>
+              <h1
                 sx={{
-                  variant: 'styles.a',
-                  border: 'none',
-                  '&.is-active': {
-                    borderBottomWidth: `2px`,
-                    borderBottomStyle: `solid`,
-                    borderBottomColor: `mutedPrimary`,
-                  },
+                  fontSize: [5, null, 6],
+                  my: 0,
+                  lineHeight: 1,
+                  fontWeight: 'normal',
                 }}
-                activeClassName="is-active"
               >
-                Uses
-              </Link>
-            </span>
-            <span>
-              <Link
-                to="/blog"
-                sx={{
-                  variant: 'styles.a',
-                  border: 'none',
-                  '&.is-active': {
-                    borderBottomWidth: `2px`,
-                    borderBottomStyle: `solid`,
-                    borderBottomColor: `mutedPrimary`,
-                  },
-                }}
-                activeClassName="is-active"
-              >
-                Blog
-              </Link>
-            </span>
-          </nav>
-        </header>
+                <span
+                  sx={{
+                    color: 'mutedPrimary',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  Build
+                </span>{' '}
+                for the modern web
+              </h1>
+            </div>
+          </div>
+        </div>
         <div
           sx={{
             display: 'grid',
             gridTemplateColumns:
               'minmax(1rem, 1fr) minmax(20ch, 70ch)  minmax(1rem, 1fr)',
-            gridTemplateRows: '1fr',
-            fontSize: 3,
+            my: 5,
+            gap: 3,
           }}
         >
           <div
             sx={{
               gridColumn: '2/3',
               display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-end',
-              mt: 5,
-              mb: 4,
+              justifyContent: 'space-between',
             }}
           >
-            <h2
-              sx={{
-                fontSize: 4,
-                my: 0,
-                lineHeight: 1,
-                fontWeight: 'normal',
-              }}
-            >
-              Hey!
-            </h2>
-            <h1
-              sx={{
-                fontSize: 7,
-                my: 0,
-                lineHeight: 1,
-                fontWeight: 'normal',
-              }}
-            >
-              <span
+            <div sx={{ color: 'text' }}>Latest blogposts</div>
+            <div sx={{ textTransform: 'uppercase', color: 'mutedTextBg' }}>
+              <Link
+                to="/blog"
                 sx={{
-                  color: 'mutedPrimary',
-                  fontWeight: 'bold',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  letterSpacing: 'wide',
+                  ':hover': {
+                    color: 'mutedPrimary',
+                  },
                 }}
               >
-                Build
-              </span>{' '}
-              for the modern web
-            </h1>
+                View all
+              </Link>
+            </div>
+          </div>
+          <div
+            sx={{
+              gridColumn: '2/3',
+              display: 'grid',
+              gap: 4,
+              fontSize: 1,
+            }}
+          >
+            {posts.map(post => {
+              return (
+                <PostCard
+                  key={post.id}
+                  url={`/${blogPath}/${post.slug}`}
+                  title={post.title}
+                  date={post.date}
+                  authors={post.authors}
+                  coverSizes={
+                    post.cover ? post.cover.childImageSharp.fluid : null
+                  }
+                />
+              );
+            })}
           </div>
         </div>
+        <Footer />
       </div>
-      <div
-        sx={{
-          display: 'grid',
-          gridTemplateColumns:
-            'minmax(1rem, 1fr) minmax(20ch, 70ch)  minmax(1rem, 1fr)',
-          fontSize: 3,
-          my: 5,
-          gap: 3,
-        }}
-      >
-        <div
-          sx={{
-            gridColumn: '2/3',
-            display: 'flex',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div sx={{ color: 'text' }}>Latest blogposts</div>
-          <div sx={{ textTransform: 'uppercase', color: 'mutedTextBg' }}>
-            <Link
-              to="/blog"
-              sx={{
-                textDecoration: 'none',
-                color: 'inherit',
-                letterSpacing: 'wide',
-                ':hover': {
-                  color: 'mutedPrimary',
-                },
-              }}
-            >
-              View all
-            </Link>
-          </div>
-        </div>
-        <div
-          sx={{
-            gridColumn: '2/3',
-            display: 'grid',
-            gap: 4,
-            fontSize: 1,
-          }}
-        >
-          {posts.map(post => {
-            return (
-              <PostCard
-                key={post.id}
-                url={`/${blogPath}/${post.slug}`}
-                title={post.title}
-                date={post.date}
-                authors={post.authors}
-                coverSizes={
-                  post.cover ? post.cover.childImageSharp.fluid : null
-                }
-              />
-            );
-          })}
-        </div>
-      </div>
-    </div>
+    </React.Fragment>
   );
 };
 

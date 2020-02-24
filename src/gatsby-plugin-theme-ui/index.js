@@ -39,6 +39,10 @@ const theme = merge(themeConfig, {
       borderBottom: `3px solid`,
       borderColor: `mutedPrimary`,
     },
+    Main: {
+      margin: `0 auto`,
+      width: 'unset',
+    },
     PostExtra: {
       borderColor: 'watermarkBg',
     },
