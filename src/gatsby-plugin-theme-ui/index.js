@@ -39,15 +39,21 @@ const theme = merge(themeConfig, {
       borderBottom: `3px solid`,
       borderColor: `mutedPrimary`,
     },
-    Main: {
-      margin: `0 auto`,
-      width: 'unset',
-    },
     PostExtra: {
-      borderColor: 'watermarkBg',
+      aside: {
+        borderColor: 'watermarkBg',
+      },
+      title: {
+        color: 'mutedTextBg',
+      },
+    },
+    MetaListItem: {
+      title: {
+        color: 'mutedTextBg',
+      },
     },
     PostCard: {
-      '.date': {
+      date: {
         color: 'mutedTextBg',
       },
     },

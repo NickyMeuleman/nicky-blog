@@ -6,10 +6,10 @@ const Footer = () => {
     <footer
       sx={{
         display: 'grid',
-        gridTemplateColumns:
-          'minmax(1rem, 1fr) minmax(20ch, 70ch)  minmax(1rem, 1fr)',
+        gridTemplateColumns: '1fr minmax(20ch, 70ch) 1fr',
         alignItems: 'center',
-        py: 3,
+        py: 4,
+        px: '5vw', // relates to width of Main
         color: 'mutedText',
         backgroundColor: 'mutedBackground',
       }}
@@ -17,7 +17,7 @@ const Footer = () => {
       <div
         sx={{
           gridColumn: '2/3',
-          gridRow: '1/1',
+          gridRow: '1/2',
           justifySelf: 'start',
           fontSize: 0,
         }}
@@ -48,8 +48,9 @@ const Footer = () => {
       <nav
         sx={{
           gridColumn: '2/3',
-          gridRow: '1/1',
-          justifySelf: 'end',
+          gridRow: ['2/3', '1/2'],
+          justifySelf: ['start', 'end'],
+          mt: [3, 0],
           display: 'flex',
           //   Chrome doesn't support "gap" for flexbox yet, sadface
           span: {

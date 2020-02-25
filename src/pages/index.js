@@ -29,9 +29,9 @@ const IndexPage = ({ data }) => {
           <div
             sx={{
               display: 'grid',
-              gridTemplateColumns:
-                'minmax(1rem, 1fr) minmax(20ch, 70ch)  minmax(1rem, 1fr)',
+              gridTemplateColumns: '1fr minmax(20ch, 70ch) 1fr',
               gridTemplateRows: '1fr',
+              px: '5vw', // relates to width of Main
             }}
           >
             <div
@@ -78,10 +78,9 @@ const IndexPage = ({ data }) => {
         <div
           sx={{
             display: 'grid',
-            gridTemplateColumns:
-              'minmax(1rem, 1fr) minmax(20ch, 70ch)  minmax(1rem, 1fr)',
+            gridTemplateColumns: '1fr minmax(20ch, 70ch) 1fr',
             my: 5,
-            gap: 3,
+            px: '5vw', // relates to width of Main
           }}
         >
           <div
@@ -89,6 +88,7 @@ const IndexPage = ({ data }) => {
               gridColumn: '2/3',
               display: 'flex',
               justifyContent: 'space-between',
+              mb: 3,
             }}
           >
             <div sx={{ color: 'text' }}>Latest blogposts</div>

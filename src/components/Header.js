@@ -7,9 +7,9 @@ const Header = ({ passedSx }) => {
     <header
       sx={{
         display: 'grid',
-        gridTemplateColumns:
-          'minmax(1rem, 1fr) minmax(20ch, 70ch)  minmax(1rem, 1fr)',
+        gridTemplateColumns: '1fr minmax(20ch, 70ch) 1fr',
         py: 4,
+        px: '5vw', // relates to width of Main
         backgroundColor: 'mutedBackground',
         borderBottom: '2px solid',
         borderBottomColor: 'mutedPrimary',
@@ -21,10 +21,22 @@ const Header = ({ passedSx }) => {
           to="/"
           sx={{
             textDecoration: 'none',
-            color: 'text',
+            color: 'mutedText',
+            display: ['none', 'block'],
           }}
         >
           NickyMeuleman
+        </Link>
+        <Link
+          to="/"
+          aria-label="Nicky Meuleman"
+          sx={{
+            textDecoration: 'none',
+            color: 'mutedText',
+            display: ['block', 'none'],
+          }}
+        >
+          Nime
         </Link>
       </span>
       <nav
