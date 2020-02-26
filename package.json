@@ -22,7 +22,6 @@
     "@nickymeuleman/gatsby-theme-blog": "^1.2.0",
     "@theme-ui/presets": "^0.3.0",
     "@theme-ui/prism": "^0.3.0",
-    "@theme-ui/typography": "^0.3.0",
     "apollo-boost": "^0.4.4",
     "apollo-server-lambda": "^2.9.7",
     "deepmerge": "^4.2.2",

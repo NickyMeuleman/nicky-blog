@@ -1565,9 +1565,9 @@
     glob-to-regexp "^0.3.0"
 
 "@nickymeuleman/gatsby-theme-blog@^1.2.0":
-  version "1.5.6"
-  resolved "https://registry.yarnpkg.com/@nickymeuleman/gatsby-theme-blog/-/gatsby-theme-blog-1.5.6.tgz#31e9cdd597e7d6a15b7548392bd8f3dae59b0b65"
-  integrity sha512-R52rtI4WK3kgQyHRjB6RlO3PESvBUaX1CHUAm2bvkYeiCl5ntLgN4HlG1DRabDuDpRi33KJzvu27kzGCulVS5A==
+  version "1.5.7"
+  resolved "https://registry.yarnpkg.com/@nickymeuleman/gatsby-theme-blog/-/gatsby-theme-blog-1.5.7.tgz#a97e7ac982672de474a1e0f8f2f36dccc884217b"
+  integrity sha512-v7c6k5CBw63qKJJxE5ip2CO86KF3MCx/IxINNsSvT/bZ2CZ7FwD5J3YrAegHf36JMtnhM/z02zhgWChMFr8K9g==
   dependencies:
     "@emotion/styled" "^10.0.14"
     "@mdx-js/mdx" "^1.1.0"
@@ -2044,15 +2044,6 @@
     modularscale "^2.0.1"
     object-assign "^4.1.1"
 
-"@theme-ui/typography@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@theme-ui/typography/-/typography-0.3.0.tgz#4e9a33a9c42e7bfac3abed4f1d7f86232a4c4ec4"
-  integrity sha512-71xT7M73FbgqBLVISaSjjL65V8Tn75cnoIH9MAPfmLP7+YhH0BtzBWfGiuB4Rz6pHj111MNnnn1PmStgtmDYQw==
-  dependencies:
-    compass-vertical-rhythm "^1.4.5"
-    modularscale "^2.0.1"
-    object-assign "^4.1.1"
-
 "@types/accepts@*":
   version "1.3.5"
   resolved "https://registry.yarnpkg.com/@types/accepts/-/accepts-1.3.5.tgz#c34bec115cfc746e04fe5a059df4ce7e7b391575"
@@ -2258,7 +2249,12 @@
   dependencies:
     "@types/node" "*"
 
-"@types/node@*", "@types/node@>=6":
+"@types/node@*":
+  version "13.7.6"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-13.7.6.tgz#cb734a7c191472ae6a2b3a502b4dfffcea974113"
+  integrity sha512-eyK7MWD0R1HqVTp+PtwRgFeIsemzuj4gBFSQxfPHY5iMjS7474e5wq+VFgTcdpyHeNxyKSaetYAjdMLJlKoWqA==
+
+"@types/node@>=6":
   version "13.7.5"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-13.7.5.tgz#2da244d764666f85154274cac94a1cb5b88dcb8d"
   integrity sha512-PfSBCTQhAQg6QBP4UhXgrZ/wQ3pjfwBr4sA7Aul+pC9XwGgm9ezrJF7OiC/I4Kf+7VPu/5ThKngAruqxyctZfA==
@@ -5795,7 +5791,12 @@ ee-first@1.1.1:
   resolved "https://registry.yarnpkg.com/ee-first/-/ee-first-1.1.1.tgz#590c61156b0ae2f4f0255732a158b266bc56b21d"
   integrity sha1-WQxhFWsK4vTwJVcyoViyZrxWsh0=
 
-electron-to-chromium@^1.3.349, electron-to-chromium@^1.3.47:
+electron-to-chromium@^1.3.349:
+  version "1.3.361"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.361.tgz#a820bf52da171c0024314745462cfe0dc944373e"
+  integrity sha512-OzSVjWpsRhJyr9PSAXkeloSe6e9viU2ToGt1wXlXFsGcxuI9vlsnalL+V/AM59Z2pEo3wRxIddtOGsT7Y6x/sQ==
+
+electron-to-chromium@^1.3.47:
   version "1.3.360"
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.360.tgz#1db9cb8d43f4c772546d94ea9be8b677a8ecb483"
   integrity sha512-RE1pv2sjQiDRRN1nI0fJ0eQHZ9le4oobu16OArnwEUV5ycAU5SNjFyvzjZ1gPUAqBa2Ud1XagtW8j3ZXfHuQHA==
@@ -7395,9 +7396,9 @@ gatsby-transformer-json@^2.2.2:
     bluebird "^3.7.2"
 
 gatsby-transformer-sharp@^2.2.4:
-  version "2.3.14"
-  resolved "https://registry.yarnpkg.com/gatsby-transformer-sharp/-/gatsby-transformer-sharp-2.3.14.tgz#425e309bc5d7a53ba6d13ea661f4b7477d0a1546"
-  integrity sha512-tjz74lcJdAUFNtngmNBtyqXbIjb2Ux0GVeCpJsHfrWheJOsogPiO2Y3tp/NZJuonAWUawV8Mvr4TFjjF9p2GZw==
+  version "2.3.15"
+  resolved "https://registry.yarnpkg.com/gatsby-transformer-sharp/-/gatsby-transformer-sharp-2.3.15.tgz#7cef35a8871068b6f7183b3203487a9394bd3316"
+  integrity sha512-JSxHlMIP4/WZx0wtsMRGxNWWKJZc5PIy1TUo7b7Rfq+FEVmtbKjZUUcGACqBu0kPYus8Ajxa1dpP1MSPfCAA8Q==
   dependencies:
     "@babel/runtime" "^7.7.6"
     bluebird "^3.7.2"

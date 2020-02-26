@@ -15,6 +15,7 @@ const SEO = ({
   canonicalUrl,
   twitterHandle,
   date,
+  author,
   children,
 }) => {
   const result = useStaticQuery(graphql`
@@ -51,6 +52,9 @@ const SEO = ({
         .toUpperCase(),
       dateColor: '99A8CF',
       dateExtraConfig: 'letter_spacing_1',
+      author: author.name || 'Nicky Meuleman',
+      twitter:
+        `@${author.twitter}` || siteMetadata.social.twitter || '@NMeuleman',
     });
   } else if (image) {
     metaImage = `${siteMetadata.siteUrl}${image}`;
