@@ -39,7 +39,7 @@
     "react-dom": "^16.8.2",
     "react-helmet": "^5.2.1",
     "theme-ui": "^0.3.1",
-    "typography-theme-moraga": "^0.16.19",
+    "typeface-source-sans-pro": "^0.0.75",
     "webpack-node-externals": "^1.7.2"
   },
   "license": "GPL-3.0-or-later",
