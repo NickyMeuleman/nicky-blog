@@ -1,30 +1,16 @@
-# gatsby-starter-default
+# Nicky Meuleman's website
 
-The default Gatsby starter.
+Site made with [Gatsby](https://www.gatsbyjs.org/).
+Hosted on [Netlify](https://www.netlify.com/).
 
-For an overview of the project structure please refer to the [Gatsby documentation - Building with Components](https://www.gatsbyjs.org/docs/building-with-components/).
+Primarily home to my blog, using [my Gatsby blog theme](https://github.com/NickyMeuleman/gatsby-theme-nicky-blog).
 
-## Install
+### Dev notes
 
-Make sure that you have the Gatsby CLI program installed:
-
-```bash
-npm install --global gatsby-cli
-```
-
-And run from your CLI:
-
-```bash
-gatsby new gatsby-example-site
-```
-
-Then you can run it by:
-
-```bash
-cd gatsby-example-site
-npm run develop
-```
-
-## Deploy
-
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/gatsbyjs/gatsby-starter-default)
+- [ ] Interact sidebar to accompany Metadata on blogposts.  
+       Houses share links. An "edit on GitHub" button and a "clap" button (backend already in place but not used in redesign...YET)
+- [ ] Flesh out author page and use it as stand-in for the old "/about" route. (redirect in `gatsby-node`)
+- [ ] Add subtle animations to all the things!
+- [ ] More sections for index page. (email? Newsletter? Something about racing 🏎?)
+- [ ] RSS feed
+- [ ] Simpler analytics, or none. I'm only interested in amount of visitors, roughly.

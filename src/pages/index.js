@@ -3,6 +3,7 @@ import React from 'react';
 import { jsx } from 'theme-ui';
 import { Link, graphql } from 'gatsby';
 import { PostCard } from '@nickymeuleman/gatsby-theme-blog';
+import SEO from '../components/SEO';
 import GlobalStyles from '../components/GlobalStyles';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -13,6 +14,7 @@ const IndexPage = ({ data }) => {
   return (
     <React.Fragment>
       <GlobalStyles />
+      <SEO />
       <div
         sx={{
           minHeight: '100vh',

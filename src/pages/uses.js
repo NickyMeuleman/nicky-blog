@@ -2,11 +2,13 @@
 import { jsx, Styled } from 'theme-ui';
 import { Link } from 'gatsby';
 import { Tweet } from '@nickymeuleman/gatsby-theme-blog';
+import SEO from '../components/SEO';
 import Layout from '../components/Layout';
 
 const Uses = () => {
   return (
     <Layout>
+      <SEO />
       <div
         sx={{
           display: 'grid',
