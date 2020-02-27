@@ -1,8 +1,0 @@
-type Query {
-  allBlogPosts: [BlogPost]
-  blogPostBySlug(slug: String!): BlogPost
-}
-type BlogPost {
-  slug: String! @unique
-  likes: Int
-}

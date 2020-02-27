@@ -13,7 +13,7 @@ yarn-error.log
 .vscode
 schema.json
 
-content/drafts/
+data/drafts/
 # Local Netlify folder
 .netlify
 .env
