@@ -71,9 +71,19 @@ const theme = merge(themeConfig, {
     pre: {
       ...nightOwl,
     },
+    h1: {
+      mt: 4,
+      mb: 2,
+    },
+    h2: {
+      mt: 4,
+      mb: 2,
+    },
+    h3: {
+      mt: 4,
+      mb: 2,
+    },
   },
 });
-
-console.log(theme);
 
 export default theme;
