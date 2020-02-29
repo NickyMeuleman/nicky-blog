@@ -1,7 +1,7 @@
 ---
 title: Linting and formatting CSS
 date: '2018-07-27'
-authors: ["nicky"]
+authors: ['nicky']
 cover: './cover.jpg'
 tags: ['CSS', 'Lint', 'Format', 'Howto', 'DX']
 ---
