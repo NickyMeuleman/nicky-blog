@@ -1,5 +1,14 @@
 {
-  "extends": [
-    "config:base"
+  "extends": ["config:base"],
+  "includePaths": ["package.json", "demo/package.json", "theme/package.json"],
+  "semanticCommits": true,
+  "schedule": ["every weekend"],
+  "rangeStrategy": "bump",
+  "rebaseWhen": "auto",
+  "packageRules": [
+    {
+      "updateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true
+    }
   ]
 }
