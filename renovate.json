@@ -1,6 +1,6 @@
 {
   "extends": ["config:base"],
-  "includePaths": ["package.json", "demo/package.json", "theme/package.json"],
+  "includePaths": ["package.json"],
   "semanticCommits": true,
   "schedule": ["every weekend"],
   "rangeStrategy": "bump",
