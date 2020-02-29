@@ -3,7 +3,7 @@ title: Clean up old git branches
 date: '2020-02-29'
 authors: ['nicky']
 cover: './cover.jpg'
-published: false
+published: true
 tags: ['git']
 ---
 
@@ -27,7 +27,7 @@ If this repository has a remote, make sure your local version is up to date.
 
 `git pull`
 
-## Overview
+## Overview of existing branches
 
 Before you get started deleting branches, let's view which one there are.
 
@@ -122,6 +122,17 @@ git branch | egrep -v "(^\*|master|dev)" | xargs git branch -D
 
 ## Deleting remote branches
 
+### Deleting non-existent tracing branches
+
+You might have branches locally that have since been deleted remotely.
+
+`git remote prune <remote>`
+
+This command will delete local branches that were set up to follow remote branches if that remote branch has been deleted.
+In my example project that only has one remote named "origin" that becomes
+
+`git remote prune origin`
+
 ### Deleting a single remote branch
 
 `git push <remote> --delete <branch>`
@@ -137,7 +148,7 @@ This will work for both merged and unmerged branches, but only for branches you 
 To delete all merged remote branches:
 
 ```sh
-git branch -r --merged | egrep -v "(^\*|master|dev)" | sed 's/origin\///' |  xargs -n 1 git push origin --delete
+git branch -r --merged | egrep -v "(^\*|master|dev)" | sed 's/origin\///' | xargs -n 1 git push origin --delete
 ```
 
 Let's break it down.
@@ -149,6 +160,16 @@ It then serves as the input for the command after the `|`.
 
 `egrep -v "(^\*|master|dev)"`: Excludes the branches named "master" and "dev".
 
-`sed 's/origin\///'`: The previous command returns strings of the form "origin/\<branch\>". This filters the "origin/" out.
+`sed 's/origin\///'`: The previous command returns strings of the form "origin/&lt;branch&gt;". This filters the "origin/" out.
 
 `xargs -n 1 git push origin --delete`: Deletes every remaining git branch.
+
+Like with local branches, if you wish to completely clean house and delete unmerged branches, change `--merged` to `-no--merged`.
+
+```sh
+# DANGER! Only run these if you are sure you want to delete unmerged branches.
+# delete all remote unmerged branches
+git branch -r --merged | egrep -v "(^\*|master|dev)" | sed 's/origin\///' | xargs -n 1 git push origin --delete
+# delete all remote branches (merged and unmerged).
+git branch -r | egrep -v "(^\*|master|dev)" | sed 's/origin\///' | xargs -n 1 git push origin --delete
+```
