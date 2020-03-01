@@ -51,10 +51,14 @@ const SEO = ({
         })
         .toUpperCase(),
       dateColor: '99A8CF',
-      dateExtraConfig: 'letter_spacing_1',
+      dateExtraConfig: 'letter_spacing_2',
       author: author.name || 'Nicky Meuleman',
       twitter:
         `@${author.twitter}` || siteMetadata.social.twitter || '@NMeuleman',
+      titleFontSize: 64,
+      dateFontSize: 36,
+      authorFontSize: 36,
+      twitterFontSize: 36,
     });
   } else if (image) {
     metaImage = `${siteMetadata.siteUrl}${image}`;
