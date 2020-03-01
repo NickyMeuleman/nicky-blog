@@ -1,6 +1,7 @@
 {
   "extends": ["config:base"],
   "includePaths": ["package.json"],
+  "schedule": ["every weekend"],
   "semanticCommits": true,
   "rangeStrategy": "bump",
   "rebaseWhen": "auto",
