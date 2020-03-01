@@ -122,16 +122,20 @@ git branch | egrep -v "(^\*|master|dev)" | xargs git branch -D
 
 ## Deleting remote branches
 
-### Deleting non-existent tracing branches
+### Deleting non-existent tracking branches
 
 You might have branches locally that have since been deleted remotely.
 
-`git remote prune <remote>`
+`git remote prune <remote> --dry-run`
 
-This command will delete local branches that were set up to follow remote branches if that remote branch has been deleted.
-In my example project that only has one remote named "origin" that becomes
+This command will list all branches that were set up to follow remote branches if that remote branch has been deleted.
+To delete the branches it listed, leave off the `--dry-run`.
+
+In my example project with the single remote named "origin" that becomes
 
 `git remote prune origin`
+
+That deleted the branches `remotes/origin/apollo-frontend` and some others for me. Those were deleted on GitHub, but not locally.
 
 ### Deleting a single remote branch
 
@@ -164,7 +168,7 @@ It then serves as the input for the command after the `|`.
 
 `xargs -n 1 git push origin --delete`: Deletes every remaining git branch.
 
-Like with local branches, if you wish to completely clean house and delete unmerged branches, change `--merged` to `-no--merged`.
+Like with local branches, if you wish to completely clean house and delete unmerged branches, change `--merged` to `--no-merged`.
 
 ```sh
 # DANGER! Only run these if you are sure you want to delete unmerged branches.
