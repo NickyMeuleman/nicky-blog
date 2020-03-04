@@ -83,6 +83,9 @@ const theme = merge(themeConfig, {
       mt: 4,
       mb: 2,
     },
+    inlineCode: {
+      fontSize: '0.85em',
+    },
   },
 });
 
