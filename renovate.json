@@ -19,10 +19,6 @@
     {
       "packagePatterns": ["eslint"],
       "groupName": "eslint"
-    },
-    {
-      "packagePatterns": ["commitlint"],
-      "groupName": "commitlint"
     }
   ]
 }
