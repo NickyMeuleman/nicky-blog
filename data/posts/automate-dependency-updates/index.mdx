@@ -41,7 +41,7 @@ After choosing to enable it for a specific repository I got a <abbr title="pull 
 ## Customize
 
 By default, that PR adds a `renovate.json` that uses all the default settings.
-This translates to a `.json` file with a single line in it.
+This translates to a file with a single line in it.
 
 ```json
 {
@@ -49,12 +49,12 @@ This translates to a `.json` file with a single line in it.
 }
 ```
 
-This is the point in time where spending some time on the [renovate documentation site](https://docs.renovatebot.com/) is helpful.
+This is the point in time where spending some time on the [renovate documentation site](https://docs.renovatebot.com/) becomes _very_ helpful.
 
 By default renovate will make PRs to your repository with updates to packages that need them.
 
 You often have more than 1 PR with an update simultaneously.
-If you use a [lockfile](https://classic.yarnpkg.com/en/docs/yarn-lock/) like `yarn.lock` or `package-lock.json`, then merging one means changing your lockfile.
+If you use a [lockfile](https://classic.yarnpkg.com/en/docs/yarn-lock/) like `yarn.lock` or `package-lock.json`, merging one PR means changing your lockfile.
 
 This will lead to a merge conflict in other PRs.
 Renovate can handle this by automatically rebasing the PRs, keeping them up to date with the current state (of the master branch).
@@ -67,9 +67,9 @@ The rebase strategy is controlled by the value `"rebaseWhen"` has in your config
 
 ### Reducing noise
 
-This automates a part of the process of staying up to date with packages, but still creates a _lot_ of noise.
+This setup automates a part of the (staying up to date with packages) process, but still creates a _lot_ of noise.
 
-Merging all those PRs can get overwhelming, and could also start to feel like a chore. Putting us back at square 1, that's what we wanted to avoid in the first place!
+Merging all those PRs can get overwhelming, and could also start to feel like a chore. Putting us back at square one.
 
 #### Schedule
 
@@ -84,10 +84,10 @@ The `"schedule"` options takes an array of strings.
 
 Those strings are parsed with [later.js](https://bunkat.github.io/later/).
 
-> note: renovate won't rebase unless it's in schedule.
+> NOTE: Renovate won't rebase unless it's in schedule.
 > This often means, if you are using a schedule, you have to set that schedule to be a range of time and merge PRs within that time.
 
-> note: automerging, mentioned below, lessens that problem-point with schedules.
+> NOTE: Automerging, mentioned below, lessens that problem-point with schedules.
 
 #### Automerge
 
@@ -101,24 +101,13 @@ To automatically merge PRs with passing tests, add the following option:
 "automerge": true
 ```
 
-<!-- ```json
-    {
-      "updateTypes": ["minor", "patch", "pin", "digest"],
-      "automerge": true
-    },
- {
-      "depTypeList": ["devDependencies"],
-      "automerge": true
-    },
-``` -->
-
 You can see the status of `"automerge"` on a PR in the PR-text.
 
 ![PR text with configuration](renovate-config.png)
 
-> Note: if you have no tests but still want Renovate to automerge, you need to add `"requiredStatusChecks": []` to your configuration.
+> NOTE: if you have no tests but still want Renovate to automerge, you need to add `"requiredStatusChecks": []` to your configuration.
 
-> aside: you should add tests 😉 (to run on PRs)
+> ASIDE: you should add tests 😉 (to run on PRs)
 
 #### Grouping
 
@@ -130,7 +119,7 @@ This results in PRs like the one in the picture below, where all packages from `
 
 ![monorepo PR](monorepo-pr.png)
 
-It is possible to go even further by more agressively grouping things.  
+It is possible to go even further by more aggressively grouping things.  
 It makes sense to update all packages with `eslint` in the package name together.
 Even if those don't all come from the same source/organization/person.
 
@@ -141,7 +130,7 @@ Even if those don't all come from the same source/organization/person.
 }
 ```
 
-> Caution: by grouping them you are increasing the chance that grouped PR with the updates will break something.  
+> CAUTION: By grouping them you are increasing the chance that grouped PR with the updates will break something.  
 > If all those packages were ungrouped, you could merge the ones that didn't break something and figure out what causes the breaks you see.  
 > In practice, many packages update together and are meant to be used together with an update from another package.
 
@@ -150,13 +139,13 @@ Even if those don't all come from the same source/organization/person.
 GitHub sends you a message when a PR is created and when it is merged.  
 So even automatically merged PRs send you 2 notification.
 
-consider adding `"automergeType": "branch"` to your config.  
+Consider adding `"automergeType": "branch"` to your config.  
 Maybe only for minor/patch updates. (combine with the `"packageRules"` array)
 
 That option merges the created braches with the updates directly into master without raising a PR first.
 
 The tests still need to pass before the branch is merged into master.
-If the tests fail, a PR is made.
+If the tests fail, a PR is made anyway.
 
 ### Not every package is equal.
 
@@ -165,6 +154,7 @@ What if you want to apply different settings to different packages?
 Automerging is nice, but I'd prefer to look at every major upgrade first, regardless of passing tests.
 
 The `"packageRules"` option enables this!
+There, you can overwrite setting for specific cases.
 
 This is the full `renovate.json` for [my site](https://github.com/NickyMeuleman/nicky-blog).
 
@@ -195,10 +185,10 @@ This is the full `renovate.json` for [my site](https://github.com/NickyMeuleman/
 }
 ```
 
-First, only certain types of package updates are automatically merged. Not the absence of `"major"` in that first `"updateTypes"` array.
+Only certain types of package updates are automatically merged. Note the absence of `"major"` in that first `"updateTypes"` array.
 Every devDependency is automerged, even if it's a major update.
 
-> aside: Check out [semver](https://semver.org/) for an explanation on update types.
+> ASIDE: Check out [semver](https://semver.org/) for an explanation on update types.
 
 From the docs:
 
