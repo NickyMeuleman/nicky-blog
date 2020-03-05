@@ -25,9 +25,12 @@ Kent C. Dodds wrote an awesome blog post that [makes a case for automation](http
 
 ## Renovate bot
 
-[Renovate](https://github.com/renovatebot/renovate) is a tool that handles that automation.
+[Renovate](https://github.com/renovatebot/renovate) is a tool that can handle the automation of package updates.
+Let's dive in and use it on a JavaScript repository!
 
-## Add the Renovate App
+> NOTE: More languages are supported. e.g. [python](https://docs.renovatebot.com/python/)
+
+### Add the Renovate App
 
 The most straightforward way to start using Renovate is to use one of their hosted apps.
 They have a [GitHub app](https://github.com/marketplace/renovate) and a [GitLab app](https://gitlab.com/renovate-bot).  
@@ -38,7 +41,7 @@ After choosing to enable it for a specific repository I got a <abbr title="pull 
 
 ![Onboarding PR](onboarding.png)
 
-## Customize
+### Customize
 
 By default, that PR adds a `renovate.json` that uses all the default settings.
 This translates to a file with a single line in it.
