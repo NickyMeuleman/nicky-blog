@@ -23,7 +23,7 @@
     "@theme-ui/presets": "^0.3.0",
     "@theme-ui/prism": "^0.3.0",
     "apollo-boost": "^0.4.7",
-    "apollo-server-lambda": "^2.10.1",
+    "apollo-server-lambda": "^2.11.0",
     "deepmerge": "^4.2.2",
     "dotenv": "^8.2.0",
     "faunadb": "^2.13.0",
