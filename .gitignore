@@ -5,15 +5,15 @@ yarn-error.log
 
 # Build directory
 /public
-/lambda
 
 *-test.*
 /*-test
 
-.vscode
 schema.json
 
 data/drafts/
+
 # Local Netlify folder
 .netlify
+
 .env
