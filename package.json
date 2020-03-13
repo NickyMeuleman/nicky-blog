@@ -43,5 +43,14 @@
     "serve": "gatsby serve",
     "dev": "gatsby develop -H 0.0.0.0",
     "clean": "gatsby clean"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb": "^18.1.0",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-react": "^7.19.0",
+    "eslint-plugin-react-hooks": "^2.5.0",
+    "prettier": "^1.19.1"
   }
 }
