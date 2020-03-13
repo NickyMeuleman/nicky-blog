@@ -1,9 +1,9 @@
 /** @jsx jsx */
-import { jsx, Styled } from 'theme-ui';
-import { Link } from 'gatsby';
-import { Tweet } from '@nickymeuleman/gatsby-theme-blog';
-import SEO from '../components/SEO';
-import Layout from '../components/Layout';
+import { jsx, Styled } from "theme-ui";
+import { Link } from "gatsby";
+import { Tweet } from "@nickymeuleman/gatsby-theme-blog";
+import SEO from "../components/SEO";
+import Layout from "../components/Layout";
 
 const Uses = () => {
   return (
@@ -11,11 +11,11 @@ const Uses = () => {
       <SEO />
       <div
         sx={{
-          display: 'grid',
-          gridTemplateColumns: '1fr minmax(20ch, 70ch) 1fr',
+          display: "grid",
+          gridTemplateColumns: "1fr minmax(20ch, 70ch) 1fr"
         }}
       >
-        <div sx={{ gridColumn: '2/3', py: 5 }}>
+        <div sx={{ gridColumn: "2/3", py: 5 }}>
           <Styled.h1 sx={{ mt: 0 }}>What I use</Styled.h1>
           <Styled.p>
             My dev computer runs Windows 10 and uses the Windows Subsystem for
@@ -24,7 +24,7 @@ const Uses = () => {
           <Styled.p>
             <Link
               to="/blog/linux-on-windows-wsl2-zsh-docker/"
-              sx={{ variant: 'styles.a' }}
+              sx={{ variant: "styles.a" }}
             >
               I wrote about how to set it up
             </Link>
@@ -33,7 +33,7 @@ const Uses = () => {
           </Styled.p>
           <Styled.h2>Code Editor</Styled.h2>
           <Styled.p>
-            The code editor I spend the most time in is{' '}
+            The code editor I spend the most time in is{" "}
             <Styled.a href="https://code.visualstudio.com/">
               Visual Studio Code
             </Styled.a>
@@ -41,26 +41,26 @@ const Uses = () => {
           <Styled.p>Some of my favorite extensions are:</Styled.p>
           <ul>
             <li>
-              Theme -{' '}
+              Theme -{" "}
               <Styled.a href="https://marketplace.visualstudio.com/items?itemName=sdras.night-owl">
                 Night Owl
               </Styled.a>
             </li>
             <li>
-              Font -{' '}
+              Font -{" "}
               <Styled.a href="https://github.com/tonsky/FiraCode">
                 Fira Code
-              </Styled.a>{' '}
+              </Styled.a>{" "}
               with ligatures turned on.
             </li>
             <li>
-              Icons -{' '}
+              Icons -{" "}
               <Styled.a href="https://marketplace.visualstudio.com/items?itemName=PKief.material-icon-theme">
                 Material Icon Theme
               </Styled.a>
             </li>
             <li>
-              More Extensions - I gathered some of my favorites in a{' '}
+              More Extensions - I gathered some of my favorites in a{" "}
               <Styled.a href="https://twitter.com/i/events/1227594604872114178">
                 Twitter moment.
               </Styled.a>
@@ -68,13 +68,13 @@ const Uses = () => {
           </ul>
           <Styled.h2>Terminal</Styled.h2>
           <Styled.p>
-            When not using the built-in terminal in VSCode, I use the{' '}
+            When not using the built-in terminal in VSCode, I use the{" "}
             <Styled.a href="https://github.com/microsoft/terminal">
               Windows Terminal
             </Styled.a>
           </Styled.p>
           <Styled.p>
-            <Link to="blog/windows-terminal/" sx={{ variant: 'styles.a' }}>
+            <Link to="blog/windows-terminal/" sx={{ variant: "styles.a" }}>
               I think it&apos;s awesome.
             </Link>
           </Styled.p>
@@ -83,7 +83,7 @@ const Uses = () => {
             <li>
               <Styled.a href="https://github.com/sindresorhus/refined-github">
                 Refined GitHub
-              </Styled.a>{' '}
+              </Styled.a>{" "}
               - Browser extension that adds useful features to the GitHub
               website.
             </li>
@@ -103,31 +103,31 @@ const Uses = () => {
               it!)
             </li>
             <li>
-              Keyboard -{' '}
+              Keyboard -{" "}
               <Styled.a href="https://www.duckychannel.com.tw/en/Ducky-One2-Mini-Pure-White-RGB">
                 Ducky one 2 mini Pure White
               </Styled.a>
             </li>
             <li>
-              Mouse -{' '}
+              Mouse -{" "}
               <Styled.a href="https://www.pcgamingrace.com/products/glorious-model-o-white">
                 Glorious Model O in Matte White
               </Styled.a>
             </li>
             <li>
-              Deskmat -{' '}
+              Deskmat -{" "}
               <Styled.a href="https://www.pcgamingrace.com/products/glorious-xxl-gaming-mouse-pad">
                 Glorious XXL Extended
               </Styled.a>
             </li>
-            <Styled.p>
-              That deskmat is <strong>LARGE</strong>. Highly recommend.
-            </Styled.p>
-            <Tweet
-              theme="dark"
-              tweetLink="NMeuleman/status/1209168210379132928"
-            />
           </ul>
+          <Styled.p>
+            That deskmat is <strong>LARGE</strong>. Highly recommend.
+          </Styled.p>
+          <Tweet
+            theme="dark"
+            tweetLink="NMeuleman/status/1209168210379132928"
+          />
         </div>
       </div>
     </Layout>
