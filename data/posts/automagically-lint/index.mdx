@@ -1,10 +1,10 @@
 ---
 title: Automagically lint and format your code
-date: '2018-05-04'
-updatedAt: "2020-03-13"
+date: "2018-05-04"
+updatedAt: "2020-03-14"
 authors: ["nicky"]
-cover: './cover.png'
-tags: ['JavaScript', 'Lint', 'Format', 'Howto', 'DX']
+cover: "./cover.png"
+tags: ["JavaScript", "Lint", "Format", "Howto", "DX"]
 ---
 
 Setting up your editor to [lint](<https://en.wikipedia.org/wiki/Lint_(software)>) and format our code automatically leaves you free to think about the functionality of your code. Not whether or not a variable is defined or if you should insert more whitespace.
@@ -26,12 +26,15 @@ npx gatsby new automagical-linting
 cd automagical-linting
 ```
 
+After bootstrapping the project, open an editor in the newly created directory and delete some files you won't use: `yarn.lock` (or `package-lock.json`) and `.prettierrc` (those options can live inside another configuration file).
+
 We'll install everything we need locally, as a devDependency.
 That way the machine we develop on doesn't matter and we avoid the _"works on my machine"_-factor.
 Don't worry, there's no magic here, I'll briefly explain what each package does.
 
 <Aside>
-  "devDependencies": Packages that are only needed for local development and testing.
+  "devDependencies": Packages that are only needed for local development and
+  testing.
 </Aside>
 
 ## Starting with ESLint
@@ -55,11 +58,9 @@ yarn add prettier -D
 The Gatsby project comes with `prettier` pre-installed.
 That means, if you are following along, that last step was optional. Totally fine, we just made _really_ sure it's there.
 
-<Aside>
-  For non-Gatsby projects, installing prettier is not optional.
-</Aside>
+<Aside>For non-Gatsby projects, installing prettier is not optional.</Aside>
 
-Next, initialize ESLint. 
+Next, initialize ESLint.
 The initialization will ask you a couple of questions and set up a configuration file that reflects your answers.
 
 ```bash
@@ -73,23 +74,23 @@ yarn eslint --init
 Here are the choices I made:
 
 - How would you like to use ESLint?  
- To check syntax, find problems, and enforce code style
+  To check syntax, find problems, and enforce code style
 - What type of modules does your project use?  
-JavaScript modules (import/export)
+  JavaScript modules (import/export)
 - Which framework does your project use?  
- React
+  React
 - Does your project use TypeScript?  
- No
+  No
 - Where does your code run?  
- Browser, Node
+  Browser, Node
 - How would you like to define a style for your project?  
- Use a popular style guide
+  Use a popular style guide
 - Which style guide do you want to follow?  
-Airbnb: https://github.com/airbnb/javascript
+  Airbnb: https://github.com/airbnb/javascript
 - What format do you want your config file to be in?  
- JSON
+  JSON
 - Would you like to install them now with npm?  
- No
+  No
 
 This process will create a `.eslintrc.json` file in the root folder of the project.
 
@@ -180,14 +181,17 @@ The `.eslintrc.json` now has this `"extends"` array.
 ```
 
 <Aside>
-  Make sure the "prettier" rules are last, that way they overwrite previous configurations.
+  Make sure the "prettier" rules are last, that way they overwrite previous
+  configurations.
 </Aside>
 
 ### Dictating our own rules
 
 While the Airbnb configuration contains an excellent set of rules, we'll make this linting/formatting setup our own and use the existing configuation as a starting point.
 
-Let's add some rules specific to Prettier in our ESLint configuration.
+#### Prettier configuration
+
+Let's add some rules specific to Prettier to our ESLint configuration.
 
 ```json
 "prettier/prettier": [
@@ -203,36 +207,43 @@ Let's add some rules specific to Prettier in our ESLint configuration.
 ```
 
 <Aside>
-  If you prefer to set these rules via a `.prettierrc` file, that's possible too.
+  If you prefer to set these rules via a `.prettierrc` file, that's possible
+  too.
+</Aside>
+<Aside>
+  Prettier rules specified in the `.eslintrc` file like this will overwrite ones
+  in a `.prettierrc` file.
 </Aside>
 
-<Aside>
- Prettier rules specified in the `.eslintrc` file like this will overwrite ones in a `.prettierrc` file.
-</Aside>
+#### More ESLint configuration
+
+If you are planning to use React hooks in your project, adding `"airbnb/hooks"` to the `"extends"` array enforces the [Rules of Hooks](https://reactjs.org/docs/hooks-rules.html).
 
 Next we'll override some of the rules set by the Airbnb styleguide by adding some entries to the `"rules"` object.
 
 ```json
 "react/jsx-filename-extension": [
-    "error",
-    {
-        "extensions": [
-            ".js",
-            ".jsx"
-        ]
-    }
+  "error",
+  {
+    "extensions": [
+        ".js",
+        ".jsx"
+    ]
+  }
 ],
 "react/prop-types": 0,
 "no-unused-vars": [
-    "error",
-    {
-        "vars": "local",
-        "args": "none"
-    }
+  "error",
+  {
+    "vars": "local",
+    "args": "none"
+  }
 ]
 ```
 
 The code snippets above are examples of what you could do, check out the configuration options for [Prettier](https://prettier.io/docs/en/options.html) and for [ESLint](https://eslint.org/docs/user-guide/configuring) for more information.
+
+## Run the linting setup
 
 If we try to run ESLint on the `src` directory again, all those errors we saw before are now gone!
 
@@ -244,7 +255,7 @@ yarn eslint src
 
 We set up the rules to be compatible with the style the Gatsby project was bootstrapped with. Let's introduce some differences!
 
-I like semicolons, so I changed the `"prettier/prettier"` rule to require them now.
+I like semicolons, so I changed the `"prettier/prettier"` rule to require them.
 
 Running the same command now reports a bunch of errors.
 Fixing them all manually is a chore, luckily this is something that is automatically fixable.
@@ -258,29 +269,31 @@ yarn eslint src --fix
 BOOM, all done!
 This was a rule specific to Prettier, but many errors originating from ESLint-specific rules are also automatically fixable!
 
-TODO: rewrite editor section
-------- MOVE
+## A tighter feedback loop: editor configuration
 
-To get started we'll install [Visual Studio Code](https://code.visualstudio.com/) as editor.
+While this is very powerful, faster feedback would be very useful.
+I'm using [Visual Studio Code](https://code.visualstudio.com/) as editor, so that's the one I'll cover here.
+The same result can be achieved in many other editors.
 
-We'll also install the 2 extensions for our editor:
-[ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) and [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode).
+### Editor plugin
 
-Let's try this on a [GatsbyJS](https://www.gatsbyjs.org/) project.
+Install the [VSCode ESLint extension](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint).
 
-After bootstrapping our project, open VSCode in the newly created directory and delete some files we won't use: `yarn.lock` (we'll use `npm`) and `.prettierrc` (those options will live inside an other configuration file)
+This extension will display those errors right inside the editor, with squiggly lines underneath the detected problems.
+A huge step up from the output we saw in the terminal!
 
-```bash
-gatsby new automagically-lint
-cd automagically-lint
-code .
-```
+![Squiggly lines beneath detected errors](squigglies.png)
 
-### Configure editor settings
+### Automatically fix issues on save
 
-Before continuing, we'll set up VSCode to perform linting and formatting tasks each time a file is saved.
+We can take it a step further and make VSCode perform linting and formatting tasks each time a file is saved.
 
 Go to the user-settings (`file > preferences > settings`)
+
+<Aside>
+  I prefer to keep these settings in the "workspace" tab so they are specific to
+  this project.
+</Aside>
 
 - Tell VSCode to format the document every time we save a file.
 - Explicitly disable fomatting for javascript files, as we will format through ESLint.
@@ -292,18 +305,77 @@ Go to the user-settings (`file > preferences > settings`)
 "[javascript]": {
   "editor.formatOnSave": false
 },
-"prettier.disableLanguages": [
-  "js"
-],
-"eslint.autoFixOnSave": true,
+"editor.codeActionsOnSave": {
+  "source.fixAll.eslint": true
+},
 "eslint.alwaysShowStatus": true,
 ```
 
-Now Prettier wil run on all file formats it supports except for JavaScript, those files will be handled by ESLint
+After reloading the editor, go to a `.js` file and try out your fancy new setup!
 
-------- ENDMOVE
+Try writing the follow snippet and save the file.
 
----------- ENDING
+<!-- prettier-ignore -->
+```js
+var num=1
+var newNum=num+5;;
+```
+
+It will turn into
+
+```js
+const num = 1;
+const newNum = num + 5;
+```
+
+The whitespace and semicolons were handled by the Prettier plugin.
+The `var`s turned into `const`s because of the [no-var rule](https://eslint.org/docs/rules/no-var) that was enabled.
+
+#### Bonus: Prettier VSCode extension
+
+Prettier is now integrated into our ESLint setup.
+That only applies to `.js` files.
+
+Prettier also supports other languages!
+
+To use the formatting power of Prettier on other languages, you can install an editor extension for Prettier.
+
+[VSCode Prettier extension](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+
+Since we set up Prettier to run through that ESLint plugin we installed previously, disable the editor extension for `.js`.
+Otherwise, the editor extension and the ESLint plugin might have a fight ~~for world domination~~.
+
+That can be done by adding this line to the VSCode settings
+
+```json
+"prettier.disableLanguages": [
+  "js"
+]
+```
+
+Now Prettier wil run on all file formats it supports except for JavaScript, those files will be handled by our ESLint setup.
+
+Try writing a `.css` file that's badly formatted.
+I went into the `index.css` that came with this Gatsby project and changed the first lines to:
+
+<!-- prettier-ignore -->
+```css
+html {  font-family: sans-serif; -ms-text-size-adjust: 100%;
+  -webkit-text-size-adjust:100%
+}
+```
+
+Save the file and POW, automatic formatting.
+
+```css
+html {
+  font-family: sans-serif;
+  -ms-text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+```
+
+## Automagical linting
 
 We successfully set up ESLint to work together with Prettier.
 We get notified in our editor about linting problems that ESLint picks up and about formatting problems that Prettier picks up.

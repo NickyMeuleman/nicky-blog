@@ -1,8 +1,15 @@
 {
   "json.schemas": [
     {
-      "fileMatch": ["renovate.json"],
+      "fileMatch": [
+        "renovate.json"
+      ],
       "url": "https://docs.renovatebot.com/renovate-schema.json"
     }
-  ]
+  ],
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "eslint.alwaysShowStatus": true
 }
