@@ -21,7 +21,7 @@ Combined, they will make you feel like you have superpowers.
 
 If you want to follow along and try this on a new project, this guide will use a [Gatsby](https://www.gatsbyjs.org/) site.
 
-```sh
+```bash
 npx gatsby new automagical-linting
 cd automagical-linting
 ```
@@ -99,7 +99,7 @@ Because I used `yarn` instead of `npm`, I chose not to install the extra needed 
 If you also answered no, install the needed packages manually.
 In my case that meant installing everything `eslint-config-airbnb` needs with `yarn`.
 
-```sh
+```bash
 npx install-peerdeps --dev --yarn eslint-config-airbnb
 ```
 
@@ -110,7 +110,7 @@ The rules to follow are determined by that `.eslintrc` file.
 
 To check every file in the `src` folder against the rules set by that config file:
 
-```sh
+```bash
 npx eslint src
 # or
 yarn eslint src
@@ -138,7 +138,7 @@ yarn add eslint-plugin-prettier -D
 
 This will run Prettier as an ESLint rule and reports differences as individual ESLint issues.
 
-To use it we'll add `"prettier"` to the `"plugins"` array and report any differences as an error by setting the `prettier/prettier" rule.
+To use it we'll add `"prettier"` to the `"plugins"` array and report any differences as an error by setting the `"prettier/prettier"` rule.
 
 ```json
 "plugins": [
@@ -247,7 +247,7 @@ The code snippets above are examples of what you could do, check out the configu
 
 If we try to run ESLint on the `src` directory again, all those errors we saw before are now gone!
 
-```sh
+```bash
 npx eslint src
 # or
 yarn eslint src
@@ -260,7 +260,7 @@ I like semicolons, so I changed the `"prettier/prettier"` rule to require them.
 Running the same command now reports a bunch of errors.
 Fixing them all manually is a chore, luckily this is something that is automatically fixable.
 
-```sh
+```bash
 npx eslint src --fix
 # or
 yarn eslint src --fix
