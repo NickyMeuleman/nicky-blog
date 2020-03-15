@@ -1,7 +1,7 @@
 {
   "extends": ["config:base", "group:monorepos"],
   "includePaths": ["package.json"],
-  "schedule": ["every weekend"],
+  "schedule": ["every weekend", "before 10am on Monday"],
   "semanticCommits": true,
   "rangeStrategy": "bump",
   "rebaseLabel": "rebase",
