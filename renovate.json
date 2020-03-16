@@ -1,20 +1,17 @@
 {
   "extends": ["config:base", "group:monorepos"],
   "includePaths": ["package.json"],
-  "schedule": ["every weekend", "before 10am on Monday"],
+  "schedule": ["every weekend", "after 4pm on Monday"],
   "semanticCommits": true,
   "rangeStrategy": "bump",
   "rebaseLabel": "rebase",
   "rebaseWhen": "auto",
   "requiredStatusChecks": [],
+  "automerge": true
   "packageRules": [
     {
-      "updateTypes": ["minor", "patch", "pin", "digest"],
-      "automerge": true
-    },
-    {
-      "depTypeList": ["devDependencies"],
-      "automerge": true
+      "updateTypes": ["major"],
+      "automerge": false
     },
     {
       "packagePatterns": ["eslint"],
