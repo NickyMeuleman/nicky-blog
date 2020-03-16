@@ -7,7 +7,7 @@
   "rebaseLabel": "rebase",
   "rebaseWhen": "auto",
   "requiredStatusChecks": [],
-  "automerge": true
+  "automerge": true,
   "packageRules": [
     {
       "updateTypes": ["major"],
