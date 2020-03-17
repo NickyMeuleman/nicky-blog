@@ -1,0 +1,68 @@
+---
+title: Use git hooks for great good
+date: "2020-03-17"
+published: false
+authors: ["nicky"]
+cover: "./cover.jpg"
+tags: ["git", "Lint", "Format", "Howto", "DX"]
+---
+
+<!-- Photo by Christian Derick Fernandez on Unsplash -->
+
+Automation shines when it's ...well... automatic.
+
+Git hooks allow you to run some code on specific triggers.
+At certain points during the git lifecycle, a trigger happens and the code associated with that trigger runs.
+
+I think of it like automated sliding doors.
+When the sensor sees you, the doors open.
+
+For example: Running a [linting/formatting](/blog/automagically-lint) command just before you `git commit` would use the `pre-commit` git hook.
+
+<Aside>Every project using git can take advantage of git hooks</Aside>
+
+Those hooks are scripts located in the `.git/hooks` directory.
+By default, the files there are bash scripts, but the only requirement is that the file is executable.
+
+The whole list of [available git hooks](https://git-scm.com/docs/githooks) is available on the git documentation website.
+
+Sharing git hooks with other people without any tools is quite hard. The `.git` directory is not part of the git repository, kinda (how meta).
+Making sure everyone uses the same hooks, and has the required local tools to run them, quickly becomes a chore.
+
+## Husky
+
+[Husky](https://github.com/typicode/husky) is a tool that makes it convenient to define and share git hooks in a JavaScript project.
+
+```bash
+npm i husky -D
+# or
+yarn add husky -D
+```
+
+After installing the tool, create a file called `.huskyrc.json` in the root of the project.
+That file will hold the configuration for this tool.
+
+<Aside>
+  Supplying that configuration in the `package.json` file is also possible.
+</Aside>
+
+```json
+{
+  "hooks": {
+    "pre-commit": "npm test"
+  }
+}
+```
+
+The `pre-commit` hook will trigger every time code is commited to the (local) repository.
+The commit will only go through if the script (`npm test` in this case) returns without a failure.
+
+The image below shows the terminal output when trying to commit to a freshly bootstrapped Gatsby app.
+The `test` command that is ran during `pre-commit` exits with a `1`, signalling an error.
+This failure prevents the commit from being applied.
+
+![failing test stops the commit](pre-commit-fail.png)
+
+## Commitlint
+
+## Lint-staged
