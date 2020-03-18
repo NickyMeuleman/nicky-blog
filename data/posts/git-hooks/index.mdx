@@ -27,17 +27,21 @@ By default, the files there are bash scripts, but the only requirement is that t
 The whole list of [available git hooks](https://git-scm.com/docs/githooks) is available on the git documentation website.
 
 Sharing git hooks with other people without any tools is quite hard. The `.git` directory is not part of the git repository, kinda (how meta).
-Making sure everyone uses the same hooks, and has the required local tools to run them, quickly becomes a chore.
+Making sure everyone uses the same hooks and has the required local tools to run them, quickly becomes a chore.
 
 ## Husky
 
 [Husky](https://github.com/typicode/husky) is a tool that makes it convenient to define and share git hooks in a JavaScript project.
+
+### Install
 
 ```bash
 npm i husky -D
 # or
 yarn add husky -D
 ```
+
+### Configure
 
 After installing the tool, create a file called `.huskyrc.json` in the root of the project.
 That file will hold the configuration for this tool.
@@ -54,6 +58,8 @@ That file will hold the configuration for this tool.
 }
 ```
 
+### Use
+
 The `pre-commit` hook will trigger every time code is commited to the (local) repository.
 The commit will only go through if the script (`npm test` in this case) returns without a failure.
 
@@ -63,6 +69,98 @@ This failure prevents the commit from being applied.
 
 ![failing test stops the commit](pre-commit-fail.png)
 
+## Lint-staged
+
+The [`lint-staged`](https://github.com/okonet/lint-staged) tool allows you to execute a script with a list of staged files as an argument.
+
+<Aside>
+  Don't let the "lint" in the name confuse you. While linting is a very popular
+  usecase for this package, it certainly isn't the only one!
+</Aside>
+
+### Install
+
+```bash
+npm i lint-staged -D
+# or
+yarn add lint-staged -D
+```
+
+### Configure
+
+After installing the tool, create a file called `.lintstagedrc.json` in the root of the project.
+That file will hold the configuration for this tool.
+
+<Aside>
+  Supplying that configuration in the `package.json` file is also possible.
+</Aside>
+
+```json
+{
+  "*.{js,jsx}": "eslint --fix"
+}
+```
+
+From the docs:
+
+> Configuration should be an object where each value is a command to run and its key is a glob pattern to use for this command. This package uses [micromatch](https://github.com/micromatch/micromatch) for glob patterns.
+
+The config above will take each staged file that ends in `.js` or `.jsx` and add them as arguments to the `eslint --fix` command.
+
+If `iLikeTurtles.js` and `Boop.jsx` were changed, saved, and `git add`ed, this would result in the following command:  
+`eslint --fix iLikeTurtles.js Boop.jsx`.
+
+After that command successfully completes, the (possibly altered) files will be `git add`ed again.
+
+### Use
+
+```bash
+npx lint-staged
+# or
+yarn lint-staged
+```
+
+As example, below is a (badly formatted) piece of code that was added to git before running `lint-staged`.
+
+<!-- prettier-ignore -->
+```js
+var num=1
+var newNum=num+5;;
+```
+
+The `eslint --fix` command that is ran during `lint-staged` exits with a `1`, signalling an error.
+This failure causes `lint-staged` to fail and also exit with a `1` code.
+
+<Aside>
+  Changes were reverted, that means the piece of code was not formatted!
+</Aside>
+
+![failing lint-staged stops the commit](lint-staged-fail.png)
+
+### Automate
+
+This presents an ideal usecase for automation.
+
+By combining [husky](https://github.com/typicode/husky) and [lint-staged](https://github.com/okonet/lint-staged), right before committing, a piece of code can be executed that is designed to run on every staged file (e.g `eslint`).
+
+This can be done by editing `.huskyrc.json` to execute `lint-staged` on the `pre-commit` trigger.
+
+```json
+{
+  "hooks": {
+    "pre-commit": "lint-staged"
+  }
+}
+```
+
+This setup will only lint files that are about to be committed, saving time, as linting an entire project can take a long time.
+
+Now, everytime you commit you can sing:
+
+🎵 A full commitment's what I'm thinking of. 🎵
+
+<YouTube youTubeId="dQw4w9WgXcQ" skipTo={{ h: 0, m: 0, s: 27 }} />
+
 ## Commitlint
 
-## Lint-staged
+TODO
