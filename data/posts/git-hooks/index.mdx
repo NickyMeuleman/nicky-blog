@@ -1,7 +1,7 @@
 ---
 title: Use git hooks for great good
-date: "2020-03-17"
-published: false
+date: "2020-03-19"
+published: true
 authors: ["nicky"]
 cover: "./cover.jpg"
 tags: ["git", "Lint", "Format", "Howto", "DX"]
@@ -26,7 +26,7 @@ By default, the files there are bash scripts, but the only requirement is that t
 
 The whole list of [available git hooks](https://git-scm.com/docs/githooks) is available on the git documentation website.
 
-Sharing git hooks with other people without any tools is quite hard. The `.git` directory is not part of the git repository, kinda (how meta).
+Sharing git hooks with other people without any tools is quite cumbersome. The `.git` directory is not part of the git repository, kinda (how meta).
 Making sure everyone uses the same hooks and has the required local tools to run them, quickly becomes a chore.
 
 ## Husky
@@ -63,6 +63,11 @@ That file will hold the configuration for this tool.
 The `pre-commit` hook will trigger every time code is commited to the (local) repository.
 The commit will only go through if the script (`npm test` in this case) returns without a failure.
 
+When using a `pre-commit` hook, everytime you commit you can sing:
+🎵 A full commitment's what I'm thinking of. 🎵
+
+<YouTube youTubeId="dQw4w9WgXcQ" skipTo={{ h: 0, m: 0, s: 27 }} />
+
 The image below shows the terminal output when trying to commit to a freshly bootstrapped Gatsby app.
 The `test` command that is ran during `pre-commit` exits with a `1`, signalling an error.
 This failure prevents the commit from being applied.
@@ -95,15 +100,15 @@ That file will hold the configuration for this tool.
   Supplying that configuration in the `package.json` file is also possible.
 </Aside>
 
+From the docs:
+
+> Configuration should be an object where each value is a command to run and its key is a glob pattern to use for this command. This package uses [micromatch](https://github.com/micromatch/micromatch) for glob patterns.
+
 ```json
 {
   "*.{js,jsx}": "eslint --fix"
 }
 ```
-
-From the docs:
-
-> Configuration should be an object where each value is a command to run and its key is a glob pattern to use for this command. This package uses [micromatch](https://github.com/micromatch/micromatch) for glob patterns.
 
 The config above will take each staged file that ends in `.js` or `.jsx` and add them as arguments to the `eslint --fix` command.
 
@@ -132,7 +137,8 @@ The `eslint --fix` command that is ran during `lint-staged` exits with a `1`, si
 This failure causes `lint-staged` to fail and also exit with a `1` code.
 
 <Aside>
-  Changes were reverted, that means the piece of code was not formatted!
+  On failure, the changes were reverted, that means the piece of code was not
+  formatted!
 </Aside>
 
 ![failing lint-staged stops the commit](lint-staged-fail.png)
@@ -141,9 +147,12 @@ This failure causes `lint-staged` to fail and also exit with a `1` code.
 
 This presents an ideal usecase for automation.
 
-By combining [husky](https://github.com/typicode/husky) and [lint-staged](https://github.com/okonet/lint-staged), right before committing, a piece of code can be executed that is designed to run on every staged file (e.g `eslint`).
+By combining [husky](https://github.com/typicode/husky) and [lint-staged](https://github.com/okonet/lint-staged).
+Right before committing, a piece of code can be executed that is designed to run on every staged file (e.g `eslint`).
 
 This can be done by editing `.huskyrc.json` to execute `lint-staged` on the `pre-commit` trigger.
+
+The commit will only go through if the script (`lint-staged` in this case) returns without a failure.
 
 ```json
 {
@@ -155,12 +164,128 @@ This can be done by editing `.huskyrc.json` to execute `lint-staged` on the `pre
 
 This setup will only lint files that are about to be committed, saving time, as linting an entire project can take a long time.
 
-Now, everytime you commit you can sing:
-
-🎵 A full commitment's what I'm thinking of. 🎵
-
-<YouTube youTubeId="dQw4w9WgXcQ" skipTo={{ h: 0, m: 0, s: 27 }} />
-
 ## Commitlint
 
-TODO
+The [`commitlint`](https://github.com/conventional-changelog/commitlint) tool allows you to execute a script that checks a string and applies some rules to it.
+
+As the name suggest, this tool is often used to check commit messages.
+
+The tool can be used to enforce commit messages to meet the standards of the [conventional commit format](https://www.conventionalcommits.org/).
+It is often recommended commit messages convey the "Why?" in the title, and the "What?" in the body. The answer to "How?" is visible by looking at the committed code.
+
+Along with increased clarity, using a consistent commit message format has [many](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#why-use-conventional-commits) [benifits](https://slides.com/marionebl/the-perks-of-committing-with-conventions#/).
+
+### Install
+
+```bash
+npm i @commitlint/config-conventional @commitlint/cli -D
+# or
+yarn add @commitlint/config-conventional @commitlint/cli -D
+```
+
+### Configure
+
+After installing the tool, create a file called `.commitlintrc.json` in the root of the project.
+That file will hold the configuration for this tool.
+
+<Aside>
+  Supplying that configuration in the `package.json` file is also possible.
+</Aside>
+
+Similar to [ESLint](https://eslint.org/) (a linter for JavaScript code), commitlint can be extensively configured.
+
+[Rule documentation](https://github.com/conventional-changelog/commitlint/blob/master/docs/reference-rules.md)
+
+```json
+{
+  "extends": ["@commitlint/config-conventional"]
+}
+```
+
+The config above will apply the rules set in [@commitlint/config-conventional](https://github.com/conventional-changelog/commitlint/blob/master/@commitlint/config-conventional/index.js) to every commit message that is checked by commitlint.
+
+### Use / test
+
+Testing a message to see the output can be done by piping the message into `commitlint`:
+
+```bash
+echo '<your-commit-message>' | npx commitlint
+# or
+echo '<your-commit-message>' | yarn commitlint
+```
+
+The image below shows the terminal output when checking a string (that does not follow the rules we set) with commitlint.
+
+![A string that fails the commitlint checks](commitlint-fail.png)
+
+### Automate
+
+The linting of commit messages is another ideal usecase for automation with git hooks.
+
+By combining [husky](https://github.com/typicode/husky) and [commitlint](https://github.com/conventional-changelog/commitlint).
+Right before committing, the attached commit message can be checked.
+
+This can be done by editing `.huskyrc.json` to execute `commitlint` on the `commit-msg` trigger.
+
+```json
+{
+  "hooks": {
+    "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+  }
+}
+```
+
+The commit will only go through if the script (`commitlint` in this case) returns without a failure.
+
+### CLI-prompt tool
+
+While manually authoring commit messages that adhere to the rules can be done, having a way to guide you when writing commit messages is very useful.
+
+The commitlint CLI-prompt helps with fast authoring of commit messages and ensures they follow those rules.
+
+#### Install
+
+```bash
+npm i @commitlint/prompt-cli -D
+# or
+yarn add @commitlint/prompt-cli -D
+```
+
+#### Use
+
+```bash
+npx commit
+# or
+yarn commit
+```
+
+To make it easier to use, add this command to the `"scripts"` key of the repository's `package.json`
+
+```json
+{
+  "scripts": {
+    "commit": "commit"
+  }
+}
+```
+
+Committing to the repository can now be done by executing that script.
+
+The script will take you through an interactive CLI prompt with the following steps:
+
+- type
+- (optional) scope
+- subject
+- (optional) body
+- (optional) footer
+
+Each step will display the amount of characters that are left until the maximum length (set in the rules) will be reached.
+If you type `help`, if applicaple, the available commands for that step will be listed.
+
+e.g. typing `help` during the type step shows the correct types to choose from (chore, feat, fix, ...).
+Any optional step can be skipped by typing `:skip`.
+
+<Aside>
+  An alternative to the commitlint promp is
+  [commitizen](https://commitizen.github.io/cz-cli/)
+</Aside>
