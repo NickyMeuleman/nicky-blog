@@ -1,6 +1,6 @@
 ---
-title: Use git hooks for great good
-date: "2020-03-19"
+title: Automatin with git hooks
+date: "2020-03-20"
 published: true
 authors: ["nicky"]
 cover: "./cover.jpg"
@@ -24,7 +24,10 @@ For example: Running a [linting/formatting](/blog/automagically-lint) command ju
 Those hooks are scripts located in the `.git/hooks` directory.
 By default, the files there are bash scripts, but the only requirement is that the file is executable.
 
-The whole list of [available git hooks](https://git-scm.com/docs/githooks) is available on the git documentation website.
+<Aside>
+  The git documentation website lists{" "}
+  <a href="https://git-scm.com/docs/githooks">all the available git hooks</a>.
+</Aside>
 
 Sharing git hooks with other people without any tools is quite cumbersome. The `.git` directory is not part of the git repository, kinda (how meta).
 Making sure everyone uses the same hooks and has the required local tools to run them, quickly becomes a chore.
@@ -112,6 +115,12 @@ From the docs:
 
 The config above will take each staged file that ends in `.js` or `.jsx` and add them as arguments to the `eslint --fix` command.
 
+<Aside>
+  Learn how to integrate [Prettier](https://prettier.io/) into
+  [ESLint](https://eslint.org/) in my [automagically
+  lint](/blog/automagically-lint) blogpost.
+</Aside>
+
 If `iLikeTurtles.js` and `Boop.jsx` were changed, saved, and `git add`ed, this would result in the following command:  
 `eslint --fix iLikeTurtles.js Boop.jsx`.
 
@@ -173,7 +182,7 @@ As the name suggest, this tool is often used to check commit messages.
 The tool can be used to enforce commit messages to meet the standards of the [conventional commit format](https://www.conventionalcommits.org/).
 It is often recommended commit messages convey the "Why?" in the title, and the "What?" in the body. The answer to "How?" is visible by looking at the committed code.
 
-Along with increased clarity, using a consistent commit message format has [many](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#why-use-conventional-commits) [benifits](https://slides.com/marionebl/the-perks-of-committing-with-conventions#/).
+Along with increased clarity, using a consistent commit message format [has](https://commitlint.js.org/#/concepts-commit-conventions?id=concept-commit-conventions) [many](https://www.conventionalcommits.org/en/v1.0.0-beta.2/#why-use-conventional-commits) [benefits](https://slides.com/marionebl/the-perks-of-committing-with-conventions#/).
 
 ### Install
 
@@ -286,6 +295,20 @@ e.g. typing `help` during the type step shows the correct types to choose from (
 Any optional step can be skipped by typing `:skip`.
 
 <Aside>
-  An alternative to the commitlint promp is
-  [commitizen](https://commitizen.github.io/cz-cli/)
+  An alternative to the commitlint prompt is{" "}
+  <a href="https://commitizen.github.io/cz-cli/">commitizen</a>
 </Aside>
+
+## Conclusion
+
+Git hooks are a useful method to automate workflows and enforce code standards.
+All git repositories (regardless of the language they are written in) can use them.
+
+Taking a JavaScript project as example, the [husky](https://github.com/typicode/husky) package provides a convenient way to share a specific hooks setup with everyone that clones that repository.
+
+Code linting and formatting standards are enforced by using [lint-staged](https://github.com/okonet/lint-staged).
+
+Commit message standards are enforced by checking the message with [commitlint](https://github.com/conventional-changelog/commitlint).
+
+Have any ideas to further automate workflows (with git hooks)?
+Please let me know [on twitter](https://twitter.com/NMeuleman)!
