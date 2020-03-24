@@ -1,12 +1,11 @@
 {
   "extends": ["config:base", "group:monorepos"],
   "includePaths": ["package.json"],
-  "schedule": ["before 10am on Monday"],
   "semanticCommits": true,
   "rangeStrategy": "bump",
   "rebaseLabel": "rebase",
   "rebaseWhen": "auto",
-  "requiredStatusChecks": [],
+  "requiredStatusChecks": null,
   "packageRules": [
     {
       "updateTypes": ["minor", "patch", "pin", "digest"],
