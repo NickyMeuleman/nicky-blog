@@ -1,0 +1,63 @@
+---
+title: Automation with GitHub Actions
+date: "2020-03-30"
+authors: ["nicky"]
+cover: "./cover.png"
+published: false
+tags: ["github", "Howto", "DX"]
+---
+
+GitHub Actions provide a way to automate several workflows/tasks,
+Like [git hooks](/blog/git-hooks), GitHub Workflows allow you to run a workflow on specific triggers.
+
+A trigger happens, and the workflow associated with that trigger runs.
+
+<Aside>
+  The GitHub Action docs have a{" "}
+  <a href="https://help.github.com/en/actions/reference/events-that-trigger-workflows">
+    list of all triggers
+  </a>
+</Aside>
+
+I think of it like automated sliding doors. When the sensor sees you, the doors open.
+
+You can write individual tasks, called actions, and combine them to create a custom workflow. Workflows are custom automated processes that you can set up in your repository to build, test, package, release, or deploy any code project on GitHub.
+
+Workflows run in Linux, macOS, Windows, and containers on GitHub-hosted machines, called 'runners'. Alternatively, you can also host your own runners to run workflows on machines you own or manage.
+https://help.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners
+
+pricing info
+https://help.github.com/en/github/setting-up-and-managing-billing-and-payments-on-github/about-billing-for-github-actions
+
+aside: Workflows in forked repositories don't run by default.
+
+GitHub Marketplace is a central location for you to find, share, and use actions built by the GitHub community.
+You can browse and search for actions in GitHub Marketplace to use in your workflows.
+https://github.com/marketplace?type=actions
+also opensource actions like the official ones: https://github.com/actions
+screenshot of the banner: for example https://github.com/actions/setup-node
+
+configure workflows using YAML syntax
+
+ou can create more than one workflow in a repository. You must store workflows in the .github/workflows directory in the root of your repository.
+
+Workflows must have at least one job, and jobs contain a set of steps that perform individual tasks. Steps can run commands or use an action. You can create your own actions or use actions shared by the GitHub community and customize them as needed.
+
+You can configure a workflow to start when a GitHub event occurs, on a schedule, or from an external event.
+
+Action
+Individual tasks that you combine as steps to create a job. Actions are the smallest portable building block of a workflow. You can create your own actions, use actions shared from the GitHub community, and customize public actions. To use an action in a workflow, you must include it as a step.
+
+Artifact
+Artifacts are the files created when you build and test your code. For example, artifacts might include binary or package files, test results, screenshots, or log files. Artifacts are associated with the workflow run where they were created and can be used by another job or deployed.
+
+artefact example: code coverage report, cypress screenshot
+
+Event
+A specific activity that triggers a workflow run. For example, activity can originate from GitHub when someone pushes a commit to a repository or when an issue or pull request is created. You can also configure a workflow to run when an external event occurs using the repository dispatch webhook.
+webhook: an url you visit, this triggers a workflow to run
+
+pre-installed stuff on github hosted runners: https://help.github.com/en/actions/reference/software-installed-on-github-hosted-runners
+like: Node.js, Parcel, Webpack, TypeScript, Yarn
+
+create your own action: https://lannonbr.com/blog/2019-08-17-gh-actions-js-actions/
