@@ -19,34 +19,51 @@ A trigger happens, and the workflow associated with that trigger runs.
   </a>
 </Aside>
 
-I think of it like automated sliding doors. When the sensor sees you, the doors open.
+Like [git hooks](/blog/git-hooks), I think of it like automated sliding doors. When the sensor sees you, the doors open.
 
-You can write individual tasks, called actions, and combine them to create a custom workflow. Workflows are custom automated processes that you can set up in your repository to build, test, package, release, or deploy any code project on GitHub.
+Some examples of things to do in a workflow: [deploying](https://lannonbr.com/blog/2020-03-31-github-actions-deploy-to-netlify/) a website, [testing](https://lannonbr.com/blog/2020-03-30-github-actions-ci-tests/) a codebase, [bundling/compiling](https://lannonbr.com/blog/2020-02-23-github-actions-webpack/) some sourcecode, ...
 
-Workflows run in Linux, macOS, Windows, and containers on GitHub-hosted machines, called 'runners'. Alternatively, you can also host your own runners to run workflows on machines you own or manage.
-https://help.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners
+## Is it Workflows, or Actions?
 
-pricing info
-https://help.github.com/en/github/setting-up-and-managing-billing-and-payments-on-github/about-billing-for-github-actions
+While the branding focusses on the term "Actions", what the section above described were Workflows.
 
-aside: Workflows in forked repositories don't run by default.
+<Aside>TL;DR: Workflow big, Action small.</Aside>
 
-GitHub Marketplace is a central location for you to find, share, and use actions built by the GitHub community.
-You can browse and search for actions in GitHub Marketplace to use in your workflows.
-https://github.com/marketplace?type=actions
-also opensource actions like the official ones: https://github.com/actions
-screenshot of the banner: for example https://github.com/actions/setup-node
+A **workflow** is the entire process that performs certain tasks in response to a trigger.
+Workflows are made up of one or more jobs.  
+A **job** is a named set of steps, completing all steps completes that job.  
+A **step** is the smallest piece in this chain.
+That step executes a single (terminal) command, or an **action**.
 
-configure workflows using YAML syntax
+<Aside>Actions are a collection of individual task you can combine.</Aside>
+
+## Workflows
+
+These workflows are described by `.yml` files located in the `.github/workflows` directory.
+
+Those files describe exactly how that workflow runs and can contain a bunch of logic that defines when/if certain things happen.
+By default, Workflows will run on a machine hosted by GitHub (called a [**runner**](https://help.github.com/en/actions/getting-started-with-github-actions/core-concepts-for-github-actions#github-hosted-runner)).
+
+Workflows can run in Linux, macOS, Windows, and containers.
+Alternatively, you can also [host your own runners](https://help.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners) to run workflows on machines you own or manage.
+
+Using GitHub Actions is free for public repositories, private repositories include some free usage minutes by default.
+For more details, check out the [pricing page](https://help.github.com/en/github/setting-up-and-managing-billing-and-payments-on-github/about-billing-for-github-actions).
+
+<Aside>Workflows in forked repositories don't run by default.</Aside>
+
+The [GitHub Marketplace](https://github.com/marketplace?type=actions) is a central location to find, share, and use Actions built by the GitHub community.
+
+The [official actions](https://github.com/actions) are opensourced.
+When you visit a repository for an action, a banner invites you to use it in your Workflows.
+
+![banner for using an Action](banner-action-repo.png)
 
 ou can create more than one workflow in a repository. You must store workflows in the .github/workflows directory in the root of your repository.
 
 Workflows must have at least one job, and jobs contain a set of steps that perform individual tasks. Steps can run commands or use an action. You can create your own actions or use actions shared by the GitHub community and customize them as needed.
 
 You can configure a workflow to start when a GitHub event occurs, on a schedule, or from an external event.
-
-Action
-Individual tasks that you combine as steps to create a job. Actions are the smallest portable building block of a workflow. You can create your own actions, use actions shared from the GitHub community, and customize public actions. To use an action in a workflow, you must include it as a step.
 
 Artifact
 Artifacts are the files created when you build and test your code. For example, artifacts might include binary or package files, test results, screenshots, or log files. Artifacts are associated with the workflow run where they were created and can be used by another job or deployed.
