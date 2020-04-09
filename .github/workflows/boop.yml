@@ -1,4 +1,4 @@
-name: CI
+name: Wisdom
 on:
   push:
     branches:
