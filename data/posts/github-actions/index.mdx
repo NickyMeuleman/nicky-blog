@@ -7,8 +7,9 @@ published: false
 tags: ["github", "Howto", "DX"]
 ---
 
-GitHub Actions provide a way to automate several workflows/tasks,
-Like [git hooks](/blog/git-hooks), GitHub Workflows allow you to run a workflow on specific triggers.
+GitHub Actions provide a way to automate several workflows/tasks.
+
+GitHub Workflows allow you to run a workflow on specific triggers.
 
 A trigger happens, and the workflow associated with that trigger runs.
 
@@ -59,9 +60,39 @@ When you visit a repository for an action, a banner invites you to use it in you
 
 ![banner for using an Action](banner-action-repo.png)
 
-ou can create more than one workflow in a repository. You must store workflows in the .github/workflows directory in the root of your repository.
+## First Github Workflow
 
-Workflows must have at least one job, and jobs contain a set of steps that perform individual tasks. Steps can run commands or use an action. You can create your own actions or use actions shared by the GitHub community and customize them as needed.
+Create a `.github` folder at the root of a (GitHub) repository.
+Create a `workflows` folder inside.
+
+YAML files inside will describe GitHub Workflows.
+A repository can have more than one workflow, thus, more than one file.
+
+The naming of this file is not important.
+
+<Aside>I named mine `boop.yml`, just because I could.</Aside>
+
+The following workflow is a fairly barebones one that doesn't use any Actions.
+It's named `Wisdom` and executes on every push to the `master` branch.
+The Workflow has a single **job**, which is (arbitrarily) named `veryImportant` and uses the latest version of Ubuntu as operating system by setting the value of the [`runs-on`](https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on) setting for that job.
+The job has a single **step**, that step is named again and executes a command in the terminal of that Ubuntu machine.
+
+```yml
+# .gihub/workflows/boop.yml
+name: Wisdom
+on:
+  push:
+    branches:
+      - master
+jobs:
+  veryImportant:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Important message
+        run: echo "Every 60 seconds, a minute passes."
+```
+
+You can create your own actions or use actions shared by the GitHub community and customize them as needed.
 
 You can configure a workflow to start when a GitHub event occurs, on a schedule, or from an external event.
 
