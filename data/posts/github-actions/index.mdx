@@ -1,6 +1,6 @@
 ---
 title: Automation with GitHub Actions
-date: "2020-03-30"
+date: "2020-04-09"
 authors: ["nicky"]
 cover: "./cover.png"
 published: false
@@ -12,6 +12,7 @@ GitHub Actions provide a way to automate several workflows/tasks.
 GitHub Workflows allow you to run a workflow on specific triggers.
 
 A trigger happens, and the workflow associated with that trigger runs.
+You can configure a workflow to start when a GitHub event occurs, on a schedule, or from an external event.
 
 <Aside>
   The GitHub Action docs have a{" "}
@@ -92,20 +93,70 @@ jobs:
         run: echo "Every 60 seconds, a minute passes."
 ```
 
-You can create your own actions or use actions shared by the GitHub community and customize them as needed.
+<!-- image of the workflow on GitHub -->
 
-You can configure a workflow to start when a GitHub event occurs, on a schedule, or from an external event.
+## A bit more advanced (and serious)
 
-Artifact
-Artifacts are the files created when you build and test your code. For example, artifacts might include binary or package files, test results, screenshots, or log files. Artifacts are associated with the workflow run where they were created and can be used by another job or deployed.
+This one automatically builds and deploys my website on every push to the master branch.
 
-artefact example: code coverage report, cypress screenshot
+It uses [the `checkout` **action**](https://github.com/actions/checkout) to checkout the relevant branch of the repository (in this case, master).
 
-Event
-A specific activity that triggers a workflow run. For example, activity can originate from GitHub when someone pushes a commit to a repository or when an issue or pull request is created. You can also configure a workflow to run when an external event occurs using the repository dispatch webhook.
-webhook: an url you visit, this triggers a workflow to run
+To build (and afterwards deploy) the website, some tools and setup is needed.
+Luckily, the GitHub-hosted **runner** comes with some [pre-installed software](https://help.github.com/en/actions/reference/software-installed-on-github-hosted-runners) so I don't have to install everything manually before using it.
 
-pre-installed stuff on github hosted runners: https://help.github.com/en/actions/reference/software-installed-on-github-hosted-runners
-like: Node.js, Parcel, Webpack, TypeScript, Yarn
+<Aside>Among this pre-installed software is a version of Node, and Yarn</Aside>
 
-create your own action: https://lannonbr.com/blog/2019-08-17-gh-actions-js-actions/
+Some environment variables are needed, to identify which site I'm trying to deploy to, and to determine if I even have the permission to do so.
+These tokens are pulled from this repo's secret section on GitHub.
+
+It's not a secret 🐱‍👤 section as in, _shhh, stay very quiet_  
+It's literally called "secrets" in the GitHub settings
+
+![Github secret settings](secret-github.png)
+
+Finally, this workflow uses the [`netlify-cli`](https://docs.netlify.com/cli/get-started/) package through [npx](https://medium.com/@maybekatz/introducing-npx-an-npm-package-runner-55f7d4bd282b) to publish the output from the build step to production.
+
+```yml
+name: Continuous Deployment
+on:
+  push:
+    branches:
+      - master
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Deps
+        run: yarn
+      - name: Build Site
+        run: yarn build
+      - name: Deploy Site
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: npx netlify-cli deploy --dir=public --prod
+```
+
+### Take it up another notch
+
+While YAML is not a fully fledged programming language, you can use it to describe complicated logic to use inside your workflows.
+By default, every **job** runs in parallel, but they can be configured to depend on another job and run in serial.
+
+[Benjamin Lannon](https://twitter.com/lannonbr) made a lightbulb change color to green or red, based on the success of a step in a workflow.
+
+### Create your own Action
+
+While there are a bunch of Actions already out there, the best ones are always the ones you made yourself.
+And, [you can totally do that](https://lannonbr.com/blog/2019-08-17-gh-actions-js-actions/)!
+
+That lightbulb that changes color uses the [`lifx-trigger-action`](https://github.com/lannonbr/lifx-trigger-action) Benjamin wrote himself!
+
+### Artifacts
+
+During these workflows, some file may be created as a result of building/testing/...
+For example: screenshots, a code coverage report, a `.json` file filled with links of cute puppies, you name it!
+
+Those files are called **artifacts**
+Artifacts are associated with the workflow run where they were created and can be used by another job or deployed.
+They can even be [persisted](https://help.github.com/en/actions/configuring-and-managing-workflows/persisting-workflow-data-using-artifacts) and shared between workflow runs.
