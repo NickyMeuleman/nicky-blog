@@ -1,8 +1,8 @@
-import React from 'react';
-import Helmet from 'react-helmet';
-import { useStaticQuery, graphql } from 'gatsby';
-import * as path from 'path';
-import getSocialImage from '../utils/og-image';
+import React from "react";
+import Helmet from "react-helmet";
+import { useStaticQuery, graphql } from "gatsby";
+import * as path from "path";
+import getSocialImage from "../utils/og-image";
 
 const SEO = ({
   meta,
@@ -44,17 +44,17 @@ const SEO = ({
     metaImage = getSocialImage({
       title,
       date: new Date(date)
-        .toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
+        .toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
         })
         .toUpperCase(),
-      dateColor: '99A8CF',
-      dateExtraConfig: 'letter_spacing_2',
-      author: author.name || 'Nicky Meuleman',
+      dateColor: "99A8CF",
+      dateExtraConfig: "letter_spacing_2",
+      author: author.name || "Nicky Meuleman",
       twitter:
-        `@${author.twitter}` || siteMetadata.social.twitter || '@NMeuleman',
+        `@${author.twitter}` || siteMetadata.social.twitter || "@NMeuleman",
       titleFontSize: 64,
       dateFontSize: 36,
       authorFontSize: 36,

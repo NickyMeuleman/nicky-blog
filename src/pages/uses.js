@@ -12,7 +12,7 @@ const Uses = () => {
       <div
         sx={{
           display: "grid",
-          gridTemplateColumns: "1fr minmax(20ch, 70ch) 1fr"
+          gridTemplateColumns: "1fr minmax(20ch, 70ch) 1fr",
         }}
       >
         <div sx={{ gridColumn: "2/3", py: 5 }}>
