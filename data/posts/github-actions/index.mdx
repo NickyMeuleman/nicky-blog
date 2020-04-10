@@ -32,8 +32,10 @@ While the branding focusses on the term "Actions", what the section above descri
 <Aside>TL;DR: Workflow big, Action small.</Aside>
 
 A **workflow** is the entire process that performs certain tasks in response to a trigger.
-Workflows are made up of one or more jobs.  
-A **job** is a named set of steps, completing all steps completes that job.  
+Workflows are made up of one or more jobs.
+
+A **job** is a named set of steps, completing all steps completes that job.
+
 A **step** is the smallest piece in this chain.
 That step executes a single (terminal) command, or an **action**.
 
@@ -52,19 +54,22 @@ Alternatively, you can also [host your own runners](https://help.github.com/en/a
 Using GitHub Actions is free for public repositories, private repositories include some free usage minutes by default.
 For more details, check out the [pricing page](https://help.github.com/en/github/setting-up-and-managing-billing-and-payments-on-github/about-billing-for-github-actions).
 
-<Aside>Workflows in forked repositories don't run by default.</Aside>
+<Aside>
+  Workflows are specific to a repository, so forking a repository doesn't mean
+  the workflows will work.
+</Aside>
 
 The [GitHub Marketplace](https://github.com/marketplace?type=actions) is a central location to find, share, and use Actions built by the GitHub community.
 
 The [official actions](https://github.com/actions) are opensourced.
-When you visit a repository for an action, a banner invites you to use it in your Workflows.
+When you visit a repository for an action, a banner invites you to use it in your **Workflows**.
 
 ![banner for using an Action](banner-action-repo.png)
 
 ## First Github Workflow
 
-Create a `.github` folder at the root of a (GitHub) repository.
-Create a `workflows` folder inside.
+Create a `.github/` folder at the root of a (GitHub) repository.
+Create a `workflows/` folder inside.
 
 YAML files inside will describe GitHub Workflows.
 A repository can have more than one workflow, thus, more than one file.
@@ -73,9 +78,9 @@ The naming of this file is not important.
 
 <Aside>I named mine `boop.yml`, just because I could.</Aside>
 
-The following workflow is a fairly barebones one that doesn't use any Actions.
+The following workflow is a fairly barebones one that doesn't use any **Actions**.
 It's named `Wisdom` and executes on every push to the `master` branch.
-The Workflow has a single **job**, which is (arbitrarily) named `veryImportant` and uses the latest version of Ubuntu as operating system by setting the value of the [`runs-on`](https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on) setting for that job.
+The **Workflow** has a single **job**, which is (arbitrarily) named `veryImportant` and uses the latest version of Ubuntu as operating system by setting the value of the [`runs-on`](https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on) setting for that job.
 The job has a single **step**, that step is named again and executes a command in the terminal of that Ubuntu machine.
 
 ```yml
@@ -97,11 +102,11 @@ jobs:
 
 ## A bit more advanced (and serious)
 
-This one automatically builds and deploys my website on every push to the master branch.
+The **Workflow** below automatically builds and deploys my website on every push to the master branch.
 
 It uses [the `checkout` **action**](https://github.com/actions/checkout) to checkout the relevant branch of the repository (in this case, master).
 
-To build (and afterwards deploy) the website, some tools and setup is needed.
+To build (and afterwards deploy) the website, some tools and setup are needed.
 Luckily, the GitHub-hosted **runner** comes with some [pre-installed software](https://help.github.com/en/actions/reference/software-installed-on-github-hosted-runners) so I don't have to install everything manually before using it.
 
 <Aside>Among this pre-installed software is a version of Node, and Yarn</Aside>
@@ -109,7 +114,8 @@ Luckily, the GitHub-hosted **runner** comes with some [pre-installed software](h
 Some environment variables are needed, to identify which site I'm trying to deploy to, and to determine if I even have the permission to do so.
 These tokens are pulled from this repo's secret section on GitHub.
 
-It's not a secret 🐱‍👤 section as in, _shhh, stay very quiet_  
+It's not a secret 🐱‍👤 section as in: _shhh, stay very quiet_
+
 It's literally called "secrets" in the GitHub settings
 
 ![Github secret settings](secret-github.png)
@@ -141,13 +147,13 @@ jobs:
 ### Take it up another notch
 
 While YAML is not a fully fledged programming language, you can use it to describe complicated logic to use inside your workflows.
-By default, every **job** runs in parallel, but they can be configured to depend on another job and run in serial.
+By default, every **job** runs in parallel, but they can be configured to depend on another job and run in series.
 
-[Benjamin Lannon](https://twitter.com/lannonbr) made a lightbulb change color to green or red, based on the success of a step in a workflow.
+[Benjamin Lannon](https://twitter.com/lannonbr) made a lightbulb change color to green or red, depending on the success of a step in a workflow.
 
 ### Create your own Action
 
-While there are a bunch of Actions already out there, the best ones are always the ones you made yourself.
+While there are a bunch of [awesome Actions](https://github.com/sdras/awesome-actions) already out there, the best ones are always the ones you made yourself.
 And, [you can totally do that](https://lannonbr.com/blog/2019-08-17-gh-actions-js-actions/)!
 
 That lightbulb that changes color uses the [`lifx-trigger-action`](https://github.com/lannonbr/lifx-trigger-action) Benjamin wrote himself!
