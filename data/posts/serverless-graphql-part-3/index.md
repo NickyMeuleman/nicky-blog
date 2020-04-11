@@ -1,9 +1,9 @@
 ---
 title: Serverless GraphQL - the third
-date: '2019-11-07'
+date: "2019-11-07"
 authors: ["nicky"]
-cover: './cover.jpg'
-tags: ['serverless', 'GraphQL', 'Howto']
+cover: "./cover.jpg"
+tags: ["serverless", "GraphQL", "Howto"]
 ---
 
 <!-- Photo by frank mckenna on Unsplash -->
@@ -127,8 +127,8 @@ Time to finally write some code.
 In `db.js`, we will export our connection to the database, our `client`, and all the functions we will use to communicate over that connection, the `query`.
 
 ```js
-require('dotenv').config();
-const faunadb = require('faunadb');
+require("dotenv").config();
+const faunadb = require("faunadb");
 
 const query = faunadb.query;
 
@@ -139,7 +139,7 @@ function createClient() {
     );
   }
   const client = new faunadb.Client({
-    secret: process.env.FAUNADB_SERVER_SECRET
+    secret: process.env.FAUNADB_SERVER_SECRET,
   });
   return client;
 }
@@ -153,19 +153,19 @@ The next step is to add these things to our GraphQL context. That way, they will
 ```js
 // in graphql.js
 
-const { ApolloServer } = require('apollo-server-lambda');
-const { typeDefs } = require('./schema.js');
-const { resolvers } = require('./resolvers.js');
-const { client, query } = require('./db.js');
+const { ApolloServer } = require("apollo-server-lambda");
+const { typeDefs } = require("./schema.js");
+const { resolvers } = require("./resolvers.js");
+const { client, query } = require("./db.js");
 
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: function() {
+  context: function () {
     return { client, query };
   },
   playground: true,
-  introspection: true
+  introspection: true,
 });
 
 exports.handler = server.createHandler();
@@ -189,17 +189,17 @@ The received data is then lightly adjusted and each individual Pokémon is store
 // This file was run once (using node) to populate the fauna database
 // Be sure to install node-fetch first!
 
-const fetch = require('node-fetch');
-const { client, query } = require('./functions/graphql/db');
+const fetch = require("node-fetch");
+const { client, query } = require("./functions/graphql/db");
 const q = query;
-const pokeAPI = 'https://pokeapi.co/api/v2/pokemon?limit=151';
+const pokeAPI = "https://pokeapi.co/api/v2/pokemon?limit=151";
 
 fetch(pokeAPI)
-  .then(res => res.json())
-  .then(res => {
+  .then((res) => res.json())
+  .then((res) => {
     const pokemonArr = res.results.map((pokemon, index) => ({
       id: (index + 1).toString(),
-      name: pokemon.name
+      name: pokemon.name,
     }));
 
     client
@@ -207,13 +207,15 @@ fetch(pokeAPI)
         q.Map(
           pokemonArr,
           q.Lambda(
-            'pokemon',
-            q.Create(q.Collection('Pokemon'), { data: q.Var('pokemon') })
+            "pokemon",
+            q.Create(q.Collection("Pokemon"), { data: q.Var("pokemon") })
           )
         )
       )
-      .then(console.log('wrote Pokemon to FaunaDB'))
-      .catch(error => console.log('Failed to save Pokemon to FaunaDB', error));
+      .then(console.log("wrote Pokemon to FaunaDB"))
+      .catch((error) =>
+        console.log("Failed to save Pokemon to FaunaDB", error)
+      );
   });
 ```
 
@@ -263,73 +265,73 @@ This is how the `resolvers.js` file eventually looked:
 exports.resolvers = {
   Query: {
     hello: (obj, args, context) => {
-      return 'Hello, FaunaDB world!';
+      return "Hello, FaunaDB world!";
     },
     allPokemon: (obj, args, context) => {
       const { client, query: q } = context;
       return client
         .query(
           q.Map(
-            q.Paginate(q.Match(q.Index('allPokemon')), {
-              size: 256
+            q.Paginate(q.Match(q.Index("allPokemon")), {
+              size: 256,
             }),
-            q.Lambda('ref', q.Select(['data'], q.Get(q.Var('ref'))))
+            q.Lambda("ref", q.Select(["data"], q.Get(q.Var("ref"))))
           )
         )
-        .then(result => result.data);
+        .then((result) => result.data);
     },
     pokemonById: (obj, args, context) => {
       const { client, query: q } = context;
       return client
-        .query(q.Get(q.Match(q.Index('pokemonById'), args.id)))
-        .then(result => result.data);
+        .query(q.Get(q.Match(q.Index("pokemonById"), args.id)))
+        .then((result) => result.data);
     },
     pokemonByName: (obj, args, context) => {
       const { client, query: q } = context;
       return client
-        .query(q.Get(q.Match(q.Index('pokemonByName'), args.name)))
-        .then(result => result.data);
-    }
+        .query(q.Get(q.Match(q.Index("pokemonByName"), args.name)))
+        .then((result) => result.data);
+    },
   },
   Mutation: {
     createPokemon: (obj, args, context) => {
       const { client, query: q } = context;
       return client
         .query(
-          q.Create(q.Collection('Pokemon'), {
-            data: { id: args.id, name: args.name }
+          q.Create(q.Collection("Pokemon"), {
+            data: { id: args.id, name: args.name },
           })
         )
-        .then(result => result.data);
+        .then((result) => result.data);
     },
     updatePokemon: (obj, args, context) => {
       const { client, query: q } = context;
       return client
         .query(
           q.Update(
-            q.Select(['ref'], q.Get(q.Match(q.Index('pokemonById'), args.id))),
+            q.Select(["ref"], q.Get(q.Match(q.Index("pokemonById"), args.id))),
             { data: { name: args.name } }
           )
         )
-        .then(result => result.data);
+        .then((result) => result.data);
     },
     deletePokemon: (obj, args, context) => {
       const { client, query: q } = context;
       return client
         .query(
           q.Delete(
-            q.Select(['ref'], q.Get(q.Match(q.Index('pokemonById'), args.id)))
+            q.Select(["ref"], q.Get(q.Match(q.Index("pokemonById"), args.id)))
           )
         )
-        .then(result => result.data);
-    }
+        .then((result) => result.data);
+    },
   },
   Pokemon: {
     isVeryBest: (obj, args, context) => {
       // is it Mr. Mime?
-      return obj.id === '122';
-    }
-  }
+      return obj.id === "122";
+    },
+  },
 };
 ```
 
@@ -414,14 +416,14 @@ exports.resolvers = {
       return client
         .query(
           q.Map(
-            q.Paginate(q.Match(q.Index('allPokemonSortById')), {
-              size: 256
+            q.Paginate(q.Match(q.Index("allPokemonSortById")), {
+              size: 256,
             }),
-            q.Lambda(['id', 'ref'], q.Select(['data'], q.Get(q.Var('ref'))))
+            q.Lambda(["id", "ref"], q.Select(["data"], q.Get(q.Var("ref"))))
           )
         )
-        .then(result => result.data);
-    }
-  }
+        .then((result) => result.data);
+    },
+  },
 };
 ```

@@ -33,15 +33,6 @@
     "react/prop-types": 0,
     "react/jsx-props-no-spreading": 0,
     "no-unused-vars": ["error", { "vars": "local", "args": "none" }],
-    "prettier/prettier": [
-      "warn",
-      {
-        "endOfLine": "lf",
-        "semi": true,
-        "singleQuote": false,
-        "tabWidth": 2,
-        "trailingComma": "es5"
-      }
-    ]
+    "prettier/prettier": ["warn"]
   }
 }

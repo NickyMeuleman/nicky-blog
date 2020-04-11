@@ -1,9 +1,9 @@
 ---
 title: Skipping renders and memoization in React
-date: '2019-04-12'
-authors: ['nicky']
-cover: './cover.jpg'
-tags: ['React']
+date: "2019-04-12"
+authors: ["nicky"]
+cover: "./cover.jpg"
+tags: ["React"]
 ---
 
 In many situations, a React component will re-render when it doesn't have to.
@@ -92,7 +92,7 @@ Instead of skipping the render-step like in class based components, `React.memo`
 
 ```jsx
 // the function component
-const Driver = function(props) {
+const Driver = function (props) {
   return <p>{props.name}</p>;
 };
 // exporting the memoized function component
@@ -121,11 +121,11 @@ The comparison function is called with the previous props and the next props. Th
 
 ```jsx
 // the function component
-const Driver = function(props) {
+const Driver = function (props) {
   return <p>{props.name}</p>;
 };
 // the custom comparison function
-const comparisonFn = function(prevProps, nextProps) {
+const comparisonFn = function (prevProps, nextProps) {
   return prevProps.name === nextProps.name;
 };
 // exporting the memoized function component
@@ -167,16 +167,16 @@ The React team has created an ESLint package, [`eslint-plugin-react-hooks`](http
 ### Example
 
 ```jsx
-import React from 'react';
+import React from "react";
 
 function calculatePodiums(name) {
   // very expensive calculation
   return numResult;
 }
 
-const Driver = function(props) {
+const Driver = function (props) {
   const numOfPodiums = React.useMemo(() => calculatePodiums(props.name), [
-    props.name
+    props.name,
   ]);
   return (
     <div>

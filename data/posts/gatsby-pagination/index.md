@@ -1,9 +1,9 @@
 ---
 title: Pagination in GatsbyJS
-date: '2018-08-16'
-authors: ['nicky']
-cover: './cover.jpg'
-tags: ['GatsbyJS', 'Howto']
+date: "2018-08-16"
+authors: ["nicky"]
+cover: "./cover.jpg"
+tags: ["GatsbyJS", "Howto"]
 ---
 
 <!-- Photo by Austris Augusts on Unsplash -->
@@ -37,7 +37,7 @@ const numPages = Math.ceil(posts.length / postsPerPage);
 Array.from({ length: numPages }).forEach((_, i) => {
   createPage({
     path: i === 0 ? `/` : `/${i + 1}`,
-    component: path.resolve('./src/templates/blog-list.js')
+    component: path.resolve("./src/templates/blog-list.js"),
   });
 });
 ```
@@ -52,13 +52,13 @@ You can pass data to the pages you created via `context`.
 Array.from({ length: numPages }).forEach((_, i) => {
   createPage({
     path: i === 0 ? `/` : `/${i + 1}`,
-    component: path.resolve('./src/templates/blog-list.js'),
+    component: path.resolve("./src/templates/blog-list.js"),
     context: {
       limit: postsPerPage,
       skip: i * postsPerPage,
       numPages,
-      currentPage: i + 1
-    }
+      currentPage: i + 1,
+    },
   });
 });
 ```

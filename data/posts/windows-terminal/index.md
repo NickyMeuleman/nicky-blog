@@ -1,9 +1,9 @@
 ---
 title: The new Windows Terminal
-date: '2019-06-30'
+date: "2019-06-30"
 authors: ["nicky"]
-cover: './cover.png'
-tags: ['Howto', 'DX']
+cover: "./cover.png"
+tags: ["Howto", "DX"]
 ---
 
 > Updated 06 december 2019
@@ -32,9 +32,10 @@ From their `README.md`:
 
 Many additional features **are** coming.
 
-f.e: [keybinding like copy&paste](https://github.com/microsoft/terminal/pull/1093#event-2438652452), [panes like tmux](https://github.com/microsoft/terminal/pull/825), ...  
+f.e: [keybinding like copy&paste](https://github.com/microsoft/terminal/pull/1093#event-2438652452), [panes like tmux](https://github.com/microsoft/terminal/pull/825), ...
+
 > These features are now (6 december 2019) available.
-For a full(ler) look at what they have planned and should be there for the 1.0 release, have a gander at the [milestones](https://github.com/microsoft/terminal/milestone/6).
+> For a full(ler) look at what they have planned and should be there for the 1.0 release, have a gander at the [milestones](https://github.com/microsoft/terminal/milestone/6).
 
 Even more features are on the developers' nice-to-have list and **may** be coming.
 

@@ -1,9 +1,9 @@
 ---
 title: From zero to a serverless GraphQL endpoint in a flash
-date: '2019-10-11'
+date: "2019-10-11"
 authors: ["nicky"]
-cover: './cover.jpg'
-tags: ['serverless', 'GraphQL', 'Howto']
+cover: "./cover.jpg"
+tags: ["serverless", "GraphQL", "Howto"]
 ---
 
 <!-- Cover photo by Jay on Unsplash -->
@@ -66,7 +66,7 @@ They will become accessible at `/.netlify/functions/{function_name}`
 Every file should export a `handler` function.
 
 ```js
-exports.handler = function(event, context, callback) {
+exports.handler = function (event, context, callback) {
   // Hey, I'm lighter than a server, I'm server~~less~~ 🥁💥
 };
 ```
@@ -80,8 +80,8 @@ exports.handler = (event, context, callback) => {
   const response = {
     statusCode: 200,
     body: JSON.stringify({
-      msg: `Mr. Mime is the best Pokemon`
-    })
+      msg: `Mr. Mime is the best Pokemon`,
+    }),
   };
   callback(undefined, response);
 };
@@ -116,7 +116,7 @@ Inside the `functions` directory create a `graphql.js` file.
 Start off that file by importing the things you are going to need.
 
 ```js
-const { ApolloServer, gql } = require('apollo-server-lambda');
+const { ApolloServer, gql } = require("apollo-server-lambda");
 ```
 
 There are 2 big parts to the GraphQL server that will live in this file.
@@ -157,9 +157,9 @@ The schema calls for a `string` type as result, so that's what we'll return from
 const resolvers = {
   Query: {
     hello: (obj, args, context) => {
-      return 'Hello, world!';
-    }
-  }
+      return "Hello, world!";
+    },
+  },
 };
 ```
 
@@ -173,7 +173,7 @@ const server = new ApolloServer({
   typeDefs,
   resolvers,
   playground: true,
-  introspection: true
+  introspection: true,
 });
 ```
 
@@ -233,9 +233,9 @@ To keep things simple, we'll add a JavaScript array to our file.
 ```js
 // I know the plural is Pokemon, don't judge me
 const pokemons = [
-  { id: '122', name: 'Mr. Mime', isVeryBest: true },
-  { id: '25', name: 'Pikachu', isVeryBest: false },
-  { id: '7', name: 'Squirtle', isVeryBest: false }
+  { id: "122", name: "Mr. Mime", isVeryBest: true },
+  { id: "25", name: "Pikachu", isVeryBest: false },
+  { id: "7", name: "Squirtle", isVeryBest: false },
 ];
 ```
 
@@ -247,41 +247,41 @@ Our resolvers should match our schema, so that part of the file now looks like t
 const resolvers = {
   Query: {
     hello: (obj, args, context) => {
-      return 'Hello, world!';
+      return "Hello, world!";
     },
     allPokemon: (obj, args, context) => {
       return pokemons;
     },
     pokemonById: (obj, args, context) => {
-      return pokemons.find(pokemon => pokemon.id === args.id);
+      return pokemons.find((pokemon) => pokemon.id === args.id);
     },
     pokemonByName: (obj, args, context) => {
-      return pokemons.find(pokemon => pokemon.name === args.name);
-    }
+      return pokemons.find((pokemon) => pokemon.name === args.name);
+    },
   },
   Mutation: {
     createPokemon: (obj, args, context) => {
       const pokemon = {
         id: args.id,
         name: args.name,
-        isVeryBest: args.isVeryBest
+        isVeryBest: args.isVeryBest,
       };
       pokemons.push(pokemon);
       return pokemon;
     },
     updatePokemon: (obj, args, context) => {
-      const pokemon = pokemons.find(pokemon => pokemon.id === args.id);
+      const pokemon = pokemons.find((pokemon) => pokemon.id === args.id);
       if (args.name) pokemon.name = args.name;
       if (args.isVeryBest) pokemon.isVeryBest = args.isVeryBest;
       return pokemon;
     },
     deletePokemon: (obj, args, context) => {
-      const index = pokemons.findIndex(pokemon => pokemon.id === args.id);
+      const index = pokemons.findIndex((pokemon) => pokemon.id === args.id);
       const pokemon = pokemons[index];
       pokemons.splice(index, 1);
       return pokemon;
-    }
-  }
+    },
+  },
 };
 ```
 

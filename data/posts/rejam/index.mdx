@@ -1,10 +1,10 @@
 ---
 title: RE:JAMstack
-date: '2019-12-13'
-authors: ['nicky']
-cover: './cover.jpg'
-tags: ['JAMstack', 'GraphQL']
-canonicalUrl: 'https://blog.logrocket.com/introducing-the-rejamstack/'
+date: "2019-12-13"
+authors: ["nicky"]
+cover: "./cover.jpg"
+tags: ["JAMstack", "GraphQL"]
+canonicalUrl: "https://blog.logrocket.com/introducing-the-rejamstack/"
 ---
 
 <!-- Photo by Viktor Forgacs on Unsplash -->
@@ -91,9 +91,8 @@ At the end of the ride, a website is made out of JavaScript, CSS, HTML, and medi
 
 - Much more...
 
-<abbr title="Search engine optimization">
-  SEO
-</abbr> is often very good as a result of the static nature of many JAMstack sites.
+<abbr title="Search engine optimization">SEO</abbr> is often very good as a result
+of the static nature of many JAMstack sites.
 
 <!-- the hosting part is usually very easy too, example: Netlify -->
 
@@ -223,7 +222,7 @@ This is the entire Gatsby page component, where the data gathered by the `GATSBY
 The gathering of the data specified by the `APOLLO_QUERY` at client time is handled by `useQuery` from [Apollo hooks](https://www.apollographql.com/docs/react/api/react-hooks/).
 
 ```js
-const IndexPage = props => {
+const IndexPage = (props) => {
   const allBuildTimeJasons = props.data.JasonAPI.allJasons;
   const { loading, data: apolloData } = useQuery(APOLLO_QUERY);
   const allClientTimeJasons = apolloData.allJasons;

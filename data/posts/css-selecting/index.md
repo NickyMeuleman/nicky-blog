@@ -20,27 +20,27 @@ An HTML-element is a **child** of another element when it is found a **single le
 Ok, that explanation sounded confusing even to me, let's look at an example.
 
 ```html
-    <div class="quarter-finals">
-        <div class="semi-finals">
-            <div class="final">
-                <div class="champion"></div>
-            </div>
-        </div>
+<div class="quarter-finals">
+  <div class="semi-finals">
+    <div class="final">
+      <div class="champion"></div>
     </div>
+  </div>
+</div>
 ```
 
 In this example, `quarter-finals` is the ancestor of every other element.
 `final` is the child(so also descendant!) of `semi-finals`.
 
 ```html{5}
-    <div class="quarter-finals">
-        <div class="semi-finals">
-            <div class="final">
-                <div class="champion"></div>
-                <div class="runner-up"></div>
-            </div>
-        </div>
+<div class="quarter-finals">
+  <div class="semi-finals">
+    <div class="final">
+      <div class="champion"></div>
+      <div class="runner-up"></div>
     </div>
+  </div>
+</div>
 ```
 
 Apart from being an ancestor/parent or descandant/child, an element can also be a **sibling** of another element.
@@ -92,15 +92,15 @@ You could read that selector like this: "Select any div-element that immediately
 If any element comes between the `.champion` and the `.runner-up` so they no longer directly follow eachother, the adjacent sibling combinator won't work. That's a good time to use the **general sibling combinator**.
 
 ```html{5}
-    <div class="quarter-finals">
-        <div class="semi-finals">
-            <div class="final">
-                <div class="champion"></div>
-                <span>won against</span>
-                <div class="runner-up"></div>
-            </div>
-        </div>
+<div class="quarter-finals">
+  <div class="semi-finals">
+    <div class="final">
+      <div class="champion"></div>
+      <span>won against</span>
+      <div class="runner-up"></div>
     </div>
+  </div>
+</div>
 ```
 
 This means our `.runner-up` will no longer have a yellow background. It doesn't immediately follow the `.champion` anymore so the CSS we wrote above won't style it. Let's fix it
@@ -140,16 +140,16 @@ Notice that space between `.final` and `:first-child`? It's the descendant selec
 This selector is very specific, what if a different element appears above the `.champion`?
 
 ```html{4}
-    <div class="quarter-finals">
-        <div class="semi-finals">
-            <div class="final">
-                <span>in this match</span>
-                <div class="champion"></div>
-                <span>won against</span>
-                <div class="runner-up"></div>
-            </div>
-        </div>
+<div class="quarter-finals">
+  <div class="semi-finals">
+    <div class="final">
+      <span>in this match</span>
+      <div class="champion"></div>
+      <span>won against</span>
+      <div class="runner-up"></div>
     </div>
+  </div>
+</div>
 ```
 
 Gone is that glorious background-color for the champion. `:first-child` does exactly what it says, it selects the element it is attached to if it is the first child. It's not attached to anything, you say? Think of it like it's written like this: `.final *:first-child`  
@@ -207,12 +207,12 @@ There are many more options, you can read/learn about them on [MDN](https://deve
 You can also select elements based on their attributes and the values of their attributes. Which is really what you are already doing when using the ID(`#`) or class(`.`) selector if you think about it.
 
 ```html
-    <div class="really-fast-drive lemans-winner tiny">
-        Fernando Alonso
-    </div>
-    <div class="really-slow-driver non-lemans-winner tall">
-        Nicky Meuleman
-    </div>
+<div class="really-fast-drive lemans-winner tiny">
+  Fernando Alonso
+</div>
+<div class="really-slow-driver non-lemans-winner tall">
+  Nicky Meuleman
+</div>
 ```
 
 The simplest form is just checking if an attribute is present.
@@ -298,8 +298,7 @@ We already had a taste of combining when we used the descendant selector in the 
 How would you go about selecting the label for a checkbox that is checked? You have this HTML to work with, the author didn't follow proper accessibility-guidelines and left off the [`for` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/label).
 
 ```html
-<input type="checkbox">
-<label>Belgium wins the world cup</label>
+<input type="checkbox" /> <label>Belgium wins the world cup</label>
 ```
 
 A possible way to do that would be:

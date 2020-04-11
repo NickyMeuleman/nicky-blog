@@ -1,9 +1,9 @@
 ---
 title: React refs
-date: '2019-03-23'
+date: "2019-03-23"
 authors: ["nicky"]
-cover: './cover.jpg'
-tags: ['React']
+cover: "./cover.jpg"
+tags: ["React"]
 ---
 
 <!-- Cover photo of two reference monitors. A funny joke, as you will undoubtedly agree. -->
@@ -86,7 +86,7 @@ Warning: Function components cannot be given refs. Attempts to access this ref w
 
 ```jsx
 // in the file you want to use the ref
-import Input from './Input';
+import Input from "./Input";
 
 function App() {
   const inputRef = React.useRef();
@@ -128,7 +128,7 @@ While `createRef` and `useRef` are **very** similar. There are some subtle diffe
 
 ```js
 // in a function component
-const myRef = React.useRef('my initial value');
+const myRef = React.useRef("my initial value");
 ```
 
 `useRef` creates an object `{ current : initialValue }` and returns it the first time it gets called. If that object already exists, `useRef` will return that existing object instead.
@@ -151,10 +151,10 @@ Since `useRef(initialValue)` returns an object with a mutable `current` property
 There is nothing stopping us from using it like an instance variable.
 
 ```js
-const palindrome = useRef('racecar');
+const palindrome = useRef("racecar");
 // const palindrome = { current: 'racecar' }
 // ...
-palindrome.current = 'pullup';
+palindrome.current = "pullup";
 // const palindrome = { current: 'pullup' }
 ```
 
@@ -169,7 +169,7 @@ The implementation of both `createRef` and `useRef` in the official [React codeb
 ```js
 export function createRef() {
   const refObject = {
-    current: null
+    current: null,
   };
   if (__DEV__) {
     Object.seal(refObject);

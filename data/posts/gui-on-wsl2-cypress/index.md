@@ -1,9 +1,9 @@
 ---
 title: Using Graphical User Interfaces like Cypress' in WSL2
-date: '2019-09-19'
+date: "2019-09-19"
 authors: ["nicky"]
-cover: './cover.png'
-tags: ['WSL2, DX, Howto']
+cover: "./cover.png"
+tags: ["WSL2, DX, Howto"]
 ---
 
 The Window Subsystem for Linux is very powerful.

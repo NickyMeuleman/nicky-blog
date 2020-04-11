@@ -1,9 +1,9 @@
 ---
 title: WSL2, zsh, and docker. Linux through Windows.
-date: '2019-06-15'
+date: "2019-06-15"
 authors: ["nicky"]
-cover: './cover.jpg'
-tags: ['Howto', 'DX']
+cover: "./cover.jpg"
+tags: ["Howto", "DX"]
 ---
 
 <!-- Photo by Javier Allegue Barros on Unsplash -->

@@ -1,9 +1,9 @@
 ---
 title: Serverless GraphQL - part deux
-date: '2019-10-12'
+date: "2019-10-12"
 authors: ["nicky"]
-cover: './cover.jpg'
-tags: ['serverless', 'GraphQL', 'Howto']
+cover: "./cover.jpg"
+tags: ["serverless", "GraphQL", "Howto"]
 ---
 
 <!-- Photo by Guillaume Bolduc on Unsplash -->
@@ -36,7 +36,7 @@ First is the schema, or our `typeDefs` variable.
 Move it to `functions/graphql/schema.js` and export that variable.
 
 ```js
-const { gql } = require('apollo-server-lambda');
+const { gql } = require("apollo-server-lambda");
 
 exports.typeDefs = gql`
   type Query {
@@ -82,19 +82,19 @@ That _context_ object will be available in every resolver function as a paramete
 The `functions/graphql/graphql.js` file now looks like this:
 
 ```js
-const { ApolloServer } = require('apollo-server-lambda');
-const { typeDefs } = require('./schema.js');
-const { resolvers } = require('./resolvers.js');
-const { pokemons } = require('./db.js');
+const { ApolloServer } = require("apollo-server-lambda");
+const { typeDefs } = require("./schema.js");
+const { resolvers } = require("./resolvers.js");
+const { pokemons } = require("./db.js");
 
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: function() {
+  context: function () {
     return { db: pokemons };
   },
   playground: true,
-  introspection: true
+  introspection: true,
 });
 
 exports.handler = server.createHandler();
@@ -156,17 +156,17 @@ Also remove all the other references to `isVeryBest` from your resolvers!
 exports.resolvers = {
   Query: {
     hello: (obj, args, context) => {
-      return 'Hello, file-seperated world!';
+      return "Hello, file-seperated world!";
     },
     allPokemon: (obj, args, context) => {
       return context.db;
     },
     pokemonById: (obj, args, context) => {
-      return context.db.find(pokemon => pokemon.id === args.id);
+      return context.db.find((pokemon) => pokemon.id === args.id);
     },
     pokemonByName: (obj, args, context) => {
-      return context.db.find(pokemon => pokemon.name === args.name);
-    }
+      return context.db.find((pokemon) => pokemon.name === args.name);
+    },
   },
   Mutation: {
     createPokemon: (obj, args, context) => {
@@ -175,23 +175,23 @@ exports.resolvers = {
       return pokemon;
     },
     updatePokemon: (obj, args, context) => {
-      const pokemon = context.db.find(pokemon => pokemon.id === args.id);
+      const pokemon = context.db.find((pokemon) => pokemon.id === args.id);
       pokemon.name = args.name;
       return pokemon;
     },
     deletePokemon: (obj, args, context) => {
-      const index = context.db.findIndex(pokemon => pokemon.id === args.id);
+      const index = context.db.findIndex((pokemon) => pokemon.id === args.id);
       const pokemon = context.db[index];
       context.db.splice(index, 1);
       return pokemon;
-    }
+    },
   },
   Pokemon: {
     isVeryBest: (obj, args, context) => {
       // is it Mr. Mime?
-      return obj.id === '122';
-    }
-  }
+      return obj.id === "122";
+    },
+  },
 };
 ```
 

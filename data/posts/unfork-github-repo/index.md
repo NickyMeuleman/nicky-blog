@@ -1,9 +1,9 @@
 ---
 title: How to unfork a repo on GitHub
-date: '2019-08-03'
-authors: ['nicky']
-cover: './cover.jpg'
-tags: ['github', 'Howto', 'tutorial']
+date: "2019-08-03"
+authors: ["nicky"]
+cover: "./cover.jpg"
+tags: ["github", "Howto", "tutorial"]
 ---
 
 > TL;DR: **2 steps**: Rename the repository. Import the renamed repository under the original name.

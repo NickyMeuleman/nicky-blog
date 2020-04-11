@@ -1,9 +1,9 @@
 ---
 title: Linting and formatting CSS
-date: '2018-07-27'
-authors: ['nicky']
-cover: './cover.jpg'
-tags: ['CSS', 'Lint', 'Format', 'Howto', 'DX']
+date: "2018-07-27"
+authors: ["nicky"]
+cover: "./cover.jpg"
+tags: ["CSS", "Lint", "Format", "Howto", "DX"]
 ---
 
 We'll set up linting and formatting for our styles.
@@ -45,7 +45,7 @@ It works! 🎉
 Don't take my word for it, let's see.
 Add this line to your `package.json`
 
-```json{3}
+```json
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint:css": "stylelint *.css"
@@ -146,13 +146,13 @@ To minimize the time this takes, we only run the command for files that are curr
 This is a huge time-saver (especially for larger projects).
 
 ```bash
-npm i -D husky@next lint-staged
+npm i -D husky lint-staged
 ```
 
 in `package.json`
 Tell `husky` to run `lint-staged` right before you commit code to your git-repository.
 Configure `lint-staged` to run `stylelint --fix` on any `.css` file that is going to be committed.
-This will (potentially) change that file, so remember to add it to `git` again afterwards!
+This will (potentially) change that file, the file will be `add`ed to `git` again afterwards!
 
 ```json
 "husky": {
@@ -162,8 +162,7 @@ This will (potentially) change that file, so remember to add it to `git` again a
 },
 "lint-staged": {
   "*.css*": [
-    "stylelint --fix",
-    "git add"
+    "stylelint --fix"
   ]
 }
 ```

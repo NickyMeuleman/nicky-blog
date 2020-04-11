@@ -1,9 +1,9 @@
 ---
 title: Setting up a fresh development environment, part 1
-date: '2018-05-15'
+date: "2018-05-15"
 authors: ["nicky"]
-cover: './cover.jpeg'
-tags: ['Howto', 'DX']
+cover: "./cover.jpeg"
+tags: ["Howto", "DX"]
 ---
 
 Sometimes you just want to start from a clean slate.
