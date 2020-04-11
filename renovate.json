@@ -5,7 +5,7 @@
   "rangeStrategy": "bump",
   "rebaseLabel": "rebase",
   "rebaseWhen": "auto",
-  "requiredStatusChecks": null,
+  "schedule": ["before 9am on Monday"],
   "packageRules": [
     {
       "updateTypes": ["minor", "patch", "pin", "digest"],
