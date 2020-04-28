@@ -40,7 +40,7 @@ const theme = merge(themeConfig, {
       borderColor: `mutedPrimary`,
     },
     PostExtra: {
-      aside: {
+      details: {
         borderColor: "watermarkBg",
       },
       title: {
