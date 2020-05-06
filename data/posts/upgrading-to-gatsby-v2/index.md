@@ -176,7 +176,7 @@ frontmatter {
 
 But don't remove `sizes` at the lowest level of your query!
 
-```json{11}
+```json hl=11
 frontmatter {
     cover {
         childImageSharp {

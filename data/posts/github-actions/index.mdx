@@ -83,8 +83,7 @@ It's named `Wisdom` and executes on every push to the `master` branch.
 The **Workflow** has a single **job**, which is (arbitrarily) named `veryImportant` and uses the latest version of Ubuntu as operating system by setting the value of the [`runs-on`](https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on) setting for that job.
 The job has a single **step**, that step is named again and executes a command in the terminal of that Ubuntu machine.
 
-```yml
-# .github/workflows/boop.yml
+```yml title=.github/workflows/boop.yml
 name: Wisdom
 on:
   push:

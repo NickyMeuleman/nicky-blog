@@ -57,6 +57,18 @@ const theme = merge(themeConfig, {
         color: "mutedTextBg",
       },
     },
+    CodeBlock: {
+      ...nightOwl,
+      highlightLine: {
+        backgroundColor: `#01121f`,
+        borderLeftColor: `#9ccc65`,
+      },
+      title: {
+        backgroundColor: nightOwl.backgroundColor,
+        borderBottomColor: `#262a39`,
+        color: nightOwl.color,
+      },
+    },
     HeaderLink: {
       textDecoration: "none",
       color: "text",
@@ -67,9 +79,6 @@ const theme = merge(themeConfig, {
         borderBottomStyle: `solid`,
         borderBottomColor: `primary`,
       },
-    },
-    pre: {
-      ...nightOwl,
     },
     h1: {
       mt: 4,

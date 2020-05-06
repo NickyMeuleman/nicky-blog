@@ -68,8 +68,7 @@ Open the `profiles.json` file by clicking settings option in the dropdown, or by
 
 Changing it to be the default shell meant finding the <abbr title="globally unique identifier">GUID</abbr> of that Ubuntu profile under the `profiles` key and placing that in the `defaultProfile` under `globals`.
 
-```json
-// profiles.json
+```json title=profiles.json
 {
   "globals": {
     // ...

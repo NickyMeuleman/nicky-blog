@@ -61,8 +61,7 @@ In this `json` file, we point to the schema used to validate against.
 
 > Many (but not all) editors support this way of linking a file to a schema
 
-```json
-// drivers.json
+```json title=drivers.json
 {
   "$schema": "./drivers.schema.json"
 }
@@ -70,8 +69,7 @@ In this `json` file, we point to the schema used to validate against.
 
 The `$schema` value points to a schema file in the same directory
 
-```json
-// drivers.schema.json
+```json title=drivers.schema.json
 {
   "$schema": "http://json-schema.org/draft-07/schema"
 }
@@ -81,8 +79,7 @@ The `$schema` value here defines which version of the JSON-schema spec is being 
 
 A bare-bones file is boring, the code beneath adds a few contraints to `driver.json`
 
-```json
-// drivers.schema.json
+```json title=drivers.schema.json
 {
   "$schema": "http://json-schema.org/draft-07/schema",
   "title": "Drivers",
@@ -114,8 +111,7 @@ Here I tried to define the season as `"2018"`
 
 Now: something more complex.
 
-```json
-// drivers.schema.json
+```json title=drivers.schema.json
 {
   // ...
   "properties": {
@@ -165,8 +161,7 @@ The entire file is available [in this gist](https://gist.github.com/NickyMeulema
 
 This is an example of a file that would satisfy that schema
 
-```json
-// drivers.json
+```json title=drivers.json
 {
   "$schema": "./drivers.schema.json",
   "series": "f1",

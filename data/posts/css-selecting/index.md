@@ -32,7 +32,7 @@ Ok, that explanation sounded confusing even to me, let's look at an example.
 In this example, `quarter-finals` is the ancestor of every other element.
 `final` is the child(so also descendant!) of `semi-finals`.
 
-```html{5}
+```html hl=5
 <div class="quarter-finals">
   <div class="semi-finals">
     <div class="final">
@@ -91,7 +91,7 @@ You could read that selector like this: "Select any div-element that immediately
 
 If any element comes between the `.champion` and the `.runner-up` so they no longer directly follow eachother, the adjacent sibling combinator won't work. That's a good time to use the **general sibling combinator**.
 
-```html{5}
+```html hl=5
 <div class="quarter-finals">
   <div class="semi-finals">
     <div class="final">
@@ -139,7 +139,7 @@ We forgot to give the `.champion` above a special color.
 Notice that space between `.final` and `:first-child`? It's the descendant selector we talked about earlier. It should be there because **pseudo-classes only target the element it is attached to**.  
 This selector is very specific, what if a different element appears above the `.champion`?
 
-```html{4}
+```html hl=4
 <div class="quarter-finals">
   <div class="semi-finals">
     <div class="final">

@@ -72,7 +72,7 @@ npm i -D stylelint-prettier
 
 And add it to `.stylelintrc`
 
-```json{2-5}
+```json hl=2-5
 {
   "plugins": ["stylelint-prettier"],
   "rules": {
@@ -92,7 +92,7 @@ We'll turn off all Stylelint rules specific to formatting and let Prettier handl
 npm i -D stylelint-config-prettier
 ```
 
-```json{6}
+```json hl=6
 {
   "plugins": ["stylelint-prettier"],
   "rules": {
@@ -118,7 +118,7 @@ You will now see the errors listed inside the PROBLEMS tab and there will be red
 Many issues (especially the formatting ones) are able to be fixed automatically.
 The only thing that's needed is to add the `--fix` flag to our script.
 
-```json{3}
+```json hl=3
 "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint:css": "stylelint *.css --fix"

@@ -27,9 +27,7 @@ In `gatsby-node.js` create that amount of pages with your template.
 
 The path for each page will be `/<number>`, with an exception for `/1`, that page will use `/` instead.
 
-```js
-// file: gatsby-node.js
-
+```js title=gatsby-node.js
 // Create blog post list pages
 const postsPerPage = 2;
 const numPages = Math.ceil(posts.length / postsPerPage);
@@ -46,9 +44,7 @@ Array.from({ length: numPages }).forEach((_, i) => {
 
 You can pass data to the pages you created via `context`.
 
-```js
-// file: gatsby-node.js
-
+```js title=gatsby-node.js
 Array.from({ length: numPages }).forEach((_, i) => {
   createPage({
     path: i === 0 ? `/` : `/${i + 1}`,
@@ -65,9 +61,7 @@ Array.from({ length: numPages }).forEach((_, i) => {
 
 The `context` object will be available in the created pages on the `pageContext` prop in React. You will also be able to access the keys in your GraphQL query for those pages.
 
-```jsx
-// file: src/templates/blog-list.js
-
+```jsx title=src/templates/blog-list.js
 import React from 'react'
 
 class BlogList extends React.component {
@@ -82,9 +76,7 @@ class BlogList extends React.component {
 
 Use `limit` and `skip` to only fetch data for the posts you want to show.
 
-```js
-// file: src/templates/blog-list.js
-
+```js title=src/templates/blog-list.js
 export const pageQuery = graphql`
   query blogPageQuery($skip: Int!, $limit: Int!) {
     allMarkdownRemark(
@@ -111,9 +103,7 @@ export const pageQuery = graphql`
 You can use `currentPage` and `numPages` to determine the routes to the previous/next page.
 They also make it possible to only show those links if they exist.
 
-```jsx
-// file: src/templates/blog-list.js
-
+```jsx title=src/templates/blog-list.js
 import React from 'react'
 import { Link } from 'gatsby'
 
@@ -146,9 +136,7 @@ class BlogList extends React.component {
 
 Iterate over `numPages` and output a number with the relevant link.
 
-```jsx
-// file: src/templates/blog-list.js
-
+```jsx title=src/templates/blog-list.js
 class BlogList extends React.component {
   // ...
   render() {

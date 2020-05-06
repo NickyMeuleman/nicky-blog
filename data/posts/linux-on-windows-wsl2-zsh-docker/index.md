@@ -413,8 +413,7 @@ I like the agnoster one, so that's what I'll go with.
 Edit the `.zshrc` file to enable it.  
 This file is also located in your Linux home directory (`cd $home` to go there).
 
-```bash
-# .zshrc
+```bash title=.zshrc
 # change the default theme
 ZSH_THEME="robbyrussell"
 # to the chosen theme
@@ -501,8 +500,7 @@ Others require a bit more effort, let's start with those!
 To install the plugin first clone [the repo](https://github.com/zsh-users/zsh-syntax-highlighting).  
 Then add the script to your `.zshrc`.
 
-```bash
-# inside .zshrc add
+```bash title=.zshrc
 source <path-to-the-script>
 # I cloned the repo to the .zsh folder, so for me it was
 source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
@@ -516,8 +514,7 @@ Installing it follows the same pattern as the plugin we installed above.
 
 First clone the repo, then add a line to `.zshrc`
 
-```bash
-# .zshrc
+```bash title=.zshrc
 source <path-to-the-script>
 # I cloned the repo to the .zsh folder, so for me it was
 source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh

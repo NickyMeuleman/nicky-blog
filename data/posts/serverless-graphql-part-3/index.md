@@ -150,9 +150,7 @@ exports.query = query;
 
 The next step is to add these things to our GraphQL context. That way, they will be easily accessible from our resolvers.
 
-```js
-// in graphql.js
-
+```js title=graphql.js
 const { ApolloServer } = require("apollo-server-lambda");
 const { typeDefs } = require("./schema.js");
 const { resolvers } = require("./resolvers.js");
