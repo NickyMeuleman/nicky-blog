@@ -1,0 +1,177 @@
+---
+title: Adding a Table of Contents that updates on scroll
+date: "2020-05-06"
+authors: ["nicky"]
+cover: "./cover.jpg"
+published: false
+tags: ["Howto"]
+---
+
+Adding a Table of Contents to an article can be useful to see the topics of the article at a glance.
+
+[Scott Spence](https://twitter.com/spences10) recently wrote [an in depth guide](https://thelocalhost.blog/2020/02/13/smooth-scroll-toc-gatsby/) on how to add a table of contents to a [Gatsby](https://www.gatsbyjs.org/) blog that uses [mdx](https://mdxjs.com/).
+
+I took the ideas from that post, expanded on them and implemented a table of contents for this blog.
+If all went well, you will see a section called "TABLE OF CONTENTS" floating next to the text of this article, updating the styles to indicate which heading you're currently on.
+
+## Starting point
+
+The following guide starts off from a functioning [Gatsby](https://www.gatsbyjs.org/) blog, that uses [mdx](https://mdxjs.com/) (by using [`gatsby-plugin-mdx`](https://www.gatsbyjs.org/packages/gatsby-plugin-mdx/)).
+
+<Aside>
+  The same thing can be done with minor (spelling) adjustments if you are using
+  regular markdown through{" "}
+  <a href="https://www.gatsbyjs.org/packages/gatsby-transformer-remark/">
+    gatsby-transformer-remark
+  </a>
+  .
+</Aside>
+
+## Getting the data
+
+As [a wise man](https://twitter.com/Dayhaysoos) once said: "Get the data, do the thing!".
+
+The goal is to create an object that lists every heading on the page, along with the corresponding CSS-id for that heading.
+
+### Add CSS-ids to all headings
+
+By default, headings (`<h1>`s to `<h6>`s) do not have a css `id` tied to them.
+We want to add one to each heading. It doesn't matter how we accomplish this, only that each heading has an `id`.
+That `id` will later be used in an anchor-tag to link to that heading on the page.
+
+I did this by adding the [`remark-slug`](https://github.com/remarkjs/remark-slug) plugin.
+`<h2>Puppies are cute</h2>` will turn into `<h2 id="puppies-are-cute">Puppies are cute</h2>`, opening the door to link to that point in the page with `<a href="#puppies-are-cute">Puppies are cute</a>`.
+
+```js title=gatsby-config.js
+const remarkSlug = require(`remark-slug`);
+// ...
+  {
+    resolve: `gatsby-plugin-mdx`,
+    options: {
+        remarkPlugins: [remarkSlug]
+    }
+  }
+// ...
+```
+
+### Querying for the `tableOfContents` object.
+
+[`gatsby-plugin-mdx`](https://www.gatsbyjs.org/packages/gatsby-plugin-mdx/) allows you to query for a field called `tableOfContents`.
+
+```js hl=8
+import { graphql } from "gatsby";
+// ...
+export const blogPostTemplateQuery = graphql`
+query PostBySlug($slug: String!) {
+  mdx(fields: { slug: { eq: $slug } }) {
+    // ...
+    body
+    tableOfContents
+    // ...
+  }
+}
+`;
+```
+
+The `tableOfContents` object lists all headings in the document (eg. `"Puppies are awesome"`), along with the link to their corresponding CSS-id (eg. `#puppies-are-awesome`).
+Lower level headings are nested under their higher level parents (an h3 will be nested under an h2).
+
+#### Example
+
+To visualize this better, an example!
+For an `.mdx` file with the following headings:
+
+```
+## First h2
+
+### First h3 under first h2
+
+#### First h4 under first h3
+
+### Second h3 under first h2
+
+## Second h2
+
+### First h3 under second h2
+```
+
+The resulting `tableOfContents` object would look like:
+
+```json
+"items": [
+  {
+    "url": "#first-h2",
+    "title": "First h2",
+    "items": [
+      {
+        "url": "#first-h3-under-first-h2",
+        "title": "First h3 under first h2",
+        "items": [
+          {
+            "url": "#first-h4-under-first-h3",
+            "title": "First h4 under first h3"
+          }
+        ]
+      },
+      {
+        "url": "#second-h3-under-first-h2",
+        "title": "Second h3 under first h2"
+      }
+    ]
+  },
+  {
+    "url": "#second-h2",
+    "title": "Second h2",
+    "items": [
+      {
+        "url": "#first-h3-under-second-h2",
+        "title": "First h3 under second h2"
+      }
+    ]
+  }
+]
+```
+
+## Using the data
+
+Once you query the `tableOfContents` for a blogpost, pass it down to its own component.
+Since the `tableOfContents` object can be empty if there are no headings, [conditionally render](https://reactjs.org/docs/conditional-rendering.html) the `<TableOfContents />` component.
+
+```jsx
+{
+  post?.tableOfContents?.items && (
+    <TableOfContents items={mdx.tableOfContents.items} />
+  );
+}
+```
+
+### One level of headings
+
+The `items` prop is an array, filled with objects.
+Scroll up for a reminder of [how those objects look like](#example).
+
+For now, let's iterate over that top-level array and render the first level of headings.
+
+```jsx title=TableOfContents.js
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    {props.items.map((item) => {
+      <li key={item.url}>
+        <a href={item.url}>{item.title}</a>
+      </li>;
+    })}
+  </ol>
+</details>
+```
+
+### Nested heading levels
+
+How do we get the nested levels of headings to also show up?
+
+Drumroll 🥁🥁🥁 ... RECURSION!
+
+Recursion is one of those scary words for a concept that seems very complicated at first.
+This video by [Computerphile](https://www.youtube.com/channel/UC9-y-6csu5WGm29I7JiwpnA) explains it beautifully
+
+<YouTube youTubeId="8lhxIOAfDss" />
