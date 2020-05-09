@@ -9,7 +9,7 @@ tags: ["Howto"]
 
 <!-- Photo by Enayet Raheem on Unsplash -->
 
-Adding a Table of Contents to an article can be useful to see the topics of the article at a glance.
+Adding a Table of Contents to an article can be useful to see at a glance which topics the article covers.
 
 [Scott Spence](https://twitter.com/spences10) recently wrote [an in depth guide](https://thelocalhost.blog/2020/02/13/smooth-scroll-toc-gatsby/) on how to add a table of contents to a [Gatsby](https://www.gatsbyjs.org/) blog that uses [mdx](https://mdxjs.com/).
 
@@ -18,7 +18,7 @@ If all went well, you will see a section called "TABLE OF CONTENTS" floating nex
 
 ## Starting point
 
-The following guide starts off from a functioning [Gatsby](https://www.gatsbyjs.org/) blog, that uses [mdx](https://mdxjs.com/) (by using [`gatsby-plugin-mdx`](https://www.gatsbyjs.org/packages/gatsby-plugin-mdx/)).
+The following guide starts off from a functioning [Gatsby](https://www.gatsbyjs.org/) blog that uses [mdx](https://mdxjs.com/) (by using [`gatsby-plugin-mdx`](https://www.gatsbyjs.org/packages/gatsby-plugin-mdx/)).
 
 <Aside>
   The same thing can be done with some adjustments if you are using regular
@@ -75,7 +75,7 @@ query PostBySlug($slug: String!) {
 `;
 ```
 
-The `tableOfContents` object lists all headings in the document (eg. `"Puppies are awesome"`), along with the link to their corresponding CSS-id (eg. `#puppies-are-awesome`).
+The `tableOfContents` object lists the text of all headings in the document (eg. `Puppies are awesome`), along with the link to their corresponding CSS-id (eg. `#puppies-are-awesome`).
 Lower level headings are nested under their higher level parents (an h3 will be nested under an h2).
 
 #### Example
@@ -139,9 +139,9 @@ The resulting `tableOfContents` object would look like:
 Once you query the `tableOfContents` for a blogpost, pass it down to its own component.
 Since the `tableOfContents` object can be empty if there are no headings, [conditionally render](https://reactjs.org/docs/conditional-rendering.html) the `<TableOfContents />` component.
 
-```jsx
+```jsx title=templates/blog-post.js
 {
-  post?.tableOfContents?.items && (
+  mdx?.tableOfContents?.items && (
     <TableOfContents items={mdx.tableOfContents.items} />
   );
 }
@@ -149,8 +149,8 @@ Since the `tableOfContents` object can be empty if there are no headings, [condi
 
 ### One level of headings
 
-The `items` prop is an array, filled with objects.
-Scroll up for a reminder of [how those objects look like](#example).
+The `items` prop is an array filled with objects.
+Scroll up for a reminder of [how those objects look](#example).
 
 For now, let's iterate over that top-level array and render the first level of headings.
 
@@ -182,7 +182,7 @@ This video by [Computerphile](https://www.youtube.com/channel/UC9-y-6csu5WGm29I7
 
 <YouTube youTubeId="8lhxIOAfDss" />
 
-Each `item` we previously rendered, can have another `items` array within it.
+Each `item` we previously rendered can have an `items` array within it.
 This can continue up to 6 times (h1 to h6).
 
 To account for that, we'll repeat the logic we wrote to display a single level of headings.
@@ -215,7 +215,7 @@ function TableOfContents(props) {
 In the `renderItems` function, check if the current item in the loop has an `items` property on it.  
 If it does, repeat the same logic for those `items`.
 
-```jsx hl=9 title=TableOfContents.js
+```jsx hl=7 title=TableOfContents.js
 function renderItems(items) {
   return (
     <ol>
@@ -244,14 +244,14 @@ To style the link to the active heading differently from all the other headings 
 You can mark a heading as "active" when it's visible to the user, when it's in the viewport.
 The [Intersection Observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API) is an ideal tool for this.
 
-An `IntersectionObserver` works by first setting up the logic for it first, and then telling it to start watching an element (eg. an anchor tag).
+An `IntersectionObserver` works by first setting up the logic for it, and then telling it to start watching an element (eg. an anchor tag).
 
 After telling an `IntersectionObserver` to keep track of an element, it will fire a callback function every time it is triggered (eg. the anchor tag enters the viewport).
 
 ### Get all the heading-ids
 
 To tell the `InterSectionObserver` which element to observe, it expects a reference to a DOM-element.
-Getting references to all heading element links in the table of contents can be done by calling [`document.getElementById()`](https://developer.mozilla.org/nl/docs/Web/API/Document/getElementById) with each heading's CSS-id.
+Getting references to all heading elements in the table of contents can be done by calling [`document.getElementById()`](https://developer.mozilla.org/nl/docs/Web/API/Document/getElementById) with each heading's CSS-id.
 
 Luckily, all the information needed for this is already there, inside the `tableOfContents` object.
 
@@ -272,6 +272,8 @@ function getIds(items) {
 }
 ```
 
+<Aside>Recursion was used again, to repeat the logic for nested items.</Aside>
+
 For our [example](#example) above, the resulting array from `getIds(props.items)` in the `<TableOfContents items={tableOfContents.items}/>` component would be:
 
 ```js
@@ -290,12 +292,12 @@ For our [example](#example) above, the resulting array from `getIds(props.items)
 We can use the data we just gathered in order to get the data we're really after: _which heading is active right now?_.
 
 We'll keep track of which heading is active inside a React [custom hook](https://reactjs.org/docs/hooks-custom.html) called `useActiveId`.
-This hook returns a piece of state that holds the id of the heading that's currently active and returns that piece of state.
+This hook returns a piece of state that holds the id of the heading that's currently active.
 
 ```js title=TableOfContents.js
 import { useEffect, useState } from "react";
 
-export const useActiveId = (itemIds) => {
+function useActiveId(itemIds) {
   const [activeId, setActiveId] = useState(``);
 
   useEffect(() => {
@@ -322,12 +324,12 @@ export const useActiveId = (itemIds) => {
   }, [itemIds]);
 
   return activeId;
-};
+}
 ```
 
 ### Using the gathered data
 
-Back in the `<TableOfContents />` component, the active id can be used to change the styling of the active heading.
+Back in the function for the `<TableOfContents />` component, the active id can be used to change the styling of the active heading.
 
 Pass the id of the active heading to the `renderItems` function.
 
@@ -344,7 +346,9 @@ function TableOfContents(props) {
 }
 ```
 
-Inside the `renderItems` function, check if the id of the current element is the same as the one passed in as `activeId` and adjust the styling accordingly.
+Inside the `renderItems` function, pass the `activeId` down to the recursive call of the function.
+
+Check if the id for the current element is the same as the one passed in as `activeId` and adjust the styling accordingly.
 
 ```js hl=8-10,14 title=TableOfContents.js
 function renderItems(items, activeId) {
@@ -372,3 +376,82 @@ function renderItems(items, activeId) {
   Remember, the url of an item starts with a #, while the active id passed into
   that function does not.
 </Aside>
+
+## All the code
+
+```jsx title=TableOfContents.js
+import React, { useEffect, useState } from "react";
+
+function getIds(items) {
+  return items.reduce((acc, item) => {
+    if (item.url) {
+      // url has a # as first character, remove it to get the raw CSS-id
+      acc.push(item.url.slice(1));
+    }
+    if (item.items) {
+      acc.push(...getIds(item.items));
+    }
+    return acc;
+  }, []);
+}
+
+function useActiveId(itemIds) {
+  const [activeId, setActiveId] = useState(`test`);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveId(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: `0% 0% -80% 0%` }
+    );
+    itemIds.forEach((id) => {
+      observer.observe(document.getElementById(id));
+    });
+    return () => {
+      itemIds.forEach((id) => {
+        observer.unobserve(document.getElementById(id));
+      });
+    };
+  }, [itemIds]);
+  return activeId;
+}
+
+function renderItems(items, activeId) {
+  return (
+    <ol>
+      {items.map((item) => {
+        return (
+          <li key={item.url}>
+            <a
+              href={item.url}
+              style={{
+                color: activeId === item.url.slice(1) ? "tomato" : "green",
+              }}
+            >
+              {item.title}
+            </a>
+            {item.items && renderItems(item.items, activeId)}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function TableOfContents(props) {
+  const idList = getIds(props.items);
+  const activeId = useActiveId(idList);
+  return (
+    <details open>
+      <summary>Table of Contents</summary>
+      {renderItems(props.items, activeId)}
+    </details>
+  );
+}
+
+export default TableOfContents;
+```
