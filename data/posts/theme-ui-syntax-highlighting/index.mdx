@@ -9,7 +9,7 @@ tags: ["Howto"]
 
 <!-- Photo by Fallon Michael on Unsplash -->
 
-A recent [blog post](https://prince.dev/blog/prism-react-renderer) by [Prince](https://twitter.com/maxcell) about how to use syntax highlighting in site that uses [mdx](https://mdxjs.com/) made me want to add syntax highlighting for codeblocks using the same method.
+A recent [blog post](https://prince.dev/blog/prism-react-renderer) by [Prince](https://twitter.com/maxcell) about how to use syntax highlighting in a site that uses [mdx](https://mdxjs.com/) made me want to add syntax highlighting for codeblocks using the same method.
 
 I was using [`@theme-ui/prism`](https://theme-ui.com/packages/prism), which did the same thing, making me postpone implementing it for myself.
 
@@ -19,7 +19,7 @@ I wanted to keep using the awesome [presets from `@theme-ui/prism`](https://gith
 
 ## Using the `@theme-ui/prism` component
 
-Eventhough I'm going to remove the `@theme-ui/prism` component immediately after this, the [official docs](https://theme-ui.com/packages/prism/) for `@theme-ui/prism` have an excellent explanation for how to replace the codeblocks (triple backticks) in markdown/mdx with a custom component.
+Even though I'm going to remove the `@theme-ui/prism` component immediately after this, the [official docs](https://theme-ui.com/packages/prism/) for `@theme-ui/prism` have an excellent explanation for how to replace the codeblocks (triple backticks) in markdown/mdx with a custom component.
 
 ## Replacing the component
 
@@ -203,7 +203,9 @@ The steps to add a section above the codeblock that can hold a title are very si
 
 Pass a prop called `title` into the `CodeBlock` component.
 
-eg. &grave;&grave;&grave;javascript title=CodeBlock.js will make the `title` prop have a value of `"Codeblock.js"`
+eg. &grave;&grave;&grave;javascript title=CodeBlock.js
+
+will make the `title` prop have a value of `"Codeblock.js"`
 
 ### Own element
 
