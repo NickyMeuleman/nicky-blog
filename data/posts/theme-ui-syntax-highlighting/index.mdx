@@ -1,0 +1,355 @@
+---
+title: Syntax highlighting codeblocks with theme-ui
+date: "2020-05-12"
+authors: ["nicky"]
+cover: "./cover.jpg"
+published: true
+tags: ["Howto"]
+---
+
+<!-- Photo by Fallon Michael on Unsplash -->
+
+A recent [blog post](https://prince.dev/blog/prism-react-renderer) by [Prince](https://twitter.com/maxcell) about how to use syntax highlighting in site that uses [mdx](https://mdxjs.com/) made me want to add syntax highlighting for codeblocks using the same method.
+
+I was using [`@theme-ui/prism`](https://theme-ui.com/packages/prism), which did the same thing, making me postpone implementing it for myself.
+
+His [followup post](https://prince.dev/blog/highlight-with-react) about highlighting lines convinced me. I was going to follow that guide, and combine it with the goodness of `@theme-ui/prism`.
+
+I wanted to keep using the awesome [presets from `@theme-ui/prism`](https://github.com/system-ui/theme-ui/tree/master/packages/prism/presets) to use colors from popular syntax highlighting themes such as [night owl](https://marketplace.visualstudio.com/items?itemName=sdras.night-owl), [dracula](https://draculatheme.com/), [night owl light](https://marketplace.visualstudio.com/items?itemName=sdras.night-owl#light-owl), and many more.
+
+## Using the `@theme-ui/prism` component
+
+Eventhough I'm going to remove the `@theme-ui/prism` component immediately after this, the [official docs](https://theme-ui.com/packages/prism/) for `@theme-ui/prism` have an excellent explanation for how to replace the codeblocks (triple backticks) in markdown/mdx with a custom component.
+
+## Replacing the component
+
+The `Prism` component that those docs told us to use? I replaced it with my own.
+I created a component called `CodeBlock.js`, and used that instead.
+
+It uses the same internals as `@theme-ui/prism`. Only this time, I can tweak them and add cool stuff like line highlighting.
+
+Those internals are powered by a package called [`prism-react-renderer`](https://github.com/FormidableLabs/prism-react-renderer).
+
+To start, this file will look almost identical to [the `Prism` component](https://github.com/system-ui/theme-ui/blob/master/packages/prism/src/index.tsx) from `@theme-ui/prism`.
+
+```jsx title=CodeBlock.js
+/** @jsx jsx */
+import React from "react";
+import Highlight, { defaultProps } from "prism-react-renderer";
+import { jsx, Styled } from "theme-ui";
+
+const CodeBlock = ({ children, className: outerClassName, ...props }) => {
+  // MDX will pass the language as className
+  // className also includes className(s) theme-ui injected
+  const [language] = outerClassName.replace(/language-/, ``).split(` `);
+  if (typeof children !== `string`) {
+    // MDX will pass in the code string as children
+    return null;
+  }
+  return (
+    <Highlight
+      {...defaultProps}
+      {...props}
+      code={children.trim()}
+      language={language}
+      theme={undefined}
+    >
+      {({ className, style, tokens, getLineProps, getTokenProps }) => (
+        <Styled.pre className={`${outerClassName} ${className}`} style={style}>
+          {tokens.map((line, index) => (
+            <div key={index} {...getLineProps({ line, key: index })}>
+              {line.map((token, key) => (
+                <span
+                  key={key}
+                  {...getTokenProps({ token, key })}
+                  // https://github.com/system-ui/theme-ui/pull/721
+                  sx={token.empty ? { display: `inline-block` } : undefined}
+                />
+              ))}
+            </div>
+          ))}
+        </Styled.pre>
+      )}
+    </Highlight>
+  );
+};
+
+export default CodeBlock;
+```
+
+This similarity also means those theme presets designed to work with `@theme-ui/prism` will still work.
+
+## Adding line highlighting
+
+[The tutorial I mentioned earlier](https://prince.dev/blog/highlight-with-react) applies a CSS-class to the lines that should be highlighted.
+
+In theme-ui, a [variant](https://theme-ui.com/guides/variants) can be used to style those lines.
+
+### Getting relevant data into the component
+
+After the three backtick followed by the language, optional key/value pairs may be passed.
+Those keys will be passed into the `CodeBlock` component as props.
+
+eg. for &grave;&grave;&grave;javascript puppies=cute
+
+The `CodeBlock` component will have a prop called `puppies` with a value of `"cute"`.
+
+I used this to pass a range of line numbers into the component under the `hl` prop (short for highlight-lines).
+
+From that point, I followed [this guide](https://prince.dev/blog/highlight-with-react) again.
+Inside the component, I created a function that returns a boolean signalling if a line should be highlighted.
+
+```jsx hl=1,2 title=CodeBlock.js
+const CodeBlock = ({ children, className: outerClassName, hl, ...props }) => {
+  const shouldHighlightLine = getShouldHighlightLine(hl);
+  return (
+    <Highlight
+      {...defaultProps}
+      {...props}
+      code={children.trim()}
+      language={language}
+      theme={undefined}
+    >
+      // ...
+    </Highlight>
+  );
+};
+```
+
+The logic to create that function lives outside of the component.
+
+```js
+import rangeParser from "parse-numeric-range";
+
+const getShouldHighlightLine = (hl) => {
+  if (hl) {
+    const lineNumbers = rangeParser(hl);
+    return (index) => lineNumbers.includes(index + 1);
+  }
+  return () => false;
+};
+```
+
+### Theme-ui variant
+
+I added some CSS to the theme-ui file to the `styles.CodeBlock.highlightLine` variant and applied it to the lines that should be highlighted.
+
+```jsx hl=6-10 title=CodeBlock.js
+// ...
+tokens.map((line, index) => (
+  <div
+    key={index}
+    {...getLineProps({ line, key: index })}
+    sx={
+      shouldHighlightLine(index)
+        ? { variant: `styles.CodeBlock.highlightLine` }
+        : undefined
+    }
+  >
+    {line.map((token, key) => (
+      // ...
+    ))}
+  </div>
+));
+// ...
+```
+
+### A wrapping element
+
+A small caveat is that the background for highlighted lines doesn't extend all the way if the user has to (horizontally) scroll the codeblock.
+
+This can be solved by wrapping the entire component in another element, and applying some CSS.
+
+```jsx hl=2,12 title=CodeBlock.js
+// ...
+<div sx={{ variant: `styles.CodeBlock` }}>
+  <Highlight
+    {...defaultProps}
+    {...props}
+    code={children.trim()}
+    language={language}
+    theme={undefined}
+  >
+    // ...
+  </Highlight>
+</div>
+```
+
+At this point I also moved the `nightOwlLight` preset to the `styles.CodeBlock` variant inside the theme-ui file.
+
+The corresponding variant in the theme-ui file:
+
+```js title=theme.js
+import nightOwlLight from "@theme-ui/prism/presets/night-owl-light.json";
+// ...
+CodeBlock: {
+    ...nightOwlLight,
+    overflow: `auto`,
+    pre: {
+        backgroundColor: `transparent`,
+        float: `left`,
+        minWidth: `100%`,
+        margin: 0,
+    },
+},
+// ...
+```
+
+## Adding title support
+
+The steps to add a section above the codeblock that can hold a title are very similar to the line highlighting ones.
+
+### Getting relevant data into the component
+
+Pass a prop called `title` into the `CodeBlock` component.
+
+eg. &grave;&grave;&grave;javascript title=CodeBlock.js will make the `title` prop have a value of `"Codeblock.js"`
+
+### Own element
+
+Above the existing outer `<div>`, create another one and conditionally render the `title`.
+
+<Aside>
+  React expects a single outer element, so wrap those 2 in a React Fragment.
+</Aside>
+
+### Theme-ui variant
+
+A theme-ui variant, `styles.CodeBlock.title` makes sure the element can be styled via the theme-ui file.
+
+```jsx hl=6,10-11,13 title=CodeBlock.js
+const CodeBlock = ({
+  children,
+  className: outerClassName,
+  title,
+  hl,
+  title,
+  ...props
+}) => {
+  return (
+    <React.Fragment>
+      {title && <div sx={{ variant: `styles.CodeBlock.title` }}>{title}</div>}
+      <div sx={{ variant: `styles.CodeBlock` }}>{/* ... */}</div>
+    </React.Fragment>
+  );
+};
+```
+
+## Final code
+
+```jsx title=CodeBlock.js
+/** @jsx jsx */
+import React from "react";
+import Highlight, { defaultProps } from "prism-react-renderer";
+import rangeParser from "parse-numeric-range";
+import { jsx, Styled } from "theme-ui";
+
+const getShouldHighlightLine = (hl) => {
+  if (hl) {
+    const lineNumbers = rangeParser(hl);
+    return (index) => lineNumbers.includes(index + 1);
+  }
+  return () => false;
+};
+
+const CodeBlock = ({
+  children,
+  className: outerClassName,
+  title,
+  hl,
+  ...props
+}) => {
+  // MDX will pass the language as className
+  // className also includes className(s) theme-ui injected
+  const [language] = outerClassName.replace(/language-/, ``).split(` `);
+  if (typeof children !== `string`) {
+    // MDX will pass in the code string as children
+    return null;
+  }
+  const shouldHighlightLine = getShouldHighlightLine(hl);
+  return (
+    <React.Fragment>
+      {title && <div sx={{ variant: `styles.CodeBlock.title` }}>{title}</div>}
+      <div sx={{ variant: `styles.CodeBlock` }}>
+        <Highlight
+          {...defaultProps}
+          {...props}
+          code={children.trim()}
+          language={language}
+          theme={undefined}
+        >
+          {({ className, style, tokens, getLineProps, getTokenProps }) => (
+            <Styled.pre
+              className={`${outerClassName} ${className}`}
+              style={style}
+            >
+              {tokens.map((line, index) => (
+                <div
+                  key={index}
+                  {...getLineProps({ line, key: index })}
+                  sx={
+                    shouldHighlightLine(index)
+                      ? { variant: `styles.CodeBlock.highlightLine` }
+                      : undefined
+                  }
+                >
+                  {line.map((token, key) => (
+                    <span
+                      key={key}
+                      {...getTokenProps({ token, key })}
+                      // https://github.com/system-ui/theme-ui/pull/721
+                      sx={token.empty ? { display: `inline-block` } : undefined}
+                    />
+                  ))}
+                </div>
+              ))}
+            </Styled.pre>
+          )}
+        </Highlight>
+      </div>
+    </React.Fragment>
+  );
+};
+
+export default CodeBlock;
+```
+
+```js title=theme.js
+import nightOwlLight from "@theme-ui/prism/presets/night-owl-light.json";
+
+const theme = {
+  styles: {
+    CodeBlock: {
+      ...nightOwlLight,
+      overflow: `auto`,
+      pre: {
+        backgroundColor: `transparent`,
+        float: `left`,
+        minWidth: `100%`,
+        margin: 0,
+      },
+      highlightLine: {
+        backgroundColor: `#f0f0f0`,
+        borderLeftColor: `#49d0c5`,
+        borderLeftStyle: `solid`,
+        borderLeftWidth: `0.25em`,
+        display: `block`,
+        marginRight: `-1em`,
+        marginLeft: `-1em`,
+        paddingRight: `1em`,
+        paddingLeft: `0.75em`,
+      },
+      title: {
+        fontFamily: `mono`,
+        backgroundColor: nightOwlLight.backgroundColor,
+        borderBottomWidth: `2px`,
+        borderBottomStyle: `solid`,
+        borderBottomColor: `#f0f0f0`,
+        color: nightOwlLight.color,
+      },
+    },
+  },
+};
+
+export default theme;
+```
