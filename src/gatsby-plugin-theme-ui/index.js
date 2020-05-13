@@ -96,6 +96,9 @@ const theme = merge(themeConfig, {
       mt: 3,
       mb: 2,
     },
+    img: {
+      maxWidth: "100%"
+    },
     inlineCode: {
       fontSize: "0.85em",
     },

@@ -1,6 +1,7 @@
 ---
 title: WSL2, zsh, and docker. Linux through Windows.
 date: "2019-06-15"
+updatedAt: "2020-05-13"
 authors: ["nicky"]
 cover: "./cover.jpg"
 tags: ["Howto", "DX"]
@@ -11,33 +12,46 @@ tags: ["Howto", "DX"]
 Compromises are great. When it comes to technology, having your cake and eating it too is better.
 
 The machine I normally use for development broke.
-The [Windows Subsystem for Linux version 2](https://devblogs.microsoft.com/commandline/announcing-wsl-2/) just came out, so I decided to set up another machine with that. When all was said and done, it was nothing short of awesome. I just booted a full-stack application that uses [docker](https://www.docker.com/) from an [Oh My ZSH](https://ohmyz.sh/) terminal window inside of [VSCode](https://code.visualstudio.com/). It booted faster than it ever had natively on Windows. I'm using Windows 10 Home, that means the [hyper-V](https://en.wikipedia.org/wiki/Hyper-V) virtualization technology normally isn't available. But <abbr title="Windows Subsystem for Linux version 2">WSL2</abbr> lets you take advantage of it anyway (if your hardware supports it).
+The [Windows Subsystem for Linux version 2](https://devblogs.microsoft.com/commandline/announcing-wsl-2/) just came out, so I decided to set up another machine with that.
 
-This post describes the steps I went through to set that up.  
+When all was said and done, it was nothing short of awesome. I just booted a full-stack application that uses [docker](https://www.docker.com/) from an [Oh My ZSH](https://ohmyz.sh/) terminal window inside of [VSCode](https://code.visualstudio.com/).
+It booted faster than it ever had natively on Windows.
+
+I'm using Windows 10 Home, that means the [hyper-V](https://en.wikipedia.org/wiki/Hyper-V) virtualization technology normally isn't available. But <abbr title="Windows Subsystem for Linux version 2">WSL2</abbr> lets you take advantage of it anyway (if your hardware supports it).
+
+This post describes the steps I went through to set that up.
+
 It's going to be a long one, so buckle up! 💪
 
-## Install the Insider preview
+## Update Windows 10
 
-As of writing, WSL2 is available in the latest release of the insider preview.
-If it's not installed, doing so is fairly straightforward.
-
-- Look for the insider programme and follow the steps to activate it.
-
-> As of writing, you will have to choose the fast ring of updates when prompted.
-
-![insider programma](insider.png)
+To use <abbr title="Windows Subsystem for Linux version 2">WSL2</abbr>, Windows 10 has to be updated to version 2004 (Build 10941) or higher.
 
 - Run Windows update
 
-![Windows update installing the insiders build](windows-update.png)
+- Check your Windows version by opening the "Run" dialog (Windows key + R) and entering `winver`.
 
-After a minor test of your patience and a few reboots. A watermark that displays the version you just installed is visible in the lower right corner of your desktop.
+![Windows version](winver.png)
 
-![watermark](insider-watermark.png)
+<Aside>
+  Currently to update to Windows 10, version 2004 (Build 19041), you will need
+  to join the Windows Insider program and select the "Release Preview" ring. The
+  public release should arrive by late May 2020.
+</Aside>
+
+### Optional: Install the Insider preview
+
+- Look for the insider programme in the "Update and Security" settings and follow the steps to activate it.
+
+![insider programme](insider.png)
+
+- Run Windows update
+
+After a minor test of your patience and a few reboots. Checking the Windows version should now result in the latest version.
 
 ## Activate optional features
 
-WSL and WSL2 use some features that aren't activated by default, so enabling those is necessary.
+WSL and WSL2 use some features that aren't activated by default, enabling those is necessary.
 
 This is possible through a <abbr title="Graphical User Interface">GUI</abbr>, by going to "turn Windows features on or off" or through an elevated Powershell prompt.
 
@@ -60,8 +74,12 @@ Regardless of the option you chose, a reboot is required.
 ### Feature for WSL2
 
 That was enough for WSL1.
-To use WSL2, first make sure virtualization is enabled in your <abbr title="Basic input/output system">BIOS</abbr>.  
-WSL2 uses the hyper-V technology. That technology is normally only available on Windows 10 pro, but Windows 10 home can also use it for WSL2.
+To use WSL2, first make sure virtualization is enabled in your <abbr title="Basic input/output system">BIOS</abbr>.
+
+<Aside>
+  WSL2 uses the hyper-V technology. That technology is normally only available
+  on Windows 10 pro, but Windows 10 home can also use it for WSL2.
+</Aside>
 
 Enabling virtualization in the BIOS looks different for most motherboard brands.  
 On my MSI board the option was called "Virtualization Technology" and was hidden in the overclocking settings.
