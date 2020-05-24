@@ -1,3 +1,1 @@
-import Layout from "../../../components/Layout";
-
-export default Layout;
+export { Layout } from "../../../components/Layout";

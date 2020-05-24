@@ -2,7 +2,7 @@ import React from "react";
 import Helmet from "react-helmet";
 import { useStaticQuery, graphql } from "gatsby";
 import * as path from "path";
-import getSocialImage from "../utils/og-image";
+import { generateSocialImage } from "../utils/og-image";
 
 const SEO = ({
   meta,
@@ -41,7 +41,7 @@ const SEO = ({
   const metaDescription = description || siteMetadata.description;
   let metaImage = null;
   if (date) {
-    metaImage = getSocialImage({
+    metaImage = generateSocialImage({
       title,
       date: new Date(date)
         .toLocaleDateString("en-US", {
@@ -105,4 +105,4 @@ const SEO = ({
   );
 };
 
-export default SEO;
+export { SEO };

@@ -1,3 +1,1 @@
-import SEO from "../../../components/SEO";
-
-export default SEO;
+export { SEO } from "../../../components/SEO";

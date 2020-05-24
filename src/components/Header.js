@@ -107,4 +107,4 @@ const Header = ({ passedSx }) => {
   );
 };
 
-export default Header;
+export { Header };
