@@ -89,6 +89,7 @@ const Aside = ({ variant = "default", children }) => {
         "em, strong": {
           color: `inherit`,
         },
+        "p:only-child": { m: 0 },
         ...variantStyles[variant],
         variant: `styles.Aside`,
       }}

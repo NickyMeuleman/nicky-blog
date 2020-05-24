@@ -14,6 +14,7 @@ const theme = merge(themeConfig, {
     watermarkBg: "#4E608C",
     info: "#63b3ed",
     danger: "#feb2b2",
+    // danger: "#d95757",
     success: "rgb(92, 212, 125)",
   },
   fonts: {
@@ -107,6 +108,5 @@ const theme = merge(themeConfig, {
     },
   },
 });
-console.log({ theme });
 
 export default theme;

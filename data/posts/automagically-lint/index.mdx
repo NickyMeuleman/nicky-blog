@@ -1,7 +1,7 @@
 ---
 title: Automagically lint and format your code
 date: "2018-05-04"
-updatedAt: "2020-03-14"
+updatedAt: "2020-05-24"
 authors: ["nicky"]
 cover: "./cover.png"
 tags: ["JavaScript", "Lint", "Format", "Howto", "DX"]
@@ -32,7 +32,7 @@ We'll install everything we need locally, as a devDependency.
 That way the machine we develop on doesn't matter and we avoid the _"works on my machine"_-factor.
 Don't worry, there's no magic here, I'll briefly explain what each package does.
 
-<Aside>
+<Aside variant="info">
   "devDependencies": Packages that are only needed for local development and
   testing.
 </Aside>
@@ -58,7 +58,9 @@ yarn add prettier -D
 The Gatsby project comes with `prettier` pre-installed.
 That means, if you are following along, that last step was optional. Totally fine, we just made _really_ sure it's there.
 
-<Aside>For non-Gatsby projects, installing prettier is not optional.</Aside>
+<Aside variant="danger">
+  For non-Gatsby projects, installing prettier is not optional.
+</Aside>
 
 Next, initialize ESLint.
 The initialization will ask you a couple of questions and set up a configuration file that reflects your answers.
@@ -180,7 +182,7 @@ The `.eslintrc.json` now has this `"extends"` array.
   ],
 ```
 
-<Aside>
+<Aside variant="danger">
   Make sure the "prettier" rules are last, that way they overwrite previous
   configurations.
 </Aside>
@@ -206,13 +208,16 @@ Let's add some rules specific to Prettier to our ESLint configuration.
 ]
 ```
 
-<Aside>
+<Aside variant="info">
   If you prefer to set these rules via a `.prettierrc` file, that's possible
   too.
 </Aside>
-<Aside>
-  Prettier rules specified in the `.eslintrc` file like this will overwrite ones
-  in a `.prettierrc` file.
+
+<Aside variant="info">
+
+Prettier rules specified in the `.eslintrc` file like this will overwrite ones
+in a `.prettierrc` file.
+
 </Aside>
 
 #### More ESLint configuration
@@ -377,8 +382,13 @@ html {
 
 ## Success!
 
-We successfully set up ESLint to work together with Prettier.
-We get notified in our editor about linting problems that ESLint picks up and about formatting problems that Prettier picks up.
-Each time we save a `.js` file those 2 packages will work together and fix all the issues that they can (as it turns out, that's quite a lot of them).
+<Aside variant="success">
+  We successfully set up ESLint to work together with Prettier.
+</Aside>
+
+We get notified in our editor about linting problems that ESLint picks up and about
+formatting problems that Prettier picks up. Each time we save a `.js` file those
+2 packages will work together and fix all the issues that they can (as it turns out,
+that's quite a lot of them).
 
 Go and write some beautiful code!
