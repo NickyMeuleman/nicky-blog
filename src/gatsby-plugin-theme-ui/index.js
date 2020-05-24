@@ -12,6 +12,9 @@ const theme = merge(themeConfig, {
     primary: "rgb(92, 212, 125)",
     mutedPrimary: "rgb(176, 251, 188)",
     watermarkBg: "#4E608C",
+    info: "#63b3ed",
+    danger: "#feb2b2",
+    success: "rgb(92, 212, 125)",
   },
   fonts: {
     body:
@@ -97,12 +100,13 @@ const theme = merge(themeConfig, {
       mb: 2,
     },
     img: {
-      maxWidth: "100%"
+      maxWidth: "100%",
     },
     inlineCode: {
       fontSize: "0.85em",
     },
   },
 });
+console.log({ theme });
 
 export default theme;
