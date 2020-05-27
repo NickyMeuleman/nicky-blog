@@ -115,7 +115,11 @@ That boolean tells React if it should use the previous result of the component i
 When `false`, the function component will be executed like it normally would.  
 When `true`, the function component will not be executed and the previous result will be used instead.
 
-> Watch out! This is the opposite from `shouldComponentUpdate`!
+<Aside variant="danger">
+
+Watch out! This is the opposite from `shouldComponentUpdate`!
+
+</Aside>
 
 The comparison function is called with the previous props and the next props. This allows complex logic where the current props are compared to the previous props in order to determine if the output would be different and thus, the _remembered result/memo of the component should be used_.
 

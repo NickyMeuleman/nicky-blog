@@ -114,7 +114,11 @@ FAUNADB_SERVER_SECRET=fnADcc6pGYACAkNS77iyW0_3LRlgTj-jq7pkZli1
 
 > Don't get any ideas about using this particular key; it's already been revoked
 
-> If using `git`, add `.env` to the `.gitignore` file to prevent uploading that file! Keep your secrets, secret 👮
+<Aside variant="info">
+
+If using `git`, add `.env` to the `.gitignore` file to prevent uploading that file! Keep your secrets, secret 👮
+
+</Aside>
 
 To reference that secret key in our code, we'll use a small package called [dotenv](https://github.com/motdotla/dotenv)
 
@@ -243,7 +247,11 @@ All methods on `client` return [Promises](https://developer.mozilla.org/en-US/do
 
 Directing our attention to the FQL inside of `client.query`, we loop over every single Pokémon in the `pokemonArr` (using [Map](https://docs.fauna.com/fauna/current/api/fql/functions/map)). We execute a [Lambda](https://docs.fauna.com/fauna/current/api/fql/functions/lambda) (which is an anonymous function) for every item in that array (we named a single item `"pokemon"`). Inside that function, we [Create](https://docs.fauna.com/fauna/current/api/fql/functions/create) a new [document](https://docs.fauna.com/fauna/current/concepts/glossary#Document) in the `"Pokemon"` [collection](https://docs.fauna.com/fauna/current/concepts/glossary#Collection). Specifically, we store the data we received in that function under the `data` key in that new document we create.
 
-> Note that to turn the `"pokemon"` we passed to the Lambda back into the object our database will store, and not the string "pokemon", we used the [Var](https://docs.fauna.com/fauna/current/api/fql/functions/var) function.
+<Aside variant="info">
+
+Note that to turn the `"pokemon"` we passed to the Lambda back into the object our database will store and not the string "pokemon", we used the [Var](https://docs.fauna.com/fauna/current/api/fql/functions/var) function.
+
+</Aside>
 
 Running this one-off file can be done from the command line
 
@@ -354,7 +362,11 @@ Notice how it automatically changed to `data.id`? The Document for a single Pok�
 Since, in this app, every Pokémon in the `Pokemon` collection has a unique `id`. Check the box that marks this index as unique.
 This enforces a uniqueness constraint on the entries of this index.
 
-> Note: If you mark an index as unique, it will not remove existing duplicates, only prevent future ones.
+<Aside variant="info">
+
+If you mark an index as unique, it will not remove existing duplicates, only prevent future ones.
+
+</Aside>
 
 Next up is the index that allows us to search for a Pokémon by their `name`. Let's create this index via FQL.
 
@@ -387,7 +399,7 @@ Guess what can be used to rectify that?
 
 One imaginary internet cookie for you if you guessed an index! 🍪
 
-https://twitter.com/NMeuleman/status/1182020349866762240
+<Tweet tweetLink="NMeuleman/status/1182020349866762240" theme="dark" />
 
 Instead of specifying the `terms`, we will create an index (remember, that's a filtered view of data) with `values` of `id` and the `ref`. The `id` will be sorted from low to high. The `ref` can be used to retrieve the Pokémon with that `id` from the database.
 

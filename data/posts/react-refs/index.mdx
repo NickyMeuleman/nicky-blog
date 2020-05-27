@@ -8,7 +8,11 @@ tags: ["React"]
 
 <!-- Cover photo of two reference monitors. A funny joke, as you will undoubtedly agree. -->
 
-> TL;DR: Refs are simple objects of the form `{ current: //something }`. In function components, pick `useRef`, otherwise, pick `createRef`.
+<Aside>
+
+TL;DR: Refs are simple objects of the form `{ current: //something }`. In function components, pick `useRef`, otherwise, pick `createRef`.
+
+</Aside>
 
 In React, a ref is an object with a mutable `current` property.
 That's it. You can view the [implementations](#implementations) below but they boil down to this: `ref = { current: //something }`  
@@ -29,14 +33,18 @@ The steps are always the same however.
 
 Several examples can be viewed in this [codesandbox demo](https://codesandbox.io/s/4jzlzr7937)
 
-> Code shown: using createRef in a class based component with a constructor
+<Aside>
+
+Code shown below: using `createRef` in a class based component with a constructor.
+
+</Aside>
 
 - Create the ref object
 
 ```jsx
 // inside the constructor
 this.audioRef = React.createRef();
-// this.audioRef = { current: null }
+// this results in: this.audioRef = { current: null }
 ```
 
 - Attach a reference to a DOM Element to that ref object
@@ -44,7 +52,7 @@ this.audioRef = React.createRef();
 ```jsx
 // inside the render() method
 <audio ref={this.audioRef} />
-// this.audioRef = { current: <audio /> }
+// this results in: this.audioRef = { current: <audio /> }
 ```
 
 - Use it

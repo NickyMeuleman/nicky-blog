@@ -33,7 +33,7 @@ To use <abbr title="Windows Subsystem for Linux version 2">WSL2</abbr>, Windows 
 
 ![Windows version](winver.png)
 
-<Aside>
+<Aside variant="info">
   Currently to update to Windows 10, version 2004 (Build 19041), you will need
   to join the Windows Insider program and select the "Release Preview" ring. The
   public release should arrive by late May 2020.
@@ -76,7 +76,7 @@ Regardless of the option you chose, a reboot is required.
 That was enough for WSL1.
 To use WSL2, first make sure virtualization is enabled in your <abbr title="Basic input/output system">BIOS</abbr>.
 
-<Aside>
+<Aside variant="info">
   WSL2 uses the hyper-V technology. That technology is normally only available
   on Windows 10 pro, but Windows 10 home can also use it for WSL2.
 </Aside>
@@ -158,7 +158,11 @@ A few tools still need to be installed on the Windows side, the rest are all Lin
 The two I'll install for Windows are: [VSCode](https://code.visualstudio.com/) and [git for Windows](https://git-scm.com/).
 Remember to set the autocrlf setting to input for git. VSCode handles it well.
 
-> Open a terminal in Windows!
+<Aside>
+
+Open a terminal in Windows!
+
+</Aside>
 
 ```bash
 git config --global core.autocrlf input
@@ -166,7 +170,11 @@ git config --global core.autocrlf input
 
 Before beginning to install Linux tools, we'll update our already installed packages.
 
-> From this point on, the action happens in your Linux terminal!
+<Aside>
+
+From this point on, the action happens in your Linux terminal!
+
+</Aside>
 
 ```bash
 sudo apt update
@@ -335,7 +343,11 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/source
 
 - Update the list of repositories and install Yarn.
 
-> Skip installing node with `--no-install-recommends` when using `nvm`
+<Aside variant="info">
+
+Skip installing node with `--no-install-recommends` when using `nvm`
+
+</Aside>
 
 ```bash
 sudo apt update

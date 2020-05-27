@@ -16,8 +16,11 @@ Wouldn't it be cool to run <abbr title="Graphical User Interfaces">GUIs</abbr> n
 ## Prerequisites
 
 Let's get the obvious one out of the way first.
-<abbr title="Window Subsystem for Linux, version 2">WSL2</abbr>. I wrote [a guide](/blog/linux-on-windows-wsl2-zsh-docker/) detailing how to take it from 0 to awesome in a short time.
-Now, it's time to [turn that dial to 11](https://youtu.be/4xgx4k83zzc).
+
+<abbr title="Window Subsystem for Linux, version 2">WSL2</abbr>. I wrote [a
+guide](/blog/linux-on-windows-wsl2-zsh-docker/) detailing how to take it from 0
+to awesome in a short time. Now, it's time to [turn that dial to
+11](https://youtu.be/4xgx4k83zzc).
 
 For good measure, update that linux install
 
@@ -107,7 +110,11 @@ In `.bashrc` (or `zshrc`), under to previous line, add
 sudo /etc/init.d/dbus start &> /dev/null
 ```
 
-> This file can be reloaded by running `source ~/.bashrc` (or `source ~/.zshrc`) in your terminal.
+<Aside variant="info">
+
+This file can be reloaded by running `source ~/.bashrc` (or `source ~/.zshrc`) in your terminal.
+
+</Aside>
 
 ## Grant passwordless access for `dbus`
 
@@ -145,6 +152,10 @@ Launch the program in Linux.
 yarn run cy:open
 ```
 
+<Aside variant="success">
+
 BOOM, a window opens running a Linux app, on Windows 🎉
+
+</Aside>
 
 ![The Cypress interface](cover.png)

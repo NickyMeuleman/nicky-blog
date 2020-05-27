@@ -83,9 +83,8 @@ const Aside = ({ variant = "default", children }) => {
         borderTopRightRadius: `default`,
         borderBottomRightRadius: `default`,
         fontStyle: `italic`,
-        mt: 3,
-        px: 3,
-        py: 3,
+        my: 3,
+        p: 3,
         "em, strong": {
           color: `inherit`,
         },

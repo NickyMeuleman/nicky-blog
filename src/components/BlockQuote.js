@@ -14,9 +14,8 @@ const BlockQuote = ({ children }) => {
         borderBottomRightRadius: `default`,
         fontStyle: `italic`,
         m: 0,
-        mt: 3,
-        px: 3,
-        py: 3,
+        my: 3,
+        p: 3,
         fontSize: 2,
         "em, strong": {
           color: `inherit`,

@@ -76,8 +76,12 @@ That key will hold a function that returns an object.
 
 That _context_ object will be available in every resolver function as a parameter.
 
-> Reminder of the resolver function signature:  
-> `fieldName(obj, args, context, info) { result }`
+<Aside variant="info">
+
+Reminder of the resolver function signature:  
+`fieldName(obj, args, context, info) { result }`
+
+</Aside>
 
 The `functions/graphql/graphql.js` file now looks like this:
 
@@ -130,7 +134,11 @@ That logic will happen in the `isVeryBest` resolver in our newly created `Pokemo
 
 The resolvers `obj` parameter holds the result that is returned from the resolver of the parent field.
 
-> The [Apollo docs for resolvers](https://www.apollographql.com/docs/graphql-tools/resolvers/#resolver-function-signature)
+<Aside variant="info">
+
+The [Apollo docs for resolvers](https://www.apollographql.com/docs/graphql-tools/resolvers/#resolver-function-signature)
+
+</Aside>
 
 Sound confusing? It did to me.  
 In practice what that means is if you query for

@@ -19,12 +19,14 @@ When the sensor sees you, the doors open.
 
 For example: Running a [linting/formatting](/blog/automagically-lint) command just before you `git commit` would use the `pre-commit` git hook.
 
-<Aside>Every project using git can take advantage of git hooks.</Aside>
+<Aside variant="info">
+  Every project using git can take advantage of git hooks.
+</Aside>
 
 Those hooks are scripts located in the `.git/hooks` directory.
 By default, the files there are bash scripts, but the only requirement is that the file is executable.
 
-<Aside>
+<Aside variant="info">
   The git documentation website lists{" "}
   <a href="https://git-scm.com/docs/githooks">all the available git hooks</a>.
 </Aside>
@@ -49,8 +51,10 @@ yarn add husky -D
 After installing the tool, create a file called `.huskyrc.json` in the root of the project.
 That file will hold the configuration for this tool.
 
-<Aside>
-  Supplying that configuration in the `package.json` file is also possible.
+<Aside variant="info">
+
+Supplying that configuration in the `package.json` file is also possible.
+
 </Aside>
 
 ```json
@@ -99,13 +103,20 @@ yarn add lint-staged -D
 After installing the tool, create a file called `.lintstagedrc.json` in the root of the project.
 That file will hold the configuration for this tool.
 
-<Aside>
-  Supplying that configuration in the `package.json` file is also possible.
+<Aside variant="info">
+
+Supplying that configuration in the `package.json` file is also possible.
+
 </Aside>
 
-From the docs:
-
 > Configuration should be an object where each value is a command to run and its key is a glob pattern to use for this command. This package uses [micromatch](https://github.com/micromatch/micromatch) for glob patterns.
+>
+> <footer>
+>
+> The [lint-staged
+> documentation](https://github.com/okonet/lint-staged#configuration)
+>
+> </footer>
 
 ```json
 {
@@ -145,7 +156,7 @@ var newNum=num+5;;
 The `eslint --fix` command that is ran during `lint-staged` exits with a `1`, signalling an error.
 This failure causes `lint-staged` to fail and also exit with a `1` code.
 
-<Aside>
+<Aside variant="danger">
   On failure, the changes were reverted, that means the piece of code was not
   formatted!
 </Aside>
@@ -197,8 +208,10 @@ yarn add @commitlint/config-conventional @commitlint/cli -D
 After installing the tool, create a file called `.commitlintrc.json` in the root of the project.
 That file will hold the configuration for this tool.
 
-<Aside>
-  Supplying that configuration in the `package.json` file is also possible.
+<Aside variant="info">
+
+Supplying that configuration in the `package.json` file is also possible.
+
 </Aside>
 
 Similar to [ESLint](https://eslint.org/) (a linter for JavaScript code), commitlint can be extensively configured.
@@ -294,7 +307,7 @@ If you type `help`, if applicaple, the available commands for that step will be 
 e.g. typing `help` during the type step shows the correct types to choose from (chore, feat, fix, ...).
 Any optional step can be skipped by typing `:skip`.
 
-<Aside>
+<Aside variant="info">
   An alternative to the commitlint prompt is{" "}
   <a href="https://commitizen.github.io/cz-cli/">commitizen</a>.
 </Aside>

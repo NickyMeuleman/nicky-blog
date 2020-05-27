@@ -137,7 +137,11 @@ While it absolutely isn't, to me this feels like
 Very neat, but if you're anything like me, you'll forget to do this from time to time.
 That's why we'll set up a way to automatically run the command above.
 
-> This section assumes the project uses the git version control manager.
+<Aside>
+
+This section assumes the project uses the git version control manager.
+
+</Aside>
 
 We'll hook into git using a package called `husky` and tell it to run our command before each commit.
 This has the added benefit of that command running for _everyone_ that commits code.

@@ -155,7 +155,11 @@ class BlogList extends React.component {
 }
 ```
 
-> Thanks to Wes Bos for [the hot tip](https://twitter.com/wesbos/status/993883756162404354) about `Array.from()`
+<Aside>
+
+Thanks to Wes Bos for [the hot tip](https://twitter.com/wesbos/status/993883756162404354) about `Array.from()`
+
+</Aside>
 
 ## Example
 
