@@ -1,7 +1,7 @@
 ---
 title: WSL2, zsh, and docker. Linux through Windows.
 date: "2019-06-15"
-updatedAt: "2020-05-13"
+updatedAt: "2020-05-30"
 authors: ["nicky"]
 cover: "./cover.jpg"
 tags: ["Howto", "DX"]
@@ -34,24 +34,20 @@ To use <abbr title="Windows Subsystem for Linux version 2">WSL2</abbr>, Windows 
 ![Windows version](winver.png)
 
 <Aside variant="info">
-  Currently to update to Windows 10, version 2004 (Build 19041), you will need
-  to join the Windows Insider program and select the "Release Preview" ring. The
-  public release should arrive by late May 2020.
+
+If the update to Windows 10, version 2004 (Build 19041) is not yet available
+in Windows update, manually installing the latest version is possible via the
+[Windows 10 Update
+Assistant](https://www.microsoft.com/en-us/software-download/windows10).
+
 </Aside>
-
-### Optional: Install the Insider preview
-
-- Look for the insider programme in the "Update and Security" settings and follow the steps to activate it.
-
-![insider programme](insider.png)
-
-- Run Windows update
-
-After a minor test of your patience and a few reboots. Checking the Windows version should now result in the latest version.
 
 ## Activate optional features
 
-WSL and WSL2 use some features that aren't activated by default, enabling those is necessary.
+<abbr title="Windows Subsystem for Linux version 1">
+  WSL1
+</abbr> and <abbr title="Windows Subsystem for Linux version 2">WSL2</abbr> use some
+features that aren't activated by default, enabling those is necessary.
 
 This is possible through a <abbr title="Graphical User Interface">GUI</abbr>, by going to "turn Windows features on or off" or through an elevated Powershell prompt.
 
@@ -59,7 +55,7 @@ This is possible through a <abbr title="Graphical User Interface">GUI</abbr>, by
 
 ![Turn Windows features on or off](features-search.png)
 
-To use WSL, enable the aptly named "Windows Subsystem for Linux" feature.
+To use <abbr title="Windows Subsystem for Linux">WSL</abbr>, enable the aptly named "Windows Subsystem for Linux" feature.
 
 ![Windows Subsystem for Linux feature](feature-wsl.png)
 
@@ -73,12 +69,14 @@ Regardless of the option you chose, a reboot is required.
 
 ### Feature for WSL2
 
-That was enough for WSL1.
-To use WSL2, first make sure virtualization is enabled in your <abbr title="Basic input/output system">BIOS</abbr>.
+That was enough for <abbr title="Windows Subsystem for Linux version 1">WSL1</abbr>.
+To use <abbr title="Windows Subsystem for Linux version 2">WSL2</abbr>, also make sure virtualization is enabled in your <abbr title="Basic input/output system">BIOS</abbr>.
 
 <Aside variant="info">
-  WSL2 uses the hyper-V technology. That technology is normally only available
-  on Windows 10 pro, but Windows 10 home can also use it for WSL2.
+
+WSL2 uses the [hyper-V](https://en.wikipedia.org/wiki/Hyper-V) technology. That technology is normally only available
+on Windows 10 pro, but Windows 10 home can also take advantage of it for WSL2.
+
 </Aside>
 
 Enabling virtualization in the BIOS looks different for most motherboard brands.  
@@ -109,7 +107,7 @@ On the first boot of the distro you just installed (which presents itself as a t
 
 ## WSL1 to WSL2
 
-To check which version of WSL is installed you can run a command in Powershell.
+To check which version of <abbr title="Windows Subsystem for Linux">WSL</abbr> is installed you can run a command in Powershell.
 
 ```bash
 wsl --list --verbose
@@ -132,7 +130,7 @@ It's not one of those that says that only to finish 5 seconds later. It took abo
 
 ![Converting a distro from WSL1 to WSL2](wsl-set-version.png)
 
-At this point, WSL2 is ready to go.  
+At this point, <abbr title="Windows Subsystem for Linux version 2">WSL2</abbr> is ready to go.  
 Opening the distro you installed will show a bash prompt.
 
 Windows Subsystem for Linux 2 comes with a real Linux kernel.  
@@ -142,11 +140,11 @@ In the words of a certain wooden puppet, it is now a _real boy_.
 
 ![Pinocchio is a real boy](https://i.imgur.com/fLW42gG.jpg)
 
-Users of WSL2 are encouraged to place their files inside the Linux root file system.  
-That way they benefit from file performance increases compared to WSL1.
+Users of <abbr title="Windows Subsystem for Linux version 2">WSL2</abbr> are encouraged to place their files inside the Linux file system.  
+That way they benefit from file performance increases compared to <abbr title="Windows Subsystem for Linux version 1">WSL1</abbr>.
 
-In WSL2 you can now access files from Linux in Windows and the other way around.  
-Modifying Linux files from Windows in WSL1 was always warned against, as this could cause _bad things_ to happen. Whoooo, spooky 👻 (but, really, it was a bad idea.)
+In <abbr title="Windows Subsystem for Linux version 2">WSL2</abbr> you can now access files from Linux in Windows and the other way around.  
+Modifying Linux files from Windows in <abbr title="Windows Subsystem for Linux version 1">WSL1</abbr> was always warned against, as this could cause _bad things_ to happen. Whoooo, spooky 👻 (but, really, it was a bad idea.)
 
 More details on changes are available in Microsoft's [WSL2 release blogpost](https://devblogs.microsoft.com/commandline/wsl-2-is-now-available-in-windows-insiders/)
 
@@ -204,7 +202,8 @@ git config --global core.autocrlf input
 
 ### Node & NPM
 
-You can install it as a standalone package.  
+You can install it as a standalone package.
+
 Now we can harness all those Linux-y tools, I'll use <abbr title="node version manager">nvm</abbr> instead to make using different versions easier.
 
 [The nvm repo](https://github.com/nvm-sh/nvm) has excellent installation instructions.
@@ -247,7 +246,7 @@ nvm use
 ```
 
 Having to do that manually seems annoying right?  
-Many solutions to this annoyance exist. Later in this post the annoyance will be "fixed".
+Many solutions to this annoyance exist. Later in this post that annoyance will be dealt with.
 
 ### Docker
 
@@ -272,7 +271,7 @@ sudo apt-key fingerprint 0EBFCD88
 
 You should see the full key in the output.
 
-```bash
+```
 9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF CD88
 ```
 
@@ -325,9 +324,37 @@ docker-compose --version
 # output: docker-compose version 1.24.0, build 0aa59064
 ```
 
+### Docker Desktop
+
+A short trip back to the Windows side!
+
+The previous way to _do Docker-y things_ all happened through the Linux terminal.
+While this is fine, the [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop) application integrates with <abbr title="Windows Subsystem for Linux version 2">WSL2</abbr> quite well and provides a <abbr title="Graphical User Interface">GUI</abbr>.
+
+![Installing the Docker Desktop application](docker-desktop-install.png)
+
+If you start a docker container in your (Linux) terminal, it will appear in, and can be controlled through the interface.
+
+e.g. Running the getting-started docker container in the Linux terminal
+
+```bash
+docker run -dp 80:80 docker/getting-started
+```
+
+will make the container appear in the interface, where it can be opened in a browser, stopped, restarted, ...
+
+![The container we started appears in the interace.](docker-desktop-dashboard.png)
+
 ### Yarn
 
-Yarn is a package manager for JavaScript made by Facebook.
+[Yarn](https://yarnpkg.com/) is a package manager for JavaScript made by Facebook.
+
+<Aside variant="danger">
+
+The process described below will install yarn1.
+For yarn2 refer to [this official guide](https://yarnpkg.com/getting-started/install).
+
+</Aside>
 
 - Add their gpg key.
 
@@ -345,7 +372,7 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/source
 
 <Aside variant="info">
 
-Skip installing node with `--no-install-recommends` when using `nvm`
+Skip installing node with `--no-install-recommends` if you are using `nvm` or a similar tool.
 
 </Aside>
 
@@ -360,16 +387,46 @@ sudo apt install --no-install-recommends yarn
 yarn --version
 ```
 
+### Visual Studio Code Remote - WSL extension
+
+The [Visual Studio Code Remote - WSL](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-wsl) extension will let you use [VSCode](https://code.visualstudio.com/) on Windows to interact with <abbr title="Windows Subsystem for Linux">WSL</abbr>.
+You can develop entirely in the Linux environment, while viewing the results in Windows.
+
+Below is a screenshot of me writing this blogpost in VSCode, while connected to my Ubuntu installation.
+Notice the `WSL: Ubuntu` badge in the lower left corner.
+
+![Me writing this blogpost in VSCode](vscode-remote-wsl.png)
+
+<Aside variant="info">
+
+VSCode wil automatically connect to your <abbr title="Windows Subsystem for Linux">WSL</abbr> instance when you launch VSCode from Linux.  
+e.g. opening a folder with `code .`
+
+</Aside>
+
 ## A better terminal
 
-When you open your terminal there are actually 2 sides at work.  
+When you open your terminal there are 2 sides at work.  
 The thing you see and type into, **the terminal**.  
 The thing that terminal communicates with and does most of the work, **the shell**.
 
-Let's face it, the terminal that ships with Windows is pretty lackluster.  
-Good news: they are coming out with [a new one](https://youtu.be/8gw0rXPMMPE) and it looks really awesome!
+<Aside variant="info">
 
-In anticipation of that release, I'm not going to change much there. I'll use the one that's integrated into VSCode most of the time anyway.
+Scott Hanselman [explains the difference](https://www.hanselman.com/blog/WhatsTheDifferenceBetweenAConsoleATerminalAndAShell.aspx).
+
+</Aside>
+
+Let's face it, the terminal that ships with Windows is pretty lackluster.  
+Good news: they are ~~coming~~ came out with [a new one](https://youtu.be/8gw0rXPMMPE) and it looks really awesome!
+
+~~In anticipation of that release, I'm not going to change much there. I'll use the one that's integrated into VSCode most of the time anyway.~~
+
+<Aside variant="success">
+
+The Windows Terminal released, and it's awesome.
+At least, [I think so](/blog/windows-terminal).
+
+</Aside>
 
 ### Change integrated VSCode terminal
 
@@ -377,14 +434,14 @@ VSCode's integrated terminal is a great productivity booster.
 Let's use the brand new Linux shell in there.
 
 When opening the integrated terminal, you can choose wich one to use as the default one.  
-Select WSL from the resulting list of options and you are done!
+Select <abbr title="Windows Subsystem for Linux">WSL</abbr> from the resulting list of options and you are done!
 
 ![select terminal in Visual Studio Code](terminal-select.png)
 
 Alternatively, edit the `settings.json` to point to the correct location.
 
 ```json
-"terminal.integrated.shell.windows": "C:\\WINDOWS\\System32\\wsl.exe"
+"terminal.integrated.shell.linux": "/bin/sh",
 ```
 
 ### ZSH
@@ -398,14 +455,14 @@ sudo apt install zsh
 ```
 
 When you launch Ubuntu, you'll still see the usual bash prompt.  
-To enter the zsh shell from that familiar bash prompt:
+To start the zsh shell from that familiar bash prompt, enter:
 
 ```bash
 zsh
 ```
 
-The first time this launches a quick configuration wizard will be shown.  
-The choice here doesn't matter all that much, since the resulting file `.zshrc` will be overwritten when we install oh-my-zsh. I chose the option `2` anyway and went with the defaults.
+The first time this launches, a configuration wizard will be shown.  
+The choice made here doesn't matter all that much, since the resulting file `.zshrc` file will be overwritten when we install [oh-my-zsh](https://ohmyz.sh/) a bit later. I chose the option `2` anyway and went with the defaults.
 
 ![zsh-install](zsh-install.png)
 
@@ -426,7 +483,7 @@ It will also enable a huge list of nice features, which is more important.
 Installing oh-my-zsh is a oneliner.
 
 ```bash
-sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 ```
 
 This will also replace that `.zshrc` file we initialised earlier.
@@ -478,7 +535,11 @@ Now navigate to the cloned repo and execute the install script.
 
 You'll see the same thing happening as you would when downloading and installing each font seperatly, but of course much quicker.
 
-Don't forget to close down the execution policy again immediately after!
+<Aside variant="danger">
+
+Don't forget to close down the execution policy again immediately after installing the fonts!
+
+</Aside>
 
 ```bash
 Set-ExecutionPolicy Default
@@ -487,7 +548,8 @@ Set-ExecutionPolicy Default
 After installing the fonts, setting them in your terminal application changes the weird boxes to icons.
 
 Note that the standard terminal in Windows still doesn't work quite right after that. It has many limitations, this not working completely is just one of them.  
-As stated before, I'm mainly going to use the terminal inside VSCode anyway, so I'm leaving the standard terminal behind.  
+As stated before, I'm mainly going to use the terminal inside VSCode, so I'm leaving the standard terminal behind.
+
 After setting the terminal font in VSCode, all icons show up beautifully.
 
 The colors when listing directories and files with the `ls` command still look, euuuhm, suboptimal.
@@ -559,7 +621,7 @@ Most of the time, activating the plugin requires you to add it to the list of pl
 
 This is what I ended up with:
 
-```bash
+```bash title=.zshrc
 plugins=(
     git
     node
