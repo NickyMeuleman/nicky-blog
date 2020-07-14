@@ -50,6 +50,51 @@ const theme = merge(themeConfig, {
       title: {
         color: "mutedTextBg",
       },
+      link: {
+        "--underlineWidth": "1px",
+      },
+    },
+    TableOfContentsList: {
+      "--underlineWidth": (t) => t.borderWidths[2],
+      "--blockLength": (t) => t.sizes[2],
+      link: {
+        color: `mutedText`,
+        textDecoration: `none`,
+        backgroundImage: (t) =>
+          `linear-gradient(90deg, ${t.colors.background}, ${t.colors.background}), linear-gradient(${t.colors.danger}, ${t.colors.danger}), linear-gradient(${t.colors.primary}, ${t.colors.primary})`,
+        backgroundRepeat: "no-repeat",
+        backgroundSize: `var(--blockLength) var(--underlineWidth), 0 var(--underlineWidth), 0 var(--underlineWidth)`,
+        backgroundPosition: `calc(var(--blockLength) * -1) 100%, 0 100%, 0 100%`,
+        transition:
+          "background-size cubic-bezier(0.39, 0.575, 0.565, 1) 2s, background-position cubic-bezier(0.39, 0.575, 0.565, 1) 2s, color cubic-bezier(0.39, 0.575, 0.565, 1) 0.5s",
+        border: "none",
+        ":hover": {
+          color: `mutedText`,
+          textDecoration: `none`,
+          backgroundImage: (t) =>
+            `linear-gradient(90deg, ${t.colors.background}, ${t.colors.background}), linear-gradient(${t.colors.mutedPrimary}, ${t.colors.mutedPrimary}), linear-gradient(${t.colors.primary}, ${t.colors.primary})`,
+          backgroundRepeat: "no-repeat",
+          backgroundSize: `var(--blockLength) var(--underlineWidth), 100% var(--underlineWidth), 0 var(--underlineWidth)`,
+          backgroundPosition: `calc(var(--blockLength) * -1) 100%, 100% 100%, 0 100%`,
+          transition:
+            "background-size cubic-bezier(0.39, 0.575, 0.565, 1) 2s, background-position cubic-bezier(0.39, 0.575, 0.565, 1) 2s, color cubic-bezier(0.39, 0.575, 0.565, 1) 0.5s",
+          border: "none",
+        },
+        active: {
+          backgroundImage: (t) =>
+            `linear-gradient(90deg, ${t.colors.background}, ${t.colors.background}), linear-gradient(red,red), linear-gradient(${t.colors.primary}, ${t.colors.primary})`,
+          backgroundRepeat: "no-repeat",
+          backgroundSize: `var(--blockLength) var(--underlineWidth), 100% var(--underlineWidth), 100% var(--underlineWidth)`,
+          backgroundPosition: `calc(var(--blockLength) * -1) 100%, 0 100%, 0 100%`,
+          transition:
+            "background-size cubic-bezier(0.39, 0.575, 0.565, 1) 2s, background-position cubic-bezier(0.39, 0.575, 0.565, 1) 2s, color cubic-bezier(0.39, 0.575, 0.565, 1) 0.5s",
+          border: "none",
+          ":hover": {
+            backgroundSize: `var(--blockLength) var(--underlineWidth), 0 var(--underlineWidth), 100% var(--underlineWidth)`,
+            backgroundPosition: `calc(100% + var(--blockLength)) 100%, 100% 100%, 0 100%`,
+          },
+        },
+      },
     },
     MetaListItem: {
       title: {
@@ -106,7 +151,30 @@ const theme = merge(themeConfig, {
     inlineCode: {
       fontSize: "0.85em",
     },
+    a: {
+      "--underlineWidth": (t) => t.borderWidths[2],
+      "--blockLength": (t) => t.sizes[2],
+      color: `mutedText`,
+      textDecoration: `none`,
+      backgroundImage: (t) =>
+        `linear-gradient(90deg, ${t.colors.background}, ${t.colors.background}), linear-gradient(${t.colors.mutedPrimary}, ${t.colors.mutedPrimary}), linear-gradient(${t.colors.primary}, ${t.colors.primary})`,
+      backgroundRepeat: "no-repeat",
+      backgroundSize: `var(--blockLength) var(--underlineWidth), 100% var(--underlineWidth), 0 var(--underlineWidth)`,
+      backgroundPosition: `calc(var(--blockLength) * -1) 100%, 100% 100%, 0 100%`,
+      transition:
+        "background-size cubic-bezier(0.39, 0.575, 0.565, 1) 2s, background-position cubic-bezier(0.39, 0.575, 0.565, 1) 2s, color cubic-bezier(0.39, 0.575, 0.565, 1) 0.5s",
+      border: "none",
+      ":hover": {
+        color: "mutedPrimary",
+        textDecoration: `none`,
+        border: "none",
+        backgroundSize: `var(--blockLength) var(--underlineWidth), 0 var(--underlineWidth), 100% var(--underlineWidth)`,
+        backgroundPosition:
+          "calc(100% + var(--blockLength)) 100%, 100% 100%, 0 100%",
+      },
+    },
   },
 });
+console.log(theme);
 
 export default theme;
