@@ -55,13 +55,7 @@ const Header = ({ passedSx }) => {
           <Link
             to="/"
             sx={{
-              variant: "styles.a",
-              border: "none",
-              "&.is-active": {
-                borderBottomWidth: `2px`,
-                borderBottomStyle: `solid`,
-                borderBottomColor: `mutedPrimary`,
-              },
+              variant: "styles.Header.link",
             }}
             activeClassName="is-active"
           >
@@ -72,13 +66,7 @@ const Header = ({ passedSx }) => {
           <Link
             to="/uses"
             sx={{
-              variant: "styles.a",
-              border: "none",
-              "&.is-active": {
-                borderBottomWidth: `2px`,
-                borderBottomStyle: `solid`,
-                borderBottomColor: `mutedPrimary`,
-              },
+              variant: "styles.Header.link",
             }}
             activeClassName="is-active"
           >
@@ -89,13 +77,7 @@ const Header = ({ passedSx }) => {
           <Link
             to="/blog"
             sx={{
-              variant: "styles.a",
-              border: "none",
-              "&.is-active": {
-                borderBottomWidth: `2px`,
-                borderBottomStyle: `solid`,
-                borderBottomColor: `mutedPrimary`,
-              },
+              variant: "styles.Header.link",
             }}
             activeClassName="is-active"
           >

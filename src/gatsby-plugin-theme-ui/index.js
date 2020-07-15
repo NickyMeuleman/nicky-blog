@@ -38,10 +38,38 @@ const theme = merge(themeConfig, {
   },
   styles: {
     Header: {
-      backgroundColor: `mutedBackground`,
-      color: `text`,
-      borderBottom: `3px solid`,
-      borderColor: `mutedPrimary`,
+      link: {
+        "--underlineWidth": (t) => t.borderWidths[2],
+        color: `mutedText`,
+        textDecoration: `none`,
+        backgroundImage: (t) =>
+          `linear-gradient(${t.colors.mutedPrimary}, ${t.colors.mutedPrimary})`,
+        backgroundRepeat: "no-repeat",
+        backgroundSize: `0 var(--underlineWidth)`,
+        backgroundPosition: `0 100%`,
+        transition:
+          "background-size cubic-bezier(.39,.575,.565,1) 0.3s, color cubic-bezier(.39,.575,.565,1) 0.3s",
+        border: "none",
+        ":hover": {
+          color: "mutedPrimary",
+          textDecoration: `none`,
+          border: "none",
+          backgroundSize: `100% var(--underlineWidth)`,
+        },
+        "&.is-active": {
+          color: `mutedText`,
+          backgroundImage: (t) =>
+            `linear-gradient(${t.colors.mutedPrimary}, ${t.colors.mutedPrimary})`,
+          backgroundRepeat: "no-repeat",
+          backgroundSize: `100% var(--underlineWidth)`,
+          backgroundPosition: `0 100%`,
+          transition: "color cubic-bezier(.39,.575,.565,1) 0.3s",
+          border: "none",
+          ":hover": {
+            color: "mutedPrimary",
+          },
+        },
+      },
     },
     PostExtra: {
       details: {
@@ -52,24 +80,34 @@ const theme = merge(themeConfig, {
       },
       link: {
         "--underlineWidth": "1px",
+        "--blockLength": (t) => t.sizes[4],
       },
     },
     TableOfContentsList: {
-      "--underlineWidth": (t) => t.borderWidths[2],
-      "--blockLength": (t) => t.sizes[2],
       link: {
+        "--underlineWidth": (t) => t.borderWidths[2],
+        "--blockLength": (t) => t.sizes[4],
         color: `mutedText`,
         textDecoration: `none`,
         backgroundImage: (t) =>
-          `linear-gradient(90deg, ${t.colors.background}, ${t.colors.background}), linear-gradient(${t.colors.danger}, ${t.colors.danger}), linear-gradient(${t.colors.primary}, ${t.colors.primary})`,
+          `linear-gradient(90deg, ${t.colors.background}, ${t.colors.background}), linear-gradient(${t.colors.mutedPrimary}, ${t.colors.mutedPrimary}), linear-gradient(${t.colors.primary}, ${t.colors.primary})`,
         backgroundRepeat: "no-repeat",
         backgroundSize: `var(--blockLength) var(--underlineWidth), 0 var(--underlineWidth), 0 var(--underlineWidth)`,
-        backgroundPosition: `calc(var(--blockLength) * -1) 100%, 0 100%, 0 100%`,
+        backgroundPosition: `calc(var(--blockLength) * -1) 100%, 100% 100%, 0 100%`,
         transition:
-          "background-size cubic-bezier(0.39, 0.575, 0.565, 1) 2s, background-position cubic-bezier(0.39, 0.575, 0.565, 1) 2s, color cubic-bezier(0.39, 0.575, 0.565, 1) 0.5s",
-        border: "none",
+          "background-size cubic-bezier(.39,.575,.565,1) 0.3s, background-position cubic-bezier(.39,.575,.565,1) 0.3s, color cubic-bezier(.39,.575,.565,1) 0.3s",
         ":hover": {
-          color: `mutedText`,
+          color: "mutedPrimary",
+          backgroundImage: (t) =>
+            `linear-gradient(90deg, ${t.colors.background}, ${t.colors.background}), linear-gradient(${t.colors.mutedPrimary}, ${t.colors.mutedPrimary}), linear-gradient(${t.colors.primary}, ${t.colors.primary})`,
+          backgroundSize: `var(--blockLength) var(--underlineWidth), 0 var(--underlineWidth), 100% var(--underlineWidth)`,
+          backgroundPosition:
+            "calc(100% + var(--blockLength)) 100%, 100% 100%, 0 100%",
+        },
+        active: {
+          "--underlineWidth": (t) => t.borderWidths[2],
+          "--blockLength": (t) => t.sizes[6],
+          color: `mutedPrimary`,
           textDecoration: `none`,
           backgroundImage: (t) =>
             `linear-gradient(90deg, ${t.colors.background}, ${t.colors.background}), linear-gradient(${t.colors.mutedPrimary}, ${t.colors.mutedPrimary}), linear-gradient(${t.colors.primary}, ${t.colors.primary})`,
@@ -77,21 +115,13 @@ const theme = merge(themeConfig, {
           backgroundSize: `var(--blockLength) var(--underlineWidth), 100% var(--underlineWidth), 0 var(--underlineWidth)`,
           backgroundPosition: `calc(var(--blockLength) * -1) 100%, 100% 100%, 0 100%`,
           transition:
-            "background-size cubic-bezier(0.39, 0.575, 0.565, 1) 2s, background-position cubic-bezier(0.39, 0.575, 0.565, 1) 2s, color cubic-bezier(0.39, 0.575, 0.565, 1) 0.5s",
-          border: "none",
-        },
-        active: {
-          backgroundImage: (t) =>
-            `linear-gradient(90deg, ${t.colors.background}, ${t.colors.background}), linear-gradient(red,red), linear-gradient(${t.colors.primary}, ${t.colors.primary})`,
-          backgroundRepeat: "no-repeat",
-          backgroundSize: `var(--blockLength) var(--underlineWidth), 100% var(--underlineWidth), 100% var(--underlineWidth)`,
-          backgroundPosition: `calc(var(--blockLength) * -1) 100%, 0 100%, 0 100%`,
-          transition:
-            "background-size cubic-bezier(0.39, 0.575, 0.565, 1) 2s, background-position cubic-bezier(0.39, 0.575, 0.565, 1) 2s, color cubic-bezier(0.39, 0.575, 0.565, 1) 0.5s",
+            "background-size cubic-bezier(.39,.575,.565,1) 0.3s, background-position cubic-bezier(.39,.575,.565,1) 0.3s, color cubic-bezier(.39,.575,.565,1) 0.3s",
           border: "none",
           ":hover": {
+            color: "mutedPrimary",
             backgroundSize: `var(--blockLength) var(--underlineWidth), 0 var(--underlineWidth), 100% var(--underlineWidth)`,
-            backgroundPosition: `calc(100% + var(--blockLength)) 100%, 100% 100%, 0 100%`,
+            backgroundPosition:
+              "calc(100% + var(--blockLength)) 100%, 100% 100%, 0 100%",
           },
         },
       },
@@ -118,17 +148,6 @@ const theme = merge(themeConfig, {
         color: nightOwl.color,
       },
     },
-    HeaderLink: {
-      textDecoration: "none",
-      color: "text",
-      ":hover": {
-        textDecoration: `none`,
-        color: `mutedPrimary`,
-        borderBottomWidth: `2px`,
-        borderBottomStyle: `solid`,
-        borderBottomColor: `primary`,
-      },
-    },
     h1: {
       mt: 4,
       mb: 2,
@@ -153,7 +172,7 @@ const theme = merge(themeConfig, {
     },
     a: {
       "--underlineWidth": (t) => t.borderWidths[2],
-      "--blockLength": (t) => t.sizes[2],
+      "--blockLength": (t) => t.sizes[3],
       color: `mutedText`,
       textDecoration: `none`,
       backgroundImage: (t) =>
@@ -162,11 +181,10 @@ const theme = merge(themeConfig, {
       backgroundSize: `var(--blockLength) var(--underlineWidth), 100% var(--underlineWidth), 0 var(--underlineWidth)`,
       backgroundPosition: `calc(var(--blockLength) * -1) 100%, 100% 100%, 0 100%`,
       transition:
-        "background-size cubic-bezier(0.39, 0.575, 0.565, 1) 2s, background-position cubic-bezier(0.39, 0.575, 0.565, 1) 2s, color cubic-bezier(0.39, 0.575, 0.565, 1) 0.5s",
+        "background-size cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s, background-position cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s, color cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s",
       border: "none",
       ":hover": {
         color: "mutedPrimary",
-        textDecoration: `none`,
         border: "none",
         backgroundSize: `var(--blockLength) var(--underlineWidth), 0 var(--underlineWidth), 100% var(--underlineWidth)`,
         backgroundPosition:
@@ -175,6 +193,5 @@ const theme = merge(themeConfig, {
     },
   },
 });
-console.log(theme);
 
 export default theme;
