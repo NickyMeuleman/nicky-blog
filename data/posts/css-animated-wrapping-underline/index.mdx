@@ -3,15 +3,15 @@ title: A CSS-only, animated, wrapping underline.
 date: "2020-07-18"
 authors: ["nicky"]
 cover: "./cover.jpg"
-published: false
+published: true
 tags: ["Howto", "CSS"]
 ---
 
 Underlines are hard.
-Complications quickly arise if you want to do anything fancier than good ol' CSS [`text-decoration: underline`](https://developer.mozilla.org/en-US/docs/Web/CSS/text-decoration).
+Complications quickly arise if you want to do anything fancier than the good ol' CSS [`text-decoration: underline`](https://developer.mozilla.org/en-US/docs/Web/CSS/text-decoration).
 There are [a lot of different techniques](https://css-tricks.com/styling-underlines-web/). Unfortunately, they nearly always come with significant drawbacks.
 
-I ran into these limitations when I wanted to "borrow" the styling from the links in a [Cassie Evans blogpost](https://www.cassie.codes/posts/creating-my-logo-animation/).
+I ran into some of these drawbacks when I wanted to "borrow" the styling from the links as seen in a [Cassie Evans blogpost](https://www.cassie.codes/posts/creating-my-logo-animation/).
 
 The links there have this awesome effect when you hover over them: The underline retreats and gets replaced by a new one, leaving a bit of space between the two while the transition happens.
 
@@ -22,12 +22,14 @@ The issue I ran into: Links on my blog often wrap to a different line and that m
 A <span style={{ color: "rgb(176, 251, 188)" }}>colored</span> underline beneath links that has a hover effect where the line retreats and is replaced by a <span style={{ color: "#feb2b2"}}>differently colored</span> line.
 The lines should not touch during this animation, leaving some space between them.
 
+A link that wraps onto a new line should have an undeline beneath both lines of text.
+
 ## Use the background
 
 There are many different ways to underline a piece of text.
 The method I ended up using that met all of the requirements was: Using the [`background-image`](https://developer.mozilla.org/en-US/docs/Web/CSS/background-image) CSS property.
 
-A `background-image` can be a solid color, by defining it as a linear-gradient that transations from one color to the same color.
+A `background-image` can be a solid color by defining it as a [linear-gradient](https://developer.mozilla.org/en-US/docs/Web/CSS/linear-gradient) that transations from one color to the same color.
 
 <Aside variant="info">
 
@@ -35,26 +37,26 @@ Why am I using `background-image` and not `background-color` if I intend to use 
 
 Because many properties to manipulate the background only work if `background-image` is used.
 
-_insert CSS is hard meme here_
+\- _insert CSS is hard meme here_ -
 
 </Aside>
 
 The size of the background is limited in height and takes up the full width of the container by setting the [`background-size`](https://developer.mozilla.org/en-US/docs/Web/CSS/background-size) to `2px` and `100%` respectively.
 
-This still ends up covering the entire background, because now it repeats over and over until it colored the entire background. So I stopped it from being naughty by setting [`background-repeat`](https://developer.mozilla.org/de/docs/Web/CSS/background-repeat) to `no-repeat`.
+This still ends up covering the entire background, because now it repeats over and over until it covers the entire background. So I stopped it from being naughty by setting [`background-repeat`](https://developer.mozilla.org/de/docs/Web/CSS/background-repeat) to `no-repeat`.
 
-The line is at the top of the anchor element! Positioning it with [`background-position`](https://developer.mozilla.org/en-US/docs/Web/CSS/background-position) set to `0 100%` places it at the left edge and 100% from the top edge.  
-In other words, at the bottom. It's at the bottom now.
+The line is at the top of the anchor element! Positioning it with [`background-position`](https://developer.mozilla.org/en-US/docs/Web/CSS/background-position) set to `0 100%` places it at the left edge and 100% from the top edge of the anchor element.  
+In other words, at the bottom... It's at the bottom now.
 
 <CodePen codePenId="qBbQdpQ" tabs={["css", "result"]} />
 
 ## Two backgrounds
 
-To use and manipulate multiple background images, set multiple values to the `background-*` properties, seperated by a comma.
+To use and manipulate multiple background images, set multiple values for the `background-*` properties, seperated by a comma.
 
 The first entry in a comma seperated list is on top, with each following entry a layer behind it.
 
-The background of the following anchor tag will be entirely black (`#000000`). The white (`#FFFFFF`) background is there, but it's not visible because it's entirely covered by the black one.
+The background of the following anchor tag will be entirely black (`#000000`). The white (`#FFFFFF`) background is there, but it's not visible because it's covered by the black one.
 
 ```css
 a {
@@ -64,6 +66,18 @@ a {
 
 In the example below, two backgrounds are set. Both at the bottom, making one overlap the other.
 
+```css hl=4-7
+a {
+  color: #dfe5f3;
+  text-decoration: none;
+  background-image: linear-gradient(rgb(176, 251, 188), rgb(176, 251, 188)),
+    linear-gradient(#feb2b2, #feb2b2);
+  background-size: 100% 2px, 100% 2px;
+  background-position: 100% 100%, 0 100%;
+  background-repeat: no-repeat, no-repeat;
+}
+```
+
 <CodePen codePenId="vYLQNRg" tabs={["css", "result"]} />
 
 ### Transitioning the `background-size`
@@ -71,13 +85,11 @@ In the example below, two backgrounds are set. Both at the bottom, making one ov
 Notice how the `background-position` is different, while it makes no visible difference?
 One is anchored to the left side, the other is anchored to the right side.
 
-They both take up the full width of the anchor element, so there is no visible difference.
-
 Next, I'll be transitioning between one background taking up the full width normally and no width on hover while the second background does the opposite.
 
-That anchoring will affect which point each background moves towards.
+That anchoring will affect which point each background moves from/towards.
 
-```css hl=9,12-15
+```css hl=6,7,9,12-15
 a {
   color: #dfe5f3;
   text-decoration: none;
@@ -98,31 +110,33 @@ a:hover {
 
 ## Three backgrounds
 
-This almost satisfies the [goals](#goal).
+This almost satisfies the [goals](#goal). The only thing missing is the space between the two lines.
 
-The space between the lines can be faked by moving a block with the same color as the background.
+That space can be faked by moving a block with the same color as the background.
 What is that block? You guessed it, another background.
 
 What is better than 2 background? Three backgrounds!
 
-Three backgrounds .. [_ah ah ah_](https://youtu.be/2AoxCkySv34)
+Three backgrounds .. [_ah ah ah_](https://youtu.be/2AoxCkySv34) 🦇
 
-I'll place this background on top of the other two by listing it first in the comma seperated `background-image` declaration.
+I'll place this background on top of the other two by listing it first in the comma seperated value for [`background-image`](https://developer.mozilla.org/en-US/docs/Web/CSS/background-image).
 
-<Aside variant="info">
+<Aside variant="danger">
 
-Don't forget!
+Don't forget!  
 The first value for other `background-*` properties now also points to this newly added `background-image`.
 
 </Aside>
 
-The width and height are set by `background-size`. While the height is set to the same size as the other backgrounds, this time, the width is also set to be a fairly small `20px`.
+The width and height are set by `background-size`. While the height is set to the same size as the other backgrounds (`2px` in this example). This time, the width is set to be a fairly small `20px`.
 
-To make the background-colored block invisible before hovering over the anchor. The background is given a negative `background-position` that completely moves it off the screen.
+### Transitioning the `background-position`
 
-After hovering on the anchor, the block should move to the opposite side of the underline, also completely off the screen.
+To make the background-colored block invisible before hovering over the anchor, the background is given a negative `background-position` that places it to the left of the anchor, and completely off the screen.
 
-The [`calc()`](https://developer.mozilla.org/en-US/docs/Web/CSS/calc) function is used for this.
+After hovering on the anchor, the block should move to the opposite side of the underline until it is completely offscreen.
+
+The [`calc()`](https://developer.mozilla.org/en-US/docs/Web/CSS/calc) function is used to calculate both of these positions.
 
 ```css hl=4,8,9,11,15,16
 a {
@@ -145,3 +159,27 @@ a:hover {
 ```
 
 <CodePen codePenId="JjGeGar" tabs={["css", "result"]} />
+
+## Tada 🎉
+
+<Aside variant="success">
+
+The anchor tag works and fits all the requirements set forth as [goals](#goal)!
+
+</Aside>
+
+A big thank you to [Jhey "Jh3y" Tompkins](https://twitter.com/jh3yy).
+
+He is magician with all things CSS/animation and I'm really glad I reached out to him.
+
+I asked him a question when I was trying to figure this out. He not only answered it and taught me about the `background-position` technique from above.
+He took it as a fun challenge and made an awesome proof of concept!
+
+<Tweet tweetLink="jh3yy/status/1283155273113382914" theme="dark" />
+
+<Aside variant="info">
+
+I got to know Jhey in the [party corgi discord](https://discord.com/partycorgi).
+It's an awesome place that is filled with talented people, come hang out!
+
+</Aside>

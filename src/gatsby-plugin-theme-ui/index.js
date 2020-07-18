@@ -138,6 +138,7 @@ const theme = merge(themeConfig, {
     },
     CodeBlock: {
       ...nightOwl,
+      mb: 3,
       highlightLine: {
         backgroundColor: `#01121f`,
         borderLeftColor: `#9ccc65`,
