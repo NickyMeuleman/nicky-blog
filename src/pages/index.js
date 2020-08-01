@@ -10,7 +10,7 @@ import { Footer } from "../components/Footer";
 
 const IndexPage = ({ data }) => {
   const posts = data.allBlogPost.nodes;
-  const blogPath = data.nickyThemeBlogConfig.basePath;
+  const blogPath = "blog";
   return (
     <React.Fragment>
       <GlobalStyles />
@@ -142,9 +142,6 @@ const IndexPage = ({ data }) => {
 
 export const indexQuery = graphql`
   query IndexQuery {
-    nickyThemeBlogConfig {
-      basePath
-    }
     allBlogPost(
       sort: { order: DESC, fields: date }
       limit: 3

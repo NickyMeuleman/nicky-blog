@@ -16,6 +16,7 @@ const SEO = ({
   twitterHandle,
   date,
   author,
+  basePath = "",
   children,
 }) => {
   const result = useStaticQuery(graphql`
@@ -30,14 +31,10 @@ const SEO = ({
           }
         }
       }
-      nickyThemeBlogConfig {
-        basePath
-      }
     }
   `);
 
   const { siteMetadata } = result.site;
-  const { basePath } = result.nickyThemeBlogConfig;
   const metaDescription = description || siteMetadata.description;
   let metaImage = null;
   if (date) {

@@ -11,9 +11,17 @@ module.exports = {
     {
       resolve: "@nickymeuleman/gatsby-theme-blog",
       options: {
-        basePath: "blog",
-        contentPath: "data/posts",
         assetPath: "data/assets",
+        instances: [
+          {
+            basePath: "blog",
+            contentPath: "data/posts",
+          },
+          {
+            basePath: "garden",
+            contentPath: "data/garden",
+          },
+        ],
       },
     },
     "gatsby-plugin-theme-ui",
