@@ -48,6 +48,73 @@ module.exports = {
         respectDNT: true,
       },
     },
+    {
+      resolve: `gatsby-plugin-feed`,
+      options: {
+        // the site_url field populates the <link> in the xml <channel>
+        // the description field populates the <description> in the xml <channel>
+        query: `
+        {
+          site {
+            siteMetadata {
+              description
+              siteUrl
+              site_url: siteUrl
+            }
+          }
+        }
+      `,
+        feeds: [
+          {
+            serialize: ({ query: { site, allBlogPost } }) => {
+              return allBlogPost.nodes.map((node) => {
+                const url = `${site.siteMetadata.siteUrl}/blog/${node.slug}`;
+                return {
+                  title: node.title,
+                  date: node.date,
+                  url,
+                  guid: url,
+                  custom_elements: [
+                    {
+                      "content:encoded": `<div style="width: 100%; margin: 0 auto; max-width: 800px; padding: 40px 40px;">
+                          <p>
+                            A new article <em>"${node.title}"</em> was posted. You can <a href="${url}">read it online</a>.
+                          </p>
+                        </div>`,
+                    },
+                  ],
+                };
+              });
+            },
+            query: `
+            {
+              allBlogPost(
+                limit: 25
+                sort: { fields: [date], order: DESC }
+                filter: {
+                  published: { ne: false }
+                  instance: { basePath: { eq: "blog" } }
+                }
+              ) {
+                nodes {
+                  title
+                  slug
+                  date
+                }
+              }
+            }
+             `,
+            output: "/blog/rss.xml",
+            // optional configuration to insert feed reference in pages:
+            // if `string` is used, it will be used to create RegExp and then test if pathname of
+            // current page satisfied this regular expression;
+            // if not provided or `undefined`, all pages will have feed reference inserted
+            match: "^/blog/",
+            title: "Nicky Meuleman Blog RSS Feed",
+          },
+        ],
+      },
+    },
     "gatsby-plugin-sitemap",
     "gatsby-plugin-netlify", // keep as last in array
   ],
