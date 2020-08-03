@@ -9,8 +9,8 @@ import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 
 const IndexPage = ({ data }) => {
-  const posts = data.allBlogPost.nodes;
-  const blogPath = "blog";
+  const blogposts = data.blogposts.nodes;
+  const gardenposts = data.gardenposts.nodes;
   return (
     <React.Fragment>
       <GlobalStyles />
@@ -93,7 +93,24 @@ const IndexPage = ({ data }) => {
               mb: 3,
             }}
           >
-            <div sx={{ color: "text" }}>Latest blogposts</div>
+            <div
+              sx={{
+                color: "text",
+                fontSize: 2,
+                position: "relative",
+                mb: 2,
+                "::before": {
+                  content: "''",
+                  bottom: 0,
+                  position: "absolute",
+                  height: "2px",
+                  width: "3ch",
+                  backgroundColor: "mutedPrimary",
+                },
+              }}
+            >
+              Latest blogposts
+            </div>
             <div sx={{ textTransform: "uppercase", color: "mutedTextBg" }}>
               <Link
                 to="/blog"
@@ -118,11 +135,99 @@ const IndexPage = ({ data }) => {
               fontSize: 1,
             }}
           >
-            {posts.map((post) => {
+            {blogposts.map((post) => {
               return (
                 <PostCard
                   key={post.id}
-                  url={`/${blogPath}/${post.slug}`}
+                  url={`/blog/${post.slug}`}
+                  title={post.title}
+                  date={post.date}
+                  authors={post.authors}
+                  coverSizes={
+                    post.cover ? post.cover.childImageSharp.fluid : null
+                  }
+                />
+              );
+            })}
+          </div>
+          <div
+            sx={{
+              gridColumn: "2/3",
+              display: "flex",
+              justifyContent: "space-between",
+              mb: 3,
+              mt: 5,
+            }}
+          >
+            <div
+              sx={{
+                color: "text",
+                fontSize: 2,
+                position: "relative",
+                mb: 2,
+                "::before": {
+                  content: "''",
+                  bottom: 0,
+                  position: "absolute",
+                  height: "2px",
+                  width: "3ch",
+                  backgroundColor: "mutedPrimary",
+                },
+              }}
+            >
+              Latest digital garden{" "}
+              <a
+                href="https://joelhooks.com/digital-garden"
+                sx={{ color: "text", verticalAlign: "middle" }}
+              >
+                <svg
+                  role="img"
+                  width="20"
+                  height="20"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  sx={{ display: "inline" }}
+                >
+                  <title>questionmark</title>
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </a>{" "}
+              posts{" "}
+            </div>
+            <div sx={{ textTransform: "uppercase", color: "mutedTextBg" }}>
+              <Link
+                to="/garden"
+                sx={{
+                  textDecoration: "none",
+                  color: "inherit",
+                  letterSpacing: "wide",
+                  ":hover": {
+                    color: "mutedPrimary",
+                  },
+                }}
+              >
+                View all
+              </Link>
+            </div>
+          </div>
+          <div
+            sx={{
+              gridColumn: "2/3",
+              display: "grid",
+              gap: 4,
+              fontSize: 1,
+            }}
+          >
+            {gardenposts.map((post) => {
+              return (
+                <PostCard
+                  key={post.id}
+                  url={`/garden/${post.slug}`}
                   title={post.title}
                   date={post.date}
                   authors={post.authors}
@@ -142,10 +247,40 @@ const IndexPage = ({ data }) => {
 
 export const indexQuery = graphql`
   query IndexQuery {
-    allBlogPost(
+    blogposts: allBlogPost(
       sort: { order: DESC, fields: date }
       limit: 3
-      filter: { published: { eq: true } }
+      filter: {
+        published: { eq: true }
+        instance: { basePath: { eq: "blog" } }
+      }
+    ) {
+      nodes {
+        id
+        authors {
+          shortName
+          name
+        }
+        date
+        id
+        slug
+        title
+        cover {
+          childImageSharp {
+            fluid {
+              ...GatsbyImageSharpFluid_withWebp
+            }
+          }
+        }
+      }
+    }
+    gardenposts: allBlogPost(
+      sort: { order: DESC, fields: date }
+      limit: 3
+      filter: {
+        published: { eq: true }
+        instance: { basePath: { eq: "garden" } }
+      }
     ) {
       nodes {
         id
