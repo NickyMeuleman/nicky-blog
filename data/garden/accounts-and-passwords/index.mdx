@@ -1,0 +1,74 @@
+---
+title: On accounts and passwords
+date: "2020-08"
+authors: ["nicky"]
+tags: ["howto"]
+published: false
+---
+
+Accounts. We all have them, the amount of accounts a single person controls varies widly.
+
+A quick internet search revealed that the average user had [90 accounts. In 2015!](https://trello.com/c/2qHMdPWM/38-http-blogdashlanecom-infographic-online-overload-its-worse-than-you-thought)
+How accurate that number is, no idea. The point is, it's _a lot_.
+
+By far the most popular method to secure an account is with a password.
+
+## Passwords
+
+Because password are so popular to secure accounts, nefarious individuals have made it their mission to find out your secret password.
+And so begins an eternal armsrace.
+
+Many methods of discovering/cracking passwords exists.
+
+If a password is too short, that means it's vulnerable to a [brute force attack](https://en.wikipedia.org/wiki/Brute-force_attack).  
+If it's a common word or sentence, that means it's vulnerable to a [dictionary attack](https://en.wikipedia.org/wiki/Dictionary_attack).
+
+The brute force method is not very popular.
+In an early scene of [Portal 2](https://en.wikipedia.org/wiki/Portal_2), a small robot named Wheatley uses this method with ... limited ... success.
+
+<YouTube youTubeId="Dpb7k1umheQ" />
+
+### Picking a better password
+
+7-8 characters is not long enough
+
+Passwords in general are not a rigidly secure way to authenticate.
+A long and complicated one is hard to remember. Making it easier to remember will often reduce the security of the password.
+As a result, a lot of passwords are hard for a human to remember, and easy for a computer to crack.
+
+The [XKCD comic](https://xkcd.com/936/) mentions this problem and proposes a method that keeps the security of longer, complicated passwords while making them easier to remember.
+
+![XKCD on choosing passwords. https://xkcd.com/license.html](https://imgs.xkcd.com/comics/password_strength.png)
+
+The proposed password is `correcthorsebatterystaple`.
+
+- This is long enough not to be vulnerable to a brute force attack.
+- It's not going to be extremely vulnerable to a dictionary attack, because the words are random and seemingly have no relation.
+
+<Aside variant="danger">
+
+Don't use `correcthorsebatterystaple` as your password.  
+The comic got so popular, it's certainly very vulnerable to any password cracking attempt now.
+
+</Aside>
+
+### A manager
+
+We previously discussed making a single password more secure.
+
+That's fine, but you shouldn't share passwords between accounts.
+That means the amount of passwords you have to remember increases with the amount of accounts you have.
+Unsustainable. Even if you manage to remember them all, they're probably less complicated and secure than if you remembered a single one.
+
+The solution? Not remembering many passwords, but one really good one.
+
+In other words: **use a password manager.**
+
+A password manager acts like a vault that houses info to a bunch of login names and associated passwords.
+One of the popular methods to get access to a vault is with a "master password". Simplified, it's the one password that grants access.
+
+Nearly all of them come with a way to randomly generate a password that will be way more complex than one you could reasonably remember.
+
+<YouTube youTubeId="w68BBPDAWr8" />
+
+TODO: MFA
