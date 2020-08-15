@@ -6,7 +6,7 @@ tags: ["howto"]
 published: false
 ---
 
-Accounts. We all have them, the amount of accounts a single person controls varies widly.
+Accounts. We all have them, the amount of accounts a single person controls varies wildly.
 
 A quick internet search revealed that the average user had [90 accounts. In 2015!](https://trello.com/c/2qHMdPWM/38-http-blogdashlanecom-infographic-online-overload-its-worse-than-you-thought)
 How accurate that number is, no idea. The point is, it's _a lot_.
@@ -18,31 +18,38 @@ By far the most popular method to secure an account is with a password.
 Because password are so popular to secure accounts, nefarious individuals have made it their mission to find out your secret password.
 And so begins an eternal armsrace.
 
-Many methods of discovering/cracking passwords exists.
+Many methods of discovering/cracking passwords exist.
 
 If a password is too short, that means it's vulnerable to a [brute force attack](https://en.wikipedia.org/wiki/Brute-force_attack).  
 If it's a common word or sentence, that means it's vulnerable to a [dictionary attack](https://en.wikipedia.org/wiki/Dictionary_attack).
+
+To oversimplify, making a password more secure means making attacks against them take an unreasonably long time. <sup>Note: That statement has about a million caveats.</sup>
+
+<Aside variant="info">
 
 The brute force method is not very popular.
 In an early scene of [Portal 2](https://en.wikipedia.org/wiki/Portal_2), a small robot named Wheatley uses this method with ... limited ... success.
 
 <YouTube youTubeId="Dpb7k1umheQ" />
 
+</Aside>
+
 ### Picking a better password
 
 7-8 characters is not long enough
 
 Passwords in general are not a rigidly secure way to authenticate.
+
 A long and complicated one is hard to remember. Making it easier to remember will often reduce the security of the password.
 As a result, a lot of passwords are hard for a human to remember, and easy for a computer to crack.
 
-The [XKCD comic](https://xkcd.com/936/) mentions this problem and proposes a method that keeps the security of longer, complicated passwords while making them easier to remember.
+An [XKCD comic](https://xkcd.com/936/) mentions this problem and proposes a method that keeps the security of longer, complicated passwords while making them easier to remember.
 
 ![XKCD on choosing passwords. https://xkcd.com/license.html](https://imgs.xkcd.com/comics/password_strength.png)
 
-The proposed password is `correcthorsebatterystaple`.
+The example proposed password is `correcthorsebatterystaple`.
 
-- This is long enough not to be vulnerable to a brute force attack.
+- This is long enough not to be vulnerable to a brute force attack. ([for now](https://youtu.be/cphNpqKpKc4))
 - It's not going to be extremely vulnerable to a dictionary attack, because the words are random and seemingly have no relation.
 
 <Aside variant="danger">
@@ -56,7 +63,7 @@ The comic got so popular, it's certainly very vulnerable to any password crackin
 
 We previously discussed making a single password more secure.
 
-That's fine, but you shouldn't share passwords between accounts.
+That's fine, but you should **never reuse passwords**.
 That means the amount of passwords you have to remember increases with the amount of accounts you have.
 Unsustainable. Even if you manage to remember them all, they're probably less complicated and secure than if you remembered a single one.
 
@@ -64,11 +71,67 @@ The solution? Not remembering many passwords, but one really good one.
 
 In other words: **use a password manager.**
 
-A password manager acts like a vault that houses info to a bunch of login names and associated passwords.
-One of the popular methods to get access to a vault is with a "master password". Simplified, it's the one password that grants access.
+A password manager acts like a vault that holds the info to a bunch of login names and the associated passwords.
+Basically, it's a fancy, secure database. If it's programmed correctly that is.
 
-Nearly all of them come with a way to randomly generate a password that will be way more complex than one you could reasonably remember.
+One of the popular methods to gain access to a vault is with a "master password".
+
+That master password should be really good. Oversimplified reason: the encryption that's used to protect your vault is derived from that master password.
+
+Nearly all password managers come with a way to randomly generate a password that will be way more complex than one you could reasonably remember.
+All my passwords are 25 (or 30, 🤷‍♂️) characters long. They're completely random and I have no clue what they are.
+
+When a website requires registration, I don't reuse passwords to sign up.
+I add an entry in my password manager and use that instead.
+
+- If I never use that website again, it doesn't matter.
+
+  It means a your password manager vault is a single entry bigger, which is not a big deal.
+
+- If that website is shady or gets comprimised and your password leaks onto the internet.
+
+  It doesn't also compromise your other accounts because the password is random and will be unique to that website.
+
+Here's a video where [Mike Pound](https://twitter.com/_mikepound) from [Nottingham University](https://en.wikipedia.org/wiki/University_of_Nottingham) explains more about how password managers work.
 
 <YouTube youTubeId="w68BBPDAWr8" />
 
-TODO: MFA
+## Multi Factor Authentication
+
+The gold standard for checking your identity is multi factor authentication.
+
+It require the presentation of 2 or more _different_ factors of identification.
+
+1. Something you know (eg. a password)
+1. Something you are (eg. a fingerprint)
+1. Something you have (eg. a physical key)
+
+2 different factors are way more secure than a single one, or multiple instances of a single one (like having 2 passwords is not multi factor.)
+
+Combining at least 2 of those factors make it much harder for an attacker to succesfully gain access to what you're protecting.
+
+A common example of this is withdrawing money at a bank. Your banking card is the thing you have and the PIN is the thing you know.
+
+Let's assume I had an account at SuperSecret™️, and it was protected by 2 factors.
+A password as the something I know, and a device generating codes as the something I have.
+
+If someone guessed my password and tried to log in to my SuperSecret™️ account.
+They (hopefully) don't have access to the device I use to provide the second factor, and would be left unable to login to my SuperSecret™️ account.
+
+At the same time, I would probably be notified of an unsuccessful login attempt, which would cause me to change that password.
+
+### Not everything
+
+Increased security usually comes at the cost of decreased convenience (like making a passord more complicated, but harder to remember).
+That's also the case with multi factor authentication and causes a lot of people to shy away from it.
+
+The ideal is having the benefits of the increased security it offers, while minimizing the extra hassle.
+
+That's why that little "remember this device" checkbox appears on many sites asking for a second factor (often the "something you have" in the form of a [one-time-password](https://en.wikipedia.org/wiki/One-time_password))
+Or why many sites don't ask you to verify your identity constantly, but when you want to change sensitive information (eg. payment details) the site asks you for that second factor again.
+
+downside: losing device. google authenticator now supports import/export. Authy, cloud
+
+some services don't support it (in 2020 that list is getting smaller)
+
+## Have i been pwned?
