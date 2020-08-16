@@ -96,6 +96,38 @@ Here's a video where [Mike Pound](https://twitter.com/_mikepound) from [Nottingh
 
 <YouTube youTubeId="w68BBPDAWr8" />
 
+## Have i been pwned?
+
+Did my password get leaked?  
+Did a company have a data breach and is my password now comprimised?  
+Or, a way to say it that's at least twice as entertaining: Have I been pwned?
+
+The website [haveibeenpwned.com](https://haveibeenpwned.com/) tries to answer that question.
+
+Whenever there's a big breach or leak of account details, this website keeps track of it.
+
+The person who runs this website, [Troy Hunt](https://twitter.com/troyhunt) has built numerous useful tools that use that data.
+
+You can enter the email address you often use for accounts.
+If that address appears in a security breach, the site will tell you in which ones, some more information about the breach like the approximate date it happened, and which data was compromised.
+
+[Another tool](https://haveibeenpwned.com/Passwords) he built will tell you if a password has been cracked.
+It will do it without ever receiving that password. Whaaaaat 🤯.
+
+<Aside variant="info">
+
+You don't have to type in your password on their website.
+They have a [REST-API](https://haveibeenpwned.com/API/v3) which can get that same information.
+
+</Aside>
+
+It uses a [k-anonymity](https://en.wikipedia.org/wiki/K-anonymity) model to allow a password to be searched by a partial hash.
+The end result is: the site tells you if the password you typed in was found in a list of compromised passwords.
+
+- You first hash your password and send them a part of that hash.
+- They then send back a bunch of potential matches (the hashes that start with the same characters you gave them), and the amount of times each hash was found in a database full of cracked passwords.
+- You look at the list of hashes that came back and see if there is an exact match to the hash of your password.
+
 ## Multi Factor Authentication
 
 The gold standard for checking your identity is multi factor authentication.
@@ -128,10 +160,31 @@ That's also the case with multi factor authentication and causes a lot of people
 The ideal is having the benefits of the increased security it offers, while minimizing the extra hassle.
 
 That's why that little "remember this device" checkbox appears on many sites asking for a second factor (often the "something you have" in the form of a [one-time-password](https://en.wikipedia.org/wiki/One-time_password))
-Or why many sites don't ask you to verify your identity constantly, but when you want to change sensitive information (eg. payment details) the site asks you for that second factor again.
+Or why many sites don't ask you to verify your identity constantly, but when you want to change sensitive information (eg. payment details) the site asks for that second factor again.
 
-downside: losing device. google authenticator now supports import/export. Authy, cloud
+Losing the "something you have" factor can be quite the issue.
+Not being able to provide that can cause you to be locked out of your accounts.
 
 some services don't support it (in 2020 that list is getting smaller)
 
-## Have i been pwned?
+### One time passwords
+
+The most popular method to provide the "something you have" factor is through smartphone apps that generate a one time password.
+
+While the exact method this works is fascinating, the enduser shouldn't care about how the cookie is made, only that it's delicious.
+They _have_ a smartphone that generates codes, those codes (that change) are the thing they need to provide when asked for their second factor.
+
+Ok, what happens is too interesting not to share.
+Here's a brief, oversimplified explanation of what happens for a time based one time password in [Google Authenticator](https://en.wikipedia.org/wiki/Google_Authenticator) (and many other apps).
+
+The phone knows a long secret code that was shared with them when the account was set up in the app.
+This is commonly done by letting you scan a QR-code.
+That secret code is combined with the current time, math happens, and a resulting code (<abbr title="time based one time password">TOTP</abbr>) is displayed.
+The server asking for verification also knows that initial secret code and does the same thing. If the resulting codes match, voila, sesame opens.
+
+When that physical device is the only object that holds the "secret sauce to your OTPs", and happens to be your phone, even upgrading to a new phone will leave you scratching your head.
+Phones also get lost, they get broken, spontaneously stop working, ...
+
+The [Google Authenticator](https://en.wikipedia.org/wiki/Google_Authenticator) app now supports import/export of accounts.
+Making switching to a new phone way more convenient than it used to be (deleting all your accounts on one phone and adding them again on another phone.)
+Another application that generates TOTPs, [Authy](https://authy.com/), also stores that long secret code in the cloud, so you can access it when you need to.
