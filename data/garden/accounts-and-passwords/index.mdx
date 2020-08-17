@@ -2,13 +2,13 @@
 title: On accounts and passwords
 date: "2020-08"
 authors: ["nicky"]
-tags: ["howto"]
-published: false
+tags: ["security"]
+published: true
 ---
 
 Accounts. We all have them, the amount of accounts a single person controls varies wildly.
 
-A quick internet search revealed that the average user had [90 accounts. In 2015!](https://trello.com/c/2qHMdPWM/38-http-blogdashlanecom-infographic-online-overload-its-worse-than-you-thought)
+A quick internet search revealed that the average user had over [90 accounts. In 2015!](https://trello.com/c/2qHMdPWM/38-http-blogdashlanecom-infographic-online-overload-its-worse-than-you-thought)
 How accurate that number is, no idea. The point is, it's _a lot_.
 
 By far the most popular method to secure an account is with a password.
@@ -36,9 +36,9 @@ In an early scene of [Portal 2](https://en.wikipedia.org/wiki/Portal_2), a small
 
 ### Picking a better password
 
-7-8 characters is not long enough
-
 Passwords in general are not a rigidly secure way to authenticate.
+
+As a broad statement, if your password is around 7-8 characters, it is not long enough.
 
 A long and complicated one is hard to remember. Making it easier to remember will often reduce the security of the password.
 As a result, a lot of passwords are hard for a human to remember, and easy for a computer to crack.
@@ -98,13 +98,14 @@ Here's a video where [Mike Pound](https://twitter.com/_mikepound) from [Nottingh
 
 ## Have i been pwned?
 
-Did my password get leaked?  
-Did a company have a data breach and is my password now comprimised?  
-Or, a way to say it that's at least twice as entertaining: Have I been pwned?
+- Did my password get leaked?
+- Did a company have a data breach and is my password now comprimised?
+
+Or, a way to say it that's at least twice as entertaining: _Have I been pwned?_
 
 The website [haveibeenpwned.com](https://haveibeenpwned.com/) tries to answer that question.
 
-Whenever there's a big breach or leak of account details, this website keeps track of it.
+Whenever there's a big breach or leak of account details, this website will try to keep track of it.
 
 The person who runs this website, [Troy Hunt](https://twitter.com/troyhunt) has built numerous useful tools that use that data.
 
@@ -112,20 +113,21 @@ You can enter the email address you often use for accounts.
 If that address appears in a security breach, the site will tell you in which ones, some more information about the breach like the approximate date it happened, and which data was compromised.
 
 [Another tool](https://haveibeenpwned.com/Passwords) he built will tell you if a password has been cracked.
-It will do it without ever receiving that password. Whaaaaat 🤯.
 
 <Aside variant="info">
 
 You don't have to type in your password on their website.
-They have a [REST-API](https://haveibeenpwned.com/API/v3) which can get that same information.
+They have a [REST API](https://haveibeenpwned.com/API/v3) which can provide the same information.
 
 </Aside>
+
+It will do that check without ever receiving the password. Whaaaaat 🤯.
 
 It uses a [k-anonymity](https://en.wikipedia.org/wiki/K-anonymity) model to allow a password to be searched by a partial hash.
 The end result is: the site tells you if the password you typed in was found in a list of compromised passwords.
 
-- You first hash your password and send them a part of that hash.
-- They then send back a bunch of potential matches (the hashes that start with the same characters you gave them), and the amount of times each hash was found in a database full of cracked passwords.
+- You first hash your password and send the API a part of that hash.
+- It then sends back a bunch of potential matches (the hashes that start with the same characters you provided), each with the amount of times that hash was found in a database full of cracked passwords.
 - You look at the list of hashes that came back and see if there is an exact match to the hash of your password.
 
 ## Multi Factor Authentication
@@ -165,7 +167,9 @@ Or why many sites don't ask you to verify your identity constantly, but when you
 Losing the "something you have" factor can be quite the issue.
 Not being able to provide that can cause you to be locked out of your accounts.
 
-some services don't support it (in 2020 that list is getting smaller)
+Another reason not to use it, is because some services flat out don't support it.
+Luckily the list of services that don't is getting smaller and smaller as time goes on.
+In 2020, the vast majority of large services support 2FA.
 
 ### One time passwords
 
@@ -188,3 +192,31 @@ Phones also get lost, they get broken, spontaneously stop working, ...
 The [Google Authenticator](https://en.wikipedia.org/wiki/Google_Authenticator) app now supports import/export of accounts.
 Making switching to a new phone way more convenient than it used to be (deleting all your accounts on one phone and adding them again on another phone.)
 Another application that generates TOTPs, [Authy](https://authy.com/), also stores that long secret code in the cloud, so you can access it when you need to.
+
+## Sign in with ...
+
+A lot of accounts provide the option to sign in through another online service. (eg Google, Facebook, Twitter, GitHub.)
+Soon, Apple is joining the party.
+
+They lighten the hassle of having to sign up for yet another account by using the authorization for an account you already have, theirs.
+
+Many of them use a the [OAuth](https://oauth.net/2/) process under the hood.
+
+The site offering this ask the provider (eg. Google) for some information about you (eg. email and name).
+If the user allows this and logs into the provider, OAuth sends the site a token confirming you've signed in.
+
+<Aside variant="info">
+
+The amount of info the site asks for varies and is often adjustable by the user right before confirming the log in.
+It's a good habit to check if that site is requesting data you're not comfortable sharing before confirming.
+
+</Aside>
+
+TODO: talk about sign in with Apple
+Opinions and what I use: KeePassXC, Google Authenticator.
+Use 2FA for many sites. If you're not a fan, PLEASE use it for your email. It's often a single point of failure with many password resets going through it.
+Limit single sign in points. Avoid Google, because https://killedbygoogle.com/.
+Avoid Facebook because. They have a less than sterling trackrecord when it comes to privacy.
+Apple thing would be cool, I hope it becomes widespread and isn't only available on their appstore and their own products.
+
+https://www.youtube.com/watch?v=pmfjt2PPuVA
