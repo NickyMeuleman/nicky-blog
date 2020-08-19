@@ -1,6 +1,7 @@
 ---
 title: On accounts and passwords
-date: "2020-08"
+date: "2020-08-10"
+updatedAt: "2020-08-19"
 authors: ["nicky"]
 tags: ["security"]
 published: true
@@ -47,7 +48,7 @@ An [XKCD comic](https://xkcd.com/936/) mentions this problem and proposes a meth
 
 ![XKCD on choosing passwords. https://xkcd.com/license.html](https://imgs.xkcd.com/comics/password_strength.png)
 
-The example proposed password is `correcthorsebatterystaple`.
+The example proposed using `correcthorsebatterystaple` as password.
 
 - This is long enough not to be vulnerable to a brute force attack. ([for now](https://youtu.be/cphNpqKpKc4))
 - It's not going to be extremely vulnerable to a dictionary attack, because the words are random and seemingly have no relation.
@@ -76,17 +77,17 @@ Basically, it's a fancy, secure database. If it's programmed correctly that is.
 
 One of the popular methods to gain access to a vault is with a "master password".
 
-That master password should be really good. Oversimplified reason: the encryption that's used to protect your vault is derived from that master password.
+That master password should be really good. _Oversimplified reason: the encryption that's used to protect your vault is derived from that master password._
 
 Nearly all password managers come with a way to randomly generate a password that will be way more complex than one you could reasonably remember.
-All my passwords are 25 (or 30, 🤷‍♂️) characters long. They're completely random and I have no clue what they are.
+All my passwords are 25 (or 30, 🤷‍♂️) characters long. They're random and I have no clue what they are.
 
 When a website requires registration, I don't reuse passwords to sign up.
 I add an entry in my password manager and use that instead.
 
 - If I never use that website again, it doesn't matter.
 
-  It means a your password manager vault is a single entry bigger, which is not a big deal.
+  It means your password manager vault is now a single entry bigger, which is not a big deal.
 
 - If that website is shady or gets comprimised and your password leaks onto the internet.
 
@@ -116,10 +117,14 @@ As a result, [credential stuffing](https://en.wikipedia.org/wiki/Credential_stuf
 
 The person who runs this website, [Troy Hunt](https://twitter.com/troyhunt) has built numerous useful tools that use that data.
 
-You can enter the email address you often use for accounts.
-If that address appears in a security breach, the site will tell you in which ones, some more information about the breach like the approximate date it happened, and which data was compromised.
+You can enter the email address you often use for accounts to check if it's been _pwned_.
+If that address appears in a security breach, the site will tell you in which ones. Each result will include some information about the breach like the approximate date it happened, and which data was compromised.
 
 [Another tool](https://haveibeenpwned.com/Passwords) he built will tell you if a password has been cracked.
+
+The end result is: the site tells you if the password you typed in was found in a list of compromised passwords.
+
+It will do that check without ever receiving the password. Whaaaaat 🤯.
 
 <Aside variant="info">
 
@@ -128,10 +133,7 @@ They have a [REST API](https://haveibeenpwned.com/API/v3) which can provide the 
 
 </Aside>
 
-It will do that check without ever receiving the password. Whaaaaat 🤯.
-
-It uses a [k-anonymity](https://en.wikipedia.org/wiki/K-anonymity) model to allow a password to be searched by a partial hash.
-The end result is: the site tells you if the password you typed in was found in a list of compromised passwords.
+It uses a [k-anonymity](https://en.wikipedia.org/wiki/K-anonymity) model to allow a password to be searched by a partial [hash](https://en.wikipedia.org/wiki/Key_derivation_function).
 
 - You first hash your password and send the <abbr title="Application programming interface">API</abbr> a part of that hash.
 - It then sends back a bunch of potential matches (the hashes that start with the same characters you provided), each with the amount of times that hash was found in a database full of cracked passwords.
@@ -182,7 +184,7 @@ In 2020, the vast majority of large services support <abbr title="two factor aut
 
 The most popular method to provide the "something you have" factor is through smartphone apps that generate a one time password.
 
-While the exact method this works is fascinating, the enduser shouldn't care about how the cookie is made, only that it's delicious.
+While the exact method of how this works is fascinating, the enduser shouldn't care about how the cookie is made, only that it's delicious.
 They _have_ a smartphone that generates codes, those codes (that change) are the thing they need to provide when asked for their second factor.
 
 Ok, what happens is too interesting not to share.
@@ -191,21 +193,24 @@ Here's a brief, oversimplified explanation of what happens for a time based one 
 The phone knows a long secret code that was shared with them when the account was set up in the app.
 This is commonly done by letting you scan a <abbr title="Quick Response code">QR code</abbr>.
 That secret code is combined with the current time, math happens, and a resulting code (<abbr title="time based one time password">TOTP</abbr>) is displayed.
+
 The server asking for verification also knows that initial secret code and does the same thing. If the resulting codes match, voila, sesame opens.
 
 When that physical device is the only object that holds the _secret sauce to your <abbr title="one time passwords">OTPs</abbr>_, and happens to be your phone, even upgrading to a new phone will leave you scratching your head.
 Phones also get lost, they get broken, spontaneously stop working, ...
 
 The [Google Authenticator](https://en.wikipedia.org/wiki/Google_Authenticator) app now supports import/export of accounts.
-Making switching to a new phone way more convenient than it used to be (deleting all your accounts on one phone and adding them again on another phone.)
+Making switching to a new phone way more convenient than it used to be.
+(You used to have to delete all accounts on one phone and add them again on another phone.)
+
 Another application that generates <abbr title="time based one time passwords">TOTPs</abbr>, [Authy](https://authy.com/), also stores that long secret code in the cloud, so you can access it when you need to.
 
 ## Sign in with ...
 
-A lot of accounts provide the option to sign in through another online service. (eg Google, Facebook, Twitter, GitHub.)
+A lot of accounts provide the option to sign in through another online service. (eg Google, Facebook, Twitter, GitHub).
 Soon, Apple is joining the party.
 
-They lighten the hassle of having to sign up for yet another account by using the authorization for an account you already have, theirs.
+They reduce the hassle of having to sign up for yet another account by using the authorization for an account you already have, theirs.
 
 Many of them use a the [OAuth](https://oauth.net/2/) process under the hood.
 
@@ -227,13 +232,13 @@ It uses Apple's method of identity confirmation, that also means it works with t
 One of the big plusses users will have is the ability to hide their email address when signing up to a service.
 Apple will then provide the site asking for your email with an anonimised one, and forward mails sent to it to your real email.
 
-This makes it harder for shady sites to sell your emailadress and spam you.
+This makes it harder for shady sites to sell your email address and spam you.
 
 > Sign in with Apple won’t track or profile you as you use your favorite apps and websites, and Apple retains only the information that’s needed to make sure you can sign in and manage your account.
 >
 > <footer>
 >
-> The [Sign in with Apple documentation](https://support.apple.com/en-us/HT210318)
+> the [Sign in with Apple documentation](https://support.apple.com/en-us/HT210318)
 >
 > </footer>
 
@@ -241,22 +246,25 @@ This makes it harder for shady sites to sell your emailadress and spam you.
 
 ## Opinions and what I use
 
-As a password manager I use [KeePassXC](https://keepassxc.org/).
+As password manager I use [KeePassXC](https://keepassxc.org/).
 
 I use <abbr title="two factor authentication">2FA</abbr> on many sites and store the <abbr title="time base one time passwords">TOTPs</abbr> in [Google Authenticator](https://en.wikipedia.org/wiki/Google_Authenticator).
 
 If you are not a fan of using <abbr title="two factor authentication">2FA</abbr> (eg. because of the extra hassle).
-Please use it for your email.
+_Please_ use it for your email.
+
 Your email often serves as a sort of master account with the ability to reset passwords for a bunch of other accounts.
-On the topic of <abbr title="two factor authentication">2FA</abbr>, avoid the <abbr title="short message service">SMS</abbr> kind. <abbr title="short message service">SMS</abbr> is not as secure and has resulted in a bunch of high profile accounts getting [hacked](https://www.theverge.com/2019/8/30/20841288/jack-dorsey-ceo-twitter-account-hacked-chuckle-gang-shane-dawson-james-charles).
+
+On the topic of <abbr title="two factor authentication">2FA</abbr>, I avoid the <abbr title="short message service">SMS</abbr> kind. <abbr title="short message service">SMS</abbr> is not as secure and has resulted in a bunch of high profile accounts getting [hacked](https://www.theverge.com/2019/8/30/20841288/jack-dorsey-ceo-twitter-account-hacked-chuckle-gang-shane-dawson-james-charles).
 Often through some form of [social engineering](<https://en.wikipedia.org/wiki/Social_engineering_(security)>).
 
-For social logins, I'm not really a fan.
+Social logins, I'm not really a fan of them.
 While the security mechanism of these big companies is almost certainly far superior to that of a random website I'm signing up for.
 I don't like these big companies knowing when I sign into anything.
 Especially if said company's business model depends on selling advertisements and they have a vested interest in targeting advertisements as well as they can.
 
-I also prefer not using them because I never seem to remember which one I used again.
+I also prefer not using them because I never seem to remember which one I used where.
+Having every account live as an entry in my password manager simplifies this.
 
 As for "log in with Google". I avoid that because my trust in the longevity of anything coming out of that company is not high.
 They famously [retire many of their services](https://killedbygoogle.com/), even if said service is universally beloved and has been around for years.
@@ -270,8 +278,8 @@ Soon Google Hangouts will join that list.
 Picasa was 13 years old when they pulled the plug. _13!_
 That one still stings.
 
-Facebook, I avoid because... They have a [less than sterling](https://www.vice.com/en_us/article/akz7qa/facebook-finally-agreed-to-a-civil-rights-audit-and-surprise-surprise-it-failed) [trackrecord](https://www.businessinsider.com/oculus-vr-users-log-into-facebook-2020-8) [when it](https://techcrunch.com/2018/04/05/zuckerberg-deleted-messages) [comes](https://www.washingtonpost.com/news/the-switch/wp/2018/04/04/facebook-said-the-personal-data-of-most-its-2-billion-users-has-been-collected-and-shared-with-outsiders/) [to](https://www.nytimes.com/interactive/2018/06/03/technology/facebook-device-partners-users-friends-data.html) [privacy](https://www.nytimes.com/2018/04/04/us/politics/cambridge-analytica-scandal-fallout.html).
+Facebook, I avoid because... They have a [less than sterling](https://www.vice.com/en_us/article/akz7qa/facebook-finally-agreed-to-a-civil-rights-audit-and-surprise-surprise-it-failed) [trackrecord](https://www.businessinsider.com/oculus-vr-users-log-into-facebook-2020-8) [when](https://techcrunch.com/2018/04/05/zuckerberg-deleted-messages) [it](https://eand.co/why-zuck-is-betting-on-social-collapse-b9091b5aca74) [comes](https://www.washingtonpost.com/news/the-switch/wp/2018/04/04/facebook-said-the-personal-data-of-most-its-2-billion-users-has-been-collected-and-shared-with-outsiders/) [to](https://www.nytimes.com/interactive/2018/06/03/technology/facebook-device-partners-users-friends-data.html) [privacy](https://www.nytimes.com/2018/04/04/us/politics/cambridge-analytica-scandal-fallout.html).
 
-The "login with Apple" thing would be cool, I hope it becomes widespread and isn't only available on their appstore and their own products.
-Apple is going to [force](https://www.theverge.com/2019/6/3/18651344/wwdc-2019-apple-force-ios-developers-sign-in-third-party) anyone on iOS using other single sign on services to also implement theirs.
+The "login with Apple" thing would be cool, I hope it becomes widespread and isn't only available on their appstore and their own products.  
+Apple is going to [force](https://www.theverge.com/2019/6/3/18651344/wwdc-2019-apple-force-ios-developers-sign-in-third-party) developers on iOS providing other single sign on services to also implement theirs.  
 Oh, Apple.
