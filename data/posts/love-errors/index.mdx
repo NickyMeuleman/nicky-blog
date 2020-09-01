@@ -2,7 +2,7 @@
 title: Love errors
 date: "2020-08-30"
 authors: ["nicky"]
-cover: "cover.jpg"
+cover: "./cover.jpg"
 tags: ["Howto", "DX"]
 published: false
 ---
@@ -13,9 +13,11 @@ TL;DR: Error messages are useful. **Read them.**
 
 _"Error messages are pretty scary, right?"_
 
-If you answered "yes", I'd like to convince you of the opposite.
+If you answered with "yes", I'd like to convince you of the opposite.
 
-Error messages were something that I do _not_ want to see.
+## Oh, no!
+
+Error messages were something that I did _not_ want to see.
 They indicated I did something wrong, that my code was bad and I should feel bad.
 
 That was **wrong**.
@@ -29,16 +31,72 @@ That was **wrong**.
 >
 > </footer>
 
-example of error that isn't helpful
+While errors used to exclusively cause a sense of dread and frustration. Now they are often a source of relief, an answer to questions, ...
 
-error message like "something went wrong"
+Don't get me wrong. They're still a source of frustration sometimes, and lots of it. Especially when one error is the thing that's preventing you from making progress.
+
+The most annoying error messages are the ones that don't tell you anything other than "Stuff broke".
 
 <Tweet tweetLink="EmmaBostian/status/1247478166777663488" theme="dark" />
 
-READ THEM
+## Gather information
+
+When you see error messages, **READ THEM**.
+
+Error messages are an invaluable tool to help you figure out what went wrong.
+They are not only telling you there is an issue, they are the first step to fixing that issue too!
 
 <Tweet tweetLink="markdalgleish/status/1162112105564143616" theme="dark" />
 <Tweet tweetLink="waterproofheart/status/1298940388959490048" theme="dark" />
+
+Error messages often contain a lot of relevant info. If they don't tell you exactly what's wrong or how to fix it, good ones will at least point you in the right direction.
+
+When presented with an error message, extract as much information as possible from it.
+Make an effort to understand what it's telling you.
+
+### Again, and again
+
+You will read code more than you write code.
+For error messages, this is even more true.
+(How can something be more true than true? That's not possible. These questions keep me awake at night.)
+
+Learn by having lots of exposure to errors.
+That's how I learn most about programming, by making mistakes, by deliberately breaking things.
+
+Being perfect and following tutorials doesn't expose you to all the errors.
+Those hold valuable [understanding](https://swizec.com/blog/why-understanding-beats-knowledge/).
+
+### Context
+
+Context is important.
+The more context you have, the better.
+
+- What language are you using, what framework.
+- The specific version of that framework.
+- Are you on Windows, Mac, Linux, ...
+- Which browser are you using.
+- ~~What did you eat for breakfast?~~
+
+A lot of that information might not be relevant to the exact problem you're having, but more information is often better than less.
+
+That's why a lot of open source projects require you to provide this information when you submit a bug.
+It _might_ be relevant.
+
+If you know a lot about what you are doing, the source of an error message may be clear to you.
+Whereas if you dive in, the error message might have been indecipherable. This ties into the next tip, keeping the feedback loop short.
+
+### Keep the feedback loop short
+
+Try to keep the time between writing code, and discovering an error that code caused as short as possible.
+The moment right after you write a bug, is the best moment to see the error it caused. It's the moment where you'll have the most context.
+
+Luckily, a lot of workflows include tools to provide you with feedback as quickly as possible.
+
+In web development, that might take the form of an automatically reloading web browser, showing you the results of the code you wrote.
+That might be with [browsersync](https://www.browsersync.io/), or a fancy setup with [React Native fast refresh](https://reactnative.dev/docs/fast-refresh).  
+What matters is the code you just wrote is getting executed and you will be presented with any errors it may cause quickly.
+
+Google for errors https://dev.to/swyx/how-to-google-your-errors-2l6o
 
 React has some useful errors.
 
@@ -56,8 +114,6 @@ link to https://nickymeuleman.netlify.app/blog/react-refs#referring-to-a-dom-ele
 Example of when an error is positive: example of TS error
 
 <Tweet tweetLink="swyx/status/1236438657269194753" theme="dark" />
-
-Keep the feedback loop short
 
 Typescript something with an incredibly high spooky-factor. Prevented me from trying. Scared. Cryptic errors. Find tweet about better error experience in a typescript releasenote.
 https://devblogs.microsoft.com/typescript/announcing-typescript-3-0/#improved-errors-and-ux
@@ -218,4 +274,35 @@ footer: {
     content: "'\\02014\\000A0' ",
     },
 },
+```
+
+Typescript something with an incredibly high spooky-factor. Prevented me from trying. Scared. Cryptic errors. Find tweet about better error experience in a typescript releasenote.
+
+voorbeeld van debugging:: WesBos vid 33 min 3 (destructured import)
+vid 36 min 11:40 (network graphql)
+
+https://twitter.com/markdalgleish/status/1162112105564143616
+
+When I come across surprising error, I used to exclaim: "impossible!". That changed to "mmmmm possible" (Joey joke)
+
+TypeScript errors are terrible?
+Not because of their content, but because of how they are formatted when we see them -pic of LONG type error in VSCode-
+You'll see more errors during development, in your IDE
+but less during runtime, in the browser console -look up stats-
+
+https://kentcdodds.com/blog/compound-components-with-react-hooks
+De custom error die hij throwt om duidelijk te maken dat je Toggle.On etc enkel IN een `<Toggle>` kunt gebruiken en niet op zichzelf! (legt het uit in video)
+
+```
+./src/components/Header.js
+Module build failed (from ./node_modules/gatsby/dist/utils/babel-loader.js):
+SyntaxError: /home/nicky/projects/nicky-blog/src/components/Header.js:
+ Expected corresponding JSX closing tag for <Link> (86:8)
+  84 |             Blog
+  85 |           <Link>
+> 86 |         </span>
+     |         ^
+  87 |       </nav>
+  88 |     </header>
+  89 |   );
 ```
