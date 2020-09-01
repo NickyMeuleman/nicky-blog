@@ -1,0 +1,221 @@
+---
+title: Love errors
+date: "2020-08-30"
+authors: ["nicky"]
+cover: "cover.jpg"
+tags: ["Howto", "DX"]
+published: false
+---
+
+<!-- Photo by Andrea Piacquadio from Pexels -->
+
+TL;DR: Error messages are useful. **Read them.**
+
+_"Error messages are pretty scary, right?"_
+
+If you answered "yes", I'd like to convince you of the opposite.
+
+Error messages were something that I do _not_ want to see.
+They indicated I did something wrong, that my code was bad and I should feel bad.
+
+That was **wrong**.
+
+> Your code is not garbage.
+>
+> <footer>
+>
+> [Jason Lengstorf and Chris Biscardi (on the
+> LWJshow)](https://www.twitch.tv/jlengstorf/clip/KitschySteamyPicklesKippa)
+>
+> </footer>
+
+example of error that isn't helpful
+
+error message like "something went wrong"
+
+<Tweet tweetLink="EmmaBostian/status/1247478166777663488" theme="dark" />
+
+READ THEM
+
+<Tweet tweetLink="markdalgleish/status/1162112105564143616" theme="dark" />
+<Tweet tweetLink="waterproofheart/status/1298940388959490048" theme="dark" />
+
+React has some useful errors.
+
+<Tweet tweetLink="AdamRackis/status/1163912550087647235" theme="dark" />
+
+The React framework has some really helpful errors.
+If you try to pass an asynchronous function to `useEffect`, a helpful error message will tell you
+![a helpful error message in React](effect-error.png)
+
+link to https://nickymeuleman.netlify.app/blog/react-refs#referring-to-a-dom-element-inside-a-react-component
+
+> That big fat error is actually really helpful:
+> `Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?`
+
+Example of when an error is positive: example of TS error
+
+<Tweet tweetLink="swyx/status/1236438657269194753" theme="dark" />
+
+Keep the feedback loop short
+
+Typescript something with an incredibly high spooky-factor. Prevented me from trying. Scared. Cryptic errors. Find tweet about better error experience in a typescript releasenote.
+https://devblogs.microsoft.com/typescript/announcing-typescript-3-0/#improved-errors-and-ux
+
+<Tweet tweetLink="typescript/status/1023972234015076352" theme="dark" />
+One of the big bullet points for a major version release was "better error experience".
+
+Sticking with it, effort to understand what errors mean. Learn by having lots of exposure to errors.
+That's how you learn most programming, by making mistakes. Being perfect/following tutorials doesn't expose you to all the errors. Those hold valuable understanding (Swizec blogpost)
+
+voorbeeld van debugging:: WesBos vid 33 min 3 (destructured import)
+vid 36 min 11:40 (network graphql)
+
+When I come across surprising error, I used to exclaim: "impossible!". That changed to "mmmmm possible" (Joey joke)
+
+TypeScript errors are terrible?
+Not because of their content, but because of how they are formatted when we see them -pic of LONG type error in VSCode-
+You'll see more errors during development, in your IDE
+but less during runtime, in the browser console -look up stats-
+
+https://kentcdodds.com/blog/compound-components-with-react-hooks
+De custom error die hij throwt om duidelijk te maken dat je Toggle.On etc enkel IN een `<Toggle>` kunt gebruiken en niet op zichzelf! (legt het uit in video)
+
+<Aside variant="danger">
+
+```error
+theme/src/components/BlogPostListPage.tsx:54:15 - error TS2322: Type 'string' is not assignable to type 'SystemStyleObject'.
+
+54 gridTemplateColumns: `1fr`,
+~~~~~~~
+
+theme/src/components/BlogPostListPage.tsx:55:15 - error TS2322: Type 'number' is not assignable to type 'SystemStyleObject'.
+
+55 gridGap: 4,
+~~~~~~~
+
+theme/src/components/BlogPostListPage.tsx:56:15 - error TS2322: Type 'number' is not assignable to type 'SystemStyleObject'.
+
+56 marginBottom: 3,
+~~~~~~~
+
+theme/src/components/BlogPostListPage.tsx:57:15 - error TS2322: Type 'string' is not assignable to type 'SystemStyleObject'.
+
+57 listStyle: `none`,
+~~~~~~~
+
+theme/src/components/BlogPostListPage.tsx:58:15 - error TS2322: Type 'number' is not assignable to type 'SystemStyleObject'.
+
+58 padding: 0,
+~~~~~~~
+
+Found 5 errors.
+```
+
+</Aside>
+
+Unhelpful errors at first sight.
+Using lots of stylign with "sx" and this is wrong, why?
+
+Pointed me to.
+
+```jsx title=BlogPostListPage.tsx
+<ul
+    sx={{
+        display: `grid`,
+        gridTemplateColumns: `1fr`,
+        gridGap: 4,
+        marginBottom: 3,
+        listStyle: `none`,
+        padding: 0,
+    }}
+>
+```
+
+The problem ended up being the "gridGap".
+After changing it to "gap", all was well again.
+
+<Aside variant="danger">
+
+<details>
+
+<summary>A long error</summary>
+
+```error
+You seem to be using a value for 'content' without quotes, try replacing it with `content: '"'\02014\000A0' "'`
+    at render
+    at BlockQuote (http://172.30.97.12:8000/commons.js:90414:23)
+    at render
+    at http://172.30.97.12:8000/commons.js:8083:30
+    at wrapper (http://172.30.97.12:8000/commons.js:8078:25)
+    at http://172.30.97.12:8000/commons.js:8083:30
+    at MDXContent (eval at _construct (http://172.30.97.12:8000/commons.js:4898:21), <anonymous>:33:25)
+    at MDXRenderer (http://172.30.97.12:8000/commons.js:32822:20)
+    at article
+    at render
+    at div
+    at render
+    at main
+    at render
+    at render
+    at Main (http://172.30.97.12:8000/commons.js:9565:23)
+    at div
+    at render
+    at render
+    at Layout (http://172.30.97.12:8000/commons.js:91049:23)
+    at BlogPostPage (http://172.30.97.12:8000/commons.js:8944:19)
+    at BlogPostTemplate (http://172.30.97.12:8000/commons.js:11921:19)
+    at AppContainer (eval at ES6ProxyComponentFactory (http://172.30.97.12:8000/commons.js:80179:10), <anonymous>:14:7)
+    at HotExportedBlogPostTemplate (eval at ES6ProxyComponentFactory (http://172.30.97.12:8000/commons.js:80179:10), <anonymous>:14:7)
+    at PageRenderer (eval at ES6ProxyComponentFactory (http://172.30.97.12:8000/commons.js:80179:10), <anonymous>:14:7)
+    at PageQueryStore (eval at ES6ProxyComponentFactory (http://172.30.97.12:8000/commons.js:80179:10), <anonymous>:14:7)
+    at RouteHandler
+    at div
+    at FocusHandlerImpl (eval at ES6ProxyComponentFactory (http://172.30.97.12:8000/commons.js:80179:10), <anonymous>:14:7)
+    at FocusHandler (http://172.30.97.12:8000/commons.js:16975:19)
+    at RouterImpl (eval at ES6ProxyComponentFactory (http://172.30.97.12:8000/commons.js:80179:10), <anonymous>:14:7)
+    at Location (http://172.30.97.12:8000/commons.js:16715:23)
+    at Router
+    at ScrollHandler (eval at ES6ProxyComponentFactory (http://172.30.97.12:8000/commons.js:80179:10), <anonymous>:14:7)
+    at RouteUpdates (eval at ES6ProxyComponentFactory (http://172.30.97.12:8000/commons.js:80179:10), <anonymous>:14:7)
+    at EnsureResources (eval at ES6ProxyComponentFactory (http://172.30.97.12:8000/commons.js:80179:10), <anonymous>:14:7)
+    at LocationHandler (eval at ES6ProxyComponentFactory (http://172.30.97.12:8000/commons.js:80179:10), <anonymous>:14:7)
+    at LocationProvider (eval at ES6ProxyComponentFactory (http://172.30.97.12:8000/commons.js:80179:10), <anonymous>:14:7)
+    at Location (http://172.30.97.12:8000/commons.js:16715:23)
+    at Root
+    at MDXProvider (http://172.30.97.12:8000/commons.js:8068:46)
+    at MDXScopeProvider (http://172.30.97.12:8000/commons.js:32388:25)
+    at http://172.30.97.12:8000/commons.js:33047:37
+    at http://172.30.97.12:8000/commons.js:8051:48
+    at MDXProvider (http://172.30.97.12:8000/commons.js:8068:46)
+    at MdxEmbedProvider (http://172.30.97.12:8000/commons.js:13194:23)
+    at MDXProvider (http://172.30.97.12:8000/commons.js:8068:46)
+    at MDXProvider$1 (http://172.30.97.12:8000/commons.js:20426:24)
+    at ColorModeProvider (http://172.30.97.12:8000/commons.js:19277:22)
+    at BaseProvider (http://172.30.97.12:8000/commons.js:20108:21)
+    at ThemeProvider (http://172.30.97.12:8000/commons.js:20120:19)
+    at ThemeProvider$1 (http://172.30.97.12:8000/commons.js:23331:19)
+    at StaticQueryStore (eval at ES6ProxyComponentFactory (http://172.30.97.12:8000/commons.js:80179:10), <anonymous>:14:7)
+    at _default
+```
+
+</details>
+
+</Aside>
+
+Writing about "love errors" and one of the points I want to make is you can use sourcemaps to figure out where the error happened.
+The place I'm interested in is line 90401, but in the source code instead of the built code
+Guess another point is scroll up, stacktraces are useful to find out how the code got to the place that produced the error, but in the vast majority of cases you're interested in the top line(s)
+
+```js hl=8 title=BlockQuote.js
+footer: {
+    fontSize: 1,
+    fontWeight: "bold",
+    fontStyle: "normal",
+    "::before": {
+    // make sure mdash is on same line as footer
+    float: "left",
+    content: "'\\02014\\000A0' ",
+    },
+},
+```

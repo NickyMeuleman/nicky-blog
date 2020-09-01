@@ -20,7 +20,7 @@ const BlockQuote = ({ children }) => {
         "em, strong": {
           color: `inherit`,
         },
-        "p:first-of-type": { mt: 0 },
+        "p:first-of-type": { mt: 0, mb: 2 },
         "p:only-child": { m: 0 },
         "::before": {
           display: "flex",
@@ -49,7 +49,7 @@ const BlockQuote = ({ children }) => {
           "::before": {
             // make sure mdash is on same line as footer
             float: "left",
-            content: "'\\02014\\000A0' ",
+            content: "'\\02014\\000A0'",
           },
         },
       }}
