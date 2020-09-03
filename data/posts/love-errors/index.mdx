@@ -22,7 +22,7 @@ If you answered with "yes", I'd like to convince you of the opposite.
 ## Oh, no!
 
 Error messages were something that I did _not_ want to see.
-They indicated I did something wrong, that my code was bad and I should feel bad.
+They indicated I did something wrong, that [my code was bad and I should feel bad](https://youtu.be/jG2KMkQLZmI).
 
 That was **wrong**.
 
@@ -35,11 +35,11 @@ That was **wrong**.
 >
 > </footer>
 
-While errors used to exclusively cause a sense of dread and frustration. Now they are often a source of relief, an answer to questions, ...
+While errors used to exclusively cause a sense of dread and frustration. Now they are often a source of relief, provide an answer to questions, etc.
 
 Don't get me wrong. They're still a source of frustration sometimes, and lots of it. Especially when one error is the thing that's preventing you from making progress.
 
-The most annoying error messages are the ones that don't tell you anything other than "Stuff broke".
+The most annoying error messages are the ones that don't tell you anything other than "stuff broke".
 
 <Tweet tweetLink="EmmaBostian/status/1247478166777663488" theme="dark" />
 
@@ -48,26 +48,27 @@ The most annoying error messages are the ones that don't tell you anything other
 When you see error messages, **READ THEM**.
 
 Error messages are an invaluable tool to help you figure out what went wrong.
-They are not only telling you there is an issue, they are the first step to fixing that issue too!
+They are not only telling you there is an issue, they are also the first step to fixing that issue!
 
 <Tweet tweetLink="markdalgleish/status/1162112105564143616" theme="dark" />
+
 <Tweet tweetLink="waterproofheart/status/1298940388959490048" theme="dark" />
 
-Error messages often contain a lot of relevant info. If they don't tell you exactly what's wrong or how to fix it, good ones will at least point you in the right direction.
+Error messages often contain a lot of relevant info. If they don't tell you exactly what's wrong or how to fix it. Good ones will at least point you in the right direction.
 
 When presented with an error message, extract as much information as possible from it.
 Make an effort to understand what it's telling you.
 
 ### Again, and again
 
-You will read code more than you write code.
+You will read code more often than you write code.
 For error messages, this is even more true.
 (How can something be more true than true? That's not possible. These questions keep me awake at night.)
 
 Learn by having lots of exposure to errors.
-That's how I learn most about programming, by making mistakes, by deliberately breaking things.
+That's how I learn most about programming: by making mistakes, by deliberately breaking things.
 
-Being perfect and following tutorials doesn't expose you to all the errors.
+Being perfect and following along with tutorials doesn't expose you to a wide variety of errors.
 Those hold valuable [understanding](https://swizec.com/blog/why-understanding-beats-knowledge/).
 
 ### Context
@@ -75,30 +76,52 @@ Those hold valuable [understanding](https://swizec.com/blog/why-understanding-be
 Context is important.
 The more context you have, the better.
 
-- What language are you using, what framework.
-- The specific version of that framework.
-- Are you on Windows, Mac, Linux, ...
-- Which browser are you using.
+- What language are you using, what framework?
+- Which version of that framework?
+- Are you on Windows, Mac, Linux, ...?
+- Which browser are you using?
 - ~~What did you eat for breakfast?~~
 
-A lot of that information might not be relevant to the exact problem you're having, but more information is often better than less.
+A lot of that information might not be relevant to the exact problem you're having. Still, having more information is often better than less.
 
 That's why a lot of open source projects require you to provide this information when you submit a bug.
 It _might_ be relevant.
 
 If you know a lot about what you are doing, the source of an error message may be clear to you.
-Whereas if you dive in, the error message might have been indecipherable. This ties into the next tip, keeping the feedback loop short.
+Whereas if you dove in without context, the error message might have been indecipherable.
+This ties into the next tip, keeping the feedback loop short.
 
 ### Keep the feedback loop short
 
 Try to keep the time between writing code, and discovering an error that code caused as short as possible.
-The moment right after you write a bug, is the best moment to see the error it caused. It's the moment where you'll have the most context.
+The moment right after you write a bug, is the best moment to see the error it caused. It's the moment where you'll have the most [context](#context).
 
 Luckily, a lot of workflows include tools to provide you with feedback as quickly as possible.
 
 In web development, that might take the form of an automatically reloading web browser, showing you the results of the code you wrote.
-That might be with [browsersync](https://www.browsersync.io/), or a fancy setup with [React Native fast refresh](https://reactnative.dev/docs/fast-refresh).  
+It might be powered by [browsersync](https://www.browsersync.io/), or a fancy setup using [React Native fast refresh](https://reactnative.dev/docs/fast-refresh).  
 What matters is the code you just wrote is getting executed and you will be presented with any errors it may cause quickly.
+
+### Scroll up
+
+When faced with multiple errors, the top one will usually provide you with the most relevant information.
+
+<Aside variant="info">
+
+The same rule of thumb often applies within a single error too, with the top lines being the most relevant ones.
+
+</Aside>
+
+If one thing is broken, that might cause other things to break (and show errors).
+Fixing the original problem will then also solve the other errors.
+
+Ofcourse this isn't always the case.
+Even if it's not, tackling errors one at a time, starting with the oldest one is useful.
+
+When you try to fix a lot of things at once, it becomes next to impossible to predict which impact a specific change had.
+Did it fix it, or did you create a whole new problem?
+
+Tackling error at a time, and making small changes, can prevent that issue. While [keeping the feedback loop short](#keep-the-feedback-loop-short).
 
 ## Reading an error
 
@@ -127,9 +150,9 @@ walk();
 ```
 
 It has an error, and while it might be easy to spot in this case.
-Reading the error messages to get rid of the bug will be helpful!
+I'll read the error message to figure out what happened.
 
-When I tried executing this code, the following error appeared.
+The following error appeared when I tried executing this code:
 
 ```
 /home/nicky/error-testing.js:10
@@ -154,9 +177,10 @@ The first line tells me 2 things. It happened in the `error-testing.js` file tha
 This is true! I already knew this, because I just made that file and I have that piece of information as [context](#context).
 
 The `:10` tells me this error happened on line number 10.
-It shows the exact piece of code that triggered the error beneath it with a caret (`^`).
+It shows the piece of code that triggered the error beneath it.
+A caret (`^`) is pointing at the exact location the error was triggered.
 
-`TypeError: Cannot read property 'bork' of undefined` tells you which kind of error this is. In this case, a [`TypeError`](https://nodejs.org/api/errors.html#errors_class_typeerror).
+`TypeError: Cannot read property 'bork' of undefined` tells me which kind of error this is. In this case, a [`TypeError`](https://nodejs.org/api/errors.html#errors_class_typeerror).
 Followed by the error message.
 
 <Aside>
@@ -168,8 +192,8 @@ The error message is usually the piece of information that'll be the most useful
 The next part is the [stacktrace](https://nodejs.org/api/errors.html#errors_error_stack).
 
 For me personally.
-This is what gave errors the scarefactor that made me say: _"I can't understand this, better not read"_.
-They're big and unwieldy, and if you don't know which information they convey, quite indecipherable.
+This is what gave errors the scarefactor that made me say: _"I can't understand this, better not read it"_.
+They're big, unwieldy, and if you don't know which information they convey, quite indecipherable.
 
 ```
 at squirrel (/home/nicky/error-testing.js:10:19)
@@ -184,7 +208,8 @@ at internal/main/run_main_module.js:17:11
 ```
 
 The stacktrace holds a bunch of information about _how_ your program came across the error.
-It can be used to trace backwards from the error and follow which function calls eventually lead to the error.
+It shows different steps in the code that eventually led to the error.
+Each line tracks the error one step backwards, following a chain of function calls, all the way up until the step where I ran the program with [node.js](https://nodejs.org/en/).
 
 The first line tells us that the error was found at `/home/nicky/error-testing.js`.
 The `:10:19` makes it even more specific. The error happened at line 10, column 19. In other words on the 10th line, at the 19th character.
@@ -194,53 +219,63 @@ The next lines are structured identically, each tracing the error back a step.
 
 It traces the error all the way back from the `squirrel` function, to the `walk` function, and even to the internal code that was used to make this program run.
 
+I'm not going to pretend like I know what's going on in most of those lines, because I don't.
+
 <Aside>
 
-Stacktraces are useful to find out how the code got to the place that produced the error, but in the vast majority of cases you're interested in the top line(s).
+Stacktraces are useful to find out how the code got to the place that produced the error, but in the vast majority of cases you're only interested in the top line(s).
 
 </Aside>
+
+When using frameworks, it is common for stacktraces to filled with lines from deep within that framework.  
+Most of the time, it's fine to ignore those and look for the entries that mention code you wrote.
+When you need information about the lines from the framework, you'll know.
 
 ### Fixing the error
 
 So the message was `Cannot read property 'bork' of undefined`.
 
-Ok, the location pointed me to the right place, to `corgi.actions.bork()`
+Ok, the location pointed me to `corgi.actions.bork()`
 
-That means `corgi.actions` is `undefined`.
-Upon checking, there is no such thing as `actions` on the `corgi` object.
+The message means `corgi.actions` is `undefined`.
+Upon checking, there is no such thing as `actions` on the `corgi` object (and thus, it's `undefined`).
+
 I changed `corgi.actions.bork()` to `corgi.bork()` and ran the code again.
 
-Oh, no! Error again. Another one though. Progress!
+Oh, no! Error again! Another one though. Progress!
 This time the error message reads `corgi.bork is not a function`.
 
-Silly me, I made a typo, there is no `bork` on the corgi method, that's why it's `undefined`! No borking corgis here!
+Silly me, I made a typo.
+There is no `bork` on the corgi object, that's why it's `undefined`! No borking corgis here!
 
 Another change to `corgi.bark()`, no errors, 🎉.
 
 ## Google for errors
 
 The error messages alone won't always be enough to figure out what is going on.
-Time the consult the biggest repository of knowledge there is, the internet.
+Time to consult the biggest repository of knowledge there is, the internet.
 
-[Swyx](https://twitter.com/swyx) shared some of his knowledge and wrote about how to [search the internet for your errors](https://www.swyx.io/writing/how-to-google-your-errors-2l6o)
+[Swyx](https://twitter.com/swyx) shared some of his knowledge and wrote about how to [search for your errors](https://www.swyx.io/writing/how-to-google-your-errors-2l6o).
 
 ## TypeScript
 
 [Typescript](https://www.typescriptlang.org/) has an incredibly high spooky-factor 👻.
 I avoided seriously trying it for a long time because I was scared.
-When I tried it out, it bombarded me with cryptic errors I couldn't understand, and I ran away. This cycle repeated a few times.
+When I tried it out, it bombarded me with cryptic errors I couldn't understand, and I ran away.
+When I tried it again, the same thing happened.
+This cycle repeated a few times.
 
 The language [continued growing in popularity](https://2018.stateofjs.com/javascript-flavors/typescript/) and it kept getting better.
 One of the big bullet points for a major version release was ["better error experience"](https://devblogs.microsoft.com/typescript/announcing-typescript-3-0/#improved-errors-and-ux).
 
 <Tweet tweetLink="typescript/status/1023972234015076352" theme="dark" />
 
-I tried again, and this time I stuck with it, and made effort to understand what errors meant.
+I tried again, and this time I stuck with it and made effort to understand what errors meant.
 
 I still thought many TypeScript errors were terrible.
 Not because of their content, but because of how they are formatted when you see them.
 
-A big draw was the promise you'll see more errors during development, in your code editor/IDE before you even run your code, and less during runtime, in the browser console.
+I really liked the promise that you'll see more errors during development, before you even run your code, and less during runtime.
 
 <Tweet tweetLink="swyx/status/1236438657269194753" theme="dark" />
 
@@ -250,15 +285,13 @@ A big draw was the promise you'll see more errors during development, in your co
 
 [React](https://reactjs.org/) has some really helpful errors.
 
-<Tweet tweetLink="AdamRackis/status/1163912550087647235" theme="dark" />
-
-If you try to pass an asynchronous function to `useEffect`, a helpful error message will tell you exactly what's wrong and even tell you how to achieve what you are likely trying to do.
+If you try to pass an asynchronous function to `useEffect`, a helpful error message will tell you exactly what's wrong and even tell you how to achieve what you are trying to do.
 
 ![a helpful error message in React](effect-error.png)
 
 Another example is an error that appears when trying to use a [`ref`](https://reactjs.org/docs/refs-and-the-dom.html).
 
-> That big fat error is actually really helpful:  
+> That big fat error is really helpful:  
 > `Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?`
 >
 > <footer>
@@ -341,7 +374,8 @@ You seem to be using a value for 'content' without quotes, try replacing it with
 
 This time, the first line did not immediately point me to the correct location.
 
-The stacktrace, tracing the error back, says the fauly code passed by `commons.js` at line 90414, that can't be right. I don't have any file that long.
+The stacktrace, tracing the error back, says the fauly code passed by `commons.js` at line 90414.
+That can't be right. I don't have any file that long.
 
 That incredibly long file is not the code I wrote, but the result of it that runs in the browser.
 [Source maps](https://developer.mozilla.org/en-US/docs/Tools/Debugger/How_to/Use_a_source_map) are often used for this reason. They translate the locations in that resulting file back to the original _source_, to the files you wrote.
@@ -362,7 +396,7 @@ footer: {
 ```
 
 Oopsie, a space where there shouldn't be one!
-Removing that extra space at the end of the value for `content` made the page using this code render again!
+Removing that extra space at the end of the value for `content` made the pages using this code render again!
 
 ### Styling
 
@@ -408,7 +442,7 @@ Found 5 errors.
 </Aside>
 
 At first sight, those messages were quite the unhelpful.
-I'm styling lots of things on my site in the same way, and this is wrong, why?
+I'm styling lots of things on my site in the same way, and this is wrong. Why?
 
 The error pointed me this this piece of code: an `<ul>` tag styled with [`theme-ui`](https://theme-ui.com/sx-prop/).
 
@@ -430,18 +464,13 @@ It turns out that `gridGap` was not a valid option for the `sx`-object (aka. the
 
 After changing the `gridGap` to `gap`, all was well again.
 
-<!-- TODO: fit into post -->
-
-voorbeeld van debugging:: WesBos vid 33 min 3 (destructured import)
-vid 36 min 11:40 (network graphql)
-
 ## Bonus: make errors better
 
-While watching [Kent C. Dodds](https://twitter.com/kentcdodds) teach about [compound components](https://kentcdodds.com/blog/compound-components-with-react-hooks) he shared an incredibly useful tip.
+While teaching about [compound components](https://kentcdodds.com/blog/compound-components-with-react-hooks), [Kent C. Dodds](https://twitter.com/kentcdodds) shared an incredibly useful tip.
 
-He made a lot future errors easier to understand by throwing an error in the code he wrote.
+He made a lot future errors easier to understand by [throwing](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/throw) an error in the code he wrote.
 
-The result is a very helpful error message will be shown if the component he wrote is used incorrectly.
-If he didn't do this, the resulting error message would be very cryptic and would likely a lot of frustration for anyone that came across it.
+As a result, a very helpful error message will be shown if the component he wrote is used incorrectly.
+If he didn't do this, the resulting error message would be very cryptic and probably cause a lot of frustration for anyone that came across it.
 
 <Tweet tweetLink="NMeuleman/status/1228339002517966849" theme="dark" />
