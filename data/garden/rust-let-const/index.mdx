@@ -1,0 +1,64 @@
+---
+title: "Rust: let vs const"
+date: "2020-09-22"
+authors: ["nicky"]
+tags: ["rust"]
+---
+
+To declare a variable in Rust, use the `let` keyword.
+
+```rust
+let num = 5;
+```
+
+By default, variables are immutable, you can't change them.
+If you wish to mutate it, you have to explicitly state that by adding `mut` to that declaration.
+
+```rust
+let mut num = 5;
+```
+
+Now, the number stored in the variable named `num` may now be changed.
+
+```rust
+num = 6;
+```
+
+<Aside>
+
+[Laurie Barth](https://twitter.com/laurieontech) has [an excellent post on `mut`](https://laurieontech.com/posts/rust-mut/)
+
+</Aside>
+
+Another piece of data that's immutable, (so can't change) is a constant.
+Declared with the `const` keyword.
+
+You might already be familiar with this concept, and wonder:
+
+> If variables are immutable by default, what's the difference between variables and constants?
+>
+> <footer>you</footer>
+
+- You aren't allowed to use `mut` on constants. No mutating, ever.
+
+- The type of a constant _must_ be declared, whereas the type of a variable _may_ be declared.
+
+- Constants can only be set to a constant [expression](https://doc.rust-lang.org/book/ch03-03-how-functions-work.html?highlight=expression#function-bodies-contain-statements-and-expressions), not to the result of a function call or anything that could only be determined at runtime.
+
+As a result, constants are always fixed in size, and known at compile time.  
+Another, less obvious result, is that constants may not be of a type that requires [allocation on the heap](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html?highlight=heap#the-stack-and-the-heap), since they're not known at compile time.
+
+- The naming convention for `const` is `SCREAMING_SNAKE_CASE`.
+- The naming convention for `let` is `snake_case`.
+
+```rust
+const SPEED_OF_LIGHT: u32 = 299792458;
+```
+
+Constants can be declared in any scope, including the global scope.  
+They are valid for the entire runtime of the program inside that scope.  
+Translation: You can put constants outside of the `main` function and it will work.
+
+More on expressions and the heap in later blogposts. If you see this and I
+haven't written about it yet, feel free to mention it on
+[Twitter](https://twitter.com/NMeuleman).
