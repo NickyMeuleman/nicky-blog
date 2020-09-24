@@ -1,0 +1,37 @@
+---
+title: "Rust: stack vs heap"
+date: "2020-09-24"
+authors: ["nicky"]
+tags: ["rust"]
+---
+
+All programs have to manage memory.
+
+The stack and the heap are 2 places in memory where Rust stores information.
+
+In most programming languages (eg. JavaScript, Python, Java, etc.), you don't have to worry about this.
+
+A [stack](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>) is a part of memory that has a specific data structure.
+
+- When there is a new piece of data that should be stored, the stack will always put it "on top". (_push_ to the stack)
+- When a piece of data should be removed from the stack, it is also taken "from the top". (_pop_ off the stack)
+
+More succinctly, it's a _last in, first out (LIFO)_ data structure.
+
+**All entries that are pushed to the stack are required to have a known, fixed size.**
+
+The size should be known at compile time, and can not change during runtime.
+We can not put things of variable size in the stack (like a string that might grow in size).
+
+If we want to store such data, we have to use the [heap](https://en.wikipedia.org/wiki/Memory_management#HEAP).
+As the name suggests, the heap is not as organized as the stack.
+
+When we want to store some data on the heap, we ask the memory allocator (a piece of logic that manages the memory of the heap) for a given amount of memory.
+The memory allocator finds a free spot in the heap, stores it there, marks it as occupied, and returns a pointer to that location in memory.
+That process is called allocating on the heap.
+
+That pointer has a known, fixed size.
+Along with a tiny amount of other information, it is stored on the stack.
+When the program wants to access the data, it has to follow that pointer to the location of that data in the heap.
+
+The heap is slower than the stack, but it is more flexible.
