@@ -19,7 +19,12 @@ Expressions _evaluate to a value_, they return that value.
 > This means that most things are expressions, and evaluate to some kind of value.
 > However, there are also statements.
 >
-> <footer>Steve Klabnik (member of the Rust core team)</footer>
+> <footer>
+>
+> [Steve Klabnik](https://twitter.com/steveklabnik) (member of the Rust core
+> team)
+>
+> </footer>
 
 Assigning a value to a variable is a statement, it doesn't return anything.
 
@@ -28,12 +33,14 @@ let num = 5;
 ```
 
 Expressions can be part of a statement.
-While that line is a statement, it contains an expression (something that evaluates to a value).
+
+While the line above is a statement, it contains an expression (something that evaluates to a value).
 In this case, the value itself, the integer `5`.
 
 <Aside variant="danger">
 
-Variable assignment being a statement is the reason you can't assign a value to the result of another assignment, like in many other languages.
+Variable assignment being a statement is the reason you can't assign a value to the result of another assignment.
+You can in many other languages, not in Rust.
 
 The following snippet would try to assign "nothing" to the `also_num` variable, that's an error!
 
@@ -56,7 +63,7 @@ If you add a semicolon to the end of an expression, you turn it into a statement
 
 If a function ends in an expression, it returns the value of that expression.
 
-A function definition itself is also a statement, it does not result in a value.
+A function definition is a statement, it does not result in a value.
 Calling a function is an expression, that expression evaluates to whatever that function call returns.
 
 ```rust
@@ -67,14 +74,14 @@ fn add(x: i32, y:i32) -> i32 {
 }
 ```
 
-The lines where the `add` function is defined, is a statement, those lines don't evaluate to anything.  
+The lines where the `add` function is defined, are a statement, those lines don't evaluate to anything.  
 Calling `add(4, 1)` is an expression, it evaluates to a value (the integer `5`).  
-Inside the function, the last line of the function body as an expression `x + y`.  
+Inside the function, the last line of the function body is an expression `x + y`.  
 That ending expression evaluates to a value and the function returns it.
 
 <Aside variant="danger">
 
-If that line ended in a semicolon instead `x + y;`, it would turn the expression into a statement.
+If that line ended in a semicolon instead (ie. `x + y;`), it would turn the expression into a statement.
 That would not return a value, causing the function to not return a value.
 
 That would mean we lied when we defined the function, as we stated it would return an integer of type `i32` (with the syntax `-> i32`).
@@ -85,9 +92,10 @@ This is a bug and the Rust compiler won't let you do this.
 
 </Aside>
 
-That value is then assigned to the variable named `num`, that entire line (`let num = add(4, 1);`) is a statement.
+The value `add(4, 1)` evaluated to is then assigned to the variable named `num`.
+That entire line (ie. `let num = add(4, 1);`) is a statement.
 
-A codeblock that creates a new scope is an expression (it evaluates to a value).
+A codeblock that creates a new scope (ie. `{}`) is an expression (it evaluates to a value).
 
 ```rust
 let num = {
@@ -97,13 +105,16 @@ let num = {
 ```
 
 Inside that codeblock, a variable declaration statement happens, followed by an expression (`x + 1`).
-The block is an expression itself, it evaluates to a value and assigns it to the `num` variable.
+The value that last expression evaluates to will be the value the entire codeblock evaluates to.
+That value is then assigned to the `num` variable in this example.
 
 ---
 
-You may explicitly return a value from a function by using the `return` keyword, followed by an expression.
+You may explicitly return a value from a function by using the `return` keyword followed by an expression.  
+By convention, that line is terminated with a semicolon.
+As you might expect, that isn't mandatory and the compiler won't complain if you leave it off.
 
-This `add` function that explicitly ends execution and returns a value is equivalent to the one that was used above.
+This is an `add` function that explicitly ends execution and returns a value is equivalent to the `add` above that ended with an expression.
 
 ```rust
 fn add(x: i32, y:i32) -> i32 {
@@ -115,38 +126,38 @@ fn add(x: i32, y:i32) -> i32 {
 
 We can use this mechanism to make code that has a variable declaration that is only used to later be populated a bit shorter.
 
-Long example:
-
-```rust
+```rust title=example.rs
 fn main() {
     let num = 5;
     let mut name = "";
     if num > 3 {
-        name = "Jon";
+        name = "Tom";
     } else {
-        name = "Mike";
+        name = "Jerry";
     }
     println!("{}", name);
 }
 ```
 
 `if` is an expression, it returns a value.
-The value it evaluates to is whatever the value of de codeblock it executed evaluated to.
-That means we can rewrite our example above, and never have `name` as empty string.
 
-```rust
+The value it evaluates to is whatever the value of de codeblock it executed evaluated to.
+That means we can rewrite our example above.  
+`name` is never an empty string, it's either `"Tom"` or `"Jerry"`.
+
+```rust title=example.rs
 fn main() {
     let num = 5;
     let name = if num > 3 {
-        "Jon"
+        "Tom"
     } else {
-        "Mike"
+        "Jerry"
     };
     println!("{}", name);
 }
 ```
 
-This has the result that every arm of the `if` statement must return the same type.
-If we return different types from the branches, the compiler won't be able to figure out what resulting type of the entire `if` is and will show a compilation error.
+This means that every arm of the `if` statement must return the same type.
+If we return different types from the branches, the compiler won't be able to figure out what the resulting type of the entire `if` is and will show a compilation error.
 
-A similar approach can be taken with more programming constructs in Rust that are expressions: like `match`, `loop`, ...
+A similar approach can be taken with more programming constructs in Rust that are expressions: like `match`.
