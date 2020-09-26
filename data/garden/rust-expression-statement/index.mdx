@@ -141,9 +141,10 @@ fn main() {
 
 `if` is an expression, it returns a value.
 
-The value it evaluates to is whatever the value of de codeblock it executed evaluated to.
-That means we can rewrite our example above.  
-`name` is never an empty string, it's either `"Tom"` or `"Jerry"`.
+The value an `if` evaluates to is the value of the codeblock it executed.
+That means we can rewrite our example above.
+
+Now, `name` is never an empty string, it's either `"Tom"` or `"Jerry"`.
 
 ```rust title=example.rs
 fn main() {
