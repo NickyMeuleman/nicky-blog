@@ -121,7 +121,30 @@ When using the `?` on a `Result`, I call it the [Annie operator](https://youtu.b
 
 <Aside variant="info">
 
-`?` can also be used on the `Option` type, it will then early return on the `None` variant of the `Option`.
+There is a slight difference between the 2 pieces of code.
+It will send the `error` contained in `Err(error)` through the [`From::from` function](https://doc.rust-lang.org/std/convert/trait.From.html#tymethod.from).
+ie. if the `Result` variant the `?` is called on is `Err(error)`, the function will return `Err(From::from(error))`.
+
+an example:
+
+```rust
+let mut f = File::open("username.txt")?;
+```
+
+is equivalent to:
+
+```rust
+let mut f = match File::open("username.txt") {
+    Ok(result) => result,
+    Err(err) => return Err(From::from(err)),
+}
+```
+
+</Aside>
+
+<Aside variant="info">
+
+`?` can also be used on the `Option` type, it will then propagate the `None` variant of the `Option`.
 
 ```rust
 fn get_number(name: String) -> Option<String> {
