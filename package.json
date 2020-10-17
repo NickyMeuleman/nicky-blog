@@ -18,7 +18,7 @@
   "homepage": "https://nickymeuleman.netlify.com/",
   "dependencies": {
     "@emotion/core": "^10.0.28",
-    "@nickymeuleman/gatsby-theme-blog": "^1.8.1",
+    "@nickymeuleman/gatsby-theme-blog": "^1.10.0",
     "@theme-ui/color": "^0.3.1",
     "@theme-ui/presets": "^0.3.0",
     "@theme-ui/prism": "^0.3.0",
