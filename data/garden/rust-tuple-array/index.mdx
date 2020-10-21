@@ -18,10 +18,10 @@ While arrays are less flexible in content, they are more flexible in usage.
 </Aside>
 
 
-The array and the tuple are both _compound_ types, that means they can hold a multiple values.
+The array and the tuple are both _compound_ types, that means they can hold multiple values.
 An array and a tuple are both groups of other values.
 
-Tuples are enclosed by parenthesis `()`.
+Tuples are enclosed by parentheses `()`.
 Every element in it is separated by a comma `,`.
 
 Arrays are enclosed by square braces `[]`.
@@ -52,13 +52,13 @@ let tup = (1, 2.5, "yummy pie");
 
 The Rust compiler is smart and will try to figure out which types it's dealing with, that means explicit type declarations are not always needed.
 
-For arrays, the type declaration consists of enclosing square brackets with the type of the elements, followed by a semicolon `;`, and the length or the array.
+For arrays, the type declaration consists of enclosing square brackets. Inside is the type of the elements followed by a semicolon `;`, and the length or the array.
 
 ```rust
 let arr: [f64;3] = [1.0, 2.5, 3.14];
 ```
 
-For tuples, the type declaration consists of enclosing parentheses with the type of each element, separated by a comma `,`.
+For tuples, the type declaration consists of enclosing parentheses. Inside are the types of each element, each one separated by a comma `,`.
 
 ```rust
 let tup: (i32, f64, &str) = (1, 2.5, "yummy pie");
@@ -101,7 +101,7 @@ let (lucky_num, double_lucky_num) = num_and_double(3);
 
 An array has some metadata associated with it, like its length.
 A tuple does not.
-They are essentialy structs with anonymous field names.
+Tuples are essentialy structs with anonymous field names.
 
 ```rust
 let arr_len = arr.len(); // 3

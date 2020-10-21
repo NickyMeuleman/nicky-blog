@@ -1,0 +1,102 @@
+---
+title: "Rust: if let and while let"
+date: "2020-10-21"
+authors: ["nicky"]
+tags: ["rust"]
+published: false
+---
+
+<Aside>
+
+
+`if let` is a fancy `if` condition.
+`while let` is a fancy `while` loop.
+
+</Aside>
+
+
+With the `if let` syntax you combine an `if` condition with a destructuring `let` assignment.
+
+Let's unpack (pun intended) that sentence.
+
+```rust
+let my_pick: Option<u8> = Some(3);
+if Some(3) == my_pick {
+    println!("Honeybadger don't care.");
+}
+```
+
+This line prints, alerting everyone that `Some(3)` is equal to `my_pick`, and more importantly that [honeybadgers don't care](https://youtu.be/4r7wHMg5Yjg).
+
+---
+
+If array destructuring works with square brackets, and tuple destructuring works via parentheses, it makes sense an `Option` could be destructured via `Some`.
+
+<Aside variant="info">
+
+
+A quick recap for array and tuple destructuring:
+
+```rust
+let arr = [1, 2, 3];
+let [one, two, three] = arr;
+println!("Counting: {}, {}, {}", one, two, three);
+// Counting: 1, 2, 3
+
+let tup = ("Daniel", "Ricciardo", 3);
+let (first_name, last_name, racing_number) = tup;
+println!("{} {} races with the number: {}", first_name, last_name, racing_number);
+// Daniel Ricciardo races with the number: 3
+```
+
+</Aside>
+
+
+If you try to destructure what's inside `my_pick` to the `number` variable with `Some(number)`, Rust will not compile and show a warning:
+
+```rust
+let my_pick: Option<u8> = Some(3);
+let Some(number) = my_pick;
+println!("Daniel Ricciardo, nicknamed 'the honeybadger' races with the number: {}", number);
+// error
+```
+
+```error
+refutable pattern in local binding: `None` not covered
+```
+
+Because `my_pick` has the type of `Option<u8>`, it will either be a `Some(u8)` or a `None`.
+The piece of code assumes there will always be some integer inside and neglects the possibility `my_pick` is `None`.
+The Rust compiler won't let you do that!
+
+We have to use a `match` and cover that possibility.
+
+```rust
+let my_pick: Option<u8> = Some(3);
+let number = match my_pick {
+    Some(num) => num,
+    None => panic!("Oh, oh, no number")
+};
+println!("Daniel Ricciardo, nicknamed 'the honeybadger' races with the number: {}", number);
+// Daniel Ricciardo, nicknamed 'the honeybadger' races with the number: 3
+```
+
+That's a bit verbose, we don't care about the `None` case and only want to do something if `my_pick` holds a `Some`.
+
+Combining that destructuring attempt with an `if` condition gives us the `if let` syntax.
+
+It tries to destructure, if that destructure works, the codeblock is entered.
+If it doesn't work, the codeblock isn't entered and the code continues.
+
+```rust
+let my_pick: Option<u8> = Some(3);
+if let Some(number) = my_pick {
+    println!("Daniel Ricciardo, nicknamed 'the honeybadger' races with the number: {}", number);
+    // Daniel Ricciardo, nicknamed 'the honeybadger' races with the number: 3
+}
+```
+
+TODO:
+
+- else cases
+- while let
