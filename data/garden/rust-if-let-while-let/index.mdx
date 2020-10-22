@@ -145,7 +145,6 @@ In the case we only care about `my_pick` holding a `Some(3)`:
 let my_pick: Option<u8> = Some(3);
 if let Some(3) = my_pick {
     println!("Daniel Ricciardo, nicknamed 'the honeybadger' races with the number: 3");
-    // Daniel Ricciardo, nicknamed 'the honeybadger' races with the number: 3
 }
 ```
 
@@ -171,7 +170,7 @@ if let Some(3) = my_pick {
 Here, `my_pick` is `Some(33)`.
 The `if` doesn't succeed anymore, the `else if` condition succeeds, printing a lyric from a [Max Verstappen fansong](https://www.youtube.com/watch?v=43HCYSXZ9GI).
 
-If `my_pick` held yet another number or if it held `None`, the `else` block would execute.
+If `my_pick` held yet another `Some` or if it held `None`, the `else` block would execute.
 
 ## Do it again, and again
 
@@ -186,7 +185,7 @@ In the case where `pop` returns `None`, the codeblock will not be entered again 
 ```rust
 let mut my_picks: Vec<u8> = vec![3, 33, 44];
 while let Some(num) = my_picks.pop() {
-    println!("{:?}", num);
+    println!("{}", num);
 }
 ```
 
@@ -212,7 +211,7 @@ if let Ok(3) = my_pick {
 }
 ```
 
-The thing we try to destructure doesn't have to be the kind of enum variant that holds something, simple enums work too!
+The thing we try to destructure doesn't have to be the kind of enum variant that holds something, simple enums variants work too!
 
 ```rust
 enum SesameStreetChar {
@@ -234,6 +233,7 @@ In the previous example, a straight comparison would fail because the enum doesn
 if SesameStreetChar::Count == best_vampire {
   println!("this does not compile");
 }
+// error
 ```
 
 `if let` still works.
