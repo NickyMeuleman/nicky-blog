@@ -12,7 +12,7 @@ A pointer is a variable that contains an address in memory.
 It points to, or _refers_ to some other data.
 You can think of it like an arrow to that value.
 
-Rust has two regular types of pointers, called references.
+Rust has two regular types of pointers called references.
 They're recognized by the ampersand in front of a variable name.
 
 - `&` for an immutable reference (eg. `&my_variable`).
@@ -29,9 +29,9 @@ The Rust programming language book has [a great chapter on ownership in Rust](ht
 
 <Aside variant="info">
 
-The Rust [the data race](https://en.wikipedia.org/wiki/Race_condition) prevention dictates that for a given piece of data, in any particular scope:
+Rust's [data race](https://en.wikipedia.org/wiki/Race_condition) prevention rules dictate that for a given piece of data in any particular scope:
 
-You can have only **one mutable reference** to that data **OR** you can have **multiple immutable references** to that data.
+You can have only **one mutable** reference to that data **OR** you can have **multiple immutable** references to that data.
 Never both at the same time.
 
 </Aside>
@@ -57,6 +57,7 @@ You could say that those pointers are ... smart
 ![Rick Dalton pointing in recognition](https://i.imgur.com/7RUWtXX.jpg)
 
 Smart pointers are usually implemented using a struct.
+
 An other difference with regular references, smart pointers usually own the data they point to.
 In other words: when the smart pointer gets dropped, the data they point to gets dropped.
 
@@ -66,7 +67,7 @@ Most smart pointers implement the [`Deref`](https://doc.rust-lang.org/std/ops/tr
 
 If you've programmed in Rust before, chances are great you already used smart pointer, even if you didn't know you were.
 
-The `String` is a smart pointer.
+The [`String`](https://doc.rust-lang.org/std/string/struct.String.html) is a smart pointer.
 
 ```rust
 let s1 = String::from("hello");
@@ -81,9 +82,9 @@ Psst, I wrote about [the stack and the heap in Rust](/garden/rust-stack-heap)
 
 </Aside>
 
-On the stack is our `String`, named `s1`.
+On the stack is our [`String`](https://doc.rust-lang.org/std/string/struct.String.html), named `s1`.
 It's a struct that not only has a pointer to a specific location on the heap (in `ptr`).
-It has additional metadata, like the length of the string (in `len`), and the amount of bytes that string occupied (in `capacity`).
+It has additional metadata, like the length of the string (in `len`), and the amount of bytes that string occupies (in `capacity`).
 The distinction between those last 2 fields is not important right now, what is important is that the string has additional metadata associated with it.
 
 The heap stores the contents of that string in consecutive memory addresses.
@@ -132,7 +133,7 @@ In the second `assert_eq`, we compare `5` with the result of using the dereferen
 
 ### Drop
 
-The [`Drop`](https://doc.rust-lang.org/std/ops/trait.Drop.html) trait allows you to customize the code that runs when an instance of that struct (a smart pointer) goes out of scope.
+The [`Drop`](https://doc.rust-lang.org/std/ops/trait.Drop.html) trait allows you to customize the code that runs when an instance of that struct goes out of scope.
 It is used to release resources like network connections, files, and used memory.
 
 An example usage: when the owner of a [`Box<T>`](https://doc.rust-lang.org/std/boxed/struct.Box.html) goes out of scope,

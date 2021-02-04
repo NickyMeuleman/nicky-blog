@@ -22,6 +22,8 @@ struct Node {
 }
 ```
 
+## Expressing "nothing"
+
 The `next` value can either be a node, or nothing.
 In other languages, that would be expressed by not giving `next` a value, by having it be `null`.
 Rust doesn't have a `null` value like many other languages do.
@@ -54,11 +56,13 @@ struct Node {
 
 The value for `next` can be either `None`, or `Some(Node)`.
 
+## Infinite recursion
+
 This doesn't compile,
 Rust has trouble with this.
 The size of a type needs to be known at compile time.
 
-While compiling, Rust tries to figure out the maximum amount of space an instance of that type takes up in memory.
+While compiling, Rust tries to figure out the maximum amount of space an instance of that type can take up in memory.
 That maximum amount of space needs to be finite.
 
 For our `Node` type, the process would go like this:
@@ -98,21 +102,22 @@ It's a recursive type, and has a possibly infinite size.
 The compiler then suggests to add some indirection.
 _indi-what?_
 
-They mean instead of storing the value (of unknown size) directly,
+They mean instead of storing the `Node` value (of unknown size) directly,
 store a pointer to that value.
 
-A `Box<T>` is great for this.
+A [`Box<T>`](https://doc.rust-lang.org/std/boxed/struct.Box.html) is great for this.
 It's a [smart pointer](/garden/rust-smart-pointers) that stores data on the stack _and_ the heap.
 Nearly all that data is stored on the heap.
 The only thing that is stored on the stack is a pointer to that location on the heap.
-Because `Box` is a smart pointer that implements the `Deref` trait, we can treat it as regular an immutable reference to that data.
+Because [`Box`](https://doc.rust-lang.org/std/boxed/struct.Box.html) is a smart pointer that implements the [`Deref`](https://doc.rust-lang.org/std/ops/trait.Deref.html) trait,
+we can treat it as a regular immutable reference to that data.
 
 That pointer has a fixed, known size, so we no longer have that "infinite size" problem.
 The data that is possibly infinite in size is stored on the heap now, that's okay.
 
-Wrapping the `Node` in a `Box`:
+Wrapping the `Node` in a [`Box`](https://doc.rust-lang.org/std/boxed/struct.Box.html):
 
-```rust title=main.rs
+```rust hl=3
 struct Node {
     data: i32,
     next: Option<Box<Node>>,
@@ -128,7 +133,7 @@ We linked a list.
 
 ## Final code
 
-```rust
+```rust title=main.rs
 struct Node {
     data: i32,
     next: Option<Box<Node>>,
