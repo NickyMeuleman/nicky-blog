@@ -19,6 +19,7 @@
   "dependencies": {
     "@emotion/core": "^10.0.28",
     "@nickymeuleman/gatsby-theme-blog": "^1.10.0",
+    "@reach/tooltip": "^0.13.0",
     "@theme-ui/color": "^0.3.1",
     "@theme-ui/presets": "^0.3.0",
     "@theme-ui/prism": "^0.3.0",
@@ -54,10 +55,13 @@
     "commit": "commit"
   },
   "devDependencies": {
+    "@babel/core": "^7.12.13",
+    "@babel/eslint-parser": "^7.12.13",
     "@commitlint/cli": "^8.3.5",
     "@commitlint/config-conventional": "^8.3.4",
     "@commitlint/prompt-cli": "^8.3.5",
-    "eslint": "6.8.0",
+    "babel-preset-gatsby": "^0.12.1",
+    "eslint": "^7.19.0",
     "eslint-config-airbnb": "18.1.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-import": "^2.20.1",
