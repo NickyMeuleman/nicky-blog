@@ -1,10 +1,10 @@
 /** @jsx jsx */
 import { jsx } from "theme-ui";
 import { useState, useEffect, useRef } from "react";
-// import Tooltip from "@reach/tooltip";
-// import "@reach/tooltip/styles.css";
+import Tooltip from "@reach/tooltip";
+import "@reach/tooltip/styles.css";
 
-const Sound = ({ fileName, label = fileName, children }) => {
+const Span = ({ fileName, inner }) => {
   const [src, setSrc] = useState();
   useEffect(() => {
     async function loadSound() {
@@ -19,12 +19,10 @@ const Sound = ({ fileName, label = fileName, children }) => {
   const handlePlay = () => {
     audioEl.current.play();
   };
-
   return (
-    // <Tooltip label={label}>
-    <span>
+    <>
       {/* eslint-disable-next-line */}
-      <audio ref={audioEl} src={src}>
+    <audio ref={audioEl} src={src}>
         Your browser does not support the <code>audio</code> element.
       </audio>
       <button
@@ -44,7 +42,7 @@ const Sound = ({ fileName, label = fileName, children }) => {
           p: 0,
         }}
       >
-        {children}
+        {inner}
         <svg
           role="img"
           width="20"
@@ -62,9 +60,23 @@ const Sound = ({ fileName, label = fileName, children }) => {
           />
         </svg>
       </button>
-    </span>
-    // </Tooltip>
+    </>
   );
+};
+
+const Sound = ({ fileName, label = fileName, children }) => {
+  const Component =
+    typeof window === `undefined` ? (
+      <Span fileName={fileName} inner={children} />
+    ) : (
+      <Tooltip label={label}>
+        <span>
+          <Span fileName={fileName} inner={children} />
+        </span>
+      </Tooltip>
+    );
+
+  return Component;
 };
 
 export { Sound };
