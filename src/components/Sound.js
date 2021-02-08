@@ -1,6 +1,6 @@
 /** @jsx jsx */
 import { jsx } from "theme-ui";
-import { useState, useEffect, useRef } from "react";
+import { Fragment, useState, useEffect, useRef } from "react";
 import Tooltip from "@reach/tooltip";
 import "@reach/tooltip/styles.css";
 
@@ -20,7 +20,7 @@ const Span = ({ fileName, inner }) => {
     audioEl.current.play();
   };
   return (
-    <>
+    <Fragment>
       {/* eslint-disable-next-line */}
     <audio ref={audioEl} src={src}>
         Your browser does not support the <code>audio</code> element.
@@ -60,7 +60,7 @@ const Span = ({ fileName, inner }) => {
           />
         </svg>
       </button>
-    </>
+    </Fragment>
   );
 };
 

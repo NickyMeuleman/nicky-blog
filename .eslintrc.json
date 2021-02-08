@@ -35,6 +35,7 @@
     "react/prop-types": 0,
     "react/jsx-props-no-spreading": 0,
     "react/jsx-pascal-case": 0,
+    "react/jsx-fragments": 0,
     "import/prefer-default-export": 0,
     "no-unused-vars": [
       "error",
