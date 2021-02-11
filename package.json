@@ -21,7 +21,7 @@
     "@nickymeuleman/gatsby-theme-blog": "^1.10.0",
     "@reach/tooltip": "^0.13.0",
     "@theme-ui/color": "^0.3.1",
-    "@theme-ui/presets": "^0.3.0",
+    "@theme-ui/presets": "^0.3.5",
     "@theme-ui/prism": "^0.3.0",
     "deepmerge": "^4.2.2",
     "gatsby": "^2.23.20",
