@@ -1,5 +1,5 @@
 import React from "react";
-import { Global } from "@emotion/core";
+import { Global } from "@emotion/react";
 import "typeface-source-sans-pro";
 
 const GlobalStyles = () => (

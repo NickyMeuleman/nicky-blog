@@ -143,8 +143,10 @@ const IndexPage = ({ data }) => {
                   title={post.title}
                   date={post.date}
                   authors={post.authors}
-                  coverSizes={
-                    post.cover ? post.cover.childImageSharp.fluid : null
+                  image={
+                    post.cover
+                      ? post.cover.childImageSharp.gatsbyImageData
+                      : null
                   }
                 />
               );
@@ -231,8 +233,10 @@ const IndexPage = ({ data }) => {
                   title={post.title}
                   date={post.date}
                   authors={post.authors}
-                  coverSizes={
-                    post.cover ? post.cover.childImageSharp.fluid : null
+                  image={
+                    post.cover
+                      ? post.cover.childImageSharp.gatsbyImageData
+                      : null
                   }
                 />
               );
@@ -267,9 +271,7 @@ export const indexQuery = graphql`
         title
         cover {
           childImageSharp {
-            fluid {
-              ...GatsbyImageSharpFluid_withWebp
-            }
+            gatsbyImageData(layout: FULL_WIDTH)
           }
         }
       }
@@ -294,9 +296,7 @@ export const indexQuery = graphql`
         title
         cover {
           childImageSharp {
-            fluid {
-              ...GatsbyImageSharpFluid_withWebp
-            }
+            gatsbyImageData(layout: FULL_WIDTH)
           }
         }
       }
