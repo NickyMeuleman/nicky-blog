@@ -50,7 +50,8 @@
     "lint:fix": "eslint src --fix",
     "format": "prettier '{**/,}*.{json,md,mdx,yml,yaml}'",
     "format:write": "prettier '{**/,}*.{json,md,mdx,yml,yaml}' --write",
-    "commit": "commit"
+    "commit": "commit",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@babel/core": "^7.12.13",
