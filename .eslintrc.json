@@ -10,7 +10,7 @@
     "airbnb",
     "airbnb/hooks",
     "prettier",
-    "prettier/react"
+    "prettier/prettier"
   ],
   "globals": {
     "Atomics": "readonly",
@@ -44,6 +44,8 @@
         "args": "none"
       }
     ],
-    "prettier/prettier": ["warn"]
+    "prettier/prettier": ["warn"],
+    "arrow-body-style": "off",
+    "prefer-arrow-callback": "off"
   }
 }
