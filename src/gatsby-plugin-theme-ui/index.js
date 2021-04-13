@@ -192,6 +192,46 @@ const theme = merge(themeConfig, {
           "calc(100% + var(--blockLength)) 100%, 100% 100%, 0 100%",
       },
     },
+    table: {
+      my: 3,
+      marginLeft: "auto",
+      marginRight: "auto",
+      width: "4/5",
+      textAlign: "left",
+      textIndent: 0,
+      borderCollapse: "collapse",
+      borderStyle: "solid",
+      borderWidth: 0,
+      thead: {
+        tr: {
+          "th:first-child": {
+            borderTopLeftRadius: `sm`,
+          },
+          "th:last-child": {
+            borderTopRightRadius: `sm`,
+          },
+        },
+      },
+      th: {
+        px: 2,
+        py: 1,
+        backgroundColor: "mutedBackground",
+        borderColor: "mutedPrimary",
+        borderStyle: "solid",
+        borderWidth: 0,
+        borderBottomWidth: "1px",
+      },
+      tr: {
+        borderStyle: "solid",
+        borderWidth: 0,
+        borderColor: "watermarkBg",
+        borderBottomWidth: "1px",
+      },
+      td: {
+        px: 2,
+        py: 1,
+      },
+    },
   },
 });
 
