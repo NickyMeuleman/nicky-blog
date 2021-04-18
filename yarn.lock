@@ -2053,12 +2053,12 @@
     schema-utils "^2.6.5"
     source-map "^0.7.3"
 
-"@reach/auto-id@0.13.2":
-  version "0.13.2"
-  resolved "https://registry.yarnpkg.com/@reach/auto-id/-/auto-id-0.13.2.tgz#6c7fe7142285707b0f38b2f556f32accb467df32"
-  integrity sha512-dWeXt6xxjN+NPRoZFXgmNkF89t8MEPsWLYjIIDf3gNXA/Dxaoytc9YBOIfVGpDSpdOwxPpxOu8rH+4Y3Jk2gHA==
+"@reach/auto-id@0.15.0":
+  version "0.15.0"
+  resolved "https://registry.yarnpkg.com/@reach/auto-id/-/auto-id-0.15.0.tgz#f46afebfc140b2099b95c7aec1f049d167d3833d"
+  integrity sha512-iACaCcZeqAhDf4OOwJpmHHS/LaRj9z3Ip8JmlhpCrFWV2YOIiiZk42amlBZX6CKH66Md+eriYZQk3TyAjk6Oxg==
   dependencies:
-    "@reach/utils" "0.13.2"
+    "@reach/utils" "0.15.0"
     tslib "^2.1.0"
 
 "@reach/observe-rect@1.2.0":
@@ -2066,50 +2066,51 @@
   resolved "https://registry.yarnpkg.com/@reach/observe-rect/-/observe-rect-1.2.0.tgz#d7a6013b8aafcc64c778a0ccb83355a11204d3b2"
   integrity sha512-Ba7HmkFgfQxZqqaeIWWkNK0rEhpxVQHIoVyW1YDSkGsGIXzcaW4deC8B0pZrNSSyLTdIk7y+5olKt5+g0GmFIQ==
 
-"@reach/portal@0.13.2":
-  version "0.13.2"
-  resolved "https://registry.yarnpkg.com/@reach/portal/-/portal-0.13.2.tgz#6f2a6f4afc14894bde9c6435667bb9b660887ed9"
-  integrity sha512-g74BnCdtuTGthzzHn2cWW+bcyIYb0iIE/yRsm89i8oNzNgpopbkh9UY8TPbhNlys52h7U60s4kpRTmcq+JqsTA==
+"@reach/portal@0.15.0":
+  version "0.15.0"
+  resolved "https://registry.yarnpkg.com/@reach/portal/-/portal-0.15.0.tgz#b137582a1ecc4e04c60ce9a9c672dd2d23a2f1cc"
+  integrity sha512-Aulqjk/PIRu+R7yhINYAAYfYh++ZdC30qwHDWDtGk2cmTEJT7m9AlvBX+W7T+Q3Ux6Wy5f37eV+TTGid1CcjFw==
   dependencies:
-    "@reach/utils" "0.13.2"
+    "@reach/utils" "0.15.0"
     tslib "^2.1.0"
 
-"@reach/rect@0.13.2":
-  version "0.13.2"
-  resolved "https://registry.yarnpkg.com/@reach/rect/-/rect-0.13.2.tgz#a7fb8ebc3685504306b324b3abc92dcec0e00044"
-  integrity sha512-Vr1J2CzXWEGVMLxHblPMt8pgwW0d7s28SflFNCdFlbHwjgWSvnKwHue9p90bYRb4W/5u6gYjYX6znzSMxv/8ZA==
+"@reach/rect@0.15.0":
+  version "0.15.0"
+  resolved "https://registry.yarnpkg.com/@reach/rect/-/rect-0.15.0.tgz#c374b2971d250d7eeea6846fb4d64733b799f94e"
+  integrity sha512-Nu0zG4Xq8Z0C3Yr3wbjtj7fvII1q2KopHDStNtmL26oWPzlaZJ9A1K6rZSPIqxKkx1hvl6AUTeom7eHTIKhHjA==
   dependencies:
     "@reach/observe-rect" "1.2.0"
-    "@reach/utils" "0.13.2"
+    "@reach/utils" "0.15.0"
     prop-types "^15.7.2"
+    tiny-warning "^1.0.3"
     tslib "^2.1.0"
 
-"@reach/tooltip@^0.13.2":
-  version "0.13.2"
-  resolved "https://registry.yarnpkg.com/@reach/tooltip/-/tooltip-0.13.2.tgz#d81aaf8a625ece280f1db04723bba79c3c7ae6e2"
-  integrity sha512-1MCH/2VkPHR2FrKlTJQtQGNwoF8IChMjWesJKGnwSe10UkrV+rb0rbMgYb8VSNXxuqTuN86Z0+BFb5NbyZJsPQ==
+"@reach/tooltip@^0.15.0":
+  version "0.15.0"
+  resolved "https://registry.yarnpkg.com/@reach/tooltip/-/tooltip-0.15.0.tgz#b611e52bf0003a2942870037c81c37953b54f378"
+  integrity sha512-eFKtelL/iAcYSlNx2buxpxXbgKTQhdcvVxjzfVzkcHkSRFhRbQ+PmDBCdSxPhP89Cq6ULcxlFraH+PvPVN3y/w==
   dependencies:
-    "@reach/auto-id" "0.13.2"
-    "@reach/portal" "0.13.2"
-    "@reach/rect" "0.13.2"
-    "@reach/utils" "0.13.2"
-    "@reach/visually-hidden" "0.13.2"
+    "@reach/auto-id" "0.15.0"
+    "@reach/portal" "0.15.0"
+    "@reach/rect" "0.15.0"
+    "@reach/utils" "0.15.0"
+    "@reach/visually-hidden" "0.15.0"
     prop-types "^15.7.2"
+    tiny-warning "^1.0.3"
     tslib "^2.1.0"
 
-"@reach/utils@0.13.2":
-  version "0.13.2"
-  resolved "https://registry.yarnpkg.com/@reach/utils/-/utils-0.13.2.tgz#87e8fef8ebfe583fa48250238a1a3ed03189fcc8"
-  integrity sha512-3ir6cN60zvUrwjOJu7C6jec/samqAeyAB12ZADK+qjnmQPdzSYldrFWwDVV5H0WkhbYXR3uh+eImu13hCetNPQ==
+"@reach/utils@0.15.0":
+  version "0.15.0"
+  resolved "https://registry.yarnpkg.com/@reach/utils/-/utils-0.15.0.tgz#5b183d668f9bb900b2dec7a33c028a2a828d27b2"
+  integrity sha512-JHHN7T5ucFiuQbqkgv8ECbRWKfRiJxrO/xHR3fHf+f2C7mVs/KkJHhYtovS1iEapR4silygX9PY0+QUmHPOTYw==
   dependencies:
-    "@types/warning" "^3.0.0"
+    tiny-warning "^1.0.3"
     tslib "^2.1.0"
-    warning "^4.0.3"
 
-"@reach/visually-hidden@0.13.2":
-  version "0.13.2"
-  resolved "https://registry.yarnpkg.com/@reach/visually-hidden/-/visually-hidden-0.13.2.tgz#ee21de376a7e57e60dc92d95a671073796caa17e"
-  integrity sha512-sPZwNS0/duOuG0mYwE5DmgEAzW9VhgU3aIt1+mrfT/xiT9Cdncqke+kRBQgU708q/Ttm9tWsoHni03nn/SuPTQ==
+"@reach/visually-hidden@0.15.0":
+  version "0.15.0"
+  resolved "https://registry.yarnpkg.com/@reach/visually-hidden/-/visually-hidden-0.15.0.tgz#70ae561c33af709769df05a796ddb998c3a1ee20"
+  integrity sha512-ZRRBOaRrvSM6iCk+R2/8txFfXLY2DsnZQuaHNqOuSvz8vN2+syUnni1T+hpC93rvBRXtqD36kqdTsu5qihGnFw==
   dependencies:
     prop-types "^15.7.2"
     tslib "^2.1.0"
@@ -2745,11 +2746,6 @@
     "@types/node" "*"
     "@types/unist" "*"
     "@types/vfile-message" "*"
-
-"@types/warning@^3.0.0":
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/@types/warning/-/warning-3.0.0.tgz#0d2501268ad8f9962b740d387c4654f5f8e23e52"
-  integrity sha1-DSUBJorY+ZYrdA04fEZU9fjiPlI=
 
 "@types/websocket@1.0.1":
   version "1.0.1"
@@ -14207,6 +14203,11 @@ tiny-emitter@^2.0.0:
   resolved "https://registry.yarnpkg.com/tiny-emitter/-/tiny-emitter-2.1.0.tgz#1d1a56edfc51c43e863cbb5382a72330e3555423"
   integrity sha512-NB6Dk1A9xgQPMoGqC5CVXn123gWyte215ONT5Pp5a0yt4nlEoO1ZWeCwpncaekPHXO60i47ihFnZPiRPjRMq4Q==
 
+tiny-warning@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/tiny-warning/-/tiny-warning-1.0.3.tgz#94a30db453df4c643d0fd566060d60a875d84754"
+  integrity sha512-lBN9zLN/oAf68o3zNXYrdCt1kP8WsiGW8Oo2ka41b2IM5JL/S1CTyX1rW0mb/zSuJun0ZUrDxx4sqvYS2FWzPA==
+
 tinycolor2@^1.4.1:
   version "1.4.2"
   resolved "https://registry.yarnpkg.com/tinycolor2/-/tinycolor2-1.4.2.tgz#3f6a4d1071ad07676d7fa472e1fac40a719d8803"
@@ -15044,13 +15045,6 @@ vorpal@^1.12.0:
     node-localstorage "^0.6.0"
     strip-ansi "^3.0.0"
     wrap-ansi "^2.0.0"
-
-warning@^4.0.3:
-  version "4.0.3"
-  resolved "https://registry.yarnpkg.com/warning/-/warning-4.0.3.tgz#16e9e077eb8a86d6af7d64aa1e05fd85b4678ca3"
-  integrity sha512-rpJyN222KWIvHJ/F53XSZv0Zl/accqHR8et1kpaMTD/fLCRxtV8iX8czMzY7sVZupTI3zcUTg8eycS2kNF9l6w==
-  dependencies:
-    loose-envify "^1.0.0"
 
 watchpack@^2.0.0:
   version "2.1.1"
