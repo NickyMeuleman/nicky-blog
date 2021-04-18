@@ -829,3 +829,98 @@ Selection sort is Omega of n², `𝛀(n²)`.
 For selection sort, in the best case:
 For every element in the list, you have to walk the entire list to pick the next element.
 Even if that element ends up being the first one you come across, you still have to check every remaining element in the list.
+
+## Recursion
+
+How do we determine the big O of a recursive function?
+
+The amount of steps a recurive function takes to complete is hard to express in an equation.
+Inside of that equation will be "the amount of steps this function takes to complete",
+that feels like cheating!
+
+The crucial thing is, the "amount of steps this function takes to complete" is using a different input.
+Also, if you follow the rabbithole down, eventually, the recusion stops.
+If it doesn't, you've got yourself an infinite loop.
+
+<Aside variant="info">
+
+That's called a [recurrence relationship](https://en.wikipedia.org/wiki/Recurrence_relation),
+and there are a bunch of ways to solve them.
+
+</Aside>
+
+An example is the recursive solution to [the towers of Hanoi](https://en.wikipedia.org/wiki/Tower_of_Hanoi).
+
+```js bigo.js
+function towers(size, fromStack, toStack, spareStack) {
+  if (size === 1) {
+    console.log(`Move disk from ${fromStack} to ${toStack}`);
+  } else {
+    towers(size - 1, fromStack, spareStack, toStack);
+    towers(1, fromStack, toStack, spareStack);
+    towers(size - 1, spareStack, toStack, fromStack);
+  }
+}
+```
+
+`n` is the `size` parameter.
+The amount of steps for an `n` can be described as:
+
+- Check if you are in the base case
+- Move a tower of size `n-1`
+- Move a tower of size `1`
+- Move a tower of size `n-1`
+
+The equation for that is `t(n) = 1 + t(n-1) + 1 + t(n-1)`
+
+<Aside variant="info">
+
+I'm using brackets again,
+this time, they _do_ mean a function.
+A math function.
+The thing inside is the input to that function.
+
+I named the function `t` because it's the ~~boring~~ logical choice.
+
+</Aside>
+
+The equation is:
+`t(n) = 1 + t(1) + 2 * t(n-1)`.
+
+That `t(1)` part is the base case, it take 2 constant steps.
+
+`t(n) = 3 + 2 * t(n-1)`
+
+<Aside variant="danger">
+
+Beware below, there be ~~dragons~~ math.
+
+</Aside>
+
+Now comes the cool part of solving a recurrence relation like this.
+Substitution! Over, and over, and over.
+We write the entire equation in the place there `t(n - 1)` is.
+
+`t(n) = 3 + 2 * (3 + 2 * t(n-2))`
+
+`t(n) = 3 + 2 * 3 + 4 * t(n-2)`
+
+Doing it again results in:
+`t(n) = 3 + 2 * 3 + 4 * 3 + 8 * t(n-3)`
+
+Doing it a number of times (and calling that number `k`):
+
+`t(n) = 3 * (1 + 2 + 3 + ... + 2^(k-1)) + 2^k * t(n-k)`
+
+- The important part to see is that the first time, we had 2 versions of the problen. (`2 * t(n-1)`)
+- The next time, we had 4 versions of that problem. (`4 * t(n-2)`)
+- The next time, 8. (`8 * t(n-3)`)
+
+That last version of the equation with `k` is solvable.
+We know `t(1)` takes 2 steps.
+If we choose our `k` so that the `n-k = 1`, we're done.
+
+If we substitute that in, we end up with `O(2ⁿ)`.
+
+To recognize exponential big O in recursive algorithms:
+Typically when an algorithm for one size results in two or more problems of a smaller size.
