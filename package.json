@@ -17,7 +17,7 @@
   ],
   "homepage": "https://nickymeuleman.netlify.com/",
   "dependencies": {
-    "@emotion/react": "^11.1.5",
+    "@emotion/react": "^11.4.0",
     "@nickymeuleman/gatsby-theme-blog": "^2.0.0",
     "@reach/tooltip": "^0.13.2",
     "@theme-ui/color": "^0.3.5",
