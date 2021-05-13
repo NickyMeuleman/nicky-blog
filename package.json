@@ -56,9 +56,9 @@
   "devDependencies": {
     "@babel/core": "^7.12.13",
     "@babel/eslint-parser": "^7.12.13",
-    "@commitlint/cli": "^12.0.1",
-    "@commitlint/config-conventional": "^12.0.1",
-    "@commitlint/prompt-cli": "^12.0.1",
+    "@commitlint/cli": "^12.1.4",
+    "@commitlint/config-conventional": "^12.1.4",
+    "@commitlint/prompt-cli": "^12.1.4",
     "babel-preset-gatsby": "^1.0.0",
     "eslint": "^7.2.0",
     "eslint-config-airbnb": "18.2.1",
