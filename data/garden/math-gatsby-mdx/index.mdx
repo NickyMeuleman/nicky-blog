@@ -1,0 +1,73 @@
+---
+title: "Adding math support to a Gatsby MDX blog"
+date: "2021-06-13"
+authors: ["nicky"]
+tags: ["math", "Gatsby"]
+---
+
+import { MathBlock } from "./../../../src/components/MathBlock";
+
+This demo supports math in mdx, using the [KaTeX](https://katex.org/) syntax.
+
+$a$ = first item  
+$l$ = last item  
+$n$ = amount of items  
+$d$ = common difference
+
+Some inline math, coming right up. $T_n = a + (n-1)d$
+
+## Using a `MathBlock` explicitly
+
+Mathblock using the `math` prop:
+
+<MathBlock title="Arithmetic progression sum" math="S_n = \frac{n(a + l)}{2}" />
+
+Mathblock using `children`:
+
+<MathBlock title="Arithmetic progression sum">
+
+S_n = \frac{n(2a + (n-1)d)}{2}
+
+</MathBlock>
+
+## Using `$$` signs in mdx
+
+### A vanilla block
+
+Input:
+
+```mdx title=index.mdx numberLines
+$$
+S_n = \frac{n(2a + (n-1)d)}{2}
+$$
+```
+
+Output:
+
+$$
+S_n = \frac{n(2a + (n-1)d)}{2}
+$$
+
+### With a meta string
+
+The title that can't have spaces because of the way it's parsed 😢
+
+Input:
+
+```mdx title=index.mdx numberLines
+<!-- prettier-ignore -->
+$$ title=Arithmetic-progression-sum
+S_n = \frac{n(a + l)}{2}
+\newline
+S_n = \frac{n(2a + (n-1)d)}{2}
+$$
+```
+
+Output:
+
+<!-- prettier-ignore -->
+$$ title=Arithmetic-progression-sum
+S_n = \frac{n(a + l)}{2}
+\newline
+S_n = \frac{n(2a + (n-1)d)}{2}
+$$
