@@ -1,6 +1,7 @@
 ---
 title: "Adding math support to a Gatsby MDX blog"
 date: "2021-06-14"
+updatedAt: "2021-06-15"
 authors: ["nicky"]
 tags: ["math", "Gatsby"]
 cover: "./cover.jpg"
@@ -10,27 +11,43 @@ import { MathBlock } from "./../../../src/components/MathBlock";
 
 <!-- Photo by <a href="https://unsplash.com/@jeshoots?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">JESHOOTS.COM</a> on <a href="https://unsplash.com/s/photos/math?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a> -->
 
+<Aside>
+
+TL;DR
+
+1. Add [`remark-math`](https://www.npmjs.com/package/remark-math).
+2. Intercept the math and render it with [`react-katex`](https://www.npmjs.com/package/@matejmazur/react-katex).
+
+Show me a minimal [code example](https://github.com/NickyMeuleman/gatsby-mdx-math-example).
+
+I'd like to see [a demo](https://nickymeuleman.github.io/gatsby-mdx-math-example/) of that code example in action!
+
+</Aside>
+
 I wanted to add support to display equations on my blog.
 A popular tool to achieve this is [KaTeX](https://katex.org/).
 
-The goal is being able to write a string in the TeX syntax inside an `.mdx` file,
-and a pretty math equation shows up on the rendered page.
+The goal is being able to write a string in the TeX syntax inside a `.mdx` file,
+and a pretty math equation showing up on the rendered page.
 
 My blog uses [`gatsby-plugin-mdx`](https://github.com/gatsbyjs/gatsby/tree/master/packages/gatsby-plugin-mdx) to be able to use `.mdx` files.
 
-To achieve the goal of writing KaTeX blocks in mdx and getting pretty equations to show up, several things need to happen.
+To achieve the goal of writing KaTeX blocks in MDX and getting pretty equations to show up, several things need to happen.
 
-`gatsby-plugin-mdx` allows you to pass `remark` and `rehype` plugins it will use internally.
+[`gatsby-plugin-mdx`](https://github.com/gatsbyjs/gatsby/tree/master/packages/gatsby-plugin-mdx) allows you to pass plugins it will use internally.  
+We'll use that to "make pretty math happen" 💅!
 
 ## Pinpoint the math sections in mdx
 
-I used [`remark-math`](https://www.npmjs.com/package/remark-math) for this.
+The first step is getting the MDX toolchain to recognize the math inside a `.mdx` file.
+
+I used the [`remark-math`](https://www.npmjs.com/package/remark-math) plugin for this.
 It takes your markdown, looks for the relevant math sections, and marks them as such.
 
 An inline math section is opened with a single dollar sign, and ended by an other single dollar sign `$`.  
-A math section that should be a block (so: start on a new line) is opened and closed by double dollar signs `$$`.
+A math section that should be a block (so: it should start on a new line) is opened and closed by double dollar signs `$$`.
 
-```mdx title=index.mdx
+```mdx title=index.mdx numberLines
 Some math on the same line: $T_n = a + (n-1)d$
 
 Or, some math in a block
@@ -41,22 +58,23 @@ $$
 ```
 
 The way markdown works has to do with [Abstract syntax trees](https://en.wikipedia.org/wiki/Abstract_syntax_tree).
-They're terribly complex at times, but also very fascinating, and very powerful tools.
+They're terribly complex at times, but they're also very fascinating and extremely powerful tools.
 
-`remark-math` manipulates that tree in such a way that your inline math turns into an `inlineMath` node,
+[`remark-math`](https://www.npmjs.com/package/remark-math) manipulates that tree in such a way that your inline math turns into an `inlineMath` node,
 and your block math turns into a `math` node.
 
-At the end of the `mdx` pipeline, HTML is rendered.  
-The inline math blocks will turn into `span`s with a class of `math-inline`.  
-A math block will turn into a `div` with a class of `math-display`.
+At the end of the MDX pipeline, HTML is rendered.
 
-The content of those HTML-elements will be a string with the KaTeX you wrote in the mdx file.
+- The inline math blocks will turn into `span`s with a class of `math-inline`.
+- A math block will turn into a `div` with a class of `math-display`.
+
+The content of those HTML-elements will be a string with the [TeX](https://katex.org/docs/supported.html) you wrote in the `.mdx` file.
 
 So `$T_n = a + (n-1)d$` turns into `<span class="math math-inline">T_n = a + (n-1)d</span>`
 
 While the block
 
-```mdx title=index.mdx
+```mdx title=index.mdx numberLines
 $$
 T_n = a + (n-1)d
 $$
@@ -68,22 +86,20 @@ Turns into `<div class="math math-display">T_n = a + (n-1)d</div>`
 
 <Aside variant="danger">
 
-Make sure to install version 3 of `remark-math` if you are using `gatsby-plugin-mdx`.
-The mdx plugin uses version 10 of `remark`, while version 4 of `remark-math` requires version 13 of `remark`.
+Make sure to install version 3 of [`remark-math`](https://www.npmjs.com/package/remark-math) if you are using [`gatsby-plugin-mdx`](https://github.com/gatsbyjs/gatsby/tree/master/packages/gatsby-plugin-mdx).
+Internally, the mdx plugin uses version 10 of [`remark`](https://github.com/remarkjs/remark), while version 4 of [`remark-math`](https://www.npmjs.com/package/remark-math) requires version 13 of [`remark`](https://github.com/remarkjs/remark).
 
 YAY dependencies!
 
 ```bash
 npm i remark-math@3.0.1
-# or
-yarn add remark-math@3.0.1
 ```
 
 </Aside>
 
-Install the `remark-math` plugin, and add it to the configuration option of `gatsby-plugin-mdx` in `gatsby-config.js`.
+Install the [`remark-math`](https://www.npmjs.com/package/remark-math) plugin, and add it to the configuration option of [`gatsby-plugin-mdx`](https://github.com/gatsbyjs/gatsby/tree/master/packages/gatsby-plugin-mdx) in [`gatsby-config.js`](https://www.gatsbyjs.com/docs/reference/config-files/gatsby-config/).
 
-```js title=gatsby-config.js hl=7
+```js title=gatsby-config.js hl=7 numberLines
 module.exports = {
   // --- snip ---
   plugins: [
@@ -107,31 +123,36 @@ Wichever way you choose, adding the required KaTeX CSS file whenever math is ren
 
 The KaTeX CSS file needs to be imported on a page to render the math correctly.
 
-You can do this manually, in every mdx file, or in a layout file, or in `gatsby-browser.js`,...
+You can do this manually in every mdx file, or once in a layout file, or in [`gatsby-browser.js`](https://www.gatsbyjs.com/docs/reference/config-files/gatsby-browser/),...
 
 For example, via the import style in a `.mdx` or `.js` file
 
-```
-import "katex/dist/katex.min.css"
+```js
+import "katex/dist/katex.min.css";
 ```
 
-Or via the require style inside `gatsby-browser.js`
+Or via the require style inside [`gatsby-browser.js`](https://www.gatsbyjs.com/docs/reference/config-files/gatsby-browser/)
 
-```
-require("katex/dist/katex.min.css")
+```js
+require("katex/dist/katex.min.css");
 ```
 
 Or a `<link>` tag in an HTML file:
 
-```
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+```html
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+  integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
+  crossorigin="anonymous"
+/>
 ```
 
 </Aside>
 
 ### Option 1: a Rehype plugin
 
-While a remark plugin like `remark-math` does work on the AST of the mdx **before** it turned into HTML.
+While a remark plugin like [`remark-math`](https://www.npmjs.com/package/remark-math) does work on the <abbr title="Abstract syntax tree">[AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree)</abbr> of the mdx **before** it turned into HTML.
 
 A rehype plugin does work **after** that HTML is generated and changes it.
 
@@ -143,9 +164,14 @@ It just needs some of that CSS.
 
 #### Wiring up rehype-katex
 
-Install the `rehype-katex` plugin, and add it to the configuration option of `gatsby-plugin-mdx` in `gatsby-config.js`.
+Install the [`rehype-katex`](https://www.npmjs.com/package/rehype-katex) plugin,
+and add it to the configuration option of [`gatsby-plugin-mdx`](https://github.com/gatsbyjs/gatsby/tree/master/packages/gatsby-plugin-mdx) inside the [`gatsby-config.js`](https://www.gatsbyjs.com/docs/reference/config-files/gatsby-config/) file.
 
-```js title=gatsby-config.js hl=8
+```bash
+npm i rehype-katex
+```
+
+```js title=gatsby-config.js hl=8 numberLines
 module.exports = {
   // --- snip ---
   plugins: [
@@ -166,11 +192,12 @@ Pretty math, yay!
 
 ### Option 2: a React component
 
-I like the React workflow, so this is the option I chose for this blog.
+I like the React workflow, so this is the option I chose.
 
-It's a bit more flexible, I take in those `<span class="math-inline">` and `<div class="math-display">`,
-and give the string to a React component to render correctly.
-Should I ever want to use it outside of mdx, I can.
+It's a bit more flexible, Should I ever want to use it outside of mdx, I can.
+
+I take in those `<span class="math-inline">` and `<div class="math-display">` elements,
+and give the string they contain to a React component to render correctly.
 
 The React package I went with is [@matejmazur/react-katex
 ](https://www.npmjs.com/package/@matejmazur/react-katex).
@@ -179,26 +206,26 @@ It has a `<TeX />` component that can turn the string of raw KaTeX into a form t
 <Aside variant="info">
 
 I also chose this method because I wanted to create a custom component.
-Give it pop ✨ with some custom CSS and add some extra features like giving a math block a title.
+Make it pop ✨ with some custom CSS, and add some extra features like giving a math block a title.
 
 </Aside>
 
-#### Using react-katex
+#### Using `react-katex`
 
-Mdx allows you to intercept the HTML that gets rendered and add to or replace it.
+MDX allows you to intercept the HTML that gets rendered and add to, or replace it.
 
-This is the mechanism we'll use to intercept those `<span class="math-inline">` and `<div class="math-display">` tags,
+This is the mechanism I used to intercept those `<span class="math-inline">` and `<div class="math-display">` tags,
 and give the contents to the `<TeX />` component.
 
-The `<MdxProvider />` component from `"@mdx-js/react"` allows this.
-If you already have one of those in your app that wraps the mdx files you want to write math in, great!
+The [`<MdxProvider />`](https://mdxjs.com/getting-started#mdxprovider) component from [`@mdx-js/react`](https://www.npmjs.com/package/@mdx-js/react) allows this.
+If you already have one of those in your app that wraps the `.mdx` files you want to write math in, great!
 
-If not, you can add one in Gatsby's [`wrapRootElement`](https://www.gatsbyjs.com/docs/reference/config-files/gatsby-browser/#wrapRootElement) in both `gatsby-browser.js` and `gatsby-ssr.js`.
-Or, in the [layout component](https://www.gatsbyjs.com/plugins/gatsby-plugin-mdx/#default-layouts) the mdx file will use.
+If not, you can add one in Gatsby's [`wrapRootElement`](https://www.gatsbyjs.com/docs/reference/config-files/gatsby-browser/#wrapRootElement) in both [`gatsby-browser.js`](https://www.gatsbyjs.com/docs/reference/config-files/gatsby-browser/) and [`gatsby-ssr.js`](https://www.gatsbyjs.com/docs/reference/config-files/gatsby-ssr/).
+Or, in the [layout component](https://www.gatsbyjs.com/plugins/gatsby-plugin-mdx/#default-layouts) the `.mdx` file will use.
 
-Yes, I know, there are _a lot_ of moving parts here.
+_Yes, I know, there are **a lot** of moving parts here._
 
-```js title=MdxLayout.js
+```jsx title=MdxLayout.js numberLines
 import React from "react";
 import TeX from "@matejmazur/react-katex";
 import { MDXProvider } from "@mdx-js/react";
@@ -207,14 +234,14 @@ const components = {
   div: (props) => {
     if (props.className.includes("math-display")) {
       import("katex/dist/katex.min.css");
-      return <Tex block math={props.children} />;
+      return <TeX block math={props.children} />;
     }
     return <div {...props} />;
   },
   span: (props) => {
-    if (props.className.includes("math-inliney")) {
+    if (props.className.includes("math-inline")) {
       import("katex/dist/katex.min.css");
-      return <Tex math={props.children} />;
+      return <TeX math={props.children} />;
     }
     return <span {...props} />;
   },
@@ -247,7 +274,7 @@ $d$ = common difference
 
 Input:
 
-```mdx title=index.mdx
+```mdx title=index.mdx numberLines
 Some inline math, coming right up. $T_n = a + (n-1)d$
 ```
 
@@ -266,7 +293,7 @@ or by including the KaTeX string in between the opening and closing tags.
 Input:
 
 <!-- prettier-ignore -->
-```mdx title=index.mdx
+```mdx title=index.mdx numberLines
 import { MathBlock } from "./../src/components/MathBlock";
 <MathBlock title="Arithmetic progression sum" math="S_n = \frac{n(a + l)}{2}" />
 ```
@@ -280,7 +307,7 @@ Output:
 Input:
 
 <!-- prettier-ignore -->
-```mdx title=index.mdx
+```mdx title=index.mdx numberLines
 import { MathBlock } from "./../src/components/MathBlock";
 <MathBlock title="Arithmetic progression sum">
 
