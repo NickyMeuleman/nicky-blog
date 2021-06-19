@@ -12,9 +12,9 @@ const Span = ({ className, children, ...rest }) => {
     );
   }
   return (
-    <div className={className} {...rest}>
+    <span className={className} {...rest}>
       {children}
-    </div>
+    </span>
   );
 };
 
