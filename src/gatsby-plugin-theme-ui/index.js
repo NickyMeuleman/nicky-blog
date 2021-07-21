@@ -37,6 +37,40 @@ const theme = merge(themeConfig, {
       'Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace',
   },
   styles: {
+    root: {
+      "::-webkit-scrollbar-thumb": {
+        ":hover": {
+          backgroundColor: "mutedText",
+        },
+        ":active": {
+          backgroundColor: "text",
+        },
+        minHeight: "58px",
+        backgroundColor: "mutedTextBg",
+        borderRadius: "8px",
+        borderWidth: "4px",
+        borderStyle: "solid",
+        borderColor: "background",
+      },
+      "::-webkit-scrollbar": {
+        width: "16px",
+      },
+      details: {
+        "::-webkit-scrollbar-thumb": {
+          ":hover": { backgroundColor: "mutedText" },
+          ":active": { backgroundColor: "text" },
+          minHeight: "58px",
+          backgroundColor: "mutedTextBg",
+          borderRadius: "8px",
+          borderWidth: "4px",
+          borderStyle: "solid",
+          borderColor: "background",
+        },
+        "::-webkit-scrollbar": {
+          width: "16px",
+        },
+      },
+    },
     Header: {
       link: {
         "--underlineWidth": (t) => t.borderWidths[2],
@@ -147,6 +181,20 @@ const theme = merge(themeConfig, {
         backgroundColor: nightOwl.backgroundColor,
         borderBottomColor: `#262a39`,
         color: nightOwl.color,
+      },
+      "::-webkit-scrollbar-thumb": {
+        ":hover": { backgroundColor: "#262a39" },
+        ":active": { backgroundColor: nightOwl.color },
+        minHeight: "58px",
+        // taken from the VSCode theme
+        backgroundColor: `#084d8180`,
+        borderRadius: "8px",
+        borderWidth: "4px",
+        borderStyle: "solid",
+        borderColor: nightOwl.backgroundColor,
+      },
+      "::-webkit-scrollbar": {
+        height: "16px",
       },
     },
     h1: {
