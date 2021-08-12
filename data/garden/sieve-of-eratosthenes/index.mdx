@@ -2,7 +2,7 @@
 title: "The Sieve of Eratosthenes"
 date: "2021-08-12"
 authors: ["nicky"]
-tags: ["rust, algorithms"]
+tags: ["algorithms, rust, javascript, python"]
 ---
 
 The [sieve of Eratosthenes](https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes) finds all [prime numbers](https://en.wikipedia.org/wiki/Prime_number) up to a given limit.
@@ -27,59 +27,89 @@ Every number that is still marked as prime is.
 
 ## Optimizations
 
-### Square root
+By using some math we can do significantly less work while still getting the same result.
+
+### Repeat until the square root
 
 <Aside>
 
-TL;DR: Only check numbers up to the square root of the upper limit.
+TL;DR: Only check numbers up to the square root of the upper limit.  
 After that, every number up to that limit will be accurately marked, because math is cool.
 
 </Aside>
 
-While iterating through all numbers, when we hit the square root of that upper limit,
-every number up to that limit will be accurately marked.
-It's unnecessary to continue.
+While iterating through all numbers, we can stop at the square root of the upper limit.
 
-Any non-prime number can be expressed as the product of 2 numbers that are not 1 or itself.
+Any non-prime can be expressed as the product of 2 numbers that are not 1 or itself.
 
 $$
 n = a * b
 $$
 
-$a$ and $b$ are _factors_ or $n$.
+$a$ and $b$ are _factors_ of $n$.
 
-Because $n = \sqrt{n} * \sqrt{n}$, we can state that one number is less than or equal to and the other is greater than or equal to $\sqrt{n}$.
+$n = \sqrt{n} * \sqrt{n}$, so one factor has to be less than or equal to $\sqrt{n}$ while the other is greater than or equal to that square root.
 
 $$
-a \leq \sqrt{n}
-\newline
-b \geq \sqrt{n}
+a \leq \sqrt{n} \leq b
 $$
-
-If you unmark multiples of all numbers less than or equal to $\sqrt{n}$, then all numbers greater than $\sqrt{n}$ will also be unmarked.
 
 Every number that is less than or equal to $n$ and is a multiple of a number greater than $\sqrt{n}$ will have a factor that is less than or equal to $\sqrt{n}$ and will already be unmarked.
 
 As a result, all the non-primes $\geq \sqrt{n}$ will be unmarked in the process of checking every number $\leq \sqrt{n}$.
 
----
+#### Example
 
-An **example** by taking the sentence above and plugging in numbers:
+$$
+\sqrt{21} = 4.58
+$$
 
-Every number that is less than or equal to $21$ and is a multiple of a number greater than $\sqrt{21} = 4.58$ will have a factor that is less than or equal to $\sqrt{21} = 4.58$.
+Any number between $4.58$ and $21$ that is a multiple of a number larger than $4.58$ will have a factor less than $4.58$.
 
-$18$ is less than $21$ and is greater than $4.58$.
-That sentence states it will have a factor that is less than $4.58$, and it does!
+Because $18$ is between $4.58$ and $21$, a factor of $18$ will be less than $4.58$.
 
-$3$ is a factor.
-Because $3$ is a factor of $18$, it will already have been unmarked during the part where we unmark every multiple in a previous iteration of the algorithm!
+That checks out, $3$ is a factor!
+
+Because $3$ is a factor of $18$, $18$ was unmarked while going through multiples during a previous iteration of the algorithm!
 
 ### Start unmarking at the square
+
+<Aside>
+
+TL;DR: Start unmarking multiples of a number at that number squared.  
+All multiples below are already unmarked, because math is cool.
+
+</Aside>
 
 During the step the algorithm unmarks all multiples of a number.
 We can start unmarking at that number squared.
 
-Every multiple below it will already be unmarked in a previous iteration.
+Every smaller multiple was already unmarked in a previous iteration.
+
+Why?
+
+A multiple can be written as a multiplier times a number.
+
+- $m = multiple$
+- $k = multiplier$
+- $p = prime$
+
+$$
+m = k * p
+$$
+
+The number that is now $p$, was previously $k$ for every smaller prime number.
+
+Because $k * p = p * k$, every multiple smaller than $p * p$ has already been unmarked in a previous iteration.
+
+#### Example
+
+If our current $n =  5$.
+
+$5$ was previously the multiplier for every smaller prime number.
+
+- $5 * 2$ was unmarked when $n$ was $2$, we don't need to calculate $2 * 5$
+- $5 * 3$ was unmarked when $n$ was $3$, we don't need to calculate $3 * 5$
 
 ## Step by step in code
 
