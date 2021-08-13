@@ -1,6 +1,7 @@
 ---
 title: "The Sieve of Eratosthenes"
 date: "2021-08-12"
+updatedAt: "2021-08-13"
 authors: ["nicky"]
 tags: ["algorithms, rust, javascript, python"]
 ---
@@ -19,13 +20,14 @@ The number 1 is a special case, so we start off by unmarking it.
 Then we go through the numbers one by one.
 For every non-prime number we find, skip to the next number.
 
-If a number is still marked as prime, it is.  
+If a number is still marked as prime when we get to it, that means it is prime.  
 Before moving on to the next number, we first unmark every multiple of the found prime.
 
 Those multiples can be divided through the prime number we just found, so by definition isn't prime.
 
 We repeat this process until we reach the upper limit.
-Every number that is still marked as prime is.
+
+Every number that is still marked as prime, is truly prime.
 
 ## Optimizations
 
@@ -56,9 +58,17 @@ $$
 a \leq \sqrt{n} \leq b
 $$
 
-Every number that is less than or equal to $n$ and is a multiple of a number greater than $\sqrt{n}$ will have a factor that is less than or equal to $\sqrt{n}$ and will already be unmarked.
+Up to any number $n$, all multiples of a number bigger than $\sqrt{n}$ must have a factor smaller than $\sqrt{n}$.
+As a result that multiple will already be unmarked.
 
-As a result, all the non-primes $\geq \sqrt{n}$ will be unmarked in the process of checking every number $\leq \sqrt{n}$.
+<Aside variant="info">
+
+The factors can both be identical to $\sqrt{n}$.  
+$49$ for example
+
+</Aside>
+
+This means that all the non-primes $\geq \sqrt{limit}$ will be unmarked in the process of checking every number $\leq \sqrt{limit}$.
 
 #### Example
 
@@ -66,13 +76,17 @@ $$
 \sqrt{21} = 4.58
 $$
 
-Any number between $4.58$ and $21$ that is a multiple of a number larger than $4.58$ will have a factor less than $4.58$.
+Any number up to $21$ that is a multiple of a number larger than $4.58$ will have a factor smaller than $4.58$.
 
-Because $18$ is between $4.58$ and $21$, a factor of $18$ will be less than $4.58$.
+Because $18$ is a number up to $21$.  
+It is also a multiple of a number that is bigger than $4.58$.
+
+That means a factor of $18$ must be smaller than $4.58$.
 
 That checks out, $3$ is a factor!
 
-Because $3$ is a factor of $18$, $18$ was unmarked while going through multiples during a previous iteration of the algorithm!
+Because $3$ is a factor of $18$.
+$18$ was unmarked while going through multiples when $3$ was the number the algorithm was unmarking multiples for!
 
 ### Start unmarking at the square
 
@@ -106,12 +120,12 @@ Because $k * p = p * k$, every multiple smaller than $p * p$ has already been un
 
 #### Example
 
-If our current $n =  5$.
+If our current detected prime, $p =  5$.
 
 $5$ was previously the multiplier for every smaller prime number.
 
-- $5 * 2$ was unmarked when $n$ was $2$, we don't need to calculate $2 * 5$
-- $5 * 3$ was unmarked when $n$ was $3$, we don't need to calculate $3 * 5$
+- $5 * 2$ was unmarked when $p$ was $2$, we don't need to calculate $2 * 5$
+- $5 * 3$ was unmarked when $p$ was $3$, we don't need to calculate $3 * 5$
 
 ## Step by step in code
 
@@ -123,7 +137,7 @@ I named that variable `optimus_prime` while writing code for this post, because 
 
 </Aside>
 
-We initialise a list of booleans that is one bigger than the given `upper_bound` and call it `sieve`.
+We initialise a list of booleans that is 1 bigger than the given `upper_bound` and call it `sieve`.
 These booleans tell us if the number at that index is prime or not. (`True` for prime, `False` for not)
 
 ```python title=sieve.py hl=3
@@ -147,12 +161,12 @@ def primes_up_to(upper_bound):
 
 This works out perfectly, because now every index exactly matches the number it represents.
 
-You want to know if the number 69 is prime? The boolean at index 69 will tell you.
+You want to know if the number 69 is prime? The boolean at index 69 will tell you. Nice!
 
 Loop over every number, starting at 2 and [ending at the square root of `upper_bound`](#square-root).
 Inside the loop, index `sieve` with that number.
 
-```python title=sieve.py hl=15-17
+```python title=sieve.py hl=14,16
 import math
 
 def primes_up_to(upper_bound):
@@ -164,9 +178,8 @@ def primes_up_to(upper_bound):
   sieve[1] = False
 
   # iterate up to square root of upper_bound
-  # reason: if num is not prime and one factor of num is bigger than sqrt(upper_bound),
+  # reason: if one factor of num is bigger than sqrt(upper_bound),
   # an other factor _must_ be smaller than sqrt(upper_bound)
-  # detecting one factor is enough to say a number is not prime
   for num in range(2, math.floor(math.sqrt(upper_bound)) + 1):
     # if sieve[num] is true, then num is prime
     if sieve[num]:
@@ -174,10 +187,11 @@ def primes_up_to(upper_bound):
 
 If the boolean at that location is `True`, the number is prime and we unmark every multiple before moving on to the next step of our loop.
 
-Do this by skip counting, [starting at the number squared](#start-unmarking-at-the-square) and adding the number every time until you hit `upper_bound`.  
-For every encountered multiple, set `sieve` at the index to `False`.
+Do this by skip counting.
+[Start at the number squared](#start-unmarking-at-the-square) and add the number until you hit `upper_bound`.  
+For every encountered multiple, set `sieve` at that number's index to `False`.
 
-```python title=sieve.py hl=21-22
+```python title=sieve.py hl=20-21
 import math
 
 def primes_up_to(upper_bound):
@@ -189,23 +203,23 @@ def primes_up_to(upper_bound):
   sieve[1] = False
 
   # iterate up to square root of upper_bound
-  # reason: if num is not prime and one factor of num is bigger than sqrt(upper_bound),
+  # reason: if one factor of num is bigger than sqrt(upper_bound),
   # an other factor _must_ be smaller than sqrt(upper_bound)
-  # detecting one factor is enough to say a number is not prime
   for num in range(2, math.floor(math.sqrt(upper_bound)) + 1):
     # if sieve[num] is true, then num is prime
     if sieve[num]:
       # unmark all multiples
-      # start marking at num squared
-      # every num below has already been marked in previous iterations
+      # start unmarking at num squared
+      # every smaller multiple has already been unmarked in previous iterations
       for multiple in range(num ** 2, upper_bound + 1, num):
         sieve[multiple] = False
 ```
 
-At the end of that loop, `sieve` will be full of booleans corresponding to the primeness of every possible index to that list.
-Use your favourite method to loop over a list while also getting the index, and put the indexes with a `true` into a new list, and presto, primes.
+At the end of the outer loop, `sieve` will be full of booleans corresponding to the primeness of every possible index to that list.
 
-```python title=sieve.py hl=25
+Use your favourite method to loop over a list while also getting the index, put the indexes with a `true` into a new list, and presto, primes.
+
+```python title=sieve.py hl=24
 import math
 
 def primes_up_to(upper_bound):
@@ -217,15 +231,14 @@ def primes_up_to(upper_bound):
   sieve[1] = False
 
   # iterate up to square root of upper_bound
-  # reason: if num is not prime and one factor of num is bigger than sqrt(upper_bound),
+  # reason: if one factor of num is bigger than sqrt(upper_bound),
   # an other factor _must_ be smaller than sqrt(upper_bound)
-  # detecting one factor is enough to say a number is not prime
   for num in range(2, math.floor(math.sqrt(upper_bound)) + 1):
     # if sieve[num] is true, then num is prime
     if sieve[num]:
       # unmark all multiples
-      # start marking at num squared
-      # every num below has already been marked in previous iterations
+      # start unmarking at num squared
+      # every smaller multiple has already been unmarked in previous iterations
       for multiple in range(num ** 2, upper_bound + 1, num):
         sieve[multiple] = False
 
@@ -248,7 +261,7 @@ The returned value is a list of prime numbers, starting at 2, and ending in the 
 
 <MultiLangCode>
 
-```rust title=sieve.rs
+```rust title=sieve.rs numberLines
 pub fn primes_up_to(upper_bound: usize) -> Vec<usize> {
     // initialise sieve that marks all numbers as prime
     let mut sieve = vec![true; upper_bound + 1];
@@ -258,15 +271,14 @@ pub fn primes_up_to(upper_bound: usize) -> Vec<usize> {
     sieve[1] = false;
 
     // iterate up to square root of upper_bound
-    // reason: if num is not prime and one factor of num is bigger than sqrt(upper_bound),
+    // reason: if one factor of num is bigger than sqrt(upper_bound),
     // an other factor _must_ be smaller than sqrt(upper_bound)
-    // detecting one factor is enough to say a number is not prime
     for num in 2..=(upper_bound as f64).sqrt() as usize + 1 {
         // if sieve[num] is true, then num is prime
         if sieve[num] {
             // unmark all multiples
-            // start marking at num squared
-            // every num below has already been marked in previous iterations
+            // start unmarking at num squared
+            // every smaller multiple has already been unmarked in previous iterations
             for multiple in (num * num..=upper_bound).step_by(num) {
                 sieve[multiple] = false;
             }
@@ -285,7 +297,7 @@ pub fn primes_up_to(upper_bound: usize) -> Vec<usize> {
 }
 ```
 
-```js title=sieve.js
+```javascript title=sieve.js numberLines
 function primesUpTo(upperBound) {
   // initialise sieve that marks all numbers as prime
   const sieve = Array.from({ length: upperBound + 1 }, () => true);
@@ -294,16 +306,15 @@ function primesUpTo(upperBound) {
   sieve[0] = false;
   sieve[1] = false;
 
-  // iterate up to square root of upper_bound
-  // reason: if num is not prime and one factor of num is bigger than sqrt(upper_bound),
-  // an other factor _must_ be smaller than sqrt(upper_bound)
-  // detecting one factor is enough to say a number is not prime
+  // iterate up to square root of upperBound
+  // reason: if one factor of num is bigger than sqrt(upperBound),
+  // an other factor _must_ be smaller than sqrt(upperBound)
   for (let num = 2; num <= Math.sqrt(upperBound) + 1; num++) {
     // if sieve[num] is true, then num is prime
     if (sieve[num]) {
       // unmark all multiples
-      // start marking at num squared
-      // every num below has already been marked in previous iterations
+      // start unmarking at num squared
+      // every smaller multiple has already been unmarked in previous iterations
       for (let multiple = num ** 2; multiple <= upperBound; multiple += num) {
         sieve[multiple] = false;
       }
@@ -320,7 +331,7 @@ function primesUpTo(upperBound) {
 }
 ```
 
-```python title=sieve.py
+```python title=sieve.py numberLines
 import math
 
 def primes_up_to(upper_bound):
@@ -332,15 +343,14 @@ def primes_up_to(upper_bound):
   sieve[1] = False
 
   # iterate up to square root of upper_bound
-  # reason: if num is not prime and one factor of num is bigger than sqrt(upper_bound),
+  # reason: if one factor of num is bigger than sqrt(upper_bound),
   # an other factor _must_ be smaller than sqrt(upper_bound)
-  # detecting one factor is enough to say a number is not prime
   for num in range(2,math.floor(math.sqrt(upper_bound)) + 1):
     # if sieve[num] is true, then num is prime
     if sieve[num]:
       # unmark all multiples
-      # start marking at num squared
-      # every num below has already been marked in previous iterations
+      # start unmarking at num squared
+      # every smaller multiple has already been unmarked in previous iterations
       for multiple in range(num**2, upper_bound + 1, num):
         sieve[multiple] = False
 
