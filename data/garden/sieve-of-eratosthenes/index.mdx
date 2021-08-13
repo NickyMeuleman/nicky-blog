@@ -5,6 +5,8 @@ authors: ["nicky"]
 tags: ["algorithms, rust, javascript, python"]
 ---
 
+import { MultiLangCode } from "./../../../src/components/MultiLangCode";
+
 The [sieve of Eratosthenes](https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes) finds all [prime numbers](https://en.wikipedia.org/wiki/Prime_number) up to a given limit.
 
 ## Method
@@ -244,6 +246,8 @@ The returned value is a list of prime numbers, starting at 2, and ending in the 
 
 ## Final code
 
+<MultiLangCode>
+
 ```rust title=sieve.rs
 pub fn primes_up_to(upper_bound: usize) -> Vec<usize> {
     // initialise sieve that marks all numbers as prime
@@ -343,3 +347,5 @@ def primes_up_to(upper_bound):
   # sieve is done, turn `True` into numbers
   return [idx for idx, mark in enumerate(sieve) if mark]
 ```
+
+</MultiLangCode>
