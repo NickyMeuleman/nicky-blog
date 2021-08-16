@@ -1,0 +1,303 @@
+---
+title: "Multilingual codeblocks"
+date: "2021-08-16"
+authors: ["nicky"]
+cover: "./cover.jpg"
+tags: ["React", "mdx"]
+---
+
+<!-- cover by Esther via Pexels -->
+
+import {
+  FirstAttempt,
+  HardCodedTabsAboveCode,
+  TabsAboveCode,
+  TabsInTitle,
+} from "./";
+
+<Aside>
+
+I made a multilingual codeblock component to show the same piece of code
+written in different programming languages.
+
+You can see it in action with [an example of The Sieve of
+Eratosthenes](/garden/sieve-of-eratosthenes#final-code).
+
+</Aside>
+
+## Proof of concept
+
+I started off simple, and I use that word because I used a package that provides a tab component in React.
+
+Making one myself was complexer than anticipated, so thank you [`@reach/tabs`](https://reach.tech/tabs/)
+
+My first attempt were 3 tabs that were hardcoded, very fragile, but perfect as proof of concept.
+
+```jsx title=MultiLangCodeBlock.js
+const MultiLangCodeBlock = (props) => {
+  return (
+    <Tabs>
+      <TabList>
+        <Tab>1</Tab>
+        <Tab>2</Tab>
+        <Tab>3</Tab>
+      </TabList>
+      <TabPanels>
+        <TabPanel>{props.children[0]}</TabPanel>
+        <TabPanel>{props.children[1]}</TabPanel>
+        <TabPanel>{props.children[2]}</TabPanel>
+      </TabPanels>
+    </Tabs>
+  );
+};
+```
+
+I can import that component into a `mdx` blogpost and pass it an array of 3 items to be rendered.
+
+I can even pass a React component as an array item, it's great.
+
+```mdx title=blogpost.mdx hl=4
+import { MultiLangCodeBlock } from "./src/components/MultiLangCodeBlock";
+import { Three } from "./src/components/Three";
+
+<MultiLangCodeBlock>
+  {["They're taking the", "Hobbits to Isengard!", <Three />]}
+</MultiLangCodeBlock>
+```
+
+The result can be seen below.
+Be sure to check out all tabs.
+
+<FirstAttempt>
+  {[
+    "They're taking the",
+    "Hobbits to Isengard!",
+    <YouTube youTubeId="uE-1RPDqJAY" skipTo={{ h: 0, m: 0, s: 18 }} />,
+  ]}
+</FirstAttempt>
+
+## Codeblocks
+
+Let's try to pass a codeblock as an item in that array.
+
+<HardCodedTabsAboveCode>
+
+```js
+const language = "JavaScript";
+```
+
+```python
+language = "Python"
+```
+
+```rust
+let language = "Rust";
+```
+
+</HardCodedTabsAboveCode>
+
+That worked!
+
+Be sure to pass those codeblocks in the component as markdown, not as a
+literal JavaScript array.
+
+````mdx title=blogpost.mdx
+<MultiLangCodeBlock>
+
+```js
+const language = "JavaScript";
+```
+
+```python
+language = "Python"
+```
+
+```rust
+let language = "Rust";
+```
+
+</MultiLangCodeBlock>
+````
+
+<Aside variant="danger">
+
+You need empty lines before and after each block in MDXv1.
+
+</Aside>
+
+### Tab labels
+
+I replaced the hardcoded amount of tabs, and made it so the tab labels were the language from the codeblock.
+
+They even work with the fancy options the single language [`CodeBlock` component](blog/theme-ui-syntax-highlighting) I made earlier.
+
+```jsx title=MultiLangCodeBlock.js hl=5-10,14-16
+const MultiLangCodeBlock = (props) => {
+  return (
+    <Tabs>
+      <TabList>
+        {props.children.map((child) => {
+          const [language] = child.props.children.props.className
+            .replace(/language-/, ``)
+            .split(` `);
+          return <Tab>{language}</Tab>;
+        })}
+      </TabList>
+
+      <TabPanels>
+        {props.children.map((child) => {
+          return <TabPanel>{child}</TabPanel>;
+        })}
+      </TabPanels>
+    </Tabs>
+  );
+};
+```
+
+<Aside variant="info">
+
+The reason they work with those options is because under the hood, a triple
+backtick codeblock gets rendered as the [`CodeBlock` component](blog/theme-ui-syntax-highlighting) I made.
+
+</Aside>
+
+This `mdx` will generate the output underneath this block, neat!
+
+````mdx title=blogpost.mdx
+<MultiLangCodeBlock>
+
+```js title=index.js numberLines hl=1
+const language = "JavaScript";
+
+console.log(language);
+```
+
+```python title=index.py numberLines hl=1
+language = "Python"
+
+print(language)
+```
+
+```rust title=index.rs numberLines hl=1
+let language = "Rust";
+
+println!("{}", language);
+```
+
+</MultiLangCodeBlock>
+````
+
+<TabsAboveCode>
+
+```js title=index.js numberLines hl=1
+const language = "JavaScript";
+
+console.log(language);
+```
+
+```python title=index.py numberLines hl=1
+language = "Python"
+
+print(language)
+```
+
+```rust title=index.rs numberLines hl=1
+let language = "Rust";
+
+println!("{}", language);
+```
+
+</TabsAboveCode>
+
+This doesn't look too bad.
+
+### Buttons inside the codeblock
+
+I wanted the tab buttons to be inside the header of a codeblock, to the right of the title.
+
+The tab buttons being _inside_ the codeblock was a problem.
+That meant the button for a tab would be inside the content for a tab, that doesn't sound right.
+
+I decided to manually render my single language `CodeBlock` component without a top part.
+
+The `title` option is what causes the single language component to have a header.
+
+That header is no longer a responsibility of the `CodeBlock` component, but one for the `MultiLangCodeBlock`.
+
+I still want that title to be displayed however, so I have to use that title information in the new `MultiLangCodeBlock`.
+
+That meant I needed a bit of state management to keep track of the current tab index, and the title and label for that tab.
+
+The `MultiLangCodeBlock` looked great after a little CSS to display the tab buttons to the right of the title and make that entire line _look_ like the top of my single language codeblocks.
+
+```js title=MultiLangCodeBlock.js
+const MultiLangCodeBlock = ({ children }) => {
+  const codeTitles = children.map(
+    (child) => child?.props?.children?.props?.title
+  );
+  const tabLabels = children.map((child) =>
+    child?.props?.children?.props?.className.replace(/language-/, ``).split(` `)
+  );
+
+  const [tabIndex, setTabindex] = useState(0);
+  const [title, setTitle] = useState(codeTitles[0]);
+
+  const handleTabsChange = (index) => {
+    setTabindex(index);
+    setTitle(codeTitles[index]);
+  };
+
+  return (
+    <Tabs index={tabIndex} onChange={handleTabsChange}>
+      <div sx={{ display: "flex", variant: `styles.CodeBlock.title` }}>
+        <div sx={{ flex: 1 }}>{title}</div>
+        <TabList
+          sx={{
+            color: "mutedText",
+            "[data-selected]": { color: "mutedPrimary" },
+          }}
+        >
+          {tabLabels.map((label) => (
+            <Tab key={label}>{label}</Tab>
+          ))}
+        </TabList>
+      </div>
+      <TabPanels>
+        {children.map((child) => {
+          // split off title so the CodeBlock from the theme doesn't render a header, this component does that
+          const { title, ...blockProps } = child.props.children.props;
+          return (
+            <TabPanel key={blockProps.className}>
+              <CodeBlock {...blockProps} />
+            </TabPanel>
+          );
+        })}
+      </TabPanels>
+    </Tabs>
+  );
+};
+```
+
+Behold! A Multilingual codeblock!
+
+<TabsInTitle>
+
+```js title=index.js numberLines hl=1
+const language = "JavaScript";
+
+console.log(language);
+```
+
+```python title=index.py numberLines hl=1
+language = "Python"
+
+print(language)
+```
+
+```rust title=index.rs numberLines hl=1
+let language = "Rust";
+
+println!("{}", language);
+```
+
+</TabsInTitle>
