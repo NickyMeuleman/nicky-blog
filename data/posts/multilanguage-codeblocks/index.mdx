@@ -1,6 +1,7 @@
 ---
 title: "Multilingual codeblocks"
 date: "2021-08-16"
+updatedAt: "2021-08-17"
 authors: ["nicky"]
 cover: "./cover.jpg"
 tags: ["React", "mdx"]
@@ -29,11 +30,14 @@ Eratosthenes](/garden/sieve-of-eratosthenes#final-code).
 
 I started off simple, and I use that word because I used a package that provides a tab component in React.
 
-Making one myself was complexer than anticipated, so thank you [`@reach/tabs`](https://reach.tech/tabs/)
+Making one myself was a lot more complex than anticipated I had anticipated, so thank you [`@reach/tabs`](https://reach.tech/tabs/).
 
-My first attempt were 3 tabs that were hardcoded, very fragile, but perfect as proof of concept.
+My first attempt were 3 tabs with hardcoded labels, very fragile, but perfect as proof of concept.
 
 ```jsx title=MultiLangCodeBlock.js
+import { Tabs, TabList, Tab, TabPanels, TabPanel } from "@reach/tabs";
+import "@reach/tabs/styles.css";
+
 const MultiLangCodeBlock = (props) => {
   return (
     <Tabs>
@@ -52,16 +56,16 @@ const MultiLangCodeBlock = (props) => {
 };
 ```
 
-I can import that component into a `mdx` blogpost and pass it an array of 3 items to be rendered.
+I can import that component into a `.mdx` blogpost and pass it an array of 3 items to be rendered.
 
 I can even pass a React component as an array item, it's great.
 
-```mdx title=blogpost.mdx hl=4
+```mdx title=blogpost.mdx hl=4-6
 import { MultiLangCodeBlock } from "./src/components/MultiLangCodeBlock";
-import { Three } from "./src/components/Three";
+import { Hobbits } from "./src/components/Hobbits";
 
 <MultiLangCodeBlock>
-  {["They're taking the", "Hobbits to Isengard!", <Three />]}
+  {["They're taking the", "Hobbits to Isengard!", <Hobbits />]}
 </MultiLangCodeBlock>
 ```
 
@@ -98,8 +102,7 @@ let language = "Rust";
 
 That worked!
 
-Be sure to pass those codeblocks in the component as markdown, not as a
-literal JavaScript array.
+Be sure to pass those codeblocks as markdown, not as a literal JavaScript array.
 
 ````mdx title=blogpost.mdx
 <MultiLangCodeBlock>
@@ -121,15 +124,24 @@ let language = "Rust";
 
 <Aside variant="danger">
 
-You need empty lines before and after each block in MDXv1.
+The empty lines before and after each block are significant.  
+It's something you need to do in MDXv1 for it to treat the text inside the component as markdown.
 
 </Aside>
 
 ### Tab labels
 
-I replaced the hardcoded amount of tabs, and made it so the tab labels were the language from the codeblock.
+I replaced the hardcoded amount of tabs, and made it so the tab labels were the language from the triple backtick codeblock.
 
-They even work with the fancy options the single language [`CodeBlock` component](blog/theme-ui-syntax-highlighting) I made earlier.
+<Aside variant="info">
+
+Remember, the codeblocks are treated as markdown.
+
+I told MDX to use [my own `CodeBlock` component](/blog/theme-ui-syntax-highlighting) every time it sees a triple backtick block in a `.mdx` file.
+
+</Aside>
+
+Using my single language [`CodeBlock` component](/blog/theme-ui-syntax-highlighting) means the fancy options (like highlighting specific lines) work too!
 
 ```jsx title=MultiLangCodeBlock.js hl=5-10,14-16
 const MultiLangCodeBlock = (props) => {
@@ -156,8 +168,10 @@ const MultiLangCodeBlock = (props) => {
 
 <Aside variant="info">
 
-The reason they work with those options is because under the hood, a triple
-backtick codeblock gets rendered as the [`CodeBlock` component](blog/theme-ui-syntax-highlighting) I made.
+That `child.props.children.props.className` line is a bit hairy.
+
+It's pulling the `className` from that single language codeblock, then turning it into the
+language for that codeblock.
 
 </Aside>
 
@@ -219,14 +233,14 @@ The tab buttons being _inside_ the codeblock was a problem.
 That meant the button for a tab would be inside the content for a tab, that doesn't sound right.
 
 I decided to manually render my single language `CodeBlock` component without a top part.
+The `CodeBlock` component would no longer be responsible for that header, the `MultiLangCodeBlock` would take on that responsability.
 
 The `title` option is what causes the single language component to have a header.
+So I prevented that option from reaching the single language block by not passing that title as a prop.
 
-That header is no longer a responsibility of the `CodeBlock` component, but one for the `MultiLangCodeBlock`.
+I still want the title to be displayed however, so I have to use that title information in the new `MultiLangCodeBlock`.
 
-I still want that title to be displayed however, so I have to use that title information in the new `MultiLangCodeBlock`.
-
-That meant I needed a bit of state management to keep track of the current tab index, and the title and label for that tab.
+That meant I needed a bit of state management to keep track of the current tab index, the title, and the label for that tab.
 
 The `MultiLangCodeBlock` looked great after a little CSS to display the tab buttons to the right of the title and make that entire line _look_ like the top of my single language codeblocks.
 
@@ -278,7 +292,11 @@ const MultiLangCodeBlock = ({ children }) => {
 };
 ```
 
+<Aside variant="success">
+
 Behold! A Multilingual codeblock!
+
+</Aside>
 
 <TabsInTitle>
 
