@@ -1,68 +1,61 @@
 /** @jsx jsx */
 import { jsx } from "theme-ui";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { CodeBlock } from "@nickymeuleman/gatsby-theme-blog";
 import { Tabs, TabList, Tab, TabPanels, TabPanel } from "@reach/tabs";
 import "@reach/tabs/styles.css";
 
 const MultiLangCode = ({ children, values }) => {
-  const [tabIndex, setTabindex] = useState(0);
-  const [title, setTitle] = useState(() => {
-    // give priority to titles passed via to values prop
-    // there is a clean way to write this but I just want this to work.
-    let firstTitle = "";
-    if (children && children[0]?.props?.children?.props?.title) {
-      firstTitle = children[0]?.props?.children?.props?.title;
-    }
-    if (values && values[0].title) {
-      firstTitle = values[0].title;
-    }
-    return firstTitle;
-  });
-
-  const codeTitles =
-    values?.map((value) => value.title) ??
-    children.map((child) => child?.props?.children?.props?.title);
-
-  const tabLabels =
-    values?.map((value) => value.label) ??
-    children.map((child) =>
-      child?.props?.children?.props?.className
-        .replace(/language-/, ``)
-        .split(` `)
+  const codeblocks = useMemo(() => {
+    return (
+      children
+        // zip children array and values array together
+        .map((child, idx) => [child, values?.length >= idx && values[idx]])
+        // returns an object per child where the items in the values array take precedence over child properties
+        .map(([child, value]) => {
+          const codeBlockProps = child?.props?.children?.props;
+          const [language] = codeBlockProps?.className
+            .replace(/language-/, ``)
+            .split(` `);
+          // split off title from the props so it isn't used later, the title prop controls CodeBlock having a header and that's this component's responsibility now
+          const { title, ...blockProps } = codeBlockProps;
+          return {
+            title: value?.title || title,
+            label: value?.label || language,
+            blockProps,
+          };
+        })
     );
+  }, [children, values]);
 
+  const [tabIndex, setTabindex] = useState(0);
   const handleTabsChange = (index) => {
     setTabindex(index);
-    setTitle(codeTitles[index]);
   };
 
   return (
     <Tabs index={tabIndex} onChange={handleTabsChange}>
-      <div
+      <header
         sx={{
           display: "flex",
           alignItems: "center",
           variant: `styles.CodeBlock.title`,
         }}
       >
-        <div sx={{ flex: 1 }}>{title}</div>
+        <div sx={{ flex: 1 }}>{codeblocks[tabIndex].title}</div>
         <TabList
           sx={{
             color: "mutedText",
             "[data-selected]": { color: "mutedPrimary" },
           }}
         >
-          {tabLabels.map((label) => (
+          {codeblocks.map(({ label }) => (
             <Tab key={label}>{label}</Tab>
           ))}
         </TabList>
-      </div>
+      </header>
       <TabPanels>
-        {children.map((child) => {
-          // split off title so the CodeBlock from the theme doesn't render a header, this component does that and add language tabs
-          // eslint-disable-next-line
-          const { title, ...blockProps } = child.props.children.props;
+        {codeblocks.map(({ blockProps }) => {
           return (
             <TabPanel key={blockProps.className}>
               <CodeBlock {...blockProps} />
