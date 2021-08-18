@@ -1,5 +1,5 @@
 /** @jsx jsx */
-import { jsx, Styled } from "theme-ui";
+import { jsx, Themed } from "theme-ui";
 
 const Footer = () => {
   return (
@@ -22,28 +22,28 @@ const Footer = () => {
           fontSize: 0,
         }}
       >
-        <Styled.p sx={{ m: 0 }}>
+        <Themed.p sx={{ m: 0 }}>
           Designed and developed by Nicky Meuleman
-        </Styled.p>
-        <Styled.p sx={{ m: 0 }}>
+        </Themed.p>
+        <Themed.p sx={{ m: 0 }}>
           Built with{" "}
-          <Styled.a
+          <Themed.a
             href="https://gatsbyjs.org"
             target="_blank"
             rel="noopener noreferrer"
           >
             Gatsby
-          </Styled.a>
+          </Themed.a>
           . Hosted on{" "}
-          <Styled.a
+          <Themed.a
             href="https://www.netlify.com/"
             target="_blank"
             rel="noopener noreferrer"
           >
             Netlify
-          </Styled.a>
+          </Themed.a>
           .
-        </Styled.p>
+        </Themed.p>
       </div>
       <nav
         sx={{
