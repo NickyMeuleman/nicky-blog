@@ -39,7 +39,13 @@ const MultiLangCode = ({ children, values }) => {
 
   return (
     <Tabs index={tabIndex} onChange={handleTabsChange}>
-      <div sx={{ display: "flex", variant: `styles.CodeBlock.title` }}>
+      <div
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          variant: `styles.CodeBlock.title`,
+        }}
+      >
         <div sx={{ flex: 1 }}>{title}</div>
         <TabList
           sx={{
