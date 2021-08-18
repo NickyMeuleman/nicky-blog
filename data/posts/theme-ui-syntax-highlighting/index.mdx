@@ -1,6 +1,7 @@
 ---
 title: Syntax highlighting codeblocks with theme-ui
 date: "2020-05-12"
+updatedAt: "2021-08-18"
 authors: ["nicky"]
 cover: "./cover.jpg"
 published: true
@@ -15,7 +16,7 @@ I was using [`@theme-ui/prism`](https://theme-ui.com/packages/prism), which did 
 
 His [followup post](https://prince.dev/blog/highlight-with-react) about highlighting lines convinced me. I was going to follow that guide, and combine it with the goodness of `@theme-ui/prism`.
 
-I wanted to keep using the awesome [presets from `@theme-ui/prism`](https://github.com/system-ui/theme-ui/tree/master/packages/prism/presets) to use colors from popular syntax highlighting themes such as [night owl](https://marketplace.visualstudio.com/items?itemName=sdras.night-owl), [dracula](https://draculatheme.com/), [night owl light](https://marketplace.visualstudio.com/items?itemName=sdras.night-owl#light-owl), and many more.
+I wanted to keep using the awesome [presets from `@theme-ui/prism`](https://github.com/system-ui/theme-ui/tree/develop/packages/prism/presets) to use colors from popular syntax highlighting themes such as [night owl](https://marketplace.visualstudio.com/items?itemName=sdras.night-owl), [dracula](https://draculatheme.com/), [night owl light](https://marketplace.visualstudio.com/items?itemName=sdras.night-owl#light-owl), and many more.
 
 ## Using the `@theme-ui/prism` component
 
@@ -24,19 +25,20 @@ Even though I'm going to remove the `@theme-ui/prism` component immediately afte
 ## Replacing the component
 
 The `Prism` component that those docs told us to use? I replaced it with my own.
+
 I created a component called `CodeBlock.js`, and used that instead.
 
 It uses the same internals as `@theme-ui/prism`. Only this time, I can tweak them and add cool stuff like line highlighting.
 
 Those internals are powered by a package called [`prism-react-renderer`](https://github.com/FormidableLabs/prism-react-renderer).
 
-To start, this file will look almost identical to [the `Prism` component](https://github.com/system-ui/theme-ui/blob/master/packages/prism/src/index.tsx) from `@theme-ui/prism`.
+To start, this file will look almost identical to [the `Prism` component](https://github.com/system-ui/theme-ui/blob/develop/packages/prism/src/index.tsx) from `@theme-ui/prism`.
 
 ```jsx title=CodeBlock.js
 /** @jsx jsx */
 import React from "react";
 import Highlight, { defaultProps } from "prism-react-renderer";
-import { jsx, Styled } from "theme-ui";
+import { jsx, Themed } from "theme-ui";
 
 const CodeBlock = ({ children, className: outerClassName, ...props }) => {
   // MDX will pass the language as className
@@ -55,7 +57,7 @@ const CodeBlock = ({ children, className: outerClassName, ...props }) => {
       theme={undefined}
     >
       {({ className, style, tokens, getLineProps, getTokenProps }) => (
-        <Styled.pre className={`${outerClassName} ${className}`} style={style}>
+        <Themed.pre className={`${outerClassName} ${className}`} style={style}>
           {tokens.map((line, index) => (
             <div key={index} {...getLineProps({ line, key: index })}>
               {line.map((token, key) => (
@@ -68,7 +70,7 @@ const CodeBlock = ({ children, className: outerClassName, ...props }) => {
               ))}
             </div>
           ))}
-        </Styled.pre>
+        </Themed.pre>
       )}
     </Highlight>
   );
@@ -77,7 +79,11 @@ const CodeBlock = ({ children, className: outerClassName, ...props }) => {
 export default CodeBlock;
 ```
 
-This similarity also means those theme presets designed to work with `@theme-ui/prism` will still work.
+<Aside variant="info">
+
+This similarity also means that those theme presets designed to work with `@theme-ui/prism` will still work.
+
+</Aside>
 
 ## Adding line highlighting
 
@@ -96,7 +102,7 @@ The `CodeBlock` component will have a prop called `puppies` with a value of `"cu
 
 I used this to pass a range of line numbers into the component under the `hl` prop (short for highlight-lines).
 
-From that point, I followed [this guide](https://prince.dev/blog/highlight-with-react) again.
+From that point, I followed [Prince's guide](https://prince.dev/blog/highlight-with-react) again.
 Inside the component, I created a function that returns a boolean signalling if a line should be highlighted.
 
 ```jsx hl=1,2 title=CodeBlock.js
@@ -211,8 +217,10 @@ will make the `title` prop have a value of `"Codeblock.js"`
 
 Above the existing outer `<div>`, create another one and conditionally render the `title`.
 
-<Aside>
-  React expects a single outer element, so wrap those 2 in a React Fragment.
+<Aside variant="info">
+
+React expects a single outer element, so wrap those 2 in a React Fragment.
+
 </Aside>
 
 ### Theme-ui variant
@@ -244,7 +252,7 @@ const CodeBlock = ({
 import React from "react";
 import Highlight, { defaultProps } from "prism-react-renderer";
 import rangeParser from "parse-numeric-range";
-import { jsx, Styled } from "theme-ui";
+import { jsx, Themed } from "theme-ui";
 
 const getShouldHighlightLine = (hl) => {
   if (hl) {
@@ -281,7 +289,7 @@ const CodeBlock = ({
           theme={undefined}
         >
           {({ className, style, tokens, getLineProps, getTokenProps }) => (
-            <Styled.pre
+            <Themed.pre
               className={`${outerClassName} ${className}`}
               style={style}
             >
@@ -305,7 +313,7 @@ const CodeBlock = ({
                   ))}
                 </div>
               ))}
-            </Styled.pre>
+            </Themed.pre>
           )}
         </Highlight>
       </div>
