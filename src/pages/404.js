@@ -6,8 +6,10 @@ const NotFoundPage = () => (
   <div
     sx={{
       height: "100vh",
-      paddingLeft: 6,
-      paddingTop: 5,
+      width: "90vw",
+      margin: "0 auto",
+      paddingLeft: [0, 6],
+      paddingTop: [0, 5],
       fontSize: 4,
       fontFamily:
         '"Segoe UI", Roboto, "Helvetica Neue", Ubuntu, Arial, sans-serif',
