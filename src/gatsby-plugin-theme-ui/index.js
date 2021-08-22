@@ -182,6 +182,10 @@ const theme = merge(themeConfig, {
         borderBottomColor: `#262a39`,
         color: nightOwl.color,
       },
+      copyButton: {
+        color: nightOwl[".comment"].color,
+        ":hover": { color: nightOwl.color, borderColor: nightOwl.color },
+      },
       "::-webkit-scrollbar-thumb": {
         ":hover": { backgroundColor: "#262a39" },
         ":active": { backgroundColor: nightOwl.color },
