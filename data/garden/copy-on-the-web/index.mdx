@@ -1,0 +1,82 @@
+---
+title: One line copy button for the web
+date: "2021-08-23"
+authors: ["nicky"]
+tags: ["JavaScript"]
+---
+
+import { CopyDemo } from "./";
+
+<Aside>
+
+TL;DR: The [Clipboard API](https://developer.mozilla.org/en-US/docs/Web/API/Clipboard_API) is quite good.
+
+The one line: `navigator.clipboard.writeText("potatoes");`
+
+</Aside>
+
+Copying something to the clipboard can be done in one line now.
+The [Clipboard API](https://developer.mozilla.org/en-US/docs/Web/API/Clipboard_API) is what powers this.
+It has a bunch of asynchronous methods, meaning they return promises.
+The promise resolves? Neat, do things afterwards.
+
+This example React component uses the [`writeText`](https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText) method to copy a string to the clipboard.
+
+```jsx title=CopyDemo.js hl=7
+import { useState } from "react";
+
+const CopyDemo = () => {
+  const text = "Boil em, mash em, stick em in a stew.";
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1000);
+  };
+  return (
+    <div>
+      <p>{text}</p>
+      <button onClick={copy}>{copied ? "Copied" : "Copy"}</button>
+    </div>
+  );
+};
+```
+
+After adding some CSS, that looks like this:
+
+<CopyDemo />
+
+If you prefer vanilla JS, check out [my copy button codepen](https://codepen.io/NMeuleman/pen/bGRGpdj).
+
+Click the copy button and BAM, Samwise Gamgee's words of wisdom are now in the clipboard.
+
+<YouTube youTubeId="ihMMw0rnKz4" />
+
+<Aside variant="info">
+
+While writing to the clipboard can always be done in the active tab using the [Clipboard API](https://developer.mozilla.org/en-US/docs/Web/API/Clipboard_API), reading the clipboard needs to be permitted.
+
+</Aside>
+
+<Aside variant="info">
+
+As with many modern APIs, `navigator.clipboard` is only available on HTTPS pages.
+
+</Aside>
+
+<Aside variant="info">
+
+Optional chaining (`?.` syntax) can not be used on things like `window` or `navigator`.
+I would have liked to use it, to prevent errors when rendering on the server without a `window`, but, alas.
+
+</Aside>
+
+## Browser support
+
+This is available in [all major browsers browsers](https://caniuse.com/mdn-api_clipboard_writetext), except Interner Explorer.
+
+With Microsoft [ending Internet Explorer support](https://techcommunity.microsoft.com/t5/microsoft-365-blog/microsoft-365-apps-say-farewell-to-internet-explorer-11-and/ba-p/1591666) for some of their own major products.
+And planning to deprecate it further in 2021, I'm not worried about Internet Explorer lacking support for the [clipboard API](https://developer.mozilla.org/en-US/docs/Web/API/Clipboard).
+
+The [Clipboard API](https://developer.mozilla.org/en-US/docs/Web/API/Clipboard_API) is meant to replace the old way of accessing the clipboard via `document.execCommand()`.
+[`execCommand()` is deprecated](https://developer.mozilla.org/en-US/docs/Web/API/Document/execCommand), only to be used for compatibility purposes.
