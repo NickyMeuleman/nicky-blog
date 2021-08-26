@@ -97,6 +97,11 @@ To confirm this worked, print out the variable you just set in the terminal.
 echo $DISPLAY
 # 172.17.224.1:0.0
 ```
+> If the output of this is something like `8.8.8.8` and not `172.x.x.x` or `192.x.x.x` [then try this instead:](https://stackoverflow.com/questions/61860208/wsl-2-run-graphical-linux-desktop-applications-from-windows-10-bash-shell-erro)
+```bash
+# set DISPLAY variable to the IP automatically assigned to WSL2
+export DISPLAY=$(route.exe print | grep 0.0.0.0 | head -1 | awk '{print $4}'):0.0
+```
 
 ### Automatically start `dbus`
 
