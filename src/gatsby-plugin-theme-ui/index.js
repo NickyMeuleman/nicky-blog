@@ -38,6 +38,10 @@ const theme = merge(themeConfig, {
   },
   styles: {
     root: {
+      accentColor: "mutedPrimary",
+      "li::marker": {
+        color: "mutedPrimary",
+      },
       "::-webkit-scrollbar-thumb": {
         ":hover": {
           backgroundColor: "mutedText",

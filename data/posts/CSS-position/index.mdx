@@ -1,0 +1,105 @@
+---
+title: CSS Position
+date: "2021-08-29"
+published: false
+authors: ["nicky"]
+tags: ["CSS"]
+---
+
+import { Beef, AbsoluteChart, RelativeDemo } from "./";
+
+<Beef />
+
+---
+
+Positioning things on the web.
+I'm bad at writing intros, let's dive in.
+
+## Document flow
+
+**flow** is the way we refer to the browser laying out all elements when there are no changes made to those elements.
+
+Every element has a natural size, and **elements in flow affect the location of the elements around it**.
+
+Boxes in normal flow are either block or inline, but not both at the same time.
+
+Inline ones sit in the same direction as text.
+Block ones are stacked along the cross axis.
+
+<Aside variant="info">
+
+The [`display` CSS property](https://www.w3.org/TR/CSS2/visuren.html#propdef-display) can set this.
+
+```css
+p {
+  display: block;
+}
+
+span {
+  display: inline;
+}
+```
+
+[Flexbox and grid _containers_ still participate in this block and inline layout.](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Flow_Layout/Block_and_Inline_Layout_in_Normal_Flow#the_display_property_and_flow_layout)
+That is why you can set the `display` property to both `flex` and `inline-flex`.
+Or to `grid` and `inline-grid`.
+
+Or, if you like the [two value display syntax](https://developer.mozilla.org/en-US/docs/Web/CSS/display#syntax): `display: block flex;` and `display: inline flex`.
+
+</Aside>
+
+There are 2 popular methods to take an element out of flow.
+
+- absolute positioning, which we discuss later
+- floating an element
+
+## Position
+
+The default value for [the CSS `position` property](https://developer.mozilla.org/en-US/docs/Web/CSS/position) is `static`.
+That's why you almost never see it written in code, when a `position` is set explicitly, it's usually with an other value.
+
+The most important aspect is if the item gets taken out of [flow](#document-flow) or not.
+
+Values for `position` that keep the element it is applied to in the document flow:
+
+- `static`
+- `relative`
+- `sticky`
+
+Values for `position` that remove the element from the document flow:
+
+- `absolute`
+- `fixed`
+
+Positioned elements can be offset by also defining a value for the `top`, `right`, `bottom`, and `left` properties with a distance.
+
+In relation to what those defined offsets apply is determined by the value you chose for `position`.
+
+<Aside variant="info">
+
+Elements with `position: static;` are positioned according to the normal document flow.
+The `top`, `right`, `bottom`, and `left` properties don't have an effect.
+
+They are about as useful as [Radioactive man's goggles](https://www.youtube.com/watch?v=hkaBT-u7qn8), so, not at all.
+
+_The offsets, they do nothing_
+
+</Aside>
+
+### Relative
+
+Relatively positioned elements remain in flow.
+They are offset relative to their original position.
+
+<RelativeDemo />
+
+<Aside variant="info">
+
+Elements with `position: sticky` are offset relative to nearest scrolling
+ancestor.
+
+That enables [a bunch of neat applications](https://mastery.games/post/position-sticky/)
+
+</Aside>
+
+<AbsoluteChart />
