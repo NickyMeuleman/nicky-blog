@@ -38,6 +38,11 @@ const theme = merge(themeConfig, {
   },
   styles: {
     root: {
+      // a named color doesn't work, this is mutedPrimary
+      accentColor: "rgb(176, 251, 188)",
+      "li::marker": {
+        color: "mutedPrimary",
+      },
       "::-webkit-scrollbar-thumb": {
         ":hover": {
           backgroundColor: "mutedText",
