@@ -227,6 +227,7 @@ const theme = merge(themeConfig, {
     },
     inlineCode: {
       fontSize: "0.85em",
+      overflowWrap: "break-word",
     },
     a: {
       "--underlineWidth": (t) => t.borderWidths[2],
