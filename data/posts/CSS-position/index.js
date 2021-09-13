@@ -3,462 +3,200 @@ import { jsx } from "theme-ui";
 import { useState } from "react";
 import { CodeBlock } from "@nickymeuleman/gatsby-theme-blog";
 import { alpha } from "@theme-ui/color";
+import { Slider } from "./Slider";
 
 /* eslint-disable */
-
-const Beef = () => {
-  const [childPosition, setChildPosition] = useState("static");
-  const [childTop, setChildTop] = useState("0");
-  const [childLeft, setChildLeft] = useState("0");
-
-  return (
-    <div>
-      <div
-        sx={{ position: "relative", height: "30vh", backgroundColor: "green" }}
-      >
-        Parent
-        <div
-          sx={{
-            position: childPosition,
-            top: `${childTop}%`,
-            left: `${childLeft}%`,
-            backgroundColor: "blue",
-          }}
-        >
-          Child
-        </div>
-      </div>
-      <input
-        type="radio"
-        id="static"
-        name="position"
-        value="static"
-        checked={childPosition == "static"}
-        onChange={(e) => {
-          setChildPosition(e.target.value);
-        }}
-      />
-      <label htmlFor="static">static</label>
-      <input
-        type="radio"
-        id="absolute"
-        name="position"
-        value="absolute"
-        checked={childPosition == "absolute"}
-        onChange={(e) => setChildPosition(e.target.value)}
-      />
-      <label htmlFor="absolute">absolute</label>
-      <input
-        type="radio"
-        id="relative"
-        name="position"
-        value="relative"
-        checked={childPosition == "relative"}
-        onChange={(e) => {
-          setChildPosition(e.target.value);
-        }}
-      />
-      <label htmlFor="relative">relative</label>
-      <input
-        type="range"
-        id="top"
-        name="top"
-        min="0"
-        max="100"
-        value={childTop}
-        onChange={(e) => {
-          const { value } = e.target;
-          setChildTop(value);
-        }}
-      />
-      <label htmlFor="top">top</label>
-      <input
-        type="range"
-        id="left"
-        name="left"
-        min="0"
-        max="100"
-        value={childLeft}
-        onChange={(e) => {
-          const { value } = e.target;
-          setChildLeft(value);
-        }}
-      />
-      <label htmlFor="left">left</label>
-    </div>
-  );
-};
 
 const AbsoluteChart = () => {
   // svg-source:excalidraw
   // removed font rules so it uses my site's default, changed some things to fit this theme and changed some CSS to object syntax
   return (
-    <div>
-      <svg
-        version="1.1"
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 638.6667175292969 279.0001525878906"
-        width="1916.0001525878906"
-        height="837.0004577636719"
-        sx={{
-          maxWidth: "100%",
-          height: "auto",
-          rect: {
-            fill: "background",
-          },
-          path: {
-            stroke: "watermarkBg",
-          },
-          text: {
-            fill: "text",
-          },
-        }}
+    <svg
+      version="1.1"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 638.6667175292969 216.00015258789062"
+      width="1916.0001525878906"
+      height="648.0004577636719"
+      sx={{
+        maxWidth: "100%",
+        height: "auto",
+        rect: {
+          fill: "background",
+        },
+        path: {
+          stroke: "watermarkBg",
+        },
+        text: {
+          fill: "text",
+        },
+      }}
+    >
+      <rect
+        x="0"
+        y="0"
+        width="638.6667175292969"
+        height="216.00015258789062"
+        fill="#ffffff"
+      ></rect>
+      <g
+        stroke-linecap="round"
+        transform="translate(140.6666259765625 10) rotate(0 173.6666717529297 24.666671752929688)"
       >
-        <defs />
-        <rect
-          x="0"
-          y="0"
-          width="638.6667175292969"
-          height="279.0001525878906"
-        />
-        <g
-          strokeLinecap="round"
-          transform="translate(140.6666259765625 10) rotate(0 170.6666717529297 48.66667175292969)"
+        <path
+          d="M-0.88 0.88 C119.28 0.59, 237.23 0.27, 347.94 0.64 M-0.11 -0.44 C70.81 1.42, 143.34 1.6, 346.7 0.48 M348.14 -0.6 C345.6 16.17, 346.76 30.39, 348.48 48.91 M346.63 0.34 C346.99 12.44, 347.94 23.42, 346.67 50.27 M347.03 49.29 C252.15 49.98, 158.22 51.27, 0.18 49.12 M347.85 49.63 C272.04 50.73, 196.44 50.32, 0.63 49.38 M1.49 50.3 C-0.69 28.26, -0.06 8.73, 1.01 -1.97 M0.16 50.09 C1.24 37.69, -0.38 28.72, 0.84 0.78"
+          stroke="#000000"
+          stroke-width="1"
+          fill="none"
+        ></path>
+      </g>
+      <g transform="translate(153.66661071777344 22.166732788085938) rotate(0 160 12.5)">
+        <text
+          x="160"
+          y="18"
+          font-size="20px"
+          fill="#000000"
+          text-anchor="middle"
+          style={{ whiteSpace: "pre" }}
+          direction="ltr"
         >
-          <path
-            d="M-0.9 0.89 C117.25 0.6, 233.15 0.27, 341.95 0.65 M-0.12 -0.45 C69.57 1.42, 140.88 1.6, 340.69 0.49 M342.14 -0.6 C339.18 31.48, 340.34 61.02, 342.48 96.91 M340.63 0.34 C341.12 24.05, 342.07 46.63, 340.67 98.27 M341.03 97.28 C247.76 97.98, 155.45 99.29, 0.18 97.12 M341.86 97.63 C267.34 98.73, 193.04 98.31, 0.64 97.38 M1.49 98.3 C-0.8 57.06, -0.18 18.35, 1.01 -1.97 M0.16 98.09 C1.48 75.28, -0.14 55.9, 0.84 0.78"
-            stroke="#000000"
-            strokeWidth="1"
-            fill="none"
-          />
-        </g>
-        <g transform="translate(148.66661071777344 44.16673278808594) rotate(0 160 12.5)">
-          <text
-            x="160"
-            y="18"
-            fontSize="20px"
-            fill="#000000"
-            textAnchor="middle"
-            style={{ whiteSpace: "pre" }}
-            direction="ltr"
-          >
-            affect other elements&apos; location?
-          </text>
-        </g>
-        <g
-          strokeLinecap="round"
-          transform="translate(10 204.66680908203125) rotate(0 142.83331298828125 32.16667175292969)"
-        >
-          <path
-            d="M1.46 -0.95 C60.96 -1.51, 119.4 -1.67, 286.22 1.04 M-0.07 0.63 C64.56 -0.6, 130.17 -0.32, 286.29 -0.52 M286.27 0.52 C283.49 17.93, 286.09 36.42, 286.44 65.17 M285.9 -0.35 C284.75 18.1, 285.01 35.46, 285.68 64.09 M285.29 63.79 C215.83 66.14, 142.08 66.82, 1.23 63.55 M286.1 64.95 C194.63 62.71, 105.43 63.31, -0.45 64.66 M0.34 63.59 C-2.04 47.86, -1.46 30.3, -0.82 -0.96 M0.34 63.98 C0.48 50.66, 0.46 34.75, 0.18 0.22"
-            stroke="#000000"
-            strokeWidth="1"
-            fill="none"
-          />
-        </g>
-        <g transform="translate(64 224.66668701171875) rotate(0 88.5 12.5)">
-          <text
-            x="0"
-            y="18"
-            fontSize="20px"
-            fill="#000000"
-            textAnchor="start"
-            style={{ whiteSpace: "pre" }}
-            direction="ltr"
-          >
-            position: absolute;
-          </text>
-        </g>
-        <g strokeLinecap="round">
-          <g transform="translate(289.3836572013728 112.00009155273438) rotate(0 -42.13913297775355 42.146830357233995)">
-            <path
-              d="M0.32 -0.81 C-13.67 12.97, -70.45 69.57, -84.6 83.71 M-0.97 1.38 C-14.53 15.85, -68.84 71.09, -82.38 85.1"
-              stroke="#000000"
-              strokeWidth="1"
-              fill="none"
-            />
-          </g>
-          <g transform="translate(289.3836572013728 112.00009155273438) rotate(0 -42.13913297775355 42.146830357233995)">
-            <path
-              d="M-71.39 56.2 C-73.27 62.87, -75.67 72.89, -80.88 84.89 M-69.59 58.01 C-74.2 64.68, -76.5 72.73, -83.34 84.89"
-              stroke="#000000"
-              strokeWidth="1"
-              fill="none"
-            />
-          </g>
-          <g transform="translate(289.3836572013728 112.00009155273438) rotate(0 -42.13913297775355 42.146830357233995)">
-            <path
-              d="M-56.7 70.52 C-62.27 73.76, -68.24 80.3, -80.88 84.89 M-54.9 72.33 C-63.6 74.91, -69.99 78.96, -83.34 84.89"
-              stroke="#000000"
-              strokeWidth="1"
-              fill="none"
-            />
-          </g>
-        </g>
-        <g transform="translate(188.66671752929688 128.00003051757812) rotate(0 13.5 12.5)">
-          <text
-            x="0"
-            y="18"
-            fontSize="20px"
-            fill="#000000"
-            textAnchor="start"
-            style={{ whiteSpace: "pre" }}
-            direction="ltr"
-          >
-            NO
-          </text>
-        </g>
-        <g
-          strokeLinecap="round"
-          transform="translate(332.6667175292969 201.3333740234375) rotate(0 148 33.333343505859375)"
-        >
-          <path
-            d="M-0.35 -0.65 C63.98 1.07, 128.22 -0.04, 296.17 1.21 M0.37 -0.02 C115.26 1.66, 229.16 1.92, 295.27 0.62 M294.38 -1.38 C297.1 24.15, 295.91 51.54, 297.52 65.25 M295.96 -0.79 C295.9 21.63, 295.31 43.84, 296.31 65.85 M295.52 66.22 C212.66 68.88, 130.1 67.35, -0.83 66.63 M295.41 67.16 C215.21 66.12, 133.46 65.39, -0.37 67.33 M0.31 68.66 C-0.38 45.76, 0.6 26.6, -0.28 -0.47 M0.09 67.23 C0.39 42.51, -0.04 16.49, 0.8 0.48"
-            stroke="#000000"
-            strokeWidth="1"
-            fill="none"
-          />
-        </g>
-        <g transform="translate(408.0000305175781 220.66671752929688) rotate(0 69 12.5)">
-          <text
-            x="0"
-            y="18"
-            fontSize="20px"
-            fill="#000000"
-            textAnchor="start"
-            style={{ whiteSpace: "pre" }}
-            direction="ltr"
-          >
-            something else
-          </text>
-        </g>
-        <g strokeLinecap="round">
-          <g transform="translate(339.1429219851841 111.33340454101562) rotate(0 41.706116150107846 42.016226458838204)">
-            <path
-              d="M-1.07 0.22 C13.03 14.35, 70.19 69.69, 84.48 83.83 M0.57 -0.71 C14.47 13.6, 69.42 70.23, 83.29 84.75"
-              stroke="#000000"
-              strokeWidth="1"
-              fill="none"
-            />
-          </g>
-          <g transform="translate(339.1429219851841 111.33340454101562) rotate(0 41.706116150107846 42.016226458838204)">
-            <path
-              d="M56.7 70.78 C62.14 75.19, 72.05 79.33, 83.25 83.92 M55.51 72.09 C65.94 76.39, 77.02 81.74, 83.93 85.53"
-              stroke="#000000"
-              strokeWidth="1"
-              fill="none"
-            />
-          </g>
-          <g transform="translate(339.1429219851841 111.33340454101562) rotate(0 41.706116150107846 42.016226458838204)">
-            <path
-              d="M71.47 56.54 C72.49 64.97, 78.09 73.27, 83.25 83.92 M70.28 57.85 C75.32 67.47, 80.9 78.12, 83.93 85.53"
-              stroke="#000000"
-              strokeWidth="1"
-              fill="none"
-            />
-          </g>
-        </g>
-        <g transform="translate(416.2597052176344 127.91337177558802) rotate(0 18 12.5)">
-          <text
-            x="18"
-            y="18"
-            fontSize="20px"
-            fill="#000000"
-            textAnchor="middle"
-            style={{ whiteSpace: "pre" }}
-            direction="ltr"
-          >
-            YES
-          </text>
-        </g>
-      </svg>
-      <svg
-        version="1.1"
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 638.6667175292969 279.0001525878906"
-        width="1916.0001525878906"
-        height="837.0004577636719"
-        sx={{
-          maxWidth: "100%",
-          height: "auto",
-          rect: {
-            fill: "background",
-          },
-          path: {
-            stroke: "mutedPrimary",
-          },
-          text: {
-            fill: "text",
-          },
-        }}
+          affect other elements' location?
+        </text>
+      </g>
+      <g
+        stroke-linecap="round"
+        transform="translate(10 156.66680908203125) rotate(0 142.83331298828125 24.666671752929688)"
       >
-        <defs />
-        <rect
+        <path
+          d="M1.46 -0.95 C60.96 -1.51, 119.4 -1.67, 286.22 1.04 M-0.07 0.63 C64.56 -0.6, 130.17 -0.32, 286.29 -0.52 M286.27 0.52 C283.55 13.58, 286.15 27.71, 286.44 50.17 M285.9 -0.35 C284.76 13.91, 285.02 27.09, 285.68 49.09 M285.29 48.79 C215.83 51.14, 142.08 51.82, 1.23 48.55 M286.1 49.95 C194.63 47.71, 105.43 48.31, -0.45 49.66 M0.34 48.59 C-2 36.96, -1.42 23.51, -0.82 -0.96 M0.34 48.98 C0.47 39.01, 0.45 26.44, 0.18 0.22"
+          stroke="#000000"
+          stroke-width="1"
+          fill="none"
+        ></path>
+      </g>
+      <g transform="translate(63 168.66668701171875) rotate(0 95 12.5)">
+        <text
           x="0"
-          y="0"
-          width="638.6667175292969"
-          height="279.0001525878906"
-        />
-        <g
-          strokeLinecap="round"
-          transform="translate(140.6666259765625 10) rotate(0 170.6666717529297 48.66667175292969)"
+          y="18"
+          font-size="20px"
+          fill="#000000"
+          text-anchor="start"
+          style={{ whiteSpace: "pre" }}
+          direction="ltr"
         >
+          absolute positioning
+        </text>
+      </g>
+      <g stroke-linecap="round">
+        <g transform="translate(298.6936054031695 71.60277414755853) rotate(0 -44.469971772056 36.54413250362077)">
           <path
-            d="M-0.9 0.89 C117.25 0.6, 233.15 0.27, 341.95 0.65 M-0.12 -0.45 C69.57 1.42, 140.88 1.6, 340.69 0.49 M342.14 -0.6 C339.18 31.48, 340.34 61.02, 342.48 96.91 M340.63 0.34 C341.12 24.05, 342.07 46.63, 340.67 98.27 M341.03 97.28 C247.76 97.98, 155.45 99.29, 0.18 97.12 M341.86 97.63 C267.34 98.73, 193.04 98.31, 0.64 97.38 M1.49 98.3 C-0.8 57.06, -0.18 18.35, 1.01 -1.97 M0.16 98.09 C1.48 75.28, -0.14 55.9, 0.84 0.78"
+            d="M0.32 -0.81 C-14.44 11.1, -74.33 60.23, -89.26 72.51 M-0.97 1.38 C-15.3 13.99, -72.72 61.76, -87.04 73.9"
             stroke="#000000"
-            strokeWidth="1"
+            stroke-width="1"
             fill="none"
-          />
+          ></path>
         </g>
-        <g transform="translate(148.66661071777344 44.16673278808594) rotate(0 160 12.5)">
-          <text
-            x="160"
-            y="18"
-            fontSize="20px"
-            fill="#000000"
-            textAnchor="middle"
-            style={{ whiteSpace: "pre" }}
-            direction="ltr"
-          >
-            affect other elements&apos; location?
-          </text>
+        <g transform="translate(298.6936054031695 71.60277414755853) rotate(0 -44.469971772056 36.54413250362077)">
+          <path
+            d="M-73.39 46.35 C-75.93 52.7, -78.98 62.39, -85.54 73.68 M-71.6 48.16 C-76.95 54.44, -79.98 62.1, -88 73.68"
+            stroke="#000000"
+            stroke-width="1"
+            fill="none"
+          ></path>
         </g>
-        <g
-          strokeLinecap="round"
-          transform="translate(10 204.66680908203125) rotate(0 142.83331298828125 32.16667175292969)"
+        <g transform="translate(298.6936054031695 71.60277414755853) rotate(0 -44.469971772056 36.54413250362077)">
+          <path
+            d="M-60.2 62.07 C-66.08 64.64, -72.33 70.51, -85.54 73.68 M-58.4 63.88 C-67.43 65.68, -74.14 68.97, -88 73.68"
+            stroke="#000000"
+            stroke-width="1"
+            fill="none"
+          ></path>
+        </g>
+      </g>
+      <g transform="translate(188.66671752929688 80.00003051757812) rotate(0 13.5 12.5)">
+        <text
+          x="0"
+          y="18"
+          font-size="20px"
+          fill="#000000"
+          text-anchor="start"
+          style={{ whiteSpace: "pre" }}
+          direction="ltr"
         >
-          <path
-            d="M1.46 -0.95 C60.96 -1.51, 119.4 -1.67, 286.22 1.04 M-0.07 0.63 C64.56 -0.6, 130.17 -0.32, 286.29 -0.52 M286.27 0.52 C283.49 17.93, 286.09 36.42, 286.44 65.17 M285.9 -0.35 C284.75 18.1, 285.01 35.46, 285.68 64.09 M285.29 63.79 C215.83 66.14, 142.08 66.82, 1.23 63.55 M286.1 64.95 C194.63 62.71, 105.43 63.31, -0.45 64.66 M0.34 63.59 C-2.04 47.86, -1.46 30.3, -0.82 -0.96 M0.34 63.98 C0.48 50.66, 0.46 34.75, 0.18 0.22"
-            stroke="#000000"
-            strokeWidth="1"
-            fill="none"
-          />
-        </g>
-        <g transform="translate(64 224.66668701171875) rotate(0 88.5 12.5)">
-          <text
-            x="0"
-            y="18"
-            fontSize="20px"
-            fill="#000000"
-            textAnchor="start"
-            style={{ whiteSpace: "pre" }}
-            direction="ltr"
-          >
-            position: absolute;
-          </text>
-        </g>
-        <g strokeLinecap="round">
-          <g transform="translate(289.3836572013728 112.00009155273438) rotate(0 -42.13913297775355 42.146830357233995)">
-            <path
-              d="M0.32 -0.81 C-13.67 12.97, -70.45 69.57, -84.6 83.71 M-0.97 1.38 C-14.53 15.85, -68.84 71.09, -82.38 85.1"
-              stroke="#000000"
-              strokeWidth="1"
-              fill="none"
-            />
-          </g>
-          <g transform="translate(289.3836572013728 112.00009155273438) rotate(0 -42.13913297775355 42.146830357233995)">
-            <path
-              d="M-71.39 56.2 C-73.27 62.87, -75.67 72.89, -80.88 84.89 M-69.59 58.01 C-74.2 64.68, -76.5 72.73, -83.34 84.89"
-              stroke="#000000"
-              strokeWidth="1"
-              fill="none"
-            />
-          </g>
-          <g transform="translate(289.3836572013728 112.00009155273438) rotate(0 -42.13913297775355 42.146830357233995)">
-            <path
-              d="M-56.7 70.52 C-62.27 73.76, -68.24 80.3, -80.88 84.89 M-54.9 72.33 C-63.6 74.91, -69.99 78.96, -83.34 84.89"
-              stroke="#000000"
-              strokeWidth="1"
-              fill="none"
-            />
-          </g>
-        </g>
-        <g transform="translate(188.66671752929688 128.00003051757812) rotate(0 13.5 12.5)">
-          <text
-            x="0"
-            y="18"
-            fontSize="20px"
-            fill="#000000"
-            textAnchor="start"
-            style={{ whiteSpace: "pre" }}
-            direction="ltr"
-          >
-            NO
-          </text>
-        </g>
-        <g
-          strokeLinecap="round"
-          transform="translate(332.6667175292969 201.3333740234375) rotate(0 148 33.333343505859375)"
+          NO
+        </text>
+      </g>
+      <g
+        stroke-linecap="round"
+        transform="translate(332.6667175292969 153.3333740234375) rotate(0 148 25.833343505859375)"
+      >
+        <path
+          d="M-0.35 -0.65 C63.98 1.07, 128.22 -0.04, 296.17 1.21 M0.37 -0.02 C115.26 1.66, 229.16 1.92, 295.27 0.62 M294.38 -1.38 C297.21 18.42, 296.02 40.08, 297.52 50.25 M295.96 -0.79 C296.01 16.72, 295.41 34.01, 296.31 50.85 M295.52 51.22 C212.66 53.88, 130.1 52.35, -0.83 51.63 M295.41 52.16 C215.21 51.12, 133.46 50.39, -0.37 52.33 M0.31 53.66 C-0.4 35.12, 0.58 20.32, -0.28 -0.47 M0.09 52.23 C0.29 33.16, -0.14 12.78, 0.8 0.48"
+          stroke="#000000"
+          stroke-width="1"
+          fill="none"
+        ></path>
+      </g>
+      <g transform="translate(409.0000305175781 165.66671752929688) rotate(0 69 12.5)">
+        <text
+          x="0"
+          y="18"
+          font-size="20px"
+          fill="#000000"
+          text-anchor="start"
+          style={{ whiteSpace: "pre" }}
+          direction="ltr"
         >
+          something else
+        </text>
+      </g>
+      <g stroke-linecap="round">
+        <g transform="translate(335.1304683027864 71.73334460449186) rotate(0 40.10186067100119 34.116240618994766)">
           <path
-            d="M-0.35 -0.65 C63.98 1.07, 128.22 -0.04, 296.17 1.21 M0.37 -0.02 C115.26 1.66, 229.16 1.92, 295.27 0.62 M294.38 -1.38 C297.1 24.15, 295.91 51.54, 297.52 65.25 M295.96 -0.79 C295.9 21.63, 295.31 43.84, 296.31 65.85 M295.52 66.22 C212.66 68.88, 130.1 67.35, -0.83 66.63 M295.41 67.16 C215.21 66.12, 133.46 65.39, -0.37 67.33 M0.31 68.66 C-0.38 45.76, 0.6 26.6, -0.28 -0.47 M0.09 67.23 C0.39 42.51, -0.04 16.49, 0.8 0.48"
+            d="M-1.07 0.22 C12.49 11.71, 67.52 56.52, 81.27 68.03 M0.57 -0.71 C13.94 10.97, 66.75 57.06, 80.08 68.95"
             stroke="#000000"
-            strokeWidth="1"
+            stroke-width="1"
             fill="none"
-          />
+          ></path>
         </g>
-        <g transform="translate(408.0000305175781 220.66671752929688) rotate(0 69 12.5)">
-          <text
-            x="0"
-            y="18"
-            fontSize="20px"
-            fill="#000000"
-            textAnchor="start"
-            style={{ whiteSpace: "pre" }}
-            direction="ltr"
-          >
-            something else
-          </text>
+        <g transform="translate(335.1304683027864 71.73334460449186) rotate(0 40.10186067100119 34.116240618994766)">
+          <path
+            d="M52.5 57.22 C58.25 60.98, 68.45 64.48, 80.04 68.12 M51.31 58.54 C62.09 62, 73.55 66.51, 80.72 69.73"
+            stroke="#000000"
+            stroke-width="1"
+            fill="none"
+          ></path>
         </g>
-        <g strokeLinecap="round">
-          <g transform="translate(339.1429219851841 111.33340454101562) rotate(0 41.706116150107846 42.016226458838204)">
-            <path
-              d="M-1.07 0.22 C13.03 14.35, 70.19 69.69, 84.48 83.83 M0.57 -0.71 C14.47 13.6, 69.42 70.23, 83.29 84.75"
-              stroke="#000000"
-              strokeWidth="1"
-              fill="none"
-            />
-          </g>
-          <g transform="translate(339.1429219851841 111.33340454101562) rotate(0 41.706116150107846 42.016226458838204)">
-            <path
-              d="M56.7 70.78 C62.14 75.19, 72.05 79.33, 83.25 83.92 M55.51 72.09 C65.94 76.39, 77.02 81.74, 83.93 85.53"
-              stroke="#000000"
-              strokeWidth="1"
-              fill="none"
-            />
-          </g>
-          <g transform="translate(339.1429219851841 111.33340454101562) rotate(0 41.706116150107846 42.016226458838204)">
-            <path
-              d="M71.47 56.54 C72.49 64.97, 78.09 73.27, 83.25 83.92 M70.28 57.85 C75.32 67.47, 80.9 78.12, 83.93 85.53"
-              stroke="#000000"
-              strokeWidth="1"
-              fill="none"
-            />
-          </g>
+        <g transform="translate(335.1304683027864 71.73334460449186) rotate(0 40.10186067100119 34.116240618994766)">
+          <path
+            d="M66.07 41.82 C67.73 49.96, 73.97 57.94, 80.04 68.12 M64.88 43.14 C70.72 52.35, 77.12 62.6, 80.72 69.73"
+            stroke="#000000"
+            stroke-width="1"
+            fill="none"
+          ></path>
         </g>
-        <g transform="translate(416.2597052176344 127.91337177558802) rotate(0 18 12.5)">
-          <text
-            x="18"
-            y="18"
-            fontSize="20px"
-            fill="#000000"
-            textAnchor="middle"
-            style={{ whiteSpace: "pre" }}
-            direction="ltr"
-          >
-            YES
-          </text>
-        </g>
-      </svg>
-    </div>
+      </g>
+      <g transform="translate(416.2597052176344 79.91337177558802) rotate(0 18 12.5)">
+        <text
+          x="18"
+          y="18"
+          font-size="20px"
+          fill="#000000"
+          text-anchor="middle"
+          style={{ whiteSpace: "pre" }}
+          direction="ltr"
+        >
+          YES
+        </text>
+      </g>
+    </svg>
   );
 };
 
 const RelativeDemo = () => {
-  const [top, setTop] = useState(null);
+  const [top, setTop] = useState(50);
   const [right, setRight] = useState(null);
   const [bottom, setBottom] = useState(null);
-  const [left, setLeft] = useState(null);
+  const [left, setLeft] = useState(50);
 
   const boxStyles = {
     backgroundColor: "mutedBackground",
@@ -507,162 +245,36 @@ ${top != null ? `  top: ${top}px;\n` : ""}${
           // make sure the controls are above the boxes
           position: "relative",
           backgroundColor: alpha("background", 0.5),
+          backdropFilter: "blur(5px)",
           gap: 3,
+          mt: 3,
           gridTemplateColumns: ["1fr", null, "1fr 1fr"],
         }}
       >
-        <label htmlFor="relative-top">
-          <div sx={{ display: "flex", justifyContent: "space-between" }}>
-            <div>
-              <label htmlFor="relative-top-checkbox">
-                <input
-                  id="relative-top-checkbox"
-                  type="checkbox"
-                  checked={typeof top === "number" || typeof top === "string"}
-                  onChange={(e) => {
-                    if (!e.target.checked) {
-                      setTop(null);
-                    } else {
-                      setTop(0);
-                    }
-                  }}
-                />
-                top
-              </label>
-            </div>
-            <div>{top || 0}px</div>
-          </div>
-          <input
-            type="range"
-            id="relative-top"
-            name="relative-top"
-            min="0"
-            max="100"
-            value={top || 0}
-            onChange={(e) => {
-              const { value } = e.target;
-              setTop(value);
-            }}
-            sx={{
-              width: "100%",
-              outlineOffset: "6px",
-              cursor: "pointer",
-            }}
-          />
-        </label>
-        <label htmlFor="relative-bottom">
-          <div sx={{ display: "flex", justifyContent: "space-between" }}>
-            <label htmlFor="relative-bottom-checkbox">
-              <input
-                id="relative-bottom-checkbox"
-                type="checkbox"
-                checked={
-                  typeof bottom === "number" || typeof bottom === "string"
-                }
-                onChange={(e) => {
-                  if (!e.target.checked) {
-                    setBottom(null);
-                  } else {
-                    setBottom(0);
-                  }
-                }}
-              />
-              bottom
-            </label>
-            <div>{bottom || 0}px</div>
-          </div>
-          <input
-            type="range"
-            id="relative-bottom"
-            name="relative-bottom"
-            min="0"
-            max="100"
-            value={bottom || 0}
-            onChange={(e) => {
-              const { value } = e.target;
-              setBottom(value);
-            }}
-            sx={{
-              width: "100%",
-              outlineOffset: "6px",
-              cursor: "pointer",
-            }}
-          />
-        </label>
-        <label htmlFor="relative-left">
-          <div sx={{ display: "flex", justifyContent: "space-between" }}>
-            <label htmlFor="relative-left-checkbox">
-              <input
-                id="relative-left-checkbox"
-                type="checkbox"
-                checked={typeof left === "number" || typeof left === "string"}
-                onChange={(e) => {
-                  if (!e.target.checked) {
-                    setLeft(null);
-                  } else {
-                    setLeft(0);
-                  }
-                }}
-              />
-              left
-            </label>
-            <div>{left || 0}px</div>
-          </div>
-          <input
-            type="range"
-            id="relative-left"
-            name="relative-left"
-            min="0"
-            max="100"
-            value={left || 0}
-            onChange={(e) => {
-              const { value } = e.target;
-              setLeft(value);
-            }}
-            sx={{
-              width: "100%",
-              outlineOffset: "6px",
-              cursor: "pointer",
-            }}
-          />
-        </label>
-        <label htmlFor="relative-right">
-          <div sx={{ display: "flex", justifyContent: "space-between" }}>
-            <label htmlFor="relative-right-checkbox">
-              <input
-                id="relative-right-checkbox"
-                type="checkbox"
-                checked={typeof right === "number" || typeof right === "string"}
-                onChange={(e) => {
-                  if (!e.target.checked) {
-                    setRight(null);
-                  } else {
-                    setRight(0);
-                  }
-                }}
-              />
-              right
-            </label>
-            <div>{right}px</div>
-          </div>
-          <input
-            type="range"
-            id="relative-right"
-            name="relative-right"
-            min="0"
-            max="100"
-            value={right || 0}
-            onChange={(e) => {
-              const { value } = e.target;
-              setRight(value);
-            }}
-            sx={{
-              width: "100%",
-              outlineOffset: "6px",
-              cursor: "pointer",
-            }}
-          />
-        </label>
+        <Slider
+          labelText="top"
+          idPrepend="relative"
+          val={top}
+          setVal={setTop}
+        />
+        <Slider
+          labelText="bottom"
+          idPrepend="relative"
+          val={bottom}
+          setVal={setBottom}
+        />
+        <Slider
+          labelText="left"
+          idPrepend="relative"
+          val={left}
+          setVal={setLeft}
+        />
+        <Slider
+          labelText="right"
+          idPrepend="relative"
+          val={right}
+          setVal={setRight}
+        />
       </div>
       <CodeBlock className="language-css" title="styles.css">
         {codeStr}
@@ -671,4 +283,236 @@ ${top != null ? `  top: ${top}px;\n` : ""}${
   );
 };
 
-export { Beef, AbsoluteChart, RelativeDemo };
+const AbsoluteDemo = () => {
+  const [top, setTop] = useState(50);
+  const [right, setRight] = useState(null);
+  const [bottom, setBottom] = useState(null);
+  const [left, setLeft] = useState(50);
+
+  const boxStyles = {
+    backgroundColor: "mutedBackground",
+    display: "grid",
+    placeItems: "center",
+    fontSize: "50px",
+    aspectRatio: "1",
+    border: "5px solid rgba(0, 0, 0, 0.3)",
+    borderRadius: "sm",
+  };
+  const codeStr = `
+.two {
+  position: absolute;
+${top != null ? `  top: ${top}px;\n` : ""}${
+    bottom != null ? `  bottom: ${bottom}px;\n` : ""
+  }${left != null ? `  left: ${left}px;\n` : ""}${
+    right != null ? `  right: ${right}px;\n` : ""
+  }}`;
+  return (
+    <div>
+      <div
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(100px, 1fr))",
+          position: "relative",
+        }}
+      >
+        <div sx={{ ...boxStyles }}>1</div>
+        <div
+          sx={{
+            ...boxStyles,
+            aspectRatio: "unset",
+            position: "absolute",
+            backgroundColor: "primary",
+            top: `${top}px`,
+            right: `${right}px`,
+            left: `${left}px`,
+            bottom: `${bottom}px`,
+          }}
+        >
+          2
+        </div>
+        <div sx={{ ...boxStyles }}>3</div>
+      </div>
+      <div
+        sx={{
+          display: "grid",
+          // make sure the controls are above the boxes
+          position: "relative",
+          backgroundColor: alpha("background", 0.5),
+          backdropFilter: "blur(5px)",
+          gap: 3,
+          mt: 3,
+          gridTemplateColumns: ["1fr", null, "1fr 1fr"],
+        }}
+      >
+        <Slider
+          labelText="top"
+          idPrepend="absolute"
+          val={top}
+          setVal={setTop}
+        />
+        <Slider
+          labelText="bottom"
+          idPrepend="absolute"
+          val={bottom}
+          setVal={setBottom}
+        />
+        <Slider
+          labelText="left"
+          idPrepend="absolute"
+          val={left}
+          setVal={setLeft}
+        />
+        <Slider
+          labelText="right"
+          idPrepend="absolute"
+          val={right}
+          setVal={setRight}
+        />
+      </div>
+      <CodeBlock className="language-css" title="styles.css">
+        {codeStr}
+      </CodeBlock>
+    </div>
+  );
+};
+
+const StickyDemo = () => {
+  const [top, setTop] = useState(50);
+
+  const boxStyles = {
+    backgroundColor: "mutedBackground",
+    display: "grid",
+    placeItems: "center",
+    fontSize: "50px",
+    aspectRatio: "1",
+    border: "5px solid rgba(0, 0, 0, 0.3)",
+    borderRadius: "sm",
+  };
+
+  const codeStr = `
+.two {
+  position: sticky;
+${top != null ? `  top: ${top}px;\n` : ""}}`;
+  return (
+    <div>
+      <div
+        sx={{
+          p: 2,
+          border: "1px solid",
+          borderColor: "watermarkBg",
+          overflowY: "scroll",
+          maxHeight: "500px",
+          "::-webkit-scrollbar-thumb": {
+            ":hover": {
+              backgroundColor: "mutedText",
+            },
+            ":active": {
+              backgroundColor: "text",
+            },
+            minHeight: "58px",
+            backgroundColor: "mutedTextBg",
+            borderRadius: "8px",
+            borderWidth: "4px",
+            borderStyle: "solid",
+            borderColor: "background",
+          },
+          "::-webkit-scrollbar": {
+            width: "16px",
+          },
+        }}
+      >
+        <div
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(100px, 1fr))",
+            overflow: "none",
+          }}
+        >
+          <div sx={{ gridRow: 1, gridColumn: "1/-1", marginBottom: 2 }}>
+            Bacon ipsum dolor amet short loin spare ribs alcatra, fatback rump
+            ribeye cupim sirloin drumstick picanha shankle pork chop strip
+            steak. Ground round filet mignon fatback pork biltong ball tip,
+            tenderloin cow bacon. Short ribs salami andouille, pastrami buffalo
+            bacon venison.
+          </div>
+          <div sx={{ ...boxStyles }}>1</div>
+          <div
+            sx={{
+              ...boxStyles,
+              position: "sticky",
+              backgroundColor: "primary",
+              top: `${top}px`,
+            }}
+          >
+            2
+          </div>
+          <div sx={{ ...boxStyles }}>3</div>
+          <div sx={{ gridColumn: "1/-1", marginTop: 2 }}>
+            Ham short loin sausage jowl tail chicken. Spare ribs short ribs
+            buffalo sausage pig jerky jowl turducken shankle tail drumstick
+            pork. Spare ribs beef ribs jerky filet mignon tri-tip turkey,
+            capicola meatloaf meatball shank tenderloin cupim chicken. Pastrami
+            turkey leberkas t-bone, tenderloin burgdoggen tri-tip bacon picanha
+            short loin flank bresaola chicken. Boudin bacon turducken pork loin
+            pancetta, ham shoulder pork strip steak chislic sirloin jerky. Rump
+            shoulder venison, strip steak t-bone shankle kielbasa beef boudin
+            cupim ham jerky picanha landjaeger tail. Turducken drumstick brisket
+            salami, frankfurter ham hock spare ribs short ribs chislic tongue
+            pork belly landjaeger andouille pancetta chicken. Ribeye turkey
+            kevin boudin, doner swine pork belly ham chuck. Ham porchetta ham
+            hock, tail drumstick kevin sausage jowl biltong chuck landjaeger
+            bresaola hamburger. Pork ball tip frankfurter salami short ribs.
+            Landjaeger pork belly boudin flank. Pork drumstick filet mignon,
+            chislic bacon frankfurter ball tip venison corned beef alcatra
+            shoulder beef sirloin spare ribs sausage. Ball tip hamburger chislic
+            boudin chicken t-bone tail tri-tip landjaeger ham andouille
+            turducken. Short ribs burgdoggen turducken chicken, pig t-bone rump
+            biltong shankle picanha alcatra pork chop. Filet mignon chicken
+            tongue, tri-tip pastrami ball tip shank porchetta. Jowl boudin
+            fatback turducken corned beef pig frankfurter flank short ribs
+            sausage meatloaf brisket ground round bresaola swine. Pancetta
+            biltong drumstick, ribeye spare ribs capicola leberkas ground round.
+            Ball tip buffalo porchetta short loin picanha drumstick bacon
+            bresaola. Spare ribs venison landjaeger biltong meatball short ribs.
+            Frankfurter jerky kielbasa ham hock burgdoggen pork ground round
+            pork chop turkey ribeye ball tip brisket sausage bresaola alcatra.
+            Leberkas t-bone tongue, alcatra rump shoulder buffalo short ribs
+            swine pancetta beef ham. Chislic hamburger ribeye, ham capicola
+            meatloaf shankle. Pork loin leberkas frankfurter pastrami, beef ribs
+            biltong picanha alcatra pork belly turducken kevin ribeye turkey
+            shankle. Tail shoulder beef burgdoggen, picanha jowl pastrami
+            porchetta spare ribs. Shank ham picanha shoulder t-bone spare ribs.
+            Chicken prosciutto alcatra kielbasa bresaola. Biltong picanha shank
+            tongue short loin landjaeger kevin short ribs pork loin cupim
+            shoulder meatball buffalo porchetta. Chislic t-bone landjaeger, ham
+            cupim turducken cow bacon.
+          </div>
+        </div>
+      </div>
+      <div
+        sx={{
+          display: "grid",
+          // make sure the controls are above the boxes
+          position: "relative",
+          backgroundColor: alpha("background", 0.5),
+          backdropFilter: "blur(5px)",
+          gap: 3,
+          gridTemplateColumns: ["1fr", null, "1fr 1fr"],
+        }}
+      >
+        <Slider
+          passedSx={{ mt: 3 }}
+          labelText="top"
+          idPrepend="sticky"
+          val={top}
+          setVal={setTop}
+        />
+      </div>
+      <CodeBlock className="language-css" title="styles.css">
+        {codeStr}
+      </CodeBlock>
+    </div>
+  );
+};
+
+export { AbsoluteChart, RelativeDemo, AbsoluteDemo, StickyDemo };
