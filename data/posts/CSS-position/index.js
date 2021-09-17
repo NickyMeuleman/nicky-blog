@@ -233,6 +233,7 @@ ${top != null ? `  top: ${top}px;\n` : ""}${
             right: `${right}px`,
             left: `${left}px`,
             bottom: `${bottom}px`,
+            willChange: "top, right, left, bottom"
           }}
         >
           2
@@ -326,6 +327,7 @@ ${top != null ? `  top: ${top}px;\n` : ""}${
             right: `${right}px`,
             left: `${left}px`,
             bottom: `${bottom}px`,
+            willChange: "top, right, left, bottom"
           }}
         >
           2
@@ -401,7 +403,7 @@ ${top != null ? `  top: ${top}px;\n` : ""}}`;
           border: "1px solid",
           borderColor: "watermarkBg",
           overflowY: "scroll",
-          maxHeight: "500px",
+          maxHeight: "min(500px, 50vh)",
           "::-webkit-scrollbar-thumb": {
             ":hover": {
               backgroundColor: "mutedText",
@@ -442,6 +444,7 @@ ${top != null ? `  top: ${top}px;\n` : ""}}`;
               position: "sticky",
               backgroundColor: "primary",
               top: `${top}px`,
+              willChange: "top"
             }}
           >
             2
@@ -467,25 +470,7 @@ ${top != null ? `  top: ${top}px;\n` : ""}}`;
             shoulder beef sirloin spare ribs sausage. Ball tip hamburger chislic
             boudin chicken t-bone tail tri-tip landjaeger ham andouille
             turducken. Short ribs burgdoggen turducken chicken, pig t-bone rump
-            biltong shankle picanha alcatra pork chop. Filet mignon chicken
-            tongue, tri-tip pastrami ball tip shank porchetta. Jowl boudin
-            fatback turducken corned beef pig frankfurter flank short ribs
-            sausage meatloaf brisket ground round bresaola swine. Pancetta
-            biltong drumstick, ribeye spare ribs capicola leberkas ground round.
-            Ball tip buffalo porchetta short loin picanha drumstick bacon
-            bresaola. Spare ribs venison landjaeger biltong meatball short ribs.
-            Frankfurter jerky kielbasa ham hock burgdoggen pork ground round
-            pork chop turkey ribeye ball tip brisket sausage bresaola alcatra.
-            Leberkas t-bone tongue, alcatra rump shoulder buffalo short ribs
-            swine pancetta beef ham. Chislic hamburger ribeye, ham capicola
-            meatloaf shankle. Pork loin leberkas frankfurter pastrami, beef ribs
-            biltong picanha alcatra pork belly turducken kevin ribeye turkey
-            shankle. Tail shoulder beef burgdoggen, picanha jowl pastrami
-            porchetta spare ribs. Shank ham picanha shoulder t-bone spare ribs.
-            Chicken prosciutto alcatra kielbasa bresaola. Biltong picanha shank
-            tongue short loin landjaeger kevin short ribs pork loin cupim
-            shoulder meatball buffalo porchetta. Chislic t-bone landjaeger, ham
-            cupim turducken cow bacon.
+            biltong shankle picanha alcatra pork chop.
           </div>
         </div>
       </div>
