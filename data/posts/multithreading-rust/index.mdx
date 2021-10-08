@@ -1,0 +1,386 @@
+---
+title: "Multithreading in Rust"
+date: "2021-10-08"
+authors: ["nicky"]
+cover: "./cover.jpg"
+tags: ["Rust"]
+---
+
+import { MultiLangCode } from "./../../../src/components/MultiLangCode";
+
+<!-- Photo by <a href="https://unsplash.com/@chriscurry92?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Chris Curry</a> on <a href="https://unsplash.com/s/photos/yarns?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a> -->
+
+The general idea with multithreading is to do more work in a smaller amount of time.
+This is done by seperating code into multiple parts called threads.
+
+These threads are then executed concurrently (maybe even in parallel).
+
+<Aside variant="info">
+
+In a seperate small post, I explain [the difference between concurrent and
+parallel](/garden/concurrent-vs-parallel).
+
+</Aside>
+
+Those threads have to be (largely) independent from each other.
+Precautions need to be taken for segments that depend on something from a different thread.
+
+That's the reason writing multithreaded code is often seen as "very hard".
+Many multithreading bugs are very subtle, and hard to track down.
+
+Lucky for Rust programmers, one of the major goals of the language is making concurrent programming safe and efficient.
+The Rust language makes many of these bugs impossible to write.
+Incorrect code will refuse to compile and present an error explaining the problem.
+
+This post goes over a few ways to write multithreaded code by using them to solve [an exercism programming exercise](https://exercism.org/tracks/rust/exercises/parallel-letter-frequency).
+
+## Creating threads
+
+A thread is created by calling [`std::thread::spawn`](https://doc.rust-lang.org/std/thread/).
+It's a function that takes [a closure](https://doc.rust-lang.org/book/ch13-01-closures.html?highlight=closure#capturing-the-environment-with-closures).
+
+The closure contains the code that will be ran in the thread.
+
+The moment that thread is created, it is "detached" from the thread that created it.
+That means it is totally independent and can outlive the thread that spawned it (unless that creator is the main thread, if that stops, everything stops).
+
+That "possibly outliving the parent thread" means everything passed to the closure must have a `'static'` lifetime (meaning: remain valid for the entire program).
+This is to ensure that everything inside that thread remains valid, even when the thread that spawned it no longer exists.
+
+In practice, this means you want the closure to take ownership of every variable it uses.
+This is done by using the `move` keyword in front of the parameter list of the closure.
+
+It's possible to make a parent thread wait for the completion of a thread it spawned.
+
+A call to `std::thread::spawn` returns a [`JoinHandle`](https://doc.rust-lang.org/std/thread/struct.JoinHandle.html).
+That handle has a `join` method that blocks the current thread, waiting until the spawned thread is closed.
+
+```rust
+use std::thread;
+
+let handle = thread::spawn(move || {
+    // some work here
+});
+// some work here
+handle.join();
+```
+
+## The problem
+
+> Count the frequency of letters in texts using parallel computation.
+>
+> Parallelism is about doing things in parallel that can also be done sequentially.
+> A common example is counting the frequency of letters.
+> Create a function that returns the total frequency of each letter in a list of texts and that employs parallelism.
+>
+> <footer>
+>
+> [The exercise description](https://exercism.org/tracks/rust/exercises/parallel-letter-frequency)
+>
+> </footer>
+
+We need to write a function called `frequency`.
+It takes a slice of strings and a worker count as parameters.
+
+The return value is a hashmap.
+The keys are all the letters those strings contain, their value the amount of times that letter appears.
+
+This needs to be done in `worker_count` number of threads.
+
+## Single threaded
+
+This snippet shows a solution to the problem that does all the work on a single thread.
+
+```rust title=lib.rs
+pub fn frequency(input: &[&str]) -> HashMap<char, usize> {
+    let mut map = HashMap::new();
+
+    for line in input {
+        for chr in line.chars().filter(|c| c.is_alphabetic()) {
+            if let Some(c) = chr.to_lowercase().next() {
+                (*map.entry(c).or_insert(0)) += 1;
+            }
+        }
+    }
+
+    map
+}
+```
+
+## Strategy
+
+We'll divide the large problem into several smaller ones.
+
+Each one will be solved in a thread with code similar to the one in the singlethreaded example.
+
+The results of those smaller problems have to be combined into one large result which will be the returned value of the `frequency` function.
+
+The breaking up of the larger problem can be done by calling [the `chunks` method](https://doc.rust-lang.org/std/primitive.slice.html#method.chunks) on the `input` parameter.
+
+```rust
+input.chunks((input.len() / worker_count).max(1));
+```
+
+The result is an iterator of length `worker_count`.
+Each thread will solve the problem for a single chunk.
+
+We then make sure to own the data in the chunk before sending it into the thread.
+
+```rust
+chunk.join("")
+```
+
+Then we are ready to spawn a thread that will solve the problem for each chunk.
+
+```rust
+pub fn frequency(input: &[&str], worker_count: usize) -> HashMap<char, usize> {
+    // divide the large problem into smaller problems
+    let chunks = input.chunks((input.len() / worker_count).max(1));
+
+    for chunk in chunks {
+        // collect the data for the current chunk into an owned variable before sending it to the thread.
+        let string = chunk.join("");
+        thread::spawn(move || {
+            // solve the problem for the current chunk
+        });
+    }
+
+    // combine the solutions
+}
+```
+
+## Joinhandle
+
+The [`JoinHandle`](https://doc.rust-lang.org/std/thread/struct.JoinHandle.html) can have an inner type.
+This means we can return something from a child thread which can then be accessed by the thread that spawned it when it calls `.join`.
+
+```rust title=lib.rs
+use std::collections::HashMap;
+use std::thread;
+
+pub fn frequency(input: &[&str], worker_count: usize) -> HashMap<char, usize> {
+    let chunks = input.chunks((input.len() / worker_count).max(1));
+    let mut handles = Vec::new();
+
+    for chunk in chunks {
+        let string = chunk.join("");
+        // return a HashMap from the thread, that way the returned value from thread::spawn is a JoinHandle<HashMap>
+        let handle = thread::spawn(move || {
+            string
+                .chars()
+                .filter(|c| c.is_alphabetic())
+                .map(|c| c.to_ascii_lowercase())
+                .fold(HashMap::<char, usize>::new(), |mut acc, c| {
+                    *acc.entry(c).or_default() += 1;
+                    acc
+                })
+        });
+        handles.push(handle);
+    }
+
+    // loop over the JoinHandles and combine the HashMaps they contain
+    handles.into_iter().fold(HashMap::new(), |mut acc, handle| {
+        for (key, value) in handle.join().unwrap() {
+            *acc.entry(key).or_default() += value;
+        }
+        acc
+    })
+}
+```
+
+## Channel
+
+A popular method to ensure safe concurrency is message passing.
+Multiple threads communicate by sending each other messages containing data.
+
+Rust has the tool of a _channel_ for this.
+
+You can think of a channel like a stream of water.
+Put something in one end, it comes out at the other end.
+
+A programming channel has two halves, a sender and a receiver.
+Put things in the sender, take things out of the receiver.
+
+The Rust standard library has an implementation of this called [`mpsc`](https://doc.rust-lang.org/std/sync/mpsc/index.html), which stands for "multiple producer, single consumer".
+So, the `mpsc` channel can have multiple senders, but only a single receiver.
+
+You can think of this like a [river delta](https://en.wikipedia.org/wiki/River_delta) with many smaller rivers ending at the same location.
+
+The `std::sync::mpsc::channel` function returns a tuple with a sender, and a receiver.
+
+<Aside variant="info">
+
+By convention, the returned values from `std::sync::mpsc::channel` are called `tx` and `rx`, which I think is _very_ confusing.
+
+What is it, Rust?
+
+- Sender?
+- Transmitter?
+- Producer?
+- `tx`?
+- Yeeter?
+
+- Receiver?
+- Consumer?
+- `rx`?
+- Yeetee?
+
+That is why I'm calling the sendy bits senders, and the receivy bit receiver.
+I value consistency more than what it used to be called.
+
+</Aside>
+
+The `Sender` can be cloned, creating multiple copies that are able to be sent across threads.
+
+A `Sender` has a `send` method, which, you guessed it, sends a value down the channel.
+The values sent have to be owned values, it can no longer be used in the thread it is sent from.
+Ownership transfers to the receiver when it receives that value.
+
+<Aside>
+
+You can think of a channel as a single ownership construct.
+
+<Aside>
+
+The `Receiver` has a `recv` method which blocks the current thread until a message is received.
+
+```rust
+use std::thread;
+use std::sync::mpsc;
+
+let (sender, receiver) = mpsc::channel();
+for i in 0..10 {
+    let sender = sender.clone();
+    thread::spawn(move|| {
+        sender.send(i).unwrap();
+    });
+}
+
+for _ in 0..10 {
+    let j = receiver.recv().unwrap();
+}
+```
+
+## Mutex
+
+<Aside>
+
+You can think of a mutex as a multiple ownership construct.
+
+<Aside>
+
+## Final code
+
+<MultiLangCode values={[{title: "lib.rs", label: "Joinhandle"}, {title: "lib.rs", label: "Channel"}, {title: "lib.rs", label: "Mutex"}]}>
+
+```rust title=lib.rs
+use std::collections::HashMap;
+use std::thread;
+
+pub fn frequency(input: &[&str], worker_count: usize) -> HashMap<char, usize> {
+    let chunks = input.chunks((input.len() / worker_count).max(1));
+    let mut handles = Vec::new();
+
+    for chunk in chunks {
+        let string = chunk.join("");
+        let handle = thread::spawn(move || {
+            string
+                .chars()
+                .fold(HashMap::<char, usize>::new(), |mut acc, c| {
+                    if c.is_alphabetic() {
+                        *acc.entry(c.to_ascii_lowercase()).or_default() += 1;
+                    }
+                    acc
+                })
+        });
+        handles.push(handle);
+    }
+
+    handles.into_iter().fold(HashMap::new(), |mut acc, handle| {
+        for (key, value) in handle.join().unwrap() {
+            *acc.entry(key).or_default() += value;
+        }
+        acc
+    })
+}
+```
+
+```rust title=lib.rs
+use std::collections::HashMap;
+use std::mem;
+use std::sync::mpsc;
+use std::thread;
+
+pub fn frequency(input: &[&str], worker_count: usize) -> HashMap<char, usize> {
+    let (sender, receiver) = mpsc::channel();
+
+    for chunk in input.chunks((input.len() / worker_count).max(1)) {
+        let sender = sender.clone();
+        let string = chunk.join("");
+        thread::spawn(move || {
+            let map = string
+                .chars()
+                .filter(|c| c.is_alphabetic())
+                .map(|c| c.to_ascii_lowercase())
+                .fold(HashMap::<char, usize>::new(), |mut acc, c| {
+                    *acc.entry(c).or_default() += 1;
+                    acc
+                });
+            sender.send(map).unwrap();
+        });
+    }
+
+    // drop the original sender, else the channel will remain open, causing the receiver to infinitely wait
+    mem::drop(sender);
+
+    receiver
+        .iter()
+        .reduce(|mut acc, map| {
+            for (key, value) in map {
+                *acc.entry(key).or_default() += value;
+            }
+            acc
+        })
+        .expect("maps from channels are not empty")
+}
+```
+
+```rust title=lib.rs
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use std::thread;
+
+pub fn frequency(input: &[&str], worker_count: usize) -> HashMap<char, usize> {
+    let result = Arc::new(Mutex::new(HashMap::new()));
+    let mut handles: Vec<_> = Vec::new();
+
+    for chunk in input.chunks((input.len() / worker_count).max(1)) {
+        let string = chunk.join("");
+        let cloned_result = Arc::clone(&result);
+        let handle = thread::spawn(move || {
+            let mut map: HashMap<char, usize> = HashMap::new();
+            let iter = string
+                .chars()
+                .filter(|c| c.is_alphabetic())
+                .map(|c| c.to_ascii_lowercase());
+            for c in iter {
+                *map.entry(c).or_default() += 1;
+            }
+            let mut result = cloned_result.lock().unwrap();
+            for (k, v) in map {
+                *result.entry(k).or_default() += v;
+            }
+        });
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        handle.join().unwrap()
+    }
+
+    // get the HashMap from the Arc<Mutex<HashMap>>
+    Arc::try_unwrap(result).unwrap().into_inner().unwrap()
+}
+```
+
+</MultiLangCode>
