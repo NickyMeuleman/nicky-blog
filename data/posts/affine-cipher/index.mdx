@@ -1,0 +1,250 @@
+---
+title: "Affine cipher"
+date: "2021-10-25"
+authors: ["nicky"]
+cover: "./cover.jpg"
+tags: ["Rust"]
+---
+
+import { Modulo, EncodeDemo } from "./";
+import { MultiLangCode } from "./../../../src/components/MultiLangCode";
+
+The affine cipher turns letters from one alphabet into letters from the same alphabet.
+
+A plaintext letter always map to the same enciphered letter.
+That is a weakness of this cipher, as it clearly shows repeated letters in text.
+
+The enciphered letter can be the same as the plaintext letter.
+
+There are three steps to enciphering/deciphering using the affine cipher.
+
+1. Turn a letter into a number
+2. Do math on that number
+3. Turn that number into a letter
+
+The second step is where the enciphering and deciphering are different.
+
+## Values
+
+### Keys
+
+The affine cipher uses 2 number keys.
+These 2 numbers have to be [coprime](https://en.wikipedia.org/wiki/Coprime_integers).
+That means they're integers with as [greatest common divisor](https://en.wikipedia.org/wiki/Greatest_common_divisor) 1.
+
+This coprime keys requirement exists because it is used while deciphering.
+A cipher that can't ever be deciphered isn't a very good one now, is it?
+
+These keys are often represented by the variables `a` and `b`.
+
+### Alphabet length
+
+Letters map to a number and the other way around.
+For the Latin alphabet that means "a" is 0, "b" is 1, ..., "z" is 25.
+The length of that sequence is used during both enciphering and deciphering.
+
+Alphabet length is often represented by the variable `m`.
+For Latin: `m = 26`.
+
+## Techniques
+
+### Modulo
+
+The modulus operation is used both in enciphering and deciphering.
+
+While similar, modulus and remainder are **NOT** the same thing!
+
+<Aside variant="danger">
+
+In many programming languages, the `%` symbol is the remainder operator.
+
+That means using `%` when you need the modulus operator is a mistake.
+
+---
+
+For two integers `n` and `m`:
+
+Remainder: `n % m`
+
+Modulus: `((n % m) + m) % m`
+
+</Aside>
+
+A modulus operation can be thought of as clockwise counting on a circle.
+
+The circle starts at 0 and increments by 1 until the maximum is reached.  
+Instead of incrementing that maximum, it reaches the top, and starts from 0 again.
+
+In our example, we calculate numbers modulo 26 (the length of the Latin alphabet).
+That means the maximum number is 25.
+
+The same logic is applied for subtracting 1.  
+A subtraction by 1 results in 1 step counterclockwise.
+
+<Modulo />
+
+### Modular multiplicative inverse
+
+The [modular multiplicative inverse](https://en.wikipedia.org/wiki/Modular_multiplicative_inverse) is used during deciphering.
+
+In modular arithmetic, regular division isn't allowed.  
+Instead we multiply by the modular inverse.
+
+In regular arithmetic dividing by $7$ is equivalent to multiplying by $1/7$.
+
+In modular arithmetic that inverse is dependent on which modulus is used.
+
+For example, modular multiplicative inverse of $7$ in $mod 26$ is $15$.
+
+## Enciphering
+
+### Plaintext letter to number
+
+The plaintext character is mapped to a number.
+Our example uses the latin alphabet and maps "a" to 0, "b" to 1, ..., "z" to 25.
+
+In code, we take advantage of the ASCII table.
+
+A lowercase `a` is represented by the number 97.
+
+As a result, a character maps to the ASCII value of that character minus 97.
+
+<MultiLangCode>
+
+```js title=encode.js
+let plaintextNum = "a".charCodeAt(0) - 97;
+```
+
+```rust title=encode.rs
+let plaintext_num = 'a' as u8 - 97;
+```
+
+</MultiLangCode>
+
+### Manipulate the number
+
+- `a` and `b` are the key numbers.
+- `m` is the length of the used alphabet.
+- `x` is the number corresponding to the plaintext letter.
+
+- `y` is the number corresponding to the ciphertext letter.
+
+The formula for enciphering is $y = a * x + b$.
+
+This is done in $mod \space m$, so in our example it's in $mod \space 26$.
+
+That means the final ciphertext number is $y \space mod \space 26$.
+
+#### Code
+
+<MultiLangCode>
+
+```js title=encode.js
+let num = a * x + b;
+num = ((num % 26) + 26) % 26;
+```
+
+```rust title=encode.rs
+let mut num = a * x as i32 + b;
+num = num.rem_euclid(26);
+```
+
+</MultiLangCode>
+
+### Number to enciphered letter
+
+Where we turned a letter into a number previously, we reverse that process.
+
+In code, we use the ASCII table again.
+
+This time, we add 97 to the zero indexed number and look up the resulting number in the ASCII table.
+
+<MultiLangCode>
+
+```js title=encode.js
+let ciphertextChar = String.fromCharCode(ciphertextNum + 97);
+```
+
+```rust title=encode.rs
+let ciphertext_char = (ciphertextNum + 97) as char;
+```
+
+</MultiLangCode>
+
+### Demo
+
+<EncodeDemo />
+
+## Deciphering
+
+### Enciphered letter to number
+
+### Manipulate the number
+
+### Number to plaintext letter
+
+## Final code
+
+### Encipher
+
+<MultiLangCode>
+
+```js title=encode.js
+const LOWERCASE_ASCII_A = 97;
+const ALPHABET_LENGTH = 26;
+
+function encipher(plaintextChar, a, b) {
+  const plainCharNum = plaintextChar.charCodeAt(0) - LOWERCASE_ASCII_A;
+  let num = a * plainCharNum + b;
+  num = ((num % ALPHABET_LENGTH) + ALPHABET_LENGTH) % ALPHABET_LENGTH;
+  const cipherChar = String.fromCharCode(num + LOWERCASE_ASCII_A);
+  return cipherChar;
+}
+```
+
+```rust title=encode.rs
+const LOWERCASE_ASCII_A: u8 = 97;
+const ALPHABET_LENGTH: u8 = 26;
+
+fn encipher(plaintext_char: char, a: i32, b: i32) -> char {
+    let plain_char_num = plaintext_char as u8 - LOWERCASE_ASCII_A;
+    let mut num = a * plain_char_num as i32 + b;
+    num = num.rem_euclid(ALPHABET_LENGTH as i32);
+    (num as u8 + LOWERCASE_ASCII_A) as char
+}
+```
+
+</MultiLangCode>
+
+### Decipher
+
+<MultiLangCode>
+
+```js title=encode.js
+const LOWERCASE_ASCII_A = 97;
+const ALPHABET_LENGTH = 26;
+
+function decipher(encipheredChar, a, b) {
+  const cipherCharNum = encipheredChar.charCodeAt(0) - LOWERCASE_ASCII_A;
+  const inverse = mmi(a, ALPHABET_LENGTH);
+  let num = inverse * (cipherCharNum - b);
+  num = ((num % ALPHABET_LENGTH) + ALPHABET_LENGTH) % ALPHABET_LENGTH;
+  const plainChar = String.fromCharCode(num + LOWERCASE_ASCII_A);
+  return plainChar;
+}
+```
+
+```rust title=encode.rs
+const LOWERCASE_ASCII_A: u8 = 97;
+const ALPHABET_LENGTH: u8 = 26;
+
+fn decipher(enciphered_char: char, a: i32, b: i32) -> char {
+    let cipher_char_num  = enciphered_char as u8 - LOWERCASE_ASCII_A;
+    let inverse = mmi(a, ALPHABET_LENGTH as i32).unwrap();
+    let mut num = inverse * (cipher_char_num as i32 - b);
+    num = num.rem_euclid(ALPHABET_LENGTH as i32);
+    (num as u8 + LOWERCASE_ASCII_A) as char
+}
+```
+
+</MultiLangCode>
