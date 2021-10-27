@@ -1,20 +1,17 @@
 ---
 title: "Affine cipher"
-date: "2021-10-25"
+date: "2021-10-27"
 authors: ["nicky"]
 cover: "./cover.jpg"
-tags: ["Rust"]
+tags: ["algorithms", "Rust", "JavaScript"]
 ---
 
-import { Modulo, EncodeDemo } from "./";
+import { Modulo, EncodeDemo, DecodeDemo } from "./";
 import { MultiLangCode } from "./../../../src/components/MultiLangCode";
 
+<!-- Foto door cottonbro via Pexels -->
+
 The affine cipher turns letters from one alphabet into letters from the same alphabet.
-
-A plaintext letter always map to the same enciphered letter.
-That is a weakness of this cipher, as it clearly shows repeated letters in text.
-
-The enciphered letter can be the same as the plaintext letter.
 
 There are three steps to enciphering/deciphering using the affine cipher.
 
@@ -24,16 +21,27 @@ There are three steps to enciphering/deciphering using the affine cipher.
 
 The second step is where the enciphering and deciphering are different.
 
-## Values
+<Aside variant="info">
+
+A plaintext letter always maps to the same enciphered letter.
+That is a weakness of this cipher, it clearly shows repeated letters in text.
+
+---
+
+The enciphered letter can be the same as the plaintext letter.
+
+</Aside>
+
+## Values and techniques used
 
 ### Keys
 
-The affine cipher uses 2 number keys.
+The affine cipher uses 2 numerical keys.
 These 2 numbers have to be [coprime](https://en.wikipedia.org/wiki/Coprime_integers).
-That means they're integers with as [greatest common divisor](https://en.wikipedia.org/wiki/Greatest_common_divisor) 1.
+That means they're integers with a [greatest common divisor](https://en.wikipedia.org/wiki/Greatest_common_divisor) of 1.
 
-This coprime keys requirement exists because it is used while deciphering.
-A cipher that can't ever be deciphered isn't a very good one now, is it?
+This requirement exists because it is used while deciphering.
+A cipher that can't ever be deciphered isn't very useful now, is it?
 
 These keys are often represented by the variables `a` and `b`.
 
@@ -41,12 +49,11 @@ These keys are often represented by the variables `a` and `b`.
 
 Letters map to a number and the other way around.
 For the Latin alphabet that means "a" is 0, "b" is 1, ..., "z" is 25.
+
 The length of that sequence is used during both enciphering and deciphering.
 
-Alphabet length is often represented by the variable `m`.
-For Latin: `m = 26`.
-
-## Techniques
+The alphabet length is often represented by the variable `m`.
+For English: `m = 26`.
 
 ### Modulo
 
@@ -56,7 +63,7 @@ While similar, modulus and remainder are **NOT** the same thing!
 
 <Aside variant="danger">
 
-In many programming languages, the `%` symbol is the remainder operator.
+In many programming languages, the `%` symbol is the **remainder** operator.
 
 That means using `%` when you need the modulus operator is a mistake.
 
@@ -94,48 +101,47 @@ In regular arithmetic dividing by $7$ is equivalent to multiplying by $1/7$.
 
 In modular arithmetic that inverse is dependent on which modulus is used.
 
-For example, modular multiplicative inverse of $7$ in $mod 26$ is $15$.
+For example, a modular multiplicative inverse of $7$ in $\mod 26$ is $15$.
 
 ## Enciphering
 
 ### Plaintext letter to number
 
-The plaintext character is mapped to a number.
-Our example uses the latin alphabet and maps "a" to 0, "b" to 1, ..., "z" to 25.
+A plaintext character is mapped to a number.
+
+Our example uses the English alphabet and zero indexes letters.
+It maps "a" to 0, "b" to 1, ..., "z" to 25.
 
 In code, we take advantage of the ASCII table.
 
-A lowercase `a` is represented by the number 97.
+A lowercase `"a"` is represented by the number 97.
 
 As a result, a character maps to the ASCII value of that character minus 97.
 
 <MultiLangCode>
 
 ```js title=encode.js
-let plaintextNum = "a".charCodeAt(0) - 97;
+let plaintextNum = plaintextChar.charCodeAt(0) - 97;
 ```
 
 ```rust title=encode.rs
-let plaintext_num = 'a' as u8 - 97;
+let plaintext_num = plaintext_char as u8 - 97;
 ```
 
 </MultiLangCode>
 
 ### Manipulate the number
 
-- `a` and `b` are the key numbers.
-- `m` is the length of the used alphabet.
-- `x` is the number corresponding to the plaintext letter.
-
-- `y` is the number corresponding to the ciphertext letter.
+- $a$ and $b$ are the key numbers.
+- $m$ is the length of the used alphabet.
+- $x$ is the number corresponding to the plaintext letter.
+- $y$ is the number corresponding to the ciphertext letter.
 
 The formula for enciphering is $y = a * x + b$.
 
 This is done in $mod \space m$, so in our example it's in $mod \space 26$.
 
 That means the final ciphertext number is $y \space mod \space 26$.
-
-#### Code
 
 <MultiLangCode>
 
@@ -145,7 +151,7 @@ num = ((num % 26) + 26) % 26;
 ```
 
 ```rust title=encode.rs
-let mut num = a * x as i32 + b;
+let mut num = a * x + b;
 num = num.rem_euclid(26);
 ```
 
@@ -179,9 +185,89 @@ let ciphertext_char = (ciphertextNum + 97) as char;
 
 ### Enciphered letter to number
 
+This step is identical to the first one while enciphering.
+
+We look up the ASCII code for a lowercase letter, then we subtract the code for a lowercase ASCII `"a"`.
+This results in a number that is zero indexed.
+
+<MultiLangCode>
+
+```js title=decode.js
+let ciphertextNum = ciphertextChar.charCodeAt(0) - 97;
+```
+
+```rust title=decode.rs
+let ciphertext_num = ciphertext_char as u8 - 97;
+```
+
+</MultiLangCode>
+
 ### Manipulate the number
 
+- $a$ and $b$ are the key numbers.
+- $m$ is the length of the used alphabet.
+- $x$ is the number corresponding to the plaintext letter.
+- $y$ is the number corresponding to the ciphertext letter.
+
+The formula for enciphering is $y = a * x + b$.
+
+The formula for deciphering is derived by rewriting that equation.  
+The goal is to isolate the plaintext letter in the equation.
+
+$$
+y = a * x + b
+\newline
+y - b = a * x
+\newline
+a^{-1} * (y - b) = x
+$$
+
+Rewritten with the plaintext number on the left side:  
+The formula for deiphering is $x = a^{-1} * (y - b)$.
+
+It is important to remember these calculation are done in $\mod m$.
+
+That is why we are not allowed to divide by $a$.  
+Instead, we multiply by the [modular multiplicative inverse](#modular-multiplicative-inverse) of $a \pmod m$.
+
+<MultiLangCode>
+
+```js title=decode.js
+const inverse = mmi(a, 26);
+let num = inverse * (cipherCharNum - b);
+num = ((num % 26) + 26) % 26;
+```
+
+```rust title=decode.rs
+let inverse = mmi(a, 26);
+let mut num = inverse * (cipherCharNum - b);
+num = num.rem_euclid(26);
+```
+
+</MultiLangCode>
+
 ### Number to plaintext letter
+
+This step is identical to the last one while enciphering.
+
+We add the number for a lowercase ASCII `"a"` to our zero indexed number.  
+Then we look up the letter for that number in the ASCII table.
+
+<MultiLangCode>
+
+```js title=decode.js
+let plaintextChar = String.fromCharCode(plaintextNum + 97);
+```
+
+```rust title=decode.rs
+let plaintext_char = (plaintext_num + 97) as char;
+```
+
+</MultiLangCode>
+
+### Demo
+
+<DecodeDemo />
 
 ## Final code
 

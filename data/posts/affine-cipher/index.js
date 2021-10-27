@@ -49,10 +49,10 @@ function encode(char, a, b) {
 function decode(char, a, b) {
   const cipherCharNum = char.charCodeAt(0) - 97;
   const inverse = modInverse(a, 26);
-  let num = inverse * (cipherCharNum - b);
-  num = mod(num, 26);
-  const plainChar = String.fromCharCode(num + 97);
-  return plainChar;
+  const num = inverse * (cipherCharNum - b);
+  const modNum = mod(num, 26);
+  const plainChar = String.fromCharCode(modNum + 97);
+  return { plainChar, cipherCharNum, inverse, num, modNum };
 }
 
 const Circle = ({ value, maxValue, children }) => {
@@ -465,6 +465,7 @@ const EncodeDemo = () => {
           sx={{
             display: "grid",
             gridTemplateColumns: "repeat( auto-fit, minmax(250px, 1fr) )",
+            gap: 2
           }}
         >
           <div>
@@ -544,4 +545,296 @@ const EncodeDemo = () => {
   );
 };
 
-export { Modulo, EncodeDemo };
+const DecodeDemo = () => {
+  const [char, setChar] = useState("a");
+  const [a, setA] = useState(5);
+  const [b, setB] = useState(7);
+  const { plainChar, cipherCharNum, inverse, num, modNum } = decode(char, a, b);
+  console.log({ plainChar, cipherCharNum, inverse, num, modNum });
+  return (
+    <div sx={{ my: 4 }}>
+      <div
+        sx={{
+          border: `1px solid`,
+          borderColor: "watermarkBg",
+          padding: 3,
+          mb: 2,
+        }}
+      >
+        <p
+          sx={{
+            margin: 0,
+            mb: 2,
+            textTransform: `uppercase`,
+            letterSpacing: `wider`,
+            fontWeight: `bold`,
+            color: "mutedTextBg",
+            fontSize: 1,
+          }}
+        >
+          Input area
+        </p>
+        <div
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat( auto-fit, minmax(250px, 1fr) )",
+            alignItems: "center",
+            gap: 2,
+          }}
+        >
+          <div>
+            <p
+              sx={{
+                margin: 0,
+                mb: 1,
+                textTransform: `uppercase`,
+                letterSpacing: `wider`,
+                fontWeight: `bold`,
+                color: `mutedText`,
+                fontSize: 0,
+              }}
+            >
+              Key a
+            </p>
+            <input
+              type="number"
+              value={a}
+              onChange={(e) => {
+                const num = Number(e.target.value);
+                if (Number.isNaN(num)) {
+                  return;
+                }
+                setA(num);
+              }}
+              sx={{
+                all: "unset",
+                backgroundColor: "transparent",
+                fontSize: 2,
+                maxWidth: "3ch",
+                textAlign: "center",
+                cursor: "text",
+                px: 2,
+                py: 1,
+                color: "text",
+                borderStyle: "solid",
+                borderWidth: "1px",
+                borderColor: "text",
+                " -moz-appearance": "textfield",
+                "::-webkit-inner-spin-button, ::-webkit-outer-spin-button": {
+                  appearance: "none",
+                  margin: 0,
+                },
+              }}
+            />
+          </div>
+          <div>
+            <p
+              sx={{
+                margin: 0,
+                mb: 1,
+                textTransform: `uppercase`,
+                letterSpacing: `wider`,
+                fontWeight: `bold`,
+                color: `mutedText`,
+                fontSize: 0,
+              }}
+            >
+              Key b
+            </p>
+            <input
+              type="number"
+              value={b}
+              onChange={(e) => {
+                const num = Number(e.target.value);
+                if (Number.isNaN(num)) {
+                  return;
+                }
+                setB(num);
+              }}
+              sx={{
+                all: "unset",
+                backgroundColor: "transparent",
+                fontSize: 2,
+                maxWidth: "3ch",
+                textAlign: "center",
+                cursor: "text",
+                px: 2,
+                py: 1,
+                color: "text",
+                borderStyle: "solid",
+                borderWidth: "1px",
+                borderColor: "text",
+                " -moz-appearance": "textfield",
+                "::-webkit-inner-spin-button, ::-webkit-outer-spin-button": {
+                  appearance: "none",
+                  margin: 0,
+                },
+              }}
+            />
+          </div>
+          <div>
+            <p
+              sx={{
+                margin: 0,
+                mb: 1,
+                textTransform: `uppercase`,
+                letterSpacing: `wider`,
+                fontWeight: `bold`,
+                color: `mutedText`,
+                fontSize: 0,
+              }}
+            >
+              Ciphertext char
+            </p>
+            <input
+              type="text"
+              maxLength={1}
+              value={char}
+              onChange={(e) => setChar(e.target.value)}
+              sx={{
+                all: "unset",
+                backgroundColor: "transparent",
+                fontSize: 2,
+                maxWidth: "3ch",
+                textAlign: "center",
+                cursor: "text",
+                px: 2,
+                py: 1,
+                color: "text",
+                borderStyle: "solid",
+                borderWidth: "1px",
+                borderColor: "text",
+                " -moz-appearance": "textfield",
+                "::-webkit-inner-spin-button, ::-webkit-outer-spin-button": {
+                  appearance: "none",
+                  margin: 0,
+                },
+              }}
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        sx={{
+          border: `1px solid`,
+          borderColor: "watermarkBg",
+          padding: 3,
+          mb: 4,
+        }}
+      >
+        <p
+          sx={{
+            margin: 0,
+            mb: 2,
+            textTransform: `uppercase`,
+            letterSpacing: `wider`,
+            fontWeight: `bold`,
+            color: "mutedTextBg",
+            fontSize: 1,
+          }}
+        >
+          Output area
+        </p>
+        <div
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat( auto-fit, minmax(250px, 1fr) )",
+            gap: 2
+          }}
+        >
+          <div>
+            <p
+              sx={{
+                margin: 0,
+                mb: 1,
+                textTransform: `uppercase`,
+                letterSpacing: `wider`,
+                fontWeight: `bold`,
+                color: `mutedText`,
+                fontSize: 0,
+              }}
+            >
+              Cipher char as number
+            </p>
+            <p sx={{ my: 1 }}>
+              {Number.isNaN(cipherCharNum) ? "..." : cipherCharNum}
+            </p>
+          </div>
+          <div>
+            <p
+              sx={{
+                margin: 0,
+                mb: 1,
+                textTransform: `uppercase`,
+                letterSpacing: `wider`,
+                fontWeight: `bold`,
+                color: `mutedText`,
+                fontSize: 0,
+              }}
+            >
+              Modular inverse of a
+            </p>
+            <p sx={{ my: 1 }}>
+              {Number.isNaN(inverse) ? "..." : inverse}
+            </p>
+          </div>
+          <div>
+            <p
+              sx={{
+                margin: 0,
+                mb: 1,
+                textTransform: `uppercase`,
+                letterSpacing: `wider`,
+                fontWeight: `bold`,
+                color: `mutedText`,
+                fontSize: 0,
+              }}
+            >
+              Plain char number before modulo
+            </p>
+            <p sx={{ my: 1 }}>{Number.isNaN(num) ? "..." : num}</p>
+          </div>
+          <div>
+            <p
+              sx={{
+                margin: 0,
+                mb: 1,
+                textTransform: `uppercase`,
+                letterSpacing: `wider`,
+                fontWeight: `bold`,
+                color: `mutedText`,
+                fontSize: 0,
+              }}
+            >
+              Plain char number after modulo
+            </p>
+            <p sx={{ my: 1 }}>{Number.isNaN(modNum) ? "..." : modNum}</p>
+          </div>
+          <div>
+            <p
+              sx={{
+                margin: 0,
+                mb: 1,
+                textTransform: `uppercase`,
+                letterSpacing: `wider`,
+                fontWeight: `bold`,
+                color: `mutedText`,
+                fontSize: 0,
+              }}
+            >
+              Plain char
+            </p>
+            {/* check if plainchar is between "a" and "z" */}
+            <p sx={{ my: 1 }}>
+              {plainChar.charCodeAt(0) >= 97 && plainChar.charCodeAt(0) <= 122
+                ? plainChar
+                : "..."}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export { Modulo, EncodeDemo, DecodeDemo };
