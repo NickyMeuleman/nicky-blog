@@ -597,7 +597,7 @@ const DecipherCharDemo = () => {
   const [b, setB] = useState(7);
   const inverse = mmi(a, 26);
   const { plainChar, cipherCharNum, plainCharNum, plainCharNumMod } =
-    decipherChar(char, a, b, 26);
+    decipherChar(char, inverse, b, 26);
 
   useEffect(() => {
     if (!mmi(a, 26)) {
