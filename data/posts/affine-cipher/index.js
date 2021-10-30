@@ -1,65 +1,179 @@
 /* eslint-disable */
 /** @jsx jsx */
 import { jsx } from "theme-ui";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
-function mod(n, m) {
+// the uses of window and document here don't cause crashes.
+// because the only usages exist after a pointerdown event is fired, at which point, they're present.
+
+const LOWERCASE_ASCII_A = 97;
+
+function mod(a, b) {
   // the % operator is NOT the same as the modulo operation
   // this is different for negative numbers
-  return ((n % m) + m) % m;
+  return ((a % b) + b) % b;
 }
 
-function modInverse(a, m) {
-  // validate inputs
-  [a, m] = [Number(a), Number(m)];
-  if (Number.isNaN(a) || Number.isNaN(m)) {
-    return NaN; // invalid input
+function egcd(a, b) {
+  if (a == 0) {
+    return [b, 0, 1];
   }
-  a = ((a % m) + m) % m;
-  if (!a || m < 2) {
-    return NaN; // invalid input
+  if (b == 0) {
+    return [a, 1, 0];
   }
-  // find the gcd
-  const s = [];
-  let b = m;
-  while (b) {
-    [a, b] = [b, a % b];
-    s.push({ a, b });
-  }
-  if (a !== 1) {
-    return NaN; // inverse does not exists
-  }
-  // find the inverse
-  let x = 1;
-  let y = 0;
-  for (let i = s.length - 2; i >= 0; --i) {
-    [x, y] = [y, x - y * Math.floor(s[i].a / s[i].b)];
-  }
-  return ((y % m) + m) % m;
+  let quotient = Math.floor(b / a);
+  let remainder = b % a;
+  let [g, x, y] = egcd(remainder, a);
+  return [g, y - quotient * x, x];
 }
 
-function encode(char, a, b) {
-  const plainCharNum = char.charCodeAt(0) - 97;
-  const num = a * plainCharNum + b;
-  const modNum = mod(num, 26);
-  const cipherChar = String.fromCharCode(modNum + 97);
-  return { cipherChar, plainCharNum, num, modNum };
+function mmi(a, b) {
+  let [gcd, v] = egcd(a, b);
+  if (gcd == 1) {
+    return mod(v, b);
+  }
 }
 
-function decode(char, a, b) {
-  const cipherCharNum = char.charCodeAt(0) - 97;
-  const inverse = modInverse(a, 26);
-  const num = inverse * (cipherCharNum - b);
-  const modNum = mod(num, 26);
-  const plainChar = String.fromCharCode(modNum + 97);
-  return { plainChar, cipherCharNum, inverse, num, modNum };
+function encipherChar(plainChar, a, b, m) {
+  let plainCharNum = plainChar.toLowerCase().charCodeAt(0) - LOWERCASE_ASCII_A;
+  let cipherCharNum = a * plainCharNum + b;
+  let cipherCharNumMod = mod(cipherCharNum, m);
+  let cipherChar = String.fromCharCode(cipherCharNumMod + LOWERCASE_ASCII_A);
+  return { cipherChar, plainCharNum, cipherCharNum, cipherCharNumMod };
 }
+
+function decipherChar(cipherChar, inverse, b, m) {
+  let cipherCharNum =
+    cipherChar.toLowerCase().charCodeAt(0) - LOWERCASE_ASCII_A;
+  let plainCharNum = inverse * (cipherCharNum - b);
+  let plainCharNumMod = mod(plainCharNum, m);
+  let plainChar = String.fromCharCode(plainCharNumMod + LOWERCASE_ASCII_A);
+  return { plainChar, cipherCharNum, inverse, plainCharNum, plainCharNumMod };
+}
+
+function encipherString(plaintext, a, b, m) {
+  return plaintext
+    .trim()
+    .toLowerCase()
+    .split("")
+    .map((char) => encipherChar(char, a, b, m).cipherChar)
+    .join("");
+}
+
+function decipherString(ciphertext, a, b, m) {
+  const inverse = mmi(a, m);
+
+  return ciphertext
+    .trim()
+    .toLowerCase()
+    .split("")
+    .map((char) => decipherChar(char, inverse, b, m).plainChar)
+    .join("");
+}
+
+const FinalDemo = () => {
+  const [mode, setMode] = useState("ENCIPHER");
+  const [message, setMessage] = useState(null);
+  const [output, setOutput] = useState(null);
+  const [input, setInput] = useState("racecar");
+  const [a, setA] = useState(5);
+  const [b, setB] = useState(7);
+
+  useEffect(() => {
+    if (mode == "ENCIPHER") {
+      setOutput(encipherString(input, a, b, 26));
+    } else {
+      setOutput(decipherString(input, a, b, 26));
+    }
+  }, [input, mode, a, b]);
+
+  useEffect(() => {
+    if (!mmi(a, 26)) {
+      setMessage("a and m (26) have to be coprime");
+    } else {
+      setMessage(null);
+    }
+  }, [a]);
+
+  return (
+    <div>
+      <DemoArea title="Input area">
+        <div sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <label>
+            <input
+              type="radio"
+              checked={mode === "ENCIPHER"}
+              onChange={() => setMode("ENCIPHER")}
+            />
+            Encipher
+          </label>
+          <label>
+            <input
+              type="radio"
+              checked={mode == "DECIPHER"}
+              onChange={() => setMode("DECIPHER")}
+            />
+            Decipher
+          </label>
+        </div>
+        <Input
+          title="Key a"
+          type="number"
+          value={a}
+          handleChange={(e) => {
+            const num = Number(e.target.value);
+            if (Number.isNaN(num)) {
+              return;
+            }
+            setA(num);
+          }}
+        />
+        <Input
+          title="Key b"
+          type="number"
+          value={b}
+          handleChange={(e) => {
+            const num = Number(e.target.value);
+            if (Number.isNaN(num)) {
+              return;
+            }
+            setB(num);
+          }}
+        />
+        <Input
+          title={mode === "ENCIPHER" ? "plaintext" : "ciphertext"}
+          type="text"
+          width="100%"
+          value={input}
+          handleChange={(e) => setInput(e.target.value)}
+        />
+      </DemoArea>
+      {message ? (
+        <DemoArea>
+          <Output value={message} />
+        </DemoArea>
+      ) : (
+        <DemoArea
+          title={`${mode == "ENCIPHER" ? "enciphered" : "deciphered"} text`}
+        >
+          <Output value={output} />
+        </DemoArea>
+      )}
+    </div>
+  );
+};
 
 const Circle = ({ value, maxValue, children }) => {
-  // get progress, then subtract half of a step to center the step
   const turn = ((100 / maxValue) * value) / 100;
   return (
-    <div sx={{ position: "relative", width: "200px", height: "200px" }}>
+    <div
+      sx={{
+        position: "relative",
+        minWidth: "200px",
+        width: "200px",
+        height: "200px",
+      }}
+    >
       {/* inactive circle */}
       <div
         sx={{
@@ -110,70 +224,69 @@ const Circle = ({ value, maxValue, children }) => {
   );
 };
 
-// const Circle = ({ radius, stroke, progress, children }) => {
-//   const normalizedRadius = radius - stroke * 2;
-//   const circumference = normalizedRadius * 2 * Math.PI;
-//   const strokeDashoffset = circumference - (progress / 100) * circumference;
+const ModuloButton = ({ handleClick, children }) => {
+  // forgive me, state machine enthusiasts
+  const [active, setActive] = useState(false);
+  const first = useRef(true);
 
-//   return (
-//     <div sx={{ position: "relative" }}>
-//       {/* background circle */}
-//       <svg
-//         height={radius * 2}
-//         width={radius * 2}
-//         sx={{ position: "absolute", top: 0, left: 0 }}
-//       >
-//         <circle
-//           sx={{
-//             transition: "stroke-dashoffset 0.35s",
-//             transform: "rotate(-90deg)",
-//             transformOrigin: "50% 50%",
-//             fill: "transparent",
-//             strokeDashoffset: `0`,
-//             strokeWidth: stroke,
-//             stroke: "mutedBackground",
-//             strokeDasharray: `${circumference} ${circumference}`,
-//           }}
-//           r={normalizedRadius}
-//           cx={radius}
-//           cy={radius}
-//         />
-//       </svg>
-//       {/* progress circle */}
-//       <svg height={radius * 2} width={radius * 2} sx={{ position: "relative" }}>
-//         <circle
-//           sx={{
-//             transition: "stroke-dashoffset 0.35s",
-//             transform: "rotate(-90deg)",
-//             transformOrigin: "50% 50%",
-//             fill: "transparent",
-//             strokeDashoffset,
-//             strokeWidth: stroke,
-//             stroke: "primary",
-//             strokeDasharray: `${circumference} ${circumference}`,
-//           }}
-//           r={normalizedRadius}
-//           cx={radius}
-//           cy={radius}
-//         />
-//       </svg>
+  useEffect(() => {
+    if (active) {
+      const id = setInterval(handleClick, 200);
+      return () => clearInterval(id);
+    }
+  }, [active]);
 
-//       {children}
-//     </div>
-//   );
-// };
+  return (
+    <button
+      onPointerDown={(e) => {
+        if (first.current) {
+          handleClick();
+          first.current = false;
+        }
+        setActive(true);
+        document.addEventListener(
+          "pointerup",
+          () => {
+            first.current = true;
+            setActive(false);
+          },
+          { once: true }
+        );
+      }}
+      type="button"
+      sx={{
+        cursor: "pointer",
+        px: 3,
+        py: 1,
+        backgroundColor: "transparent",
+        color: "text",
+        borderStyle: "solid",
+        borderWidth: "1px",
+        borderColor: "text",
+      }}
+    >
+      {children}
+    </button>
+  );
+};
 
-const NumberInput = ({ val, setVal }) => {
+const ModuloControls = ({ val, setVal }) => {
   return (
     <div sx={{ display: "flex", gap: 1 }}>
       <button
-        onClick={() => {
-          setVal(val - 1);
+        onClick={async (e) => {
+          const timer = (ms) => new Promise((res) => setTimeout(res, ms));
+          for (let i = 0; i < 26; i++) {
+            setVal((count) => count - 1);
+            // timeout and transition duration for the indicator can't be far off
+            // if they are, the indicator and the number inside get out of sync
+            await timer(200);
+          }
         }}
         type="button"
         sx={{
           cursor: "pointer",
-          px: 2,
+          px: 3,
           py: 1,
           backgroundColor: "transparent",
           color: "text",
@@ -182,8 +295,15 @@ const NumberInput = ({ val, setVal }) => {
           borderColor: "text",
         }}
       >
-        -
+        - 26
       </button>
+      <ModuloButton
+        handleClick={() => {
+          setVal((count) => count - 1);
+        }}
+      >
+        -
+      </ModuloButton>
       <input
         sx={{
           all: "unset",
@@ -198,7 +318,7 @@ const NumberInput = ({ val, setVal }) => {
           borderStyle: "solid",
           borderWidth: "1px",
           borderColor: "text",
-          " -moz-appearance": "textfield",
+          MozAppearance: "textfield",
           "::-webkit-inner-spin-button, ::-webkit-outer-spin-button": {
             appearance: "none",
             margin: 0,
@@ -214,15 +334,25 @@ const NumberInput = ({ val, setVal }) => {
           setVal(num);
         }}
       />
-
+      <ModuloButton
+        handleClick={() => {
+          setVal((count) => count + 1);
+        }}
+      >
+        +
+      </ModuloButton>
       <button
-        onClick={() => {
-          setVal(val + 1);
+        onClick={async (e) => {
+          const timer = (ms) => new Promise((res) => setTimeout(res, ms));
+          for (let i = 0; i < 26; i++) {
+            setVal((count) => count + 1);
+            await timer(200);
+          }
         }}
         type="button"
         sx={{
           cursor: "pointer",
-          px: 2,
+          px: 3,
           py: 1,
           backgroundColor: "transparent",
           color: "text",
@@ -231,28 +361,27 @@ const NumberInput = ({ val, setVal }) => {
           borderColor: "text",
         }}
       >
-        +
+        + 26
       </button>
     </div>
   );
 };
 
-const Modulo = () => {
+const ModuloDemo = () => {
   const [inputNum, setInputNum] = useState(0);
   const maxNum = 26;
   return (
     <div
       sx={{
         display: "flex",
+        flexWrap: "wrap",
         justifyContent: "center",
         alignItems: "center",
         gap: 4,
         my: 4,
       }}
     >
-      <div>
-        <NumberInput val={inputNum} setVal={setInputNum} />
-      </div>
+      <ModuloControls val={inputNum} setVal={setInputNum} />
       <p>mod 26</p>
       <Circle value={inputNum} maxValue={maxNum}>
         <span
@@ -272,569 +401,282 @@ const Modulo = () => {
   );
 };
 
-const EncodeDemo = () => {
+const DemoArea = ({ title, children }) => {
+  return (
+    <div
+      sx={{
+        border: `1px solid`,
+        borderColor: "watermarkBg",
+        padding: 3,
+        mb: 2,
+      }}
+    >
+      <p
+        sx={{
+          margin: 0,
+          mb: 2,
+          textTransform: `uppercase`,
+          letterSpacing: `wider`,
+          fontWeight: `bold`,
+          color: "mutedTextBg",
+          fontSize: 1,
+        }}
+      >
+        {title}
+      </p>
+      <div
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "repeat( auto-fit, minmax(200px, 1fr) )",
+          gap: 2,
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
+
+const Input = ({ title, value, handleChange, width, ...props }) => {
+  return (
+    <div>
+      <label>
+        <p
+          sx={{
+            margin: 0,
+            mb: 1,
+            textTransform: `uppercase`,
+            letterSpacing: `wider`,
+            fontWeight: `bold`,
+            color: `mutedText`,
+            fontSize: 0,
+          }}
+        >
+          {title}
+        </p>
+        <input
+          value={value}
+          onChange={handleChange}
+          sx={{
+            all: "unset",
+            boxSizing: "border-box",
+            backgroundColor: "transparent",
+            fontSize: 2,
+            maxWidth: `${width || "5ch"}`,
+            textAlign: "center",
+            cursor: "text",
+            px: 2,
+            py: 1,
+            color: "text",
+            borderStyle: "solid",
+            borderWidth: "1px",
+            borderColor: "text",
+            MozAppearance: "textfield",
+            "::-webkit-inner-spin-button, ::-webkit-outer-spin-button": {
+              appearance: "none",
+              margin: 0,
+            },
+          }}
+          {...props}
+        />
+      </label>
+    </div>
+  );
+};
+
+const Output = ({ title, value }) => {
+  return (
+    <div>
+      <p
+        sx={{
+          margin: 0,
+          mb: 1,
+          textTransform: `uppercase`,
+          letterSpacing: `wider`,
+          fontWeight: `bold`,
+          color: `mutedText`,
+          fontSize: 0,
+        }}
+      >
+        {title}
+      </p>
+      <p sx={{ my: 1 }}>{value}</p>
+    </div>
+  );
+};
+
+const EncipherCharDemo = () => {
+  const [message, setMessage] = useState(null);
   const [char, setChar] = useState("a");
   const [a, setA] = useState(5);
   const [b, setB] = useState(7);
-  const { cipherChar, plainCharNum, num, modNum } = encode(char, a, b);
+  const { cipherChar, plainCharNum, cipherCharNum, cipherCharNumMod } =
+    encipherChar(char, a, b, 26);
+
+  useEffect(() => {
+    if (!mmi(a, 26)) {
+      setMessage("a and m (26) have to be coprime");
+    } else {
+      setMessage(null);
+    }
+  }, [a]);
+
   return (
     <div sx={{ my: 4 }}>
-      <div
-        sx={{
-          border: `1px solid`,
-          borderColor: "watermarkBg",
-          padding: 3,
-          mb: 2,
-        }}
-      >
-        <p
-          sx={{
-            margin: 0,
-            mb: 2,
-            textTransform: `uppercase`,
-            letterSpacing: `wider`,
-            fontWeight: `bold`,
-            color: "mutedTextBg",
-            fontSize: 1,
+      <DemoArea title="Input area">
+        <Input
+          title="Key a"
+          type="number"
+          value={a}
+          handleChange={(e) => {
+            const num = Number(e.target.value);
+            if (Number.isNaN(num)) {
+              return;
+            }
+            setA(num);
           }}
-        >
-          Input area
-        </p>
-        <div
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "repeat( auto-fit, minmax(250px, 1fr) )",
-            alignItems: "center",
-            gap: 2,
+        />
+        <Input
+          title="Key b"
+          type="number"
+          value={b}
+          handleChange={(e) => {
+            const num = Number(e.target.value);
+            if (Number.isNaN(num)) {
+              return;
+            }
+            setB(num);
           }}
-        >
-          <div>
-            <p
-              sx={{
-                margin: 0,
-                mb: 1,
-                textTransform: `uppercase`,
-                letterSpacing: `wider`,
-                fontWeight: `bold`,
-                color: `mutedText`,
-                fontSize: 0,
-              }}
-            >
-              Key a
-            </p>
-            <input
-              type="number"
-              value={a}
-              onChange={(e) => {
-                const num = Number(e.target.value);
-                if (Number.isNaN(num)) {
-                  return;
-                }
-                setA(num);
-              }}
-              sx={{
-                all: "unset",
-                backgroundColor: "transparent",
-                fontSize: 2,
-                maxWidth: "3ch",
-                textAlign: "center",
-                cursor: "text",
-                px: 2,
-                py: 1,
-                color: "text",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                borderColor: "text",
-                " -moz-appearance": "textfield",
-                "::-webkit-inner-spin-button, ::-webkit-outer-spin-button": {
-                  appearance: "none",
-                  margin: 0,
-                },
-              }}
-            />
-          </div>
-          <div>
-            <p
-              sx={{
-                margin: 0,
-                mb: 1,
-                textTransform: `uppercase`,
-                letterSpacing: `wider`,
-                fontWeight: `bold`,
-                color: `mutedText`,
-                fontSize: 0,
-              }}
-            >
-              Key b
-            </p>
-            <input
-              type="number"
-              value={b}
-              onChange={(e) => {
-                const num = Number(e.target.value);
-                if (Number.isNaN(num)) {
-                  return;
-                }
-                setB(num);
-              }}
-              sx={{
-                all: "unset",
-                backgroundColor: "transparent",
-                fontSize: 2,
-                maxWidth: "3ch",
-                textAlign: "center",
-                cursor: "text",
-                px: 2,
-                py: 1,
-                color: "text",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                borderColor: "text",
-                " -moz-appearance": "textfield",
-                "::-webkit-inner-spin-button, ::-webkit-outer-spin-button": {
-                  appearance: "none",
-                  margin: 0,
-                },
-              }}
-            />
-          </div>
-          <div>
-            <p
-              sx={{
-                margin: 0,
-                mb: 1,
-                textTransform: `uppercase`,
-                letterSpacing: `wider`,
-                fontWeight: `bold`,
-                color: `mutedText`,
-                fontSize: 0,
-              }}
-            >
-              Plaintext char
-            </p>
-            <input
-              type="text"
-              maxLength={1}
-              value={char}
-              onChange={(e) => setChar(e.target.value)}
-              sx={{
-                all: "unset",
-                backgroundColor: "transparent",
-                fontSize: 2,
-                maxWidth: "3ch",
-                textAlign: "center",
-                cursor: "text",
-                px: 2,
-                py: 1,
-                color: "text",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                borderColor: "text",
-                " -moz-appearance": "textfield",
-                "::-webkit-inner-spin-button, ::-webkit-outer-spin-button": {
-                  appearance: "none",
-                  margin: 0,
-                },
-              }}
-            />
-          </div>
-        </div>
-      </div>
-      <div
-        sx={{
-          border: `1px solid`,
-          borderColor: "watermarkBg",
-          padding: 3,
-          mb: 4,
-        }}
-      >
-        <p
-          sx={{
-            margin: 0,
-            mb: 2,
-            textTransform: `uppercase`,
-            letterSpacing: `wider`,
-            fontWeight: `bold`,
-            color: "mutedTextBg",
-            fontSize: 1,
-          }}
-        >
-          Output area
-        </p>
-        <div
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "repeat( auto-fit, minmax(250px, 1fr) )",
-            gap: 2
-          }}
-        >
-          <div>
-            <p
-              sx={{
-                margin: 0,
-                mb: 1,
-                textTransform: `uppercase`,
-                letterSpacing: `wider`,
-                fontWeight: `bold`,
-                color: `mutedText`,
-                fontSize: 0,
-              }}
-            >
-              Plaintext char as number
-            </p>
-            <p sx={{ my: 1 }}>
-              {Number.isNaN(plainCharNum) ? "..." : plainCharNum}
-            </p>
-          </div>
-          <div>
-            <p
-              sx={{
-                margin: 0,
-                mb: 1,
-                textTransform: `uppercase`,
-                letterSpacing: `wider`,
-                fontWeight: `bold`,
-                color: `mutedText`,
-                fontSize: 0,
-              }}
-            >
-              Cipher number before modulo
-            </p>
-            <p sx={{ my: 1 }}>{Number.isNaN(num) ? "..." : num}</p>
-          </div>
-          <div>
-            <p
-              sx={{
-                margin: 0,
-                mb: 1,
-                textTransform: `uppercase`,
-                letterSpacing: `wider`,
-                fontWeight: `bold`,
-                color: `mutedText`,
-                fontSize: 0,
-              }}
-            >
-              Cipher number after modulo
-            </p>
-            <p sx={{ my: 1 }}>{Number.isNaN(modNum) ? "..." : modNum}</p>
-          </div>
-          <div>
-            <p
-              sx={{
-                margin: 0,
-                mb: 1,
-                textTransform: `uppercase`,
-                letterSpacing: `wider`,
-                fontWeight: `bold`,
-                color: `mutedText`,
-                fontSize: 0,
-              }}
-            >
-              Cipher char
-            </p>
-            {/* check  if cipherchar is between "a" and "z" */}
-            <p sx={{ my: 1 }}>
-              {cipherChar.charCodeAt(0) >= 97 && cipherChar.charCodeAt(0) <= 122
+        />
+        <Input
+          title="Plaintext char"
+          type="text"
+          maxLength={1}
+          value={char}
+          handleChange={(e) => setChar(e.target.value)}
+        />
+      </DemoArea>
+      {message ? (
+        <DemoArea>
+          <Output value={message} />
+        </DemoArea>
+      ) : (
+        <DemoArea title="Output area">
+          <Output
+            title="Plaintext char as number"
+            value={Number.isNaN(plainCharNum) ? "..." : plainCharNum}
+          />
+          <Output
+            title="Cipher number before modulo"
+            value={Number.isNaN(cipherCharNum) ? "..." : cipherCharNum}
+          />
+          <Output
+            title="Cipher number after modulo"
+            value={Number.isNaN(cipherCharNumMod) ? "..." : cipherCharNumMod}
+          />
+          <Output
+            title="Cipher char"
+            value={
+              /* check  if cipherchar is between "a" and "z" */ cipherChar.charCodeAt(
+                0
+              ) >= 97 && cipherChar.charCodeAt(0) <= 122
                 ? cipherChar
-                : "..."}
-            </p>
-          </div>
-        </div>
-      </div>
+                : "..."
+            }
+          />
+        </DemoArea>
+      )}
     </div>
   );
 };
 
-const DecodeDemo = () => {
+const DecipherCharDemo = () => {
+  const [message, setMessage] = useState(null);
   const [char, setChar] = useState("a");
   const [a, setA] = useState(5);
   const [b, setB] = useState(7);
-  const { plainChar, cipherCharNum, inverse, num, modNum } = decode(char, a, b);
-  console.log({ plainChar, cipherCharNum, inverse, num, modNum });
+  const { plainChar, cipherCharNum, inverse, plainCharNum, plainCharNumMod } =
+    decipherChar(char, a, b, 26);
+
+  useEffect(() => {
+    if (!mmi(a, 26)) {
+      setMessage("a and m (26) have to be coprime");
+    } else {
+      setMessage(null);
+    }
+  }, [a]);
+
   return (
     <div sx={{ my: 4 }}>
-      <div
-        sx={{
-          border: `1px solid`,
-          borderColor: "watermarkBg",
-          padding: 3,
-          mb: 2,
-        }}
-      >
-        <p
-          sx={{
-            margin: 0,
-            mb: 2,
-            textTransform: `uppercase`,
-            letterSpacing: `wider`,
-            fontWeight: `bold`,
-            color: "mutedTextBg",
-            fontSize: 1,
+      <DemoArea title="Input area">
+        <Input
+          title="Key a"
+          type="number"
+          value={a}
+          handleChange={(e) => {
+            const num = Number(e.target.value);
+            if (Number.isNaN(num)) {
+              return;
+            }
+            setA(num);
           }}
-        >
-          Input area
-        </p>
-        <div
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "repeat( auto-fit, minmax(250px, 1fr) )",
-            alignItems: "center",
-            gap: 2,
+        />
+        <Input
+          title="Key b"
+          type="number"
+          value={b}
+          handleChange={(e) => {
+            const num = Number(e.target.value);
+            if (Number.isNaN(num)) {
+              return;
+            }
+            setB(num);
           }}
-        >
-          <div>
-            <p
-              sx={{
-                margin: 0,
-                mb: 1,
-                textTransform: `uppercase`,
-                letterSpacing: `wider`,
-                fontWeight: `bold`,
-                color: `mutedText`,
-                fontSize: 0,
-              }}
-            >
-              Key a
-            </p>
-            <input
-              type="number"
-              value={a}
-              onChange={(e) => {
-                const num = Number(e.target.value);
-                if (Number.isNaN(num)) {
-                  return;
-                }
-                setA(num);
-              }}
-              sx={{
-                all: "unset",
-                backgroundColor: "transparent",
-                fontSize: 2,
-                maxWidth: "3ch",
-                textAlign: "center",
-                cursor: "text",
-                px: 2,
-                py: 1,
-                color: "text",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                borderColor: "text",
-                " -moz-appearance": "textfield",
-                "::-webkit-inner-spin-button, ::-webkit-outer-spin-button": {
-                  appearance: "none",
-                  margin: 0,
-                },
-              }}
-            />
-          </div>
-          <div>
-            <p
-              sx={{
-                margin: 0,
-                mb: 1,
-                textTransform: `uppercase`,
-                letterSpacing: `wider`,
-                fontWeight: `bold`,
-                color: `mutedText`,
-                fontSize: 0,
-              }}
-            >
-              Key b
-            </p>
-            <input
-              type="number"
-              value={b}
-              onChange={(e) => {
-                const num = Number(e.target.value);
-                if (Number.isNaN(num)) {
-                  return;
-                }
-                setB(num);
-              }}
-              sx={{
-                all: "unset",
-                backgroundColor: "transparent",
-                fontSize: 2,
-                maxWidth: "3ch",
-                textAlign: "center",
-                cursor: "text",
-                px: 2,
-                py: 1,
-                color: "text",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                borderColor: "text",
-                " -moz-appearance": "textfield",
-                "::-webkit-inner-spin-button, ::-webkit-outer-spin-button": {
-                  appearance: "none",
-                  margin: 0,
-                },
-              }}
-            />
-          </div>
-          <div>
-            <p
-              sx={{
-                margin: 0,
-                mb: 1,
-                textTransform: `uppercase`,
-                letterSpacing: `wider`,
-                fontWeight: `bold`,
-                color: `mutedText`,
-                fontSize: 0,
-              }}
-            >
-              Ciphertext char
-            </p>
-            <input
-              type="text"
-              maxLength={1}
-              value={char}
-              onChange={(e) => setChar(e.target.value)}
-              sx={{
-                all: "unset",
-                backgroundColor: "transparent",
-                fontSize: 2,
-                maxWidth: "3ch",
-                textAlign: "center",
-                cursor: "text",
-                px: 2,
-                py: 1,
-                color: "text",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                borderColor: "text",
-                " -moz-appearance": "textfield",
-                "::-webkit-inner-spin-button, ::-webkit-outer-spin-button": {
-                  appearance: "none",
-                  margin: 0,
-                },
-              }}
-            />
-          </div>
-        </div>
-      </div>
-      <div
-        sx={{
-          border: `1px solid`,
-          borderColor: "watermarkBg",
-          padding: 3,
-          mb: 4,
-        }}
-      >
-        <p
-          sx={{
-            margin: 0,
-            mb: 2,
-            textTransform: `uppercase`,
-            letterSpacing: `wider`,
-            fontWeight: `bold`,
-            color: "mutedTextBg",
-            fontSize: 1,
-          }}
-        >
-          Output area
-        </p>
-        <div
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "repeat( auto-fit, minmax(250px, 1fr) )",
-            gap: 2
-          }}
-        >
-          <div>
-            <p
-              sx={{
-                margin: 0,
-                mb: 1,
-                textTransform: `uppercase`,
-                letterSpacing: `wider`,
-                fontWeight: `bold`,
-                color: `mutedText`,
-                fontSize: 0,
-              }}
-            >
-              Cipher char as number
-            </p>
-            <p sx={{ my: 1 }}>
-              {Number.isNaN(cipherCharNum) ? "..." : cipherCharNum}
-            </p>
-          </div>
-          <div>
-            <p
-              sx={{
-                margin: 0,
-                mb: 1,
-                textTransform: `uppercase`,
-                letterSpacing: `wider`,
-                fontWeight: `bold`,
-                color: `mutedText`,
-                fontSize: 0,
-              }}
-            >
-              Modular inverse of a
-            </p>
-            <p sx={{ my: 1 }}>
-              {Number.isNaN(inverse) ? "..." : inverse}
-            </p>
-          </div>
-          <div>
-            <p
-              sx={{
-                margin: 0,
-                mb: 1,
-                textTransform: `uppercase`,
-                letterSpacing: `wider`,
-                fontWeight: `bold`,
-                color: `mutedText`,
-                fontSize: 0,
-              }}
-            >
-              Plain char number before modulo
-            </p>
-            <p sx={{ my: 1 }}>{Number.isNaN(num) ? "..." : num}</p>
-          </div>
-          <div>
-            <p
-              sx={{
-                margin: 0,
-                mb: 1,
-                textTransform: `uppercase`,
-                letterSpacing: `wider`,
-                fontWeight: `bold`,
-                color: `mutedText`,
-                fontSize: 0,
-              }}
-            >
-              Plain char number after modulo
-            </p>
-            <p sx={{ my: 1 }}>{Number.isNaN(modNum) ? "..." : modNum}</p>
-          </div>
-          <div>
-            <p
-              sx={{
-                margin: 0,
-                mb: 1,
-                textTransform: `uppercase`,
-                letterSpacing: `wider`,
-                fontWeight: `bold`,
-                color: `mutedText`,
-                fontSize: 0,
-              }}
-            >
-              Plain char
-            </p>
-            {/* check if plainchar is between "a" and "z" */}
-            <p sx={{ my: 1 }}>
-              {plainChar.charCodeAt(0) >= 97 && plainChar.charCodeAt(0) <= 122
+        />
+        <Input
+          title="Ciphertext char"
+          type="text"
+          maxLength={1}
+          value={char}
+          handleChange={(e) => setChar(e.target.value)}
+        />
+      </DemoArea>
+      {message ? (
+        <DemoArea>
+          <Output value={message} />
+        </DemoArea>
+      ) : (
+        <DemoArea title="Output area">
+          <Output
+            title="Cipher char as number"
+            value={Number.isNaN(cipherCharNum) ? "..." : cipherCharNum}
+          />
+          <Output
+            title="Modular inverse of a"
+            value={Number.isNaN(inverse) ? "..." : inverse}
+          />
+          <Output
+            title="Plain char number before modulo"
+            value={Number.isNaN(plainCharNum) ? "..." : plainCharNum}
+          />
+          <Output
+            title="Plain char number after modulo"
+            value={Number.isNaN(plainCharNumMod) ? "..." : plainCharNumMod}
+          />
+          <Output
+            title="Plain char"
+            value={
+              /* check if plainchar is between "a" and "z" */ plainChar.charCodeAt(
+                0
+              ) >= 97 && plainChar.charCodeAt(0) <= 122
                 ? plainChar
-                : "..."}
-            </p>
-          </div>
-        </div>
-      </div>
+                : "..."
+            }
+          />
+        </DemoArea>
+      )}
     </div>
   );
 };
 
-export { Modulo, EncodeDemo, DecodeDemo };
+export { ModuloDemo, EncipherCharDemo, DecipherCharDemo, FinalDemo };

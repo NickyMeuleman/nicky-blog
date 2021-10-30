@@ -1,13 +1,15 @@
 ---
 title: "Affine cipher"
 date: "2021-10-27"
+updatedAt: "2021-10-30"
 authors: ["nicky"]
 cover: "./cover.jpg"
 tags: ["algorithms", "Rust", "JavaScript"]
 ---
 
-import { Modulo, EncodeDemo, DecodeDemo } from "./";
+import { ModuloDemo, EncipherCharDemo, DecipherCharDemo, FinalDemo } from "./";
 import { MultiLangCode } from "./../../../src/components/MultiLangCode";
+import { MathBlock } from "./../../../src/components/MathBlock";
 
 <!-- Foto door cottonbro via Pexels -->
 
@@ -30,6 +32,10 @@ That is a weakness of this cipher, it clearly shows repeated letters in text.
 
 The enciphered letter can be the same as the plaintext letter.
 
+---
+
+For this post, it is assumed all inputs are lowercase letters from the English alphabet.
+
 </Aside>
 
 ## Values and techniques used
@@ -37,23 +43,24 @@ The enciphered letter can be the same as the plaintext letter.
 ### Keys
 
 The affine cipher uses 2 numerical keys.
-These 2 numbers have to be [coprime](https://en.wikipedia.org/wiki/Coprime_integers).
-That means they're integers with a [greatest common divisor](https://en.wikipedia.org/wiki/Greatest_common_divisor) of 1.
-
-This requirement exists because it is used while deciphering.
-A cipher that can't ever be deciphered isn't very useful now, is it?
 
 These keys are often represented by the variables `a` and `b`.
 
 ### Alphabet length
 
 Letters map to a number and the other way around.
-For the Latin alphabet that means "a" is 0, "b" is 1, ..., "z" is 25.
+For the English alphabet that means "a" is 0, "b" is 1, ..., "z" is 25.
 
 The length of that sequence is used during both enciphering and deciphering.
 
 The alphabet length is often represented by the variable `m`.
 For English: `m = 26`.
+
+Key `a` and alphabet length `m` have to be [coprime](https://en.wikipedia.org/wiki/Coprime_integers).
+That means they're integers with a [greatest common divisor](https://en.wikipedia.org/wiki/Greatest_common_divisor) of 1.
+
+This requirement exists because it is used while deciphering.
+A cipher that can't ever be deciphered isn't very useful now, is it?
 
 ### Modulo
 
@@ -77,18 +84,22 @@ Modulus: `((n % m) + m) % m`
 
 </Aside>
 
-A modulus operation can be thought of as clockwise counting on a circle.
+A modulo operation can be thought of as counting on a circle.  
+That circle has as many steps as the modulus you are applying.
 
-The circle starts at 0 and increments by 1 until the maximum is reached.  
+Adding 1 to the number we take the modulo of means taking one step clockwise on the circle.
+
+Starting at 0, and incrementing by one every step.  
+The result of a modulo calculation starts at 0 and increments by 1 until the maximum is reached.  
 Instead of incrementing that maximum, it reaches the top, and starts from 0 again.
 
-In our example, we calculate numbers modulo 26 (the length of the Latin alphabet).
+In our example, we calculate numbers with a modulus of 26 (the length of the English alphabet).
 That means the maximum number is 25.
 
 The same logic is applied for subtracting 1.  
 A subtraction by 1 results in 1 step counterclockwise.
 
-<Modulo />
+<ModuloDemo />
 
 ### Modular multiplicative inverse
 
@@ -97,11 +108,126 @@ The [modular multiplicative inverse](https://en.wikipedia.org/wiki/Modular_multi
 In modular arithmetic, regular division isn't allowed.  
 Instead we multiply by the modular inverse.
 
-In regular arithmetic dividing by $7$ is equivalent to multiplying by $1/7$.
+In regular arithmetic dividing by $7$ is equivalent to multiplying by ${1 \over 7}$.
 
 In modular arithmetic that inverse is dependent on which modulus is used.
 
-For example, a modular multiplicative inverse of $7$ in $\mod 26$ is $15$.
+For example, a modular multiplicative inverse of $7$ in $\bmod 26$ is $15$.
+
+We want to find a number (which we'll call $v$) where multiplying by that number in $\bmod 26$ works out to $1$.
+
+- $a$ is $7$
+- $w$ is a random integer
+- in $\bmod 26$
+
+We want to find $v$ such that:
+
+$$
+a * v = 1 \plusmn 26 * w
+$$
+
+written differently:
+
+$$
+7 * v \cong 1 \pmod {26}
+$$
+
+What we just wrote, is a rearranged special case of [Bézout's identity](https://en.wikipedia.org/wiki/B%C3%A9zout%27s_identity).
+It says that a multiple of 7 plus a multiple of 26 is equal to the greatest common divisor of 7 and 26.
+
+In the affine cipher, the greatest common divisor is always 1.
+
+<Aside variant="info">
+
+The greatest common divisor is 1 because `a` and `m` are required to be coprime.
+
+</Aside>
+
+<!-- can't pass the math as children because * gets automatically changed to _ by markdown-all-in-one -->
+
+<MathBlock
+  title="Written as Bezout's identity"
+  math={"a * v + m * w = 1 \\newline 7 * v + 26 * w = 1 "}
+/>
+
+Remember, the number we're interested in is $a^{-1}$.
+
+<Aside variant="info">
+
+If we find a $v$ where $a * v + 26 * w = 1$.  
+That means of $v \bmod {26}$ is $a^{-1}$
+
+</Aside>
+
+The [extended Euclidean algorithm](https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm) calculates the greatest common divisor of 2 numbers along with both factors of [Bézout's identity](https://en.wikipedia.org/wiki/B%C3%A9zout%27s_identity).
+
+$v$ is one of those factors!
+
+By plugging $a$ and $26$ into the algorithm, we get 3 things back.
+
+1. The greatest common divisor of $a$ and $26$, that's $1$.
+2. The first integer in [Bézout's identity](https://en.wikipedia.org/wiki/B%C3%A9zout%27s_identity), that's $v$
+3. The second integer in [Bézout's identity](https://en.wikipedia.org/wiki/B%C3%A9zout%27s_identity), which is irrelevant.
+
+<MultiLangCode>
+
+```js title=index.js
+function egcd(a, b) {
+  if (a == 0) {
+    return [b, 0, 1];
+  }
+  if (b == 0) {
+    return [a, 1, 0];
+  }
+  let quotient = Math.floor(b / a);
+  let remainder = b % a;
+  let [g, x, y] = egcd(remainder, a);
+  return [g, y - quotient * x, x];
+}
+```
+
+```rust title=lib.rs
+fn egcd(a: i32, b: i32) -> (i32, i32, i32) {
+    match (a, b) {
+        (0, _) => (b, 0, 1),
+        (_, 0) => (a, 1, 0),
+        _ => {
+            let quotient = b / a;
+            let remainder = b % a;
+            let (g, x, y) = egcd(remainder, a);
+            (g, y - quotient * x, x)
+        }
+    }
+}
+```
+
+</MultiLangCode>
+
+The function to calculate the [modular multiplicative inverse](https://en.wikipedia.org/wiki/Modular_multiplicative_inverse) checks if the greatest common divisor between key `a`, and alphabet length `m` is 1.
+If it is, it returns the first Bezout coefficient $\bmod m$, which is $a^{-1}$.
+
+<MultiLangCode>
+
+```js title=index.js
+function mmi(a, m) {
+  let [gcd, v] = egcd(a, m);
+  if (gcd == 1) {
+    return ((v % m) + m) % m;
+  }
+}
+```
+
+```rust title=lib.rs
+fn mmi(a: i32, m: i32) -> Option<i32> {
+    let (g, v, _) = egcd(a, m);
+    match g {
+        1 => Some(v.rem_euclid(m)),
+        _ => None,
+    }
+}
+```
+
+</MultiLangCode>
 
 ## Enciphering
 
@@ -114,17 +240,17 @@ It maps "a" to 0, "b" to 1, ..., "z" to 25.
 
 In code, we take advantage of the ASCII table.
 
-A lowercase `"a"` is represented by the number 97.
+In ASCII, a lowercase `"a"` is represented by the number 97.
 
 As a result, a character maps to the ASCII value of that character minus 97.
 
 <MultiLangCode>
 
-```js title=encode.js
+```js title=index.js
 let plaintextNum = plaintextChar.charCodeAt(0) - 97;
 ```
 
-```rust title=encode.rs
+```rust title=lib.rs
 let plaintext_num = plaintext_char as u8 - 97;
 ```
 
@@ -135,7 +261,7 @@ let plaintext_num = plaintext_char as u8 - 97;
 - $a$ and $b$ are the key numbers.
 - $m$ is the length of the used alphabet.
 - $x$ is the number corresponding to the plaintext letter.
-- $y$ is the number corresponding to the ciphertext letter.
+- $y$ is the number corresponding to the ciphertext letter before the modulo operation.
 
 The formula for enciphering is $y = a * x + b$.
 
@@ -145,14 +271,14 @@ That means the final ciphertext number is $y \space mod \space 26$.
 
 <MultiLangCode>
 
-```js title=encode.js
-let num = a * x + b;
-num = ((num % 26) + 26) % 26;
+```js title=index.js
+let y = a * x + b;
+y = ((y % 26) + 26) % 26;
 ```
 
-```rust title=encode.rs
-let mut num = a * x + b;
-num = num.rem_euclid(26);
+```rust title=lib.rs
+let mut y = a * x + b;
+y = y.rem_euclid(26);
 ```
 
 </MultiLangCode>
@@ -163,15 +289,15 @@ Where we turned a letter into a number previously, we reverse that process.
 
 In code, we use the ASCII table again.
 
-This time, we add 97 to the zero indexed number and look up the resulting number in the ASCII table.
+This time, we add 97 to the zero indexed number and look up the resulting letter in the ASCII table.
 
 <MultiLangCode>
 
-```js title=encode.js
+```js title=index.js
 let ciphertextChar = String.fromCharCode(ciphertextNum + 97);
 ```
 
-```rust title=encode.rs
+```rust title=lib.rs
 let ciphertext_char = (ciphertextNum + 97) as char;
 ```
 
@@ -179,7 +305,7 @@ let ciphertext_char = (ciphertextNum + 97) as char;
 
 ### Demo
 
-<EncodeDemo />
+<EncipherCharDemo />
 
 ## Deciphering
 
@@ -192,11 +318,11 @@ This results in a number that is zero indexed.
 
 <MultiLangCode>
 
-```js title=decode.js
+```js title=index.js
 let ciphertextNum = ciphertextChar.charCodeAt(0) - 97;
 ```
 
-```rust title=decode.rs
+```rust title=lib.rs
 let ciphertext_num = ciphertext_char as u8 - 97;
 ```
 
@@ -206,12 +332,12 @@ let ciphertext_num = ciphertext_char as u8 - 97;
 
 - $a$ and $b$ are the key numbers.
 - $m$ is the length of the used alphabet.
-- $x$ is the number corresponding to the plaintext letter.
 - $y$ is the number corresponding to the ciphertext letter.
+- $x$ is the number corresponding to the plaintext letter before the modulo operation.
 
 The formula for enciphering is $y = a * x + b$.
 
-The formula for deciphering is derived by rewriting that equation.  
+The formula for deciphering is derived by rewriting that equation.
 The goal is to isolate the plaintext letter in the equation.
 
 $$
@@ -222,26 +348,26 @@ y - b = a * x
 a^{-1} * (y - b) = x
 $$
 
-Rewritten with the plaintext number on the left side:  
+Rewritten with the plaintext number on the left side:
 The formula for deiphering is $x = a^{-1} * (y - b)$.
 
-It is important to remember these calculation are done in $\mod m$.
+It is important to remember these calculation are done in $\bmod m$.
 
-That is why we are not allowed to divide by $a$.  
+That is why we are not allowed to divide by $a$.
 Instead, we multiply by the [modular multiplicative inverse](#modular-multiplicative-inverse) of $a \pmod m$.
 
 <MultiLangCode>
 
-```js title=decode.js
+```js title=index.js
 const inverse = mmi(a, 26);
-let num = inverse * (cipherCharNum - b);
-num = ((num % 26) + 26) % 26;
+let x = inverse * (cipherCharNum - b);
+x = ((x % 26) + 26) % 26;
 ```
 
-```rust title=decode.rs
+```rust title=lib.rs
 let inverse = mmi(a, 26);
-let mut num = inverse * (cipherCharNum - b);
-num = num.rem_euclid(26);
+let mut x = inverse * (cipherchar_num - b);
+x = x.rem_euclid(26);
 ```
 
 </MultiLangCode>
@@ -250,16 +376,16 @@ num = num.rem_euclid(26);
 
 This step is identical to the last one while enciphering.
 
-We add the number for a lowercase ASCII `"a"` to our zero indexed number.  
+We add the number for a lowercase ASCII `"a"` to our zero indexed number.
 Then we look up the letter for that number in the ASCII table.
 
 <MultiLangCode>
 
-```js title=decode.js
+```js title=index.js
 let plaintextChar = String.fromCharCode(plaintextNum + 97);
 ```
 
-```rust title=decode.rs
+```rust title=lib.rs
 let plaintext_char = (plaintext_num + 97) as char;
 ```
 
@@ -267,69 +393,136 @@ let plaintext_char = (plaintext_num + 97) as char;
 
 ### Demo
 
-<DecodeDemo />
+<DecipherCharDemo />
 
-## Final code
+## Final code and demo
 
-### Encipher
+The demo and code to encipher/decipher entire strings instead of single characters is below.
 
-<MultiLangCode>
+### Demo
 
-```js title=encode.js
-const LOWERCASE_ASCII_A = 97;
-const ALPHABET_LENGTH = 26;
+<FinalDemo />
 
-function encipher(plaintextChar, a, b) {
-  const plainCharNum = plaintextChar.charCodeAt(0) - LOWERCASE_ASCII_A;
-  let num = a * plainCharNum + b;
-  num = ((num % ALPHABET_LENGTH) + ALPHABET_LENGTH) % ALPHABET_LENGTH;
-  const cipherChar = String.fromCharCode(num + LOWERCASE_ASCII_A);
-  return cipherChar;
-}
-```
-
-```rust title=encode.rs
-const LOWERCASE_ASCII_A: u8 = 97;
-const ALPHABET_LENGTH: u8 = 26;
-
-fn encipher(plaintext_char: char, a: i32, b: i32) -> char {
-    let plain_char_num = plaintext_char as u8 - LOWERCASE_ASCII_A;
-    let mut num = a * plain_char_num as i32 + b;
-    num = num.rem_euclid(ALPHABET_LENGTH as i32);
-    (num as u8 + LOWERCASE_ASCII_A) as char
-}
-```
-
-</MultiLangCode>
-
-### Decipher
+### Code
 
 <MultiLangCode>
 
-```js title=encode.js
+```js title=index.js
 const LOWERCASE_ASCII_A = 97;
-const ALPHABET_LENGTH = 26;
 
-function decipher(encipheredChar, a, b) {
-  const cipherCharNum = encipheredChar.charCodeAt(0) - LOWERCASE_ASCII_A;
-  const inverse = mmi(a, ALPHABET_LENGTH);
-  let num = inverse * (cipherCharNum - b);
-  num = ((num % ALPHABET_LENGTH) + ALPHABET_LENGTH) % ALPHABET_LENGTH;
-  const plainChar = String.fromCharCode(num + LOWERCASE_ASCII_A);
-  return plainChar;
+function mod(a, b) {
+  return ((a % b) + b) % b;
+}
+
+function egcd(a, b) {
+  if (a == 0) {
+    return [b, 0, 1];
+  }
+  if (b == 0) {
+    return [a, 1, 0];
+  }
+  let quotient = Math.floor(b / a);
+  let remainder = b % a;
+  let [g, x, y] = egcd(remainder, a);
+  return [g, y - quotient * x, x];
+}
+
+function mmi(a, b) {
+  let [gcd, v] = egcd(a, b);
+  if (gcd == 1) {
+    return mod(v, b);
+  } else {
+    throw new Error(`Key a: ${a} and alphabet length m: ${b} are not coprime`);
+  }
+}
+
+function encipherChar(plainchar, a, b, m) {
+  let plaincharNum = plainchar.charCodeAt(0) - LOWERCASE_ASCII_A;
+  let ciphercharNum = a * plaincharNum + b;
+  ciphercharNum = mod(ciphercharNum, m);
+  return String.fromCharCode(ciphercharNum + LOWERCASE_ASCII_A);
+}
+
+function decipherChar(cipherchar, inverse, b, m) {
+  let ciphercharNum = cipherchar.charCodeAt(0) - LOWERCASE_ASCII_A;
+  let plaincharNum = inverse * (ciphercharNum - b);
+  plaincharNum = mod(plaincharNum, m);
+  return String.fromCharCode(plaincharNum + LOWERCASE_ASCII_A);
+}
+
+function encipherString(plaintext, a, b, m) {
+  // check if an inverse to a exists
+  mmi(a, m);
+
+  return plaintext
+    .split("")
+    .map((char) => encipherChar(char, a, b, m))
+    .join("");
+}
+
+function decipherString(ciphertext, a, b, m) {
+  const inverse = mmi(a, m);
+
+  return ciphertext
+    .split("")
+    .map((char) => decipherChar(char, inverse, b, m))
+    .join("");
 }
 ```
 
-```rust title=encode.rs
+```rust title=lib.rs
 const LOWERCASE_ASCII_A: u8 = 97;
-const ALPHABET_LENGTH: u8 = 26;
 
-fn decipher(enciphered_char: char, a: i32, b: i32) -> char {
-    let cipher_char_num  = enciphered_char as u8 - LOWERCASE_ASCII_A;
-    let inverse = mmi(a, ALPHABET_LENGTH as i32).unwrap();
-    let mut num = inverse * (cipher_char_num as i32 - b);
-    num = num.rem_euclid(ALPHABET_LENGTH as i32);
-    (num as u8 + LOWERCASE_ASCII_A) as char
+#[derive(Debug)]
+enum AffineCipherError {
+    NotCoprime(i32, i32)
+}
+
+fn egcd(a: i32, b: i32) -> (i32, i32, i32) {
+    match (a, b) {
+        (0, _) => (b, 0, 1),
+        (_, 0) => (a, 1, 0),
+        _ => {
+            let quotient = b / a;
+            let remainder = b % a;
+            let (g, x, y) = egcd(remainder, a);
+            (g, y - quotient * x, x)
+        }
+    }
+}
+
+fn mmi(a: i32, m: i32) -> Option<i32> {
+    let (g, x, _) = egcd(a, m);
+    match g {
+        1 => Some(x.rem_euclid(m)),
+        _ => None,
+    }
+}
+
+fn encipher_char(plainchar: char, a: i32, b: i32, m: i32) -> char {
+  let plainchar_num = plainchar as u8 - LOWERCASE_ASCII_A;
+  let mut cipherchar_num = a * plainchar_num as i32 + b;
+  cipherchar_num = cipherchar_num.rem_euclid(m);
+  (cipherchar_num as u8 + LOWERCASE_ASCII_A) as char
+}
+
+fn decipher_char(cipherchar: char, inverse: i32, b: i32, m: i32) -> char {
+  let cipherchar_num = cipherchar as u8 - LOWERCASE_ASCII_A;
+  let mut plainchar_num = inverse * (cipherchar_num as i32 - b);
+  plainchar_num = plainchar_num.rem_euclid(m);
+  (plainchar_num as u8 + LOWERCASE_ASCII_A) as char
+}
+
+fn encipher_string(plaintext: &str, a: i32, b: i32, m: i32) -> Result<String, AffineCipherError> {
+  mmi(a, m).ok_or(AffineCipherError::NotCoprime(a, m))?;
+  let enciphered = plaintext.chars().map(|c| encipher_char(c, a, b, m)).collect();
+  Ok(enciphered)
+}
+
+fn decipher_string(ciphertext: &str, a: i32, b: i32, m: i32) -> Result<String, AffineCipherError> {
+  let inverse = mmi(a, m).ok_or(AffineCipherError::NotCoprime(a, m))?;
+  let deciphered = ciphertext.chars().map(|c| decipher_char(c, inverse, b, m)).collect();
+  Ok(deciphered)
 }
 ```
 
