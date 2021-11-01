@@ -253,8 +253,15 @@ const ModuloButton = ({ handleClick, children }) => {
           { once: true }
         );
       }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          handleClick();
+        }
+      }}
       type="button"
       sx={{
+        outlineWidth: "1px",
+        outlineOffset: "2px",
         cursor: "pointer",
         px: 3,
         py: 1,
@@ -263,6 +270,10 @@ const ModuloButton = ({ handleClick, children }) => {
         borderStyle: "solid",
         borderWidth: "1px",
         borderColor: "text",
+        ":hover": {
+          color: "primary",
+          borderColor: "mutedPrimary",
+        },
       }}
     >
       {children}
@@ -285,6 +296,8 @@ const ModuloControls = ({ val, setVal }) => {
         }}
         type="button"
         sx={{
+          outlineWidth: "1px",
+          outlineOffset: "2px",
           cursor: "pointer",
           px: 3,
           py: 1,
@@ -293,6 +306,10 @@ const ModuloControls = ({ val, setVal }) => {
           borderStyle: "solid",
           borderWidth: "1px",
           borderColor: "text",
+          ":hover": {
+            color: "primary",
+            borderColor: "mutedPrimary",
+          },
         }}
       >
         - 26
@@ -306,7 +323,8 @@ const ModuloControls = ({ val, setVal }) => {
       </ModuloButton>
       <input
         sx={{
-          all: "unset",
+          outlineWidth: "1px",
+          outlineOffset: "2px",
           backgroundColor: "transparent",
           fontSize: 3,
           maxWidth: "5ch",
@@ -351,6 +369,8 @@ const ModuloControls = ({ val, setVal }) => {
         }}
         type="button"
         sx={{
+          outlineWidth: "1px",
+          outlineOffset: "2px",
           cursor: "pointer",
           px: 3,
           py: 1,
@@ -359,6 +379,10 @@ const ModuloControls = ({ val, setVal }) => {
           borderStyle: "solid",
           borderWidth: "1px",
           borderColor: "text",
+          ":hover": {
+            color: "primary",
+            borderColor: "mutedPrimary",
+          },
         }}
       >
         + 26
@@ -458,7 +482,8 @@ const Input = ({ title, value, handleChange, width, ...props }) => {
           value={value}
           onChange={handleChange}
           sx={{
-            all: "unset",
+            outlineWidth: "1px",
+            outlineOffset: "2px",
             boxSizing: "border-box",
             backgroundColor: "transparent",
             fontSize: 2,
