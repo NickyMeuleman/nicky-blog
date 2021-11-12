@@ -41,7 +41,8 @@
     "react-helmet": "^6.1.0",
     "remark-math": "3",
     "theme-ui": "^0.10.0",
-    "typeface-source-sans-pro": "0.0.75"
+    "typeface-source-sans-pro": "0.0.75",
+    "wasm-game-of-life-nmeuleman": "^0.1.0"
   },
   "license": "GPL-3.0-or-later",
   "scripts": {
