@@ -2,7 +2,7 @@
 import { jsx } from "theme-ui";
 import { alpha } from "@theme-ui/color";
 
-const Aside = ({ variant = "default", children }) => {
+const Aside = ({ variant = "default", passedSx, children }) => {
   const variantStyles = {
     default: {
       borderLeftColor: `primary`,
@@ -90,6 +90,7 @@ const Aside = ({ variant = "default", children }) => {
         },
         "p:only-child": { m: 0 },
         ...variantStyles[variant],
+        ...passedSx,
         variant: `styles.Aside`,
       }}
     >
