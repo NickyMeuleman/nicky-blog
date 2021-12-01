@@ -1,12 +1,20 @@
 ---
 title: WebAssembly. Scary name, exciting applications.
-date: "2021-11-28"
+date: "2021-11-29"
+updatedAt: "2021-12-01"
 authors: ["nicky"]
 cover: "./cover.jpg"
 tags: ["WebAssembly", "Rust"]
 ---
 
-import { GOLDemo, JSRuntimeChart, JSWASMTime, Timeshift } from "./";
+import {
+  GOLDemo,
+  JSRuntimeChart,
+  JSWASMTime,
+  Timeshift,
+  Portability,
+  Glue,
+} from "./";
 
 <!-- Foto door Pietro Battistoni via Pexels -->
 
@@ -47,6 +55,8 @@ ARM, Intel, AMD, you name it, it can execute WebAssembly.
 This is possible because the machine WebAssembly targets is the lowest common denominator of popular hardware.
 Allowing all kinds of physical chips to translate those universal WebAssembly instructions to the ones and zeroes that are specific to that architecture and put specific patterns of lightning into the sand we call a CPU to trick it into doing math.
 
+<Portability />
+
 The instructions in a `.wasm` file are for a [stack machine](https://en.wikipedia.org/wiki/Stack_machine).
 Chris Hay has [a great primer video](https://youtu.be/Hq_cj77fuqo) on how this works.
 The tl;dr is: push things on a stack, do things with the numbers on the stack, pop things off the stack.
@@ -57,7 +67,7 @@ Knowing how things work is optional, if you don't want to know details, that's t
 
 A textual representation of a `.wasm` file is called a `.wat` file.
 That stands for **W**ebAssembly **T**ext **F**ormat.
-The first letters of that accurately describe my reaction when I first saw a `.wat` file.
+The first letters of which accurately describe my reaction when I first saw a `.wat` file.
 
 It's human readable, but at first glance I thought _"not to this human"_. ([Jake Archibald](https://youtu.be/u0Jgz6QVJqg?t=53) had a similar reaction).
 
@@ -97,7 +107,7 @@ It's a language that can run in the browser, but can also run outside of it.
 A `.wasm` file is a binary file, it isn't assembly text.
 The `.wat` format is a textual representation that more closely resembles assembly.
 
-It's assembly for a virtual machine too, where traditional assembly is directly giving instructions to a phyisical chip.
+It's assembly for a virtual machine too, where traditional assembly is directly giving instructions to a physical chip.
 
 ## Why
 
@@ -105,21 +115,24 @@ Cool, but why should I care? 👇
 
 ### Fast
 
-Wasm goes **predictably** fast.
+WASM goes **predictably** fast.
+
+To make this point, first let's take a short dive into how modern JavaScript runtimes work.
 
 The speed at which JavaScript can go is impressive.
-This is achieved by modern JavaScript runtimes that do [just in time compiling](https://en.wikipedia.org/wiki/Just-in-time_compilation).
-
-The [Speed, Speed, Speed talk by Franziska Hinkelmann](https://www.youtube.com/watch?v=uMuYaES4W3o&t=739s) goes into this.
-
-JavaScript has to go through more steps before it ends turned into optimized machine code, each of those steps takes time.
-Before JS can get turned into machine code at all, some things have to happen like turning the JS text into a tree-like structure, an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree).
+This is achieved by modern JavaScript runtimes that do [just in time compilation](https://en.wikipedia.org/wiki/Just-in-time_compilation).
 
 <JSRuntimeChart />
 
+The [Speed, Speed, Speed talk by Franziska Hinkelmann](https://www.youtube.com/watch?v=uMuYaES4W3o&t=739s) goes into this deeper.
+
+JavaScript has to go through more steps before it ends turned into optimized machine code, each of those steps takes time.
+
+Before JS can get turned into machine code at all, some things have to happen like turning the JS text into a tree-like structure, an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree).
+
 To make optimized machine code, JS has to execute pieces of code first.
 The JavaScript runtime uses the information it gathered while the JS was executing to generate faster machine code.
-This process can repeat over and over with an end result of fairly efficient machine code.
+This process can repeat over and over and results in chunks of fairly efficient machine code after a while.
 
 An additional problem is that while doing this, the engine might make certain assumptions that help execution speed.
 These assumptions might have held the first 5000 times a piece of code was executed, but aren't true anymore the 5001th time.
@@ -144,11 +157,11 @@ the [same optimizing compiler](https://v8.dev/docs/turbofan) that was used when 
 If the compiled WASM comes from a host language like Rust, the WASM runs at the **near-native** speed of that host language.
 
 How close is the "near" in that statement? I want numbers!  
-The answer is the very unsatisfying "it depends", but I've heard numbers of about 1.2x native speed.
+The answer is the very unsatisfying "it depends", but I've heard numbers of about 1.2x - 1.3x native speed on average.
 
 The end result is that WASM takes less time to get going than JavaScript, and once it gets going, it'll probably be faster.
 
-Below is a bar chart detailing roughly the total time each step takes during the total runtime of a file.
+Below is a bar chart detailing roughly the total time each step takes during the runtime of a file.
 
 <JSWASMTime />
 
@@ -170,8 +183,8 @@ The post where [Surma](https://twitter.com/dassurma) details [replacing a hot pa
 The JavaScript ecosystem is pretty huge, there are a staggering amount of packages on [npm](https://www.npmjs.com/).
 But JavaScript is not the first choice to solve all coding problems.
 
-Many solutions to problems might exist, but have a much more extensive solution in other languages like C or Rust.
-Those solutions might not exist at all in JavaScript while there are packages in those other languages.
+Many solutions to problems might exist, but have a much more extensive solution in other languages like C or Rust.  
+Or, those solutions do not exist at all in JavaScript while there are packages in those other languages.
 
 Using WebAssembly, you can tap into an other language's ecosystem.
 
@@ -188,7 +201,8 @@ They use algorithms from other languages to bring many kinds of image compressio
 
 These last 3 examples are _huge_ codebases that didn't need to be entirely rewritten to target a much broader audience.
 
-And in the hypotethical scenario where they did rewrite everything in JavaScript, it would likely be too slow, bringing us back to the previous point, WASM can go [fast](#fast).
+And in the hypothetical scenario where they did rewrite everything in JavaScript, it would likely be too slow to be even possible for it to live on the web,
+bringing us back to the previous point, WASM can go [fast](#fast).
 
 The web is the largest and most ubiquitous delivery platform in existence.
 The expansion of the capabilities of the web is exciting.
@@ -216,9 +230,9 @@ For example: [`wasm-opt`](https://github.com/WebAssembly/binaryen#wasm-opt).
 ### Universal
 
 WebAssembly is designed to run on as much real computers as possible.
-It does this by targeting a virtual machine, and letting the physical machines handle the translation of those universal instructions to machine code.
+It does this by targeting a virtual machine, and letting the physical machines handle the translation of those virtual instructions to machine code.
 
-This is also often called [portability](https://webassembly.org/docs/portability/).
+This is often called [portability](https://webassembly.org/docs/portability/).
 
 This is a very important characteristic if you want to ship code to the web.
 There, you can't know ahead of time which type of physical machine your code will run on next.
@@ -226,7 +240,7 @@ It might be a powerful x86 desktop, it might be an old ARM phone.
 
 The web isn't the only place where WASM can run though, it has many exciting applications on traditional servers, in the cloud, in [IoT devices](https://www.youtube.com/watch?v=oky3FdsTuUM).
 
-I'd like to change [that popular JavaScript quote](https://en.wikipedia.org/wiki/Jeff_Atwood#:~:text=In%202007%2C%20Jeff%20Atwood%20made,question%2Dand%2Danswer%20website.) and make it about WASM.
+I'd like to change [that popular JavaScript quote](https://en.wikipedia.org/wiki/Jeff_Atwood#:~:text=In%202007%2C%20Jeff%20Atwood%20made,question%2Dand%2Danswer%20website.) and give it a WASMy twist.
 
 > Any processor WASM **can** run on, WASM **will** run on.
 
@@ -265,11 +279,10 @@ Here's a tweet by Solomon Hykes, one of the co-founders of Docker:
 If you compile your C code to native code and there's a nasty pointer error somewhere, that can have dangerous consequences.
 If you compile to WASM instead, it will run slightly slower, but it will just crash when the pointer is wrong instead of causing an error that can lead to stealing your stuff.
 
-WebAssembly is sandboxed, just like JavaScript is. It can’t access the user’s operating system directly
-security: good, but not perfect and [closesly looked at](https://i.blackhat.com/us-18/Thu-August-9/us-18-Lukasiewicz-WebAssembly-A-New-World-of-Native_Exploits-On-The-Web-wp.pdf).
+The security story is good, but not perfect and [closesly looked at](https://i.blackhat.com/us-18/Thu-August-9/us-18-Lukasiewicz-WebAssembly-A-New-World-of-Native_Exploits-On-The-Web-wp.pdf).
 
 A lot of that boils down to: being able to use C code means you can do things that are possible in C,
-like making a pointer point at the wrong value.
+like making a pointer point at the wrong value (but as we discussed, only inside WASM, a pointer to the outside will be invalid).
 Using a language like Rust mitigates even more of those risks, but of course, nothing is 100% safe.
 
 <Aside variant="info">
@@ -282,7 +295,7 @@ This opens up the door to executing untrusted code on your machines without havi
 
 ## When
 
-**Now**
+<p style="font-size: 4rem">now!</p>
 
 [caniuse.com puts it at 95%](https://caniuse.com/wasm) of global users for web browsers at the moment of writing.
 That's only a bit less than CSS Grid, and more than CSS `pointer-events` or JavaScript `BigInt`.
@@ -291,17 +304,72 @@ It's quite unprecedented that so many large vested interests in the web (Google,
 
 ## How
 
-### What makes WASM work?
+### How does WASM work?
 
-WASM is very bare-bones, that means that for fairly simply functionality, a JavaScript file can be smaller/faster than WASM,
+WASM is very bare-bones, that means that for fairly simple functionality, a JavaScript file can be smaller/faster than WASM module,
 because the JS can leverage all the code the JavaScript runtime (like [v8](https://v8.dev/)) already provides.
 
 In WASM, if you need something, that code has to be included in the `.wasm` file.
-Examples are: Dynamic memory allocation, using strings, or an array implementation.
+Examples are: Dynamic memory allocation, using strings, or an array implementation.  
 Oh. You used a method on that array? Better include the logic for that too.
 
 Luckily, that's all code you don't need to write yourself, language specific tools like [wasm-bindgen for Rust](https://rustwasm.github.io/docs/wasm-bindgen/) or [emscripten for C](https://emscripten.org/) handle that,
 meaning you can write code as usual, and they make sure the needed bits are included to use the `.wasm` file.
+
+Because WebAssembly is so bare bones, it doesn't understand things like strings.
+It understands numbers, and only numbers!
+
+<Aside variant="info">
+
+Currently WebAssembly only understands 4 types, and they're all numbers.
+They're either 32, or 64 bits in size.
+And they're either integers, or floating point numbers.
+
+That results in `i32`, `i64`, `f32`, `f64`.
+
+The interface types proposal is looking to change this, to add some logic that means programmers can store things like a WebAssembly string.
+
+Check out the [HTTP203 on Interface Types](https://www.youtube.com/watch?v=B-ign0dW51o) to learn more.
+
+</Aside>
+
+As a developer you can write code in Rust and interact with it from JavaScript.
+This is made possible by so called "glue code".
+
+This glue code is also code you don't have to write yourself.
+You call functions from the JavaScript glue, and it makes sure WASM does the right thing.
+
+An example of a Rust program with a function that returns a `String`:
+
+The Rust strings have to be turned into numbers that WebAssembly can understand and work with.  
+That's done by some glue code on the WASM side.
+
+If you now want to call that function you wrote in Rust, you do it through the JS glue code that was generated.
+The JS glue calls into WebAssembly which will return a bunch of numbers.
+Those are then translated into a string that JavaScript can understand.  
+That's done by some glue code on the JS side.
+
+The end result is you calling a function from JS, and getting a string back.
+But under the hood, there are lots of numbers happening!
+
+```rust title=lib.rs
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn hello() {
+  "Hello world".to_string()
+}
+```
+
+```js title=index.js
+const { hello } = require("path/to/JS/glue");
+
+console.log(hello());
+```
+
+Visualized in a diagram, like the one from the [Gentle introduction to WebAssembly](https://www.youtube.com/watch?v=hLAoSrZEOfU) talk by [Colin Eberhardt](https://twitter.com/ColinEberhardt).
+
+<Glue />
 
 If this all sounds like something like this happened before, it's because it did.
 The [JVM](https://nl.wikipedia.org/wiki/Java_Virtual_Machine) is an example of something similar to WASM.
@@ -325,7 +393,7 @@ For example: Writing a program in Rust, compiling it to WASM, and using the outp
 
 <Aside variant="info">
 
-I'm actively learning Rust at the moment, and I know very little about other languages, so most examples are focussed on Rust.
+I'm actively learning Rust at the moment, and I know very little about other languages, so most examples are focused on Rust.
 But pull requests with other technologies are more than welcome!
 
 </Aside>
@@ -337,23 +405,21 @@ I wanted to put the output from the [rust-wasm tutorial](https://rustwasm.github
 
 It's [Conway's game of life](https://nl.wikipedia.org/wiki/Game_of_Life).
 
-The following is that thing, the Rust is fairly similar, but the JavaScript is not.
-You can judge my scrappy JavaScripting chops on [GitHub because my blog is opensource](https://github.com/NickyMeuleman/nicky-blog).
+The Rust part is fairly similar, but the JavaScript is not.  
+You can judge [my scrappy JavaScripting chops](https://github.com/NickyMeuleman/nicky-blog/tree/master/data/posts/webassembly) on GitHub because my blog is opensource.
 
 For simplicity I decided to publish the Game of Life logic written in Rust as an npm package and use that.
 (Because I didn't want to redo my blog's folder structure like the example repo I made.)
 
-It's a bit different from the one in the book, it should run a bit faster because of some optimizations I made.
+It should run a bit faster than the example in the rustwasm book because of some optimizations I made.
 If you want to hear about those, [ping me on Twitter](https://twitter.com/NMeuleman).
-You can also look at the code, because I publicly [share what I'm up to while learning Rust](https://github.com/NickyMeuleman/scrapyard/tree/main/rust_wasm_book).
+You can also [look at the code](https://github.com/NickyMeuleman/scrapyard/tree/main/rust_wasm_book), because I share what I'm up to while learning Rust.
 
 The driver logic is implemented in the same thing my blog uses, [React](https://reactjs.org/).
 
-The calculation logic where the new state of the board is calculated, that's done in [Rust](https://www.rust-lang.org/), compiled to WASM with [wasm-pack](https://rustwasm.github.io/wasm-pack/).
+The calculation logic where the new state of the board is calculated is written in [Rust](https://www.rust-lang.org/), and compiled to WASM with [wasm-pack](https://rustwasm.github.io/wasm-pack/).
 
 The React part uses the glue code wasm-pack provides to call into the WASM.
-
-TODO: explain glue code in the HOW section and use a diagram showing there's glue on both sides
 
 <GOLDemo />
 
@@ -363,39 +429,40 @@ TODO: explain glue code in the HOW section and use a diagram showing there's glu
 
 The WASM model maps incredibly well to the Jamstack model.
 
-To me, the most important thing about Jamstack is time shifting.
+To me, the most important aspect to Jamstack is time shifting.
 In other words: doing work ahead of time.
 
 In traditional Jamstacky static sites, that means doing as much work as possible ahead of time and shipping pre-rendered HTML pages to users.
 WebAssembly is like that, but for a programming language.
-Compiling ahead of time instead of doing that clientside like JavaScript does.
+Compiling partly ahead of time instead of entirely just in time like JavaScript does.
 
-Doing more work ahead of time, so there has to be less work done when the code you wrote is being used.
+Do more work ahead of time, so there has to be less work done when the code you wrote is being used.
 
-Serverless is also a big usecase for WASM.
-Running `.wasm` files directly means many languages can be used.
+Serverless is also a big usecase for WASM.  
+Running a `.wasm` file directly means many languages can be used to create that file, and by extension, that serverless function.
 
 A WASM module can be as lightweight as it has to be, that's good for startup times.
 Those times have long been a sore point for serverless functions, and have become shorter and shorter as time goes on.
 
 But for serverless functions written in JavaScript, there's only so low you can go.
-The JavaScript runtime has to start up first, and that takes time.
+The JavaScript runtime has to start up before any JS code you wrote can get executed, and that takes time.
 
 So, what if we break that startuptime floor?
 
 It turns out you can put JS inside WASM and make those startup times go poof.
 This comes at the cost as maximum execution speed,
-but as the vast majority of serverless functions have a very low runtime, so the startup time is significant.
+but as the vast majority of serverless functions have a very low runtime, the startup time is very significant.
 
 An other very interesting talk by Lin Clark ([Making JavaScript on WebAssembly fast](https://www.youtube.com/watch?v=CRaMls9oVBw)) explains a bit more _how_ this works, and _why_ this works.
 
 Serverless functions are cool.
-I'm a greedy person, I always want more.
+But I'm a greedy person and always want more/better.
+
 Right now, I'm using serverless functions through the "big dog" in the industry, AWS.
 More specifically, a datacenter in Virginia called US-East-1 is executing most of the serverless functions I write.
 
-I can write code, and have it be executed much closed to users by using an edge network.
-Those are tiny servers all over the world that typically serve static files like HTML, CSS, and JS to users.
+I want to write code, and have it be executed much closed to users, by using an edge network.
+Edge server are tiny servers all over the world that typically serve static files like HTML, CSS, and JS to users.
 
 But they can execute code too.
 They're not as powerful as full-blown server farms,
@@ -418,6 +485,8 @@ The Facebook picture uploader uses WASM to do some quick transformations to imag
 
 [BBC iPlayer](https://medium.com/bbc-design-engineering/building-a-webassembly-runtime-for-bbc-iplayer-and-enhanced-audience-experiences-7087455808ef).
 
-TODO: find more things readers will have already used
+[PSPDFKit is now on the web](https://pspdfkit.com/webassembly-benchmark/).
 
-notes: investigate https://suborbital.dev/.
+[Microsoft Flight Simulator has WASM plugins](https://docs.flightsimulator.com/html/Programming_Tools/WASM/WebAssembly.htm).
+
+[Disney+ application development](https://medium.com/disney-streaming/introducing-the-disney-application-development-kit-adk-ad85ca139073).
