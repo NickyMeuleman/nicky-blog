@@ -52,7 +52,9 @@ const GOLDemo = () => {
   const ALIVE_COLOR = theme.colors.mutedPrimary || "#000000";
 
   const loadWasm = async () => {
-    // TODO: this concat stuff isn't needed anymore I think
+    // concat stuff needed because otherwise webpack errors with "WebAssembly module is included in initial chunk."
+    // https://github.com/gatsbyjs/gatsby/issues/26364
+    // the string concatenation forces the import to happen at a different time (dynamically at runtime which works instead of during build which errors)
     try {
       /* eslint no-useless-concat: "off" */
       const wasmModule = await import(
