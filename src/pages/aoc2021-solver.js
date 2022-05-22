@@ -26,18 +26,6 @@ const outAnimation = keyframes({
   },
 });
 
-function useAnimatedUnmount(condition) {
-  const [shouldRender, setShouldRender] = useState(false);
-
-  useEffect(() => {
-    if (condition) {
-      setShouldRender(true);
-    }
-  }, [condition]);
-
-  return [shouldRender, setShouldRender];
-}
-
 const DemoArea = ({ title, children }) => {
   return (
     <div
@@ -228,6 +216,9 @@ const AoC2021SolverPage = ({ data }) => {
     worker: null,
     WASMReady: false,
     error: null,
+    showSolution: false,
+    renderError: false,
+    renderSolution: false,
   };
   function aocReducer(state, action) {
     // I should learn state machines, eh?
@@ -258,8 +249,7 @@ const AoC2021SolverPage = ({ data }) => {
           day: action.payload.day,
           input,
           executionTime: null,
-          part1Solution: null,
-          part2Solution: null,
+          showSolution: false,
           error: null,
         };
       }
@@ -271,18 +261,19 @@ const AoC2021SolverPage = ({ data }) => {
           input: action.payload.input,
           day: state.executionTime && !state.calculating ? null : state.day,
           executionTime: null,
-          part1Solution: null,
-          part2Solution: null,
+          showSolution: false,
           error: null,
         };
       }
       case "calculated": {
         return {
           ...state,
+          showSolution: true,
           part1Solution: action.payload.part1,
           part2Solution: action.payload.part2,
           calculating: false,
           executionTime: action.payload.executionTime,
+          renderSolution: true,
         };
       }
       case "setupWorker": {
@@ -296,6 +287,21 @@ const AoC2021SolverPage = ({ data }) => {
           ...state,
           calculating: false,
           error: true,
+          renderError: true,
+        };
+      }
+      case "errorAnimatedOut": {
+        return {
+          ...state,
+          renderError: false,
+        };
+      }
+      case "solutionAnimatedOut": {
+        return {
+          ...state,
+          renderSolution: false,
+          part1Solution: null,
+          part2Solution: null,
         };
       }
       default: {
@@ -315,9 +321,10 @@ const AoC2021SolverPage = ({ data }) => {
     worker,
     WASMReady,
     error,
+    renderError,
+    showSolution,
+    renderSolution,
   } = state;
-  const [renderError, setRenderError] = useAnimatedUnmount(error);
-  const [renderSolution, setRenderSolution] = useAnimatedUnmount(part1Solution);
 
   // load WASM and JS glue
   useEffect(() => {
@@ -475,7 +482,7 @@ const AoC2021SolverPage = ({ data }) => {
               }}
               onAnimationEnd={() => {
                 if (!error) {
-                  setRenderError(false);
+                  dispatch({ type: "errorAnimatedOut" });
                 }
               }}
             >
@@ -500,14 +507,14 @@ const AoC2021SolverPage = ({ data }) => {
                   gridColumn: "1/2",
                   gridRow: "2/3",
                   animation: `${
-                    part1Solution
+                    showSolution
                       ? `${inAnimation} 3000ms ease-in`
                       : `${outAnimation} 3000ms ease-in`
                   }`,
                 }}
                 onAnimationEnd={() => {
-                  if (!part1Solution) {
-                    setRenderSolution(false);
+                  if (!showSolution) {
+                    dispatch({ type: "solutionAnimatedOut" });
                   }
                 }}
               >
@@ -520,14 +527,14 @@ const AoC2021SolverPage = ({ data }) => {
                   gridColumn: "2/3",
                   gridRow: "2/3",
                   animation: `${
-                    part2Solution
+                    showSolution
                       ? `${inAnimation} 3000ms ease-in`
                       : `${outAnimation} 3000ms ease-in`
                   }`,
                 }}
                 onAnimationEnd={() => {
-                  if (!part2Solution) {
-                    setRenderSolution(false);
+                  if (!showSolution) {
+                    dispatch({ type: "solutionAnimatedOut" });
                   }
                 }}
               >
