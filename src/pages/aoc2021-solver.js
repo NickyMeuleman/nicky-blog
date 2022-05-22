@@ -365,9 +365,9 @@ const AoC2021SolverPage = ({ data }) => {
         };
         dispatch({ type: "setupWorker", payload: { worker: myWorker } });
       } catch (err) {
-        console.error(
-          `Unexpected error in loadWasm. [Message: ${err.message}]`
-        );
+        // console.error(
+        //   `Unexpected error in loadWasm. [Message: ${err.message}]`
+        // );
       }
     };
     loadWasm();
@@ -476,8 +476,8 @@ const AoC2021SolverPage = ({ data }) => {
                 gridRow: "2/3",
                 animation: `${
                   error
-                    ? `${inAnimation} 3000ms ease-in`
-                    : `${outAnimation} 3000ms ease-in`
+                    ? `${inAnimation} 300ms ease-in`
+                    : `${outAnimation} 300ms ease-in`
                 }`,
               }}
               onAnimationEnd={() => {
@@ -508,8 +508,8 @@ const AoC2021SolverPage = ({ data }) => {
                   gridRow: "2/3",
                   animation: `${
                     showSolution
-                      ? `${inAnimation} 3000ms ease-in`
-                      : `${outAnimation} 3000ms ease-in`
+                      ? `${inAnimation} 300ms ease-in`
+                      : `${outAnimation} 300ms ease-in`
                   }`,
                 }}
                 onAnimationEnd={() => {
