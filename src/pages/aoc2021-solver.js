@@ -528,8 +528,8 @@ const AoC2021SolverPage = ({ data }) => {
                   gridRow: "2/3",
                   animation: `${
                     showSolution
-                      ? `${inAnimation} 3000ms ease-in`
-                      : `${outAnimation} 3000ms ease-in`
+                      ? `${inAnimation} 300ms ease-in`
+                      : `${outAnimation} 300ms ease-in`
                   }`,
                 }}
                 onAnimationEnd={() => {
