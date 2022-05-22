@@ -1,10 +1,42 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /** @jsx jsx */
-import { useState, useReducer, useEffect, useRef } from "react";
+import React, { useState, useReducer, useEffect, useRef } from "react";
 import { graphql } from "gatsby";
 import { jsx } from "theme-ui";
+import { alpha } from "@theme-ui/color";
+import { keyframes } from "@emotion/react";
 import { SEO } from "../components/SEO";
 import { Layout } from "../components/Layout";
+
+const ellipsis = keyframes({ to: { width: "3ch" } });
+const inAnimation = keyframes({
+  "0%": {
+    opacity: 0,
+  },
+  "100%": {
+    opacity: 1,
+  },
+});
+const outAnimation = keyframes({
+  "0%": {
+    opacity: 1,
+  },
+  "100%": {
+    opacity: 0,
+  },
+});
+
+function useAnimatedUnmount(condition) {
+  const [shouldRender, setShouldRender] = useState(false);
+
+  useEffect(() => {
+    if (condition) {
+      setShouldRender(true);
+    }
+  }, [condition]);
+
+  return [shouldRender, setShouldRender];
+}
 
 const DemoArea = ({ title, children }) => {
   return (
@@ -43,9 +75,15 @@ const DemoArea = ({ title, children }) => {
   );
 };
 
-const Output = ({ title, children }) => {
+const Output = ({ title, children, passedSx, ...props }) => {
   return (
-    <div>
+    <div
+      sx={{
+        color: `mutedText`,
+        ...passedSx,
+      }}
+      {...props}
+    >
       <p
         sx={{
           margin: 0,
@@ -53,7 +91,6 @@ const Output = ({ title, children }) => {
           textTransform: `uppercase`,
           letterSpacing: `wider`,
           fontWeight: `bold`,
-          color: `mutedText`,
           fontSize: 0,
         }}
       >
@@ -151,7 +188,22 @@ const Solution = ({ val }) => {
 
 function getExectionText(executing, time) {
   if (executing) {
-    return "Calculating...";
+    return (
+      <span
+        sx={{
+          ":after": {
+            overflow: "hidden",
+            display: "inline-block",
+            verticalAlign: "bottom",
+            animation: `${ellipsis} steps(4,end) 2s infinite`,
+            content: '"\\2026"' /* ascii code for the ellipsis character */,
+            width: "0px",
+          },
+        }}
+      >
+        Calculating
+      </span>
+    );
   }
   if (time) {
     return `${time} ms`;
@@ -167,21 +219,23 @@ function getCodeLink(day) {
 const AoC2021SolverPage = ({ data }) => {
   const fileInputRef = useRef(null);
   const initialState = {
-    wasm: null,
     calculating: false,
     day: 1,
     input: "",
     part1Solution: null,
     part2Solution: null,
     executionTime: null,
+    worker: null,
+    WASMReady: false,
+    error: null,
   };
   function aocReducer(state, action) {
     // I should learn state machines, eh?
     switch (action.type) {
-      case "wasmLoaded": {
+      case "WASMReady": {
         return {
           ...state,
-          wasm: action.payload.wasm,
+          WASMReady: true,
         };
       }
       case "startCalculating": {
@@ -206,6 +260,7 @@ const AoC2021SolverPage = ({ data }) => {
           executionTime: null,
           part1Solution: null,
           part2Solution: null,
+          error: null,
         };
       }
       case "fileInput": {
@@ -218,6 +273,7 @@ const AoC2021SolverPage = ({ data }) => {
           executionTime: null,
           part1Solution: null,
           part2Solution: null,
+          error: null,
         };
       }
       case "calculated": {
@@ -229,6 +285,19 @@ const AoC2021SolverPage = ({ data }) => {
           executionTime: action.payload.executionTime,
         };
       }
+      case "setupWorker": {
+        return {
+          ...state,
+          worker: action.payload.worker,
+        };
+      }
+      case "error": {
+        return {
+          ...state,
+          calculating: false,
+          error: true,
+        };
+      }
       default: {
         return state;
       }
@@ -237,51 +306,73 @@ const AoC2021SolverPage = ({ data }) => {
 
   const [state, dispatch] = useReducer(aocReducer, initialState);
   const {
-    wasm,
     calculating,
     day,
     input,
     part1Solution,
     part2Solution,
     executionTime,
+    worker,
+    WASMReady,
+    error,
   } = state;
-  const loadWasm = async () => {
-    try {
-      // concat stuff needed because otherwise webpack errors with "WebAssembly module is included in initial chunk."
-      // https://github.com/gatsbyjs/gatsby/issues/26364
-      // the string concatenation forces the import to happen at a different time (dynamically at runtime which works instead of during build which errors)
-      /* eslint no-useless-concat: "off" */
-      const wasmModule = await import("@nickymeuleman/aoc2021" + "/aoc2021_bg");
-      dispatch({ type: "wasmLoaded", payload: { wasm: wasmModule } });
-    } catch (err) {
-      // console.error(`Unexpected error in loadWasm. [Message: ${err.message}]`);
-    }
-  };
+  const [renderError, setRenderError] = useAnimatedUnmount(error);
+  const [renderSolution, setRenderSolution] = useAnimatedUnmount(part1Solution);
 
   // load WASM and JS glue
   useEffect(() => {
+    const loadWasm = async () => {
+      try {
+        const myWorker = new Worker(
+          new URL("../utils/worker.js", import.meta.url),
+          {
+            name: "AoCWorker",
+            type: "module",
+          }
+        );
+        myWorker.onmessage = (msg) => {
+          switch (msg.data.type) {
+            case "ready": {
+              dispatch({ type: "WASMReady" });
+              break;
+            }
+            case "solved": {
+              dispatch({
+                type: "calculated",
+                payload: {
+                  part1: msg.data.payload.part1,
+                  part2: msg.data.payload.part2,
+                  executionTime: msg.data.payload.elapsed,
+                },
+              });
+              break;
+            }
+            case "error": {
+              dispatch({ type: "error" });
+              break;
+            }
+            default: {
+              break;
+            }
+          }
+        };
+        dispatch({ type: "setupWorker", payload: { worker: myWorker } });
+      } catch (err) {
+        console.error(
+          `Unexpected error in loadWasm. [Message: ${err.message}]`
+        );
+      }
+    };
     loadWasm();
   }, []);
 
   // execute
   useEffect(() => {
-    if (wasm && day && input && !executionTime) {
-      // if you setCalculating(true) here it refuses to update before blocking
-      // can error if input isn't in the correct format
-      // choosing an image will make it explode for instance
-      // this is fine, but TODO: display error of "invalid input file" to user
-      const startTime = performance.now();
-
-      wasm.solve(day, input).then(({ part1, part2 }) => {
-        // call into rust with the day state, and set the result states
-        const elapsed = performance.now() - startTime;
-        dispatch({
-          type: "calculated",
-          payload: { part1, part2, executionTime: elapsed.toFixed(3) },
-        });
-      });
+    if (WASMReady && day && input && !executionTime) {
+      const args = { day, input };
+      worker.postMessage(args);
     }
-  }, [wasm, day, input, executionTime]);
+  }, [WASMReady, worker, day, input, executionTime]);
 
   return (
     <Layout>
@@ -310,7 +401,7 @@ const AoC2021SolverPage = ({ data }) => {
               value={day || "default"}
               onChange={(e) => {
                 // the secret sauce to having the execution text update to calculating and not going from idle straight to done
-                if (wasm && input && !executionTime) {
+                if (WASMReady && input && !executionTime) {
                   dispatch({ type: "startCalculating" });
                 }
                 dispatch({
@@ -337,7 +428,7 @@ const AoC2021SolverPage = ({ data }) => {
               onChange={(e) => {
                 const chosenFile = e.target.files[0];
                 // the secret sauce to having the execution text update to calculating and not going from idle straight to done
-                if (wasm && day && !executionTime) {
+                if (WASMReady && day && !executionTime) {
                   dispatch({ type: "startCalculating" });
                 }
 
@@ -370,20 +461,80 @@ const AoC2021SolverPage = ({ data }) => {
           <Output title="Time to calculate">
             {getExectionText(calculating, executionTime)}
           </Output>
-          <Output title="Part 1 solution">
-            {part1Solution ? (
-              <Solution val={part1Solution} />
-            ) : (
-              <Solution val="..." />
-            )}
-          </Output>
-          <Output title="Part 2 solution">
-            {part2Solution ? (
-              <Solution val={part2Solution} />
-            ) : (
-              <Solution val="..." />
-            )}
-          </Output>
+          {renderError ? (
+            <Output
+              title="Error"
+              passedSx={{
+                gridColumn: "1/-1",
+                gridRow: "2/3",
+                animation: `${
+                  error
+                    ? `${inAnimation} 3000ms ease-in`
+                    : `${outAnimation} 3000ms ease-in`
+                }`,
+              }}
+              onAnimationEnd={() => {
+                if (!error) {
+                  setRenderError(false);
+                }
+              }}
+            >
+              <div sx={{ color: alpha("danger", 0.9) }}>
+                <p>
+                  Failed to calculate day {day} with the current input file.
+                  Please make sure the selected day and input match.
+                </p>
+                <p>
+                  Files have to use UNIX style line endings (LF, not CRLF) for
+                  this tool to work correctly. The default if you download an
+                  input file from the advent of code website is correct.
+                </p>
+              </div>
+            </Output>
+          ) : null}
+          {renderSolution ? (
+            <React.Fragment>
+              <Output
+                title="Part 1 solution"
+                passedSx={{
+                  gridColumn: "1/2",
+                  gridRow: "2/3",
+                  animation: `${
+                    part1Solution
+                      ? `${inAnimation} 3000ms ease-in`
+                      : `${outAnimation} 3000ms ease-in`
+                  }`,
+                }}
+                onAnimationEnd={() => {
+                  if (!part1Solution) {
+                    setRenderSolution(false);
+                  }
+                }}
+              >
+                <Solution val={part1Solution} />
+              </Output>
+
+              <Output
+                title="Part 2 solution"
+                passedSx={{
+                  gridColumn: "2/3",
+                  gridRow: "2/3",
+                  animation: `${
+                    part2Solution
+                      ? `${inAnimation} 3000ms ease-in`
+                      : `${outAnimation} 3000ms ease-in`
+                  }`,
+                }}
+                onAnimationEnd={() => {
+                  if (!part2Solution) {
+                    setRenderSolution(false);
+                  }
+                }}
+              >
+                <Solution val={part2Solution} />
+              </Output>
+            </React.Fragment>
+          ) : null}
         </DemoArea>
       </div>
     </Layout>
