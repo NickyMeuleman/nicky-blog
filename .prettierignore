@@ -3,5 +3,5 @@
 node_modules/
 public/
 .netlify/
-yarn.lock
+package-lock.json
 schema.json
