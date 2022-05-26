@@ -17,5 +17,5 @@ self.onmessage = ({ data }) => {
       };
       self.postMessage({ type: "solved", payload: data });
     })
-    .catch((err) => self.postMessage({ type: "error" }));
+    .catch((err) => self.postMessage({ type: "error", payload: {day: data.day} }));
 };

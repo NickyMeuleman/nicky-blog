@@ -1,12 +1,14 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /** @jsx jsx */
-import React, { useState, useReducer, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { graphql } from "gatsby";
 import { jsx } from "theme-ui";
 import { alpha } from "@theme-ui/color";
 import { keyframes } from "@emotion/react";
+import { useMachine } from "@xstate/react";
 import { SEO } from "../components/SEO";
 import { Layout } from "../components/Layout";
+import { aocMachine } from "../machines/aoc";
 
 const ellipsis = keyframes({ to: { width: "3ch" } });
 const inAnimation = keyframes({
@@ -174,8 +176,8 @@ const Solution = ({ val }) => {
   );
 };
 
-function getExectionText(executing, time) {
-  if (executing) {
+function getExectionText(executionState) {
+  if (executionState === "Calculating") {
     return (
       <span
         sx={{
@@ -189,12 +191,12 @@ function getExectionText(executing, time) {
           },
         }}
       >
-        Calculating
+        {executionState}
       </span>
     );
   }
-  if (time) {
-    return `${time} ms`;
+  if (executionState.includes("ms")) {
+    return executionState;
   }
   return "Nothing calculating yet";
 }
@@ -204,182 +206,41 @@ function getCodeLink(day) {
   return `https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2021/src/day_${padded}.rs`;
 }
 
-const AoC2021SolverPage = ({ data }) => {
+const Xstate = ({ data }) => {
+  const [state, send] = useMachine(aocMachine);
   const fileInputRef = useRef(null);
-  const initialState = {
-    calculating: false,
-    day: 1,
-    input: "",
-    part1Solution: null,
-    part2Solution: null,
-    executionTime: null,
-    worker: null,
-    WASMReady: false,
-    error: null,
-    showSolution: false,
-    renderError: false,
-    renderSolution: false,
-  };
-  function aocReducer(state, action) {
-    // I should learn state machines, eh?
-    switch (action.type) {
-      case "WASMReady": {
-        return {
-          ...state,
-          WASMReady: true,
-        };
-      }
-      case "startCalculating": {
-        return {
-          ...state,
-          calculating: true,
-        };
-      }
-      case "dayInput": {
-        // if we're not calculating and there is an executionTime, that means a day has been chosen after a previous calculation
-        // wipe the input to prevent starting a new calculation with that mismatched input
-        let { input } = state;
-        if (state.executionTime && !state.calculating) {
-          // reset file input and state with the contents of that file
-          fileInputRef.current.value = "";
-          input = null;
-        }
-        return {
-          ...state,
-          day: action.payload.day,
-          input,
-          executionTime: null,
-          showSolution: false,
-          error: null,
-        };
-      }
-      case "fileInput": {
-        // if we're not calculating and there is an executionTime, that means an input file has been chosen after a previous calculation
-        // wipe the day to prevent starting a new calculation with that mismatched day
-        return {
-          ...state,
-          input: action.payload.input,
-          day: state.executionTime && !state.calculating ? null : state.day,
-          executionTime: null,
-          showSolution: false,
-          error: null,
-        };
-      }
-      case "calculated": {
-        return {
-          ...state,
-          showSolution: true,
-          part1Solution: action.payload.part1,
-          part2Solution: action.payload.part2,
-          calculating: false,
-          executionTime: action.payload.executionTime,
-          renderSolution: true,
-        };
-      }
-      case "setupWorker": {
-        return {
-          ...state,
-          worker: action.payload.worker,
-        };
-      }
-      case "error": {
-        return {
-          ...state,
-          calculating: false,
-          error: true,
-          renderError: true,
-        };
-      }
-      case "errorAnimatedOut": {
-        return {
-          ...state,
-          renderError: false,
-        };
-      }
-      case "solutionAnimatedOut": {
-        return {
-          ...state,
-          renderSolution: false,
-          part1Solution: null,
-          part2Solution: null,
-        };
-      }
-      default: {
-        return state;
-      }
-    }
-  }
-
-  const [state, dispatch] = useReducer(aocReducer, initialState);
-  const {
-    calculating,
-    day,
-    input,
-    part1Solution,
-    part2Solution,
-    executionTime,
-    worker,
-    WASMReady,
-    error,
-    renderError,
-    showSolution,
-    renderSolution,
-  } = state;
-
-  // load WASM and JS glue
+  console.log("state:", state.value);
   useEffect(() => {
-    const loadWasm = async () => {
-      try {
-        const myWorker = new Worker(
-          new URL("../utils/worker.js", import.meta.url),
-          {
-            name: "AoCWorker",
-            type: "module",
-          }
-        );
-        myWorker.onmessage = (msg) => {
-          switch (msg.data.type) {
-            case "ready": {
-              dispatch({ type: "WASMReady" });
-              break;
-            }
-            case "solved": {
-              dispatch({
-                type: "calculated",
-                payload: {
-                  part1: msg.data.payload.part1,
-                  part2: msg.data.payload.part2,
-                  executionTime: msg.data.payload.elapsed,
-                },
-              });
-              break;
-            }
-            case "error": {
-              dispatch({ type: "error" });
-              break;
-            }
-            default: {
-              break;
-            }
-          }
-        };
-        dispatch({ type: "setupWorker", payload: { worker: myWorker } });
-      } catch (err) {
-        // console.error(
-        //   `Unexpected error in loadWasm. [Message: ${err.message}]`
-        // );
+    const worker = new Worker(new URL("../utils/worker.js", import.meta.url), {
+      name: "AoCWorker",
+      type: "module",
+    });
+    worker.onmessage = (msg) => {
+      switch (msg.data.type) {
+        case "ready": {
+          send({
+            type: "ready",
+            worker,
+            fileInputRef,
+          });
+          break;
+        }
+        case "solved": {
+          send({
+            type: "calculated",
+            part1: msg.data.payload.part1,
+            part2: msg.data.payload.part2,
+            elapsed: msg.data.payload.elapsed,
+          });
+          break;
+        }
+        default: {
+          send({ type: "error", day: msg.data.payload.day });
+          break;
+        }
       }
     };
-    loadWasm();
-  }, []);
-
-  // execute
-  useEffect(() => {
-    if (WASMReady && day && input && !executionTime) {
-      const args = { day, input };
-      worker.postMessage(args);
-    }
-  }, [WASMReady, worker, day, input, executionTime]);
+  }, [send]);
 
   return (
     <Layout>
@@ -390,6 +251,7 @@ const AoC2021SolverPage = ({ data }) => {
         twitterHandle="NMeuleman"
         description="Choose a day, choose an input file, get the answers!"
       />
+      <pre>state: {state.value}</pre>
       <div
         sx={{
           display: "flex",
@@ -404,19 +266,12 @@ const AoC2021SolverPage = ({ data }) => {
         <DemoArea title="Input area">
           <Input title="Day">
             <select
-              name="days"
-              value={day || "default"}
-              onChange={(e) => {
-                // the secret sauce to having the execution text update to calculating and not going from idle straight to done
-                if (WASMReady && input && !executionTime) {
-                  dispatch({ type: "startCalculating" });
-                }
-                dispatch({
-                  type: "dayInput",
-                  payload: { day: Number(e.target.value) },
-                });
-              }}
               sx={{ fontSize: 1 }}
+              disabled={state.matches("calculate") || state.matches("setup")}
+              value={state.context.day}
+              onChange={(evt) => {
+                send("chooseDay", { day: evt.target.value });
+              }}
             >
               <option key="default" value="default">
                 Pick a day
@@ -430,66 +285,51 @@ const AoC2021SolverPage = ({ data }) => {
           </Input>
           <Input title="Input File">
             <input
+              sx={{ fontSize: 1, width: "100%" }}
               ref={fileInputRef}
               type="file"
-              onChange={(e) => {
-                const chosenFile = e.target.files[0];
-                // the secret sauce to having the execution text update to calculating and not going from idle straight to done
-                if (WASMReady && day && !executionTime) {
-                  dispatch({ type: "startCalculating" });
-                }
-
-                const reader = new FileReader();
-                reader.addEventListener(
-                  "load",
-                  async () => {
-                    dispatch({
-                      type: "fileInput",
-                      payload: { input: reader.result },
-                    });
-                  },
-                  false
-                );
-
-                if (chosenFile) {
-                  reader.readAsText(chosenFile);
-                }
+              disabled={state.matches("calculate") || state.matches("setup")}
+              onChange={(evt) => {
+                send("chooseFile", { file: evt.target.files[0] });
               }}
-              sx={{ fontSize: 1, width: "100%" }}
             />
           </Input>
         </DemoArea>
         <DemoArea title="Output area">
-          <Output title={`Day ${day} code`}>
-            <a href={getCodeLink(day)} sx={{ variant: "styles.a" }}>
+          <Output title={`Day ${state.context.day} code`}>
+            <a
+              href={getCodeLink(state.context.day)}
+              sx={{ variant: "styles.a" }}
+            >
               Rust
             </a>
           </Output>
           <Output title="Time to calculate">
-            {getExectionText(calculating, executionTime)}
+            {getExectionText(state.context.calculationStatus)}
           </Output>
-          {renderError ? (
+          {state.context.renderError ? (
             <Output
               title="Error"
               passedSx={{
                 gridColumn: "1/-1",
                 gridRow: "2/3",
                 animation: `${
-                  error
+                  state.matches("withError")
                     ? `${inAnimation} 300ms ease-in`
                     : `${outAnimation} 300ms ease-in`
                 }`,
               }}
               onAnimationEnd={() => {
-                if (!error) {
-                  dispatch({ type: "errorAnimatedOut" });
+                if (!state.matches("withError")) {
+                  send("errorAnimatedOut");
                 }
               }}
             >
               <div sx={{ color: alpha("danger", 0.9) }}>
                 <p>
-                  Failed to calculate day {day} with the current input file.
-                  Please make sure the selected day and input match.
+                  Failed to calculate day {state.context.errorDay} with the
+                  current input file. Please make sure the selected day and
+                  input match.
                 </p>
                 <p>
                   Files have to use UNIX style line endings (LF, not CRLF) for
@@ -499,7 +339,7 @@ const AoC2021SolverPage = ({ data }) => {
               </div>
             </Output>
           ) : null}
-          {renderSolution ? (
+          {state.context.renderSolution ? (
             <React.Fragment>
               <Output
                 title="Part 1 solution"
@@ -507,18 +347,19 @@ const AoC2021SolverPage = ({ data }) => {
                   gridColumn: "1/2",
                   gridRow: "2/3",
                   animation: `${
-                    showSolution
+                    state.matches("withSolution")
                       ? `${inAnimation} 300ms ease-in`
                       : `${outAnimation} 300ms ease-in`
                   }`,
                 }}
                 onAnimationEnd={() => {
-                  if (!showSolution) {
-                    dispatch({ type: "solutionAnimatedOut" });
+                  if (!state.matches("withSolution")) {
+                    // both solutions are animated out at the same time and should have the same animation duration
+                    send("solutionAnimatedOut");
                   }
                 }}
               >
-                <Solution val={part1Solution} />
+                <Solution val={state.context.solutions.part1} />
               </Output>
 
               <Output
@@ -527,18 +368,13 @@ const AoC2021SolverPage = ({ data }) => {
                   gridColumn: "2/3",
                   gridRow: "2/3",
                   animation: `${
-                    showSolution
+                    state.matches("withSolution")
                       ? `${inAnimation} 300ms ease-in`
                       : `${outAnimation} 300ms ease-in`
                   }`,
                 }}
-                onAnimationEnd={() => {
-                  if (!showSolution) {
-                    dispatch({ type: "solutionAnimatedOut" });
-                  }
-                }}
               >
-                <Solution val={part2Solution} />
+                <Solution val={state.context.solutions.part2} />
               </Output>
             </React.Fragment>
           ) : null}
@@ -548,8 +384,8 @@ const AoC2021SolverPage = ({ data }) => {
   );
 };
 
-export const aoc2021SolverQuery = graphql`
-  query aoc2021SolverQuery {
+export const aoc2021Query = graphql`
+  query aoc2021Query {
     file(name: { regex: "/aoc2021/" }) {
       childImageSharp {
         original {
@@ -560,4 +396,4 @@ export const aoc2021SolverQuery = graphql`
   }
 `;
 
-export default AoC2021SolverPage;
+export default Xstate;
