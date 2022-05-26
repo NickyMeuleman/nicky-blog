@@ -19,19 +19,25 @@ export const aocMachine =
       },
       id: "aocMachine",
       initial: "setup",
+      invoke: {
+        src: "setupWorker",
+      },
       on: {
         errorAnimatedOut: {
-          actions: "stopRenderingError",
+          actions: ["stopRenderingError"],
         },
         solutionAnimatedOut: {
-          actions: "stopRenderingSolution",
+          actions: ["stopRenderingSolution"],
+        },
+        addFileInputRef: {
+          actions: ["addFileInputRef"],
         },
       },
       states: {
         setup: {
           on: {
             ready: {
-              actions: ["addWorker", "addFileInputRef"],
+              actions: ["addWorker"],
               target: "idle",
             },
           },
@@ -44,7 +50,7 @@ export const aocMachine =
           },
           on: {
             chooseDay: {
-              actions: "setDay",
+              actions: ["setDay"],
             },
             chooseFile: {
               target: "readingFile",
@@ -57,7 +63,7 @@ export const aocMachine =
           },
           on: {
             readerLoaded: {
-              actions: "setInput",
+              actions: ["setInput"],
               target: "idle",
             },
           },
@@ -69,7 +75,7 @@ export const aocMachine =
           },
           on: {
             calculated: {
-              actions: "addSolution",
+              actions: ["addSolution"],
               target: "withSolution",
             },
             error: {
@@ -81,7 +87,7 @@ export const aocMachine =
           entry: "enterError",
           on: {
             chooseDay: {
-              actions: "setDay",
+              actions: ["setDay"],
               target: "idle",
             },
             chooseFile: {
@@ -97,7 +103,7 @@ export const aocMachine =
               target: "idle",
             },
             chooseFile: {
-              actions: "clearDay",
+              actions: ["clearDay"],
               target: "readingFile",
             },
           },
@@ -111,6 +117,39 @@ export const aocMachine =
         },
       },
       services: {
+        setupWorker: (ctx, evt) => (callback, onReceive) => {
+          const worker = new Worker(
+            new URL("../utils/worker.js", import.meta.url),
+            {
+              name: "AoCWorker",
+              type: "module",
+            }
+          );
+          worker.onmessage = (msg) => {
+            switch (msg.data.type) {
+              case "ready": {
+                callback({
+                  type: "ready",
+                  worker,
+                });
+                break;
+              }
+              case "solved": {
+                callback({
+                  type: "calculated",
+                  part1: msg.data.payload.part1,
+                  part2: msg.data.payload.part2,
+                  elapsed: msg.data.payload.elapsed,
+                });
+                break;
+              }
+              default: {
+                callback({ type: "error", day: msg.data.payload.day });
+                break;
+              }
+            }
+          };
+        },
         doCalculation: (ctx, evt) => {
           ctx.worker.postMessage({ day: ctx.day, input: ctx.input });
         },

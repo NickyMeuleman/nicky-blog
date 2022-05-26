@@ -209,38 +209,14 @@ function getCodeLink(day) {
 const Xstate = ({ data }) => {
   const [state, send] = useMachine(aocMachine);
   const fileInputRef = useRef(null);
-  console.log("state:", state.value);
+
   useEffect(() => {
-    const worker = new Worker(new URL("../utils/worker.js", import.meta.url), {
-      name: "AoCWorker",
-      type: "module",
+    send({
+      type: "addFileInputRef",
+      fileInputRef,
     });
-    worker.onmessage = (msg) => {
-      switch (msg.data.type) {
-        case "ready": {
-          send({
-            type: "ready",
-            worker,
-            fileInputRef,
-          });
-          break;
-        }
-        case "solved": {
-          send({
-            type: "calculated",
-            part1: msg.data.payload.part1,
-            part2: msg.data.payload.part2,
-            elapsed: msg.data.payload.elapsed,
-          });
-          break;
-        }
-        default: {
-          send({ type: "error", day: msg.data.payload.day });
-          break;
-        }
-      }
-    };
   }, [send]);
+  console.log("state:", state.value);
 
   return (
     <Layout>
