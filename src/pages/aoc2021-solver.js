@@ -216,7 +216,6 @@ const Xstate = ({ data }) => {
       fileInputRef,
     });
   }, [send]);
-  console.log("state:", state.value);
 
   return (
     <Layout>
@@ -227,7 +226,6 @@ const Xstate = ({ data }) => {
         twitterHandle="NMeuleman"
         description="Choose a day, choose an input file, get the answers!"
       />
-      <pre>state: {state.value}</pre>
       <div
         sx={{
           display: "flex",
@@ -302,10 +300,10 @@ const Xstate = ({ data }) => {
               }}
             >
               <div sx={{ color: alpha("danger", 0.9) }}>
-                {state.context.errorStatus?.day ? (
+                {state.matches({ withError: "calculationError" }) ? (
                   <React.Fragment>
                     <p>
-                      Failed to calculate day {state.context.errorStatus.day}
+                      Failed to calculate day {state.context.errorStatus.day}{" "}
                       with the current input file. Please make sure the selected
                       day and input match.
                     </p>
