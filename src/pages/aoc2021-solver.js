@@ -302,16 +302,26 @@ const Xstate = ({ data }) => {
               }}
             >
               <div sx={{ color: alpha("danger", 0.9) }}>
-                <p>
-                  Failed to calculate day {state.context.errorDay} with the
-                  current input file. Please make sure the selected day and
-                  input match.
-                </p>
-                <p>
-                  Files have to use UNIX style line endings (LF, not CRLF) for
-                  this tool to work correctly. The default if you download an
-                  input file from the advent of code website is correct.
-                </p>
+                {state.context.errorStatus?.day ? (
+                  <React.Fragment>
+                    <p>
+                      Failed to calculate day {state.context.errorStatus.day}
+                      with the current input file. Please make sure the selected
+                      day and input match.
+                    </p>
+                    <p>
+                      Files have to use UNIX style line endings (LF, not CRLF)
+                      for this tool to work correctly. The default if you
+                      download an input file from the advent of code website is
+                      correct.
+                    </p>
+                  </React.Fragment>
+                ) : (
+                  <p>
+                    There was an error reading the &quot;
+                    {state.context.errorStatus.fileName}&quot; file.
+                  </p>
+                )}
               </div>
             </Output>
           ) : null}

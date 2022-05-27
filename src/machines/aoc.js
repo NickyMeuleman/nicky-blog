@@ -1,7 +1,7 @@
 import { assign, createMachine } from "xstate";
 
 export const aocMachine =
-  /** @xstate-layout N4IgpgJg5mDOIC5QEMD2BjAss9ALAlgHZgB0sYALgK4AOAxAE5jIQCeioNqs+F+qhDiAAeiAKwAGMSQDMUgOwBGGQDYZAFgCci+WPUAaEOwSr5JTQA558lZu2X1isQF9nhtFhwFiJfBAA2YHR4qNxgACLIxpzcvPyCSCKI8qrmFjIATHZammIqGWKGxjKKGSQWUhYZipYymuoWLm4gHth4RKR+gcG4oeQAYviBQlw8fAJCoggWKmYSEvLVmjJiSpryFkWI6vLqJI4NkgUWubau7hht3p0BQSOx4wmgU5LScqvKalo6elsIBRISBITjJ5Os9GJNBIMhZzi1Ll4OiQmCwiFBBt0URAwAwADKoFiQe5jeKTRAzOYLJYrNYbP4yKz7MG5HLpFSKOGtRE+dDIfzoKj+ZAUIK8-mC4VExKjOITRJTDISTTmFQNGHfaqKP6Q6QZeQLbT6mpVJoXTztHl8gVCkV0HEMVAMYmyp5Jf5KlVqiwaxRaoziZSyLJ1MRiRTpdbyTkIi2kADuvFwAFEGA6GD0+hEos7HmSEK9ZApPhpDb9-QgGjJzAsJCsZKCdipTfDzdcSAmKMnU46M2EMWAc6T5eIpIWPqoSz8DOWVDMSDZfZoVBInPrdtHW0iO7gAMqofxUR698iRaIgGW54f50fvJQT766afGVaA701d6WKnqDdXLeJvcHkeIR9kMA7Sg8Q7PCObxFvepZPskGjzhkOyKOoEiqjCOg-tyQT2o6ACChD4AAtpKEAAPKHoOcpQdeZgbCueS7E46x+sYljmBoJxiBky46poGQ4bGdCwPuh7xERpHkVRFA0a6UxaAx0LQt6S7rHI8h-KUrjNIQqDYvAiRcrGZCULQ8l5uhFiyJYfFiBYNTrOyMh-Oh0jpDY1T3vMQnNCZbZdGBMQkrRbopDZGR1nYMIWOk3puRIey7AsOgoeoejqN+-kxm2WJov2llXoo0JmFCL6KpYpS8W5iwkHoMwLMuGFWMJbZitakpFXROx-DCZQrmuyhxYspxtX+nYpmm3VuqogL5JG6zrNCtjatCQIrsoVVgmIGgqONPjbgBElhRekGzbtJClHF9QbIsLl-MuVbqP1voFOywL7Tlm7EDNCqueWOhmL6zIbL6GqwrpQA */
+  /** @xstate-layout N4IgpgJg5mDOIC5QEMD2BjAss9ALAlgHZgB0sYALgK4AOAxAE5jIQCeioNqs+F+qhDiAAeiAKwAGMSQDMUgGzyA7AA4xayTIA0IdggAsAThUkxARnkyzAJmsSV+1UoC+znWiw4CxEvggAbMDo8VG4wABFkPU5uXn5BJBFEJRl5EmMrQwk5MzMVGX0dPX1rEwdrMyVDM0N9CUVrV3cMbDwiUj9A4NxQ8gAxfEChLh4+ASFRBBVlEgkJJQrDGTElGtUi8SySfXM7JX15LP2XNxAPVu8OgKDh2LGE0EnJaTkxRVV1MU0NhFSlbesjn0NQKZisYhkTTOLS87RITBYRCgAy6CIgYAYABlUCxILdRvEJohpv85gsQSs1iofppTBYrLZ7I4VCdmp42j50Mh-OgqP5kBQglyeXyBXjEiM4uNEpM7IZ0vJmdZVvoHDIlGIfoc0iozEZLPllip6lDzrDOdzefzBXQMQxUAx8VKHkkEHKFUqVWqNVq9SQWakzGJrF8VjIVKaYRzSAB3Xi4ACiDHtDG6vQiUSd9yJCGesgUyjUGmyNLU2128wOR0ckfZlxIcYoieTDrTYRRYCzhJl4ik+behc+310yRUJleqV1jle+lrFzhjdwAGVUP4qPc2+RItEQJLsz3c33Xu8i18SyOEMprLJpmYJMrrIZlFI5+bY-GV2uNyF24NOxK7m7R5exeAsPmLbQL3yNJrHkMdb0MdQqgjU4zWjW0WwYABBQh8AAWzFCAAHl1y7aVgMPf5VHveoZBkWD5CDH48mkaZDCqKQKhqPJGlQqNLjoWBV3XeIcPwwiSIoMiXUmIwqJo6ix2yH0L2MdIChURDYKkRDqlfdCWAgDsAElCBodcACUwAAM2knNzBMcwkKURjYMMYxmN405CFQdF4ESND63IagaDsg86nHYxGQkfRUnsQwaQqf0UnYtQUnMKp9PrTp-xiAlyNdFITGsZZSt2RwbESiQSCUWrKx2A55FsLK4TRJEOzCii72VdIpCUGjjBsYNS0chxjFWFlgwqFqLRFa1ct3QCCtkpQfhkdzZGDA5KnS6owRm98myTFNOtdOKSCa9iCho+QxCfVaL3kbJTB2OQ5FVO79r4usFw-YT9zy50c1KkgbDHIwJDvTS6kKC9+v0dIFnDOiWX65QDtO2VIL0QEZFMe81DouYrBSSFXGcIA */
   createMachine(
     {
       context: {
@@ -12,16 +12,16 @@ export const aocMachine =
         worker: null,
         calculationStatus: "Not calculating yet.",
         fileInputRef: null,
-        errorDay: null,
+        errorStatus: null,
         renderError: false,
         solutions: { part1: null, part2: null },
         renderSolution: false,
       },
-      id: "aocMachine",
-      initial: "setup",
       invoke: {
         src: "setupWorker",
       },
+      id: "aocMachine",
+      initial: "setup",
       on: {
         errorAnimatedOut: {
           actions: ["stopRenderingError"],
@@ -65,6 +65,10 @@ export const aocMachine =
             readerLoaded: {
               actions: ["setInput"],
               target: "idle",
+            },
+            readerError: {
+              actions: ["clearInput"],
+              target: "withError",
             },
           },
         },
@@ -158,13 +162,22 @@ export const aocMachine =
           const reader = new FileReader();
           reader.addEventListener(
             "load",
-            async () => {
+            () => {
               callback({ type: "readerLoaded", data: reader.result });
+            },
+            false
+          );
+          reader.addEventListener(
+            "error",
+            () => {
+              callback({ type: "readerError", fileName: file.name });
             },
             false
           );
 
           reader.readAsText(file);
+          // to test the error case:
+          // reader.dispatchEvent(new Event("error"));
         },
       },
       actions: {
@@ -172,18 +185,21 @@ export const aocMachine =
           return { renderSolution: true };
         }),
         stopRenderingSolution: assign((ctx, evt) => {
-          return { renderSolution: false };
+          return { renderSolution: false, solutions: null };
         }),
         stopRenderingError: assign((ctx, evt) => {
-          return { renderError: false };
+          return { renderError: false, errorStatus: null };
         }),
         enterIdle: assign((ctx, evt) => {
           return { calculationStatus: "" };
         }),
         enterError: assign((ctx, evt) => {
+          const errorStatus = evt.day
+            ? { day: evt.day }
+            : { fileName: evt.fileName };
           return {
             calculationStatus: "Error",
-            errorDay: evt.day,
+            errorStatus,
             renderError: true,
           };
         }),
