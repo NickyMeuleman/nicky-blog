@@ -26,6 +26,7 @@
     "@theme-ui/color": "^0.10.0",
     "@theme-ui/presets": "^0.10.0",
     "@theme-ui/prism": "^0.10.0",
+    "@xstate/react": "^3.0.0",
     "deepmerge": "^4.2.2",
     "gatsby": "^3.11.1",
     "gatsby-plugin-feed": "^3.7.1",
@@ -43,7 +44,8 @@
     "remark-math": "3",
     "theme-ui": "^0.10.0",
     "typeface-source-sans-pro": "0.0.75",
-    "wasm-game-of-life-nmeuleman": "^0.1.0"
+    "wasm-game-of-life-nmeuleman": "^0.1.0",
+    "xstate": "^4.32.1"
   },
   "license": "GPL-3.0-or-later",
   "scripts": {
