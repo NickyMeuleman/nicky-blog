@@ -300,7 +300,7 @@ const AoC2021Solver = ({ data }) => {
               }}
             >
               <div sx={{ color: alpha("danger", 0.9) }}>
-                {state.matches({ withError: "calculationError" }) ? (
+                {state.context.errorStatus?.day ? (
                   <React.Fragment>
                     <p>
                       Failed to calculate day {state.context.errorStatus.day}{" "}
