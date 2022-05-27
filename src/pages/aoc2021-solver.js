@@ -206,13 +206,13 @@ function getCodeLink(day) {
   return `https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2021/src/day_${padded}.rs`;
 }
 
-const Xstate = ({ data }) => {
+const AoC2021Solver = ({ data }) => {
   const [state, send] = useMachine(aocMachine);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
     send({
-      type: "addFileInputRef",
+      type: "setFileInputRef",
       fileInputRef,
     });
   }, [send]);
@@ -380,4 +380,4 @@ export const aoc2021Query = graphql`
   }
 `;
 
-export default Xstate;
+export default AoC2021Solver;

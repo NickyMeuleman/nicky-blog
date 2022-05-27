@@ -27,15 +27,15 @@ export const aocMachine = createMachine(
       solutionAnimatedOut: {
         actions: "stopRenderingSolution",
       },
-      addFileInputRef: {
-        actions: "addFileInputRef",
+      setFileInputRef: {
+        actions: "setFileInputRef",
       },
     },
     states: {
       setup: {
         on: {
           ready: {
-            actions: "addWorker",
+            actions: "setWorker",
             target: "idle",
           },
         },
@@ -77,7 +77,7 @@ export const aocMachine = createMachine(
         },
         on: {
           calculated: {
-            actions: "addSolution",
+            actions: "setSolution",
             target: "withSolution",
           },
           error: {
@@ -184,50 +184,17 @@ export const aocMachine = createMachine(
       },
     },
     actions: {
-      enterSolution: assign((ctx, evt) => {
-        return { renderSolution: true };
-      }),
-      stopRenderingSolution: assign((ctx, evt) => {
-        return { renderSolution: false, solutions: null };
-      }),
-      stopRenderingError: assign((ctx, evt) => {
-        return { renderError: false, errorStatus: null };
-      }),
-      enterIdle: assign((ctx, evt) => {
-        return { calculationStatus: "" };
-      }),
-      enterError: assign((ctx, evt) => {
-        const errorStatus = evt.day
-          ? { day: evt.day }
-          : { fileName: evt.fileName };
-        return {
-          calculationStatus: "Error",
-          errorStatus,
-          renderError: true,
-        };
-      }),
-      addFileInputRef: assign((ctx, evt) => {
+      setFileInputRef: assign((ctx, evt) => {
         return {
           fileInputRef: evt.fileInputRef,
         };
       }),
-      clearDay: assign((ctx, evt) => {
-        return {
-          day: "",
-        };
-      }),
-      clearInput: assign((ctx, evt) => {
-        ctx.fileInputRef.current.value = "";
-        return {
-          input: "",
-        };
-      }),
-      addWorker: assign((ctx, evt) => {
+      setWorker: assign((ctx, evt) => {
         return {
           worker: evt.worker,
         };
       }),
-      addSolution: assign((ctx, evt) => {
+      setSolution: assign((ctx, evt) => {
         return {
           solutions: { part1: evt.part1, part2: evt.part2 },
           calculationStatus: `${evt.elapsed} ms`,
@@ -249,6 +216,39 @@ export const aocMachine = createMachine(
       }),
       setInput: assign((ctx, evt) => {
         return { input: evt.data };
+      }),
+      enterIdle: assign((ctx, evt) => {
+        return { calculationStatus: "" };
+      }),
+      enterSolution: assign((ctx, evt) => {
+        return { renderSolution: true };
+      }),
+      enterError: assign((ctx, evt) => {
+        const errorStatus = evt.day
+          ? { day: evt.day }
+          : { fileName: evt.fileName };
+        return {
+          calculationStatus: "Error",
+          errorStatus,
+          renderError: true,
+        };
+      }),
+      stopRenderingSolution: assign((ctx, evt) => {
+        return { renderSolution: false, solutions: null };
+      }),
+      stopRenderingError: assign((ctx, evt) => {
+        return { renderError: false, errorStatus: null };
+      }),
+      clearDay: assign((ctx, evt) => {
+        return {
+          day: "",
+        };
+      }),
+      clearInput: assign((ctx, evt) => {
+        ctx.fileInputRef.current.value = "";
+        return {
+          input: "",
+        };
       }),
     },
   }
