@@ -241,7 +241,7 @@ const AoC2021Solver = ({ data }) => {
           <Input title="Day">
             <select
               sx={{ fontSize: 1 }}
-              disabled={state.matches("calculate") || state.matches("setup")}
+              disabled={state.matches({ withWorker: "setup" })}
               value={state.context.day}
               onChange={(evt) => {
                 send("chooseDay", { day: evt.target.value });
@@ -262,7 +262,7 @@ const AoC2021Solver = ({ data }) => {
               sx={{ fontSize: 1, width: "100%" }}
               ref={fileInputRef}
               type="file"
-              disabled={state.matches("calculate") || state.matches("setup")}
+              disabled={state.matches({ withWorker: "setup" })}
               onChange={(evt) => {
                 send("chooseFile", { file: evt.target.files[0] });
               }}
@@ -288,13 +288,13 @@ const AoC2021Solver = ({ data }) => {
                 gridColumn: "1/-1",
                 gridRow: "2/3",
                 animation: `${
-                  state.matches("withError")
+                  state.matches({ withWorker: "withError" })
                     ? `${inAnimation} 300ms ease-in`
                     : `${outAnimation} 300ms ease-in`
                 }`,
               }}
               onAnimationEnd={() => {
-                if (!state.matches("withError")) {
+                if (!state.matches({ withWorker: "withError" })) {
                   send("errorAnimatedOut");
                 }
               }}
@@ -331,13 +331,13 @@ const AoC2021Solver = ({ data }) => {
                   gridColumn: "1/2",
                   gridRow: "2/3",
                   animation: `${
-                    state.matches("withSolution")
+                    state.matches({ withWorker: "withSolution" })
                       ? `${inAnimation} 300ms ease-in`
                       : `${outAnimation} 300ms ease-in`
                   }`,
                 }}
                 onAnimationEnd={() => {
-                  if (!state.matches("withSolution")) {
+                  if (!state.matches({ withWorker: "withSolution" })) {
                     // both solutions are animated out at the same time and should have the same animation duration
                     send("solutionAnimatedOut");
                   }
@@ -352,7 +352,7 @@ const AoC2021Solver = ({ data }) => {
                   gridColumn: "2/3",
                   gridRow: "2/3",
                   animation: `${
-                    state.matches("withSolution")
+                    state.matches({ withWorker: "withSolution" })
                       ? `${inAnimation} 300ms ease-in`
                       : `${outAnimation} 300ms ease-in`
                   }`,
