@@ -1,0 +1,153 @@
+---
+title: Working with files on the web
+date: "2022-06-10"
+authors: ["nicky"]
+tags: ["JavaScript"]
+---
+
+When you want to use local files in the browser, there are several methods you can use.
+
+## Getting a `File`
+
+A [`File` object](https://developer.mozilla.org/en-US/docs/Web/API/File) lets you read a bunch of information about a file, including the content.
+
+<Aside>
+
+tl;dr: If you want to read a file, get a `File`.
+
+</Aside>
+
+### The `<input type="file" />`
+
+Ol' reliable, the `<input>` element.
+
+Give it at `type` attribute of `"file"`, and a button appears that opens your OSs file picker when clicked.
+
+An [`<input type="file" />`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file) has many extra features.
+It's a [drop zone](#drop-zone) too.
+Drop a file on it, and it will behave like you opened that file picker and chose a file. Neat!
+
+After the user selects a file (or multiple) from the file picker, a `"change"` event is fired.
+The file(s) will be accessible there on `event.target.files`.
+
+It's a [`FileList`](https://developer.mozilla.org/en-US/docs/Web/API/FileList).
+Every item inside that list is a [`File`](https://developer.mozilla.org/en-US/docs/Web/API/File).
+
+If a single file was selected, it'll be the 0th element in that list.
+
+```html title=index.html
+<input type="file" />
+```
+
+```js title=index.js
+const inputEl = document.querySelector("input");
+textFileInput.addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  console.log("A file was selected");
+  console.log("Name:", file.name);
+});
+```
+
+### Drop zone
+
+Another method to get a `File` is using a drop zone.
+Dragging and dropping a file is a nice UX.
+
+<Aside variant="info">
+
+By default, the browser prevents anything from happening when dropping something onto most HTML elements.
+
+To change that, the element must handle both the [`"dragover"`](https://developer.mozilla.org/en-US/docs/Web/API/Document/dragover_event) and [`"drop"`](https://developer.mozilla.org/en-US/docs/Web/API/Document/drop_event) events.
+
+</Aside>
+
+Each handler calls [`event.preventDefault()`](https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault) to prevent further processing of the event.
+
+You might want to call [`event.stopPropagation()`](https://developer.mozilla.org/en-US/docs/Web/API/Event/stopPropagation) in each handler too.
+It's not required, but allowing the events to continue propagating might lead to unwanted effects.
+
+_I think it's a bit weird too, but it's necessary._
+
+The file(s) are accessible under `event.dataTransfer.files`.
+
+Alternatively, you can use the [`DataTransferItemList` API](https://developer.mozilla.org/en-US/docs/Web/API/DataTransferItemList) to access the file(s).
+This API is handy if you also want to support the dropping of things that are **not** `File` objects.
+
+```html title=index.html
+<div>Welcome to THE DROP ZONE</div>
+```
+
+```js title=index.js
+const dropZoneEl = document.querySelector("div");
+dropZoneEl.addEventListener("dragover", (event) => {
+  event.preventDefault();
+});
+dropZoneEl.addEventListener("drop", (event) => {
+  event.preventDefault();
+  console.log("Something was dropped");
+
+  const file = event.dataTransfer.files[0];
+  console.log("Name:", file.name);
+});
+```
+
+```js title=alternative-index.js hl=9-12
+const dropZoneEl = document.querySelector("div");
+dropZoneEl.addEventListener("dragover", (event) => {
+  event.preventDefault();
+});
+dropZoneEl.addEventListener("drop", (event) => {
+  event.preventDefault();
+  console.log("Something was dropped");
+
+  if (event.dataTransfer.items[0].kind === "file") {
+    const file = event.dataTransfer.items[0].getAsFile();
+    console.log("Name:", file.name);
+  }
+});
+```
+
+## Using a `File`
+
+A `File` is a special kind of [`Blob`](https://developer.mozilla.org/en-US/docs/Web/API/Blob) and can be used everywhere a `Blob` can.
+
+The metadata directly accessible on a `File` object is browser-specific, what might be there in Chromium browsers, may not exist in Firefox etc.
+
+By metadata I mean properties like `file.name`, `file.type`, `file.size`, ...
+
+The thing I was interested in the most was reading/doing stuff with the data of the file.
+This being the web, there are multiple ways to do that.
+
+### The `File` API
+
+The [`File` object](https://developer.mozilla.org/en-US/docs/Web/API/File) inherits a bunch of methods from `Blob` that can retrieve all the data-y goodness your file holds.
+
+For example [`.text()`](https://developer.mozilla.org/en-US/docs/Web/API/Blob/text) and [`.arrayBuffer()`](https://developer.mozilla.org/en-US/docs/Web/API/Blob/arrayBuffer) return a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise).
+While [`.stream()`]() returns a [`ReadableStream`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream).
+
+Lots of options!
+
+Is the file an image and do you want to draw it in a `<canvas>`?
+No problem!
+Call [`createImageBitmap(file)`](https://developer.mozilla.org/en-US/docs/Web/API/createImageBitmap) and feed it to the canvas' [`drawImage`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage) method.
+
+Do you want to represent the data as a [Data URL](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URLs)?
+Some example usages of those is populating the `src` attribute of a `<video>` or `<img>` tag.
+
+The `URL` API has a [`.createObjectURL`](https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL) method that accepts a `Blob`!
+
+---
+
+### The `FileReader` API
+
+WIP
+
+boop
+
+event based API
+mention tracking progress on the load event
+
+the Filesystem access API, chromium only for now
+Something about filehandles
+
+writing to files
