@@ -1,0 +1,251 @@
+---
+title: Working with files on the web
+date: "2022-06-10"
+authors: ["nicky"]
+tags: ["JavaScript"]
+---
+
+import { Demo } from "./";
+import { MultiLangCode } from "./../../../src/components/MultiLangCode";
+
+Here is where I would put an intro to an article about using files on the web, [IF I HAD ONE](https://www.youtube.com/watch?v=omguEZ7jy5E).
+
+## Getting a `File`
+
+A [`File` object](https://developer.mozilla.org/en-US/docs/Web/API/File) lets you read a bunch of information about a file, including the contents.
+
+### The `<input type="file" />`
+
+Ol' reliable, the `<input>` element.
+
+Give it a `type` attribute of `"file"`, and a button appears that opens your OS's file picker when clicked.
+
+An [`<input type="file" />`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file) has many extra features.
+It's a [drop zone](#drop-zone) too.
+Drop a file on it, and it will behave like you opened that file picker and chose a file. [Neat](https://www.youtube.com/watch?v=Hm3JodBR-vs)!
+
+After the user selects a file (or multiple) from the file picker, a `"change"` event is fired.
+The file(s) will be accessible on `event.target.files`.
+
+It's a [`FileList`](https://developer.mozilla.org/en-US/docs/Web/API/FileList).
+Every item inside that list is a [`File`](https://developer.mozilla.org/en-US/docs/Web/API/File).
+
+If a single file was selected, it'll be the 0th element in that list.
+
+```html title=index.html
+<input type="file" />
+```
+
+```js title=index.js
+const inputEl = document.querySelector("input");
+inputEl.addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  console.log("A file was selected");
+  console.log("Name:", file.name);
+});
+```
+
+### Drop zone
+
+Another method to get a `File` is using a drop zone.
+Dragging and dropping a file is a nice user experience.
+
+<Aside variant="info">
+
+By default, the browser prevents anything from happening when dropping something onto most HTML elements.
+
+To change that, the element must handle both the [`"dragover"`](https://developer.mozilla.org/en-US/docs/Web/API/Document/dragover_event) and [`"drop"`](https://developer.mozilla.org/en-US/docs/Web/API/Document/drop_event) events.
+
+</Aside>
+
+Each handler calls [`event.preventDefault()`](https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault) to prevent further processing of the event.
+
+You also might want to call [`event.stopPropagation()`](https://developer.mozilla.org/en-US/docs/Web/API/Event/stopPropagation) in each handler.
+It's not required, but allowing the events to continue propagating can lead to unwanted behaviour.
+
+> I think it's a bit weird too, but it's necessary.
+
+The file(s) are accessible under `event.dataTransfer.files` in the `"drop"` event handler.
+
+Alternatively, you can use the [`DataTransferItemList` API](https://developer.mozilla.org/en-US/docs/Web/API/DataTransferItemList) to access the file(s).
+This API is handy if you also want to support the dropping of things that are **not** `File` objects.
+
+```html title=index.html
+<div>Welcome to THE DROP ZONE</div>
+```
+
+<MultiLangCode values={[{label: "dataTransfer.files"}, {label: "dataTransfer.items"}]}>
+
+```js title=index.js
+const dropZoneEl = document.querySelector("div");
+dropZoneEl.addEventListener("dragover", (event) => {
+  event.preventDefault();
+});
+dropZoneEl.addEventListener("drop", (event) => {
+  event.preventDefault();
+  console.log("Something was dropped");
+
+  const file = event.dataTransfer.files[0];
+  console.log("Name:", file.name);
+});
+```
+
+```js title=index.js hl=9-12
+const dropZoneEl = document.querySelector("div");
+dropZoneEl.addEventListener("dragover", (event) => {
+  event.preventDefault();
+});
+dropZoneEl.addEventListener("drop", (event) => {
+  event.preventDefault();
+  console.log("Something was dropped");
+
+  if (event.dataTransfer.items[0].kind === "file") {
+    const file = event.dataTransfer.items[0].getAsFile();
+    console.log("Name:", file.name);
+  }
+});
+```
+
+</MultiLangCode>
+
+### The The File System Access API
+
+The [File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API) is fairly new at the time of writing and available in Chromium browsers (Chrome and Edge).
+
+It differs from the previous methods in that you first get a file **handle**, which in turn lets you get the underlying file.
+
+A benefit of this is that you can use that handle to also **write** to the file.
+
+You get one (or multiple) [`FileSystemFileHandle`(s)](https://developer.mozilla.org/en-US/docs/Web/API/FileSystemFileHandle) by calling a method on the [`window`](https://developer.mozilla.org/en-US/docs/Web/API/Window).
+
+This opens the OS's file picker and returns a `Promise` that resolves to an array of handles to the file(s) you just picked.  
+The file itself can then be accessed by calling the [`getFile`](https://developer.mozilla.org/en-US/docs/Web/API/FileSystemFileHandle/getFile) method on a handle.  
+That method returns a `Promise` that resolves to a `File`.
+
+```js title=index.js
+const fileHandles = await window.showOpenFilePicker();
+const file = await fileHandles[0].getFile();
+console.log("A file was selected");
+console.log("Name:", file.name);
+```
+
+<Aside variant="info">
+
+You can also access the handle to a directory by calling [`window.showDirectoryPicker`](https://developer.mozilla.org/en-US/docs/Web/API/Window/showDirectoryPicker).
+
+Another neat way to get a filehandle is calling the [`getAsFileSystemHandle`](https://developer.mozilla.org/en-US/docs/Web/API/DataTransferItem/getAsFileSystemHandle) method
+on a [`DataTransferItem`](https://developer.mozilla.org/en-US/docs/Web/API/DataTransferItem) during the [drag and drop method](#drop-zone).
+
+</Aside>
+
+## Using a `File`
+
+A `File` is a special kind of [`Blob`](https://developer.mozilla.org/en-US/docs/Web/API/Blob) and can be used everywhere a `Blob` can.
+
+The metadata directly accessible on a `File` object is browser-specific, what might be there in one browser, may not exist in another.
+
+By metadata I mean properties like `file.name`, `file.type`, `file.size`, ...
+
+The most interesting thing is the contents of that file.
+This being the web, there are multiple ways to read that data.
+
+### The `File` API
+
+The [`File` object](https://developer.mozilla.org/en-US/docs/Web/API/File) inherits a bunch of methods from `Blob` that can retrieve all the data-y goodness your file holds.
+
+For example [`.text()`](https://developer.mozilla.org/en-US/docs/Web/API/Blob/text) and [`.arrayBuffer()`](https://developer.mozilla.org/en-US/docs/Web/API/Blob/arrayBuffer) return a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) that resolves to a string or an arraybuffer respectively.
+While [`.stream()`]() returns a [`ReadableStream`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream).
+
+Lots of options!
+
+- Is the file an image and do you want to draw it in a `<canvas>`?
+  No problem!
+  Call [`createImageBitmap(file)`](https://developer.mozilla.org/en-US/docs/Web/API/createImageBitmap) and feed it to the canvas' [`drawImage`](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage) method.
+
+- Do you want to represent the data as a [Data URL](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URLs)?
+  Some example usages of those is populating the `src` attribute of a `<video>` or `<img>` tag.
+
+- The `URL` API has a [`createObjectURL`](https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL) method that accepts a `Blob`!
+
+### The `FileReader` API
+
+The [`FileReader` API](https://developer.mozilla.org/en-US/docs/Web/API/FileReader) is an event based API.
+A reader fires events you can listen to by defining an [`addEventListener`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener).
+
+You can kick off an action for the reader to take by calling one of its methods: [`readAsText`](https://developer.mozilla.org/en-US/docs/Web/API/FileReader/readAsText),
+[`readAsArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/API/FileReader/readAsArrayBuffer),
+[`readAsDataURL`](https://developer.mozilla.org/en-US/docs/Web/API/FileReader/readAsDataURL),
+[`readAsText`](https://developer.mozilla.org/en-US/docs/Web/API/FileReader/readAsText),
+or [`readAsBinaryString`](https://developer.mozilla.org/en-US/docs/Web/API/FileReader/readAsBinaryString).
+
+Once that action completes, the reader will fire the `"load"` event, and the result will be available on `reader.result`.
+
+<Aside variant="danger">
+
+The usage of [`readAsBinaryString`](https://developer.mozilla.org/en-US/docs/Web/API/FileReader/readAsBinaryString) is discouraged.
+Prefer [`readAsArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/API/FileReader/readAsArrayBuffer).
+
+</Aside>
+
+This event-based API allows a bit more flexibility than using the `Promises` of the `File` API,
+like showing a progress bar by listening to the `"progress"` event the reader will periodically fire while reading a file.
+
+<Aside variant="info">
+
+You may want to manually send an [`Event`](https://developer.mozilla.org/en-US/docs/Web/API/Event) to the reader.
+
+An example is making a reader fire the `"error"` event while testing:
+`reader.dispatchEvent(new Event("error"));`
+
+</Aside>
+
+```js title=index.js
+const file = /* a File object */;
+const reader = new FileReader();
+
+reader.addEventListener("load", (event) => {
+  console.log("Successfully read:", file.name);
+  console.log("Text contents:", reader.result);
+})
+
+reader.readAsText(file);
+```
+
+## Writing to files
+
+Once you have a handle to a file, you can call the [`createWritable` method](https://developer.mozilla.org/en-US/docs/Web/API/FileSystemFileHandle/createWritable)
+to get a [`FileSystemWritableFileStream`](https://developer.mozilla.org/en-US/docs/Web/API/FileSystemWritableFileStream), which can be used to write to that file.
+
+The snippet below writes "BOOP" to a file. Glorious.
+
+```html title=index.html
+<button>choose a file to write to</button>
+```
+
+```js title=index.js
+const button = document.querySelector("button");
+
+button.addEventListener("click", async () => {
+  const handle = await window.showSaveFilePicker();
+  const writable = await handle.createWritable();
+  await writable.write("BOOP");
+  await writable.close();
+});
+```
+
+In the tweet below, I choose a file and then append either "boop" or "potato" to the file, depending on which button is clicked:
+
+<Tweet tweetLink="NMeuleman/status/1533177195283243008" theme="dark" />
+
+## Demo & code
+
+Try selecting a video, an image, or a text file with any of the three input methods in the demo underneath.
+
+By looking at the `file.type`, the demo determines how it should read the file.
+If it's a video or an image, it reads the contents as a data URL and sets the `src` for a `<video>` or `<img>` tag.
+
+Anything else, and it reads and displays the plain text that's inside that file.
+
+You can view [the code for this demo](https://github.com/NickyMeuleman/nicky-blog/blob/master/data/garden/files-on-the-web/index.js)
+
+<Demo />
