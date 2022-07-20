@@ -3,11 +3,13 @@
 import { jsx } from "theme-ui";
 import React, { useState, useEffect, useRef } from "react";
 import { keyframes } from "@emotion/react";
+import partyCorgiSrc from "./party-corgi.gif";
 
-const Button = ({ children, ...props }) => {
+const Button = ({ children, onClick, ...props }) => {
   return (
     <button
       type="button"
+      onClick={onClick}
       sx={{
         outlineWidth: "1px",
         outlineOffset: "2px",
@@ -250,6 +252,7 @@ const WebWorkerDemo = () => {
                 while (Date.now() < startTime + 2500) {
                   currCount += 1;
                   if (currCount % 50_000 === 0) {
+                    console.log("hi");
                     setCount(currCount);
                   }
                 }
@@ -318,6 +321,9 @@ const WebWorkerDemo = () => {
             />
           </div>
         </Output>
+        <Output title="GIF">
+          <img src={partyCorgiSrc} alt="walking rainbow corgi" />
+        </Output>
         <Output title="count">{count}</Output>
         <Output title="Adele">{adele}</Output>
       </DemoArea>
@@ -325,4 +331,186 @@ const WebWorkerDemo = () => {
   );
 };
 
-export { WebWorkerDemo };
+const ProblemDemo = () => {
+  const jsAnimEl = useRef(null);
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let degrees = 0;
+    function animate() {
+      // eslint-disable-next-line no-use-before-define
+      requestId = requestAnimationFrame(animate);
+      degrees += 1;
+      jsAnimEl?.current.style.setProperty(`--degrees`, `${degrees}deg`);
+    }
+    let requestId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(requestId);
+  }, []);
+
+  return (
+    <React.Fragment>
+      <DemoArea>
+        <Input title="Main thread">
+          <Button
+            type="button"
+            onClick={() => {
+              const start = Date.now();
+              // eslint-disable-next-line no-empty
+              while (start + 3000 > Date.now()) {}
+            }}
+          >
+            Block 3 seconds
+          </Button>
+        </Input>
+        <Input title="Main thread">
+          <Button
+            type="button"
+            onClick={() => {
+              const intervalId = setInterval(() => {
+                const start = Date.now();
+                // eslint-disable-next-line no-empty
+                while (start + 180 > Date.now()) {}
+              }, 200);
+              setTimeout(() => clearInterval(intervalId), 3000);
+            }}
+          >
+            Jank / heavy work 3 seconds
+          </Button>
+        </Input>
+        <Input title="Main thread">
+          <Button
+            type="button"
+            onClick={() => {
+              setCount(count + 1);
+            }}
+          >
+            increment
+          </Button>
+        </Input>
+      </DemoArea>
+      <DemoArea>
+        <Output
+          title="JS Animation"
+          sx={{
+            display: "grid",
+            gridTemplateRows: "auto 1fr",
+          }}
+        >
+          <div
+            ref={jsAnimEl}
+            sx={{
+              backgroundColor: "primary",
+              transform: `rotate(var(--degrees))`,
+              minWidth: "1rem",
+              minHeight: "4rem",
+              alignSelf: "center",
+              justifySelf: "center",
+              borderRadius: "sm",
+            }}
+          />
+        </Output>
+        <Output title="GIF">
+          <img src={partyCorgiSrc} alt="walking rainbow corgi" />
+        </Output>
+        <Output title="Count">{count}</Output>
+      </DemoArea>
+    </React.Fragment>
+  );
+};
+
+const SolutionDemo = () => {
+  const jsAnimEl = useRef(null);
+  const [count, setCount] = useState(0);
+  const [countWorker, setCountWorker] = useState(null);
+
+  useEffect(() => {
+    let degrees = 0;
+    function animate() {
+      // eslint-disable-next-line no-use-before-define
+      requestId = requestAnimationFrame(animate);
+      degrees += 1;
+      jsAnimEl?.current.style.setProperty(`--degrees`, `${degrees}deg`);
+    }
+    let requestId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(requestId);
+  }, []);
+
+  useEffect(() => {
+    const worker = new Worker(new URL("./countWorker.js", import.meta.url), {
+      name: "countWorker2",
+      type: "module",
+    });
+
+    // do I want to show the updated count in this demo?
+    // worker.addEventListener("message", (event) => {
+    //   setCount(event.data);
+    // });
+
+    setCountWorker(worker);
+  }, []);
+
+  return (
+    <React.Fragment>
+      <DemoArea>
+        <Input title="Web Worker">
+          <Button
+            type="button"
+            onClick={() => {
+              countWorker.postMessage("block");
+            }}
+          >
+            Block 3 seconds
+          </Button>
+        </Input>
+        <Input title="Web Worker">
+          <Button
+            type="button"
+            onClick={() => {
+              countWorker.postMessage("jank");
+            }}
+          >
+            Jank / heavy work 3 seconds
+          </Button>
+        </Input>
+        <Input title="Main thread">
+          <Button
+            type="button"
+            onClick={() => {
+              setCount(count + 1);
+            }}
+          >
+            increment
+          </Button>
+        </Input>
+      </DemoArea>
+      <DemoArea>
+        <Output
+          title="JS Animation"
+          sx={{
+            display: "grid",
+            gridTemplateRows: "auto 1fr",
+          }}
+        >
+          <div
+            ref={jsAnimEl}
+            sx={{
+              backgroundColor: "primary",
+              transform: `rotate(var(--degrees))`,
+              minWidth: "1rem",
+              minHeight: "4rem",
+              alignSelf: "center",
+              justifySelf: "center",
+              borderRadius: "sm",
+            }}
+          />
+        </Output>
+        <Output title="GIF">
+          <img src={partyCorgiSrc} alt="walking rainbow corgi" />
+        </Output>
+        <Output title="Count">{count}</Output>
+      </DemoArea>
+    </React.Fragment>
+  );
+};
+
+export { ProblemDemo, SolutionDemo, WebWorkerDemo };
