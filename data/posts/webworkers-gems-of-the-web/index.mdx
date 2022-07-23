@@ -7,7 +7,12 @@ cover: "./cover.jpg"
 tags: ["JavaScript"]
 ---
 
-import { ProblemDemo, SolutionDemo, WebWorkerDemo } from "./";
+import {
+  ProblemDemo,
+  SolutionDemo,
+  MainToWorkerChart,
+  WebWorkerDemo,
+} from "./";
 
 <!-- Photo by <a href="https://unsplash.com/@rewdew?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Kyle Larivee</a> on <a href="https://unsplash.com/s/photos/bus-lane?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
  -->
@@ -57,7 +62,6 @@ But it also comes with a bunch of downsides.
 Adding threading and shared memory support to everything now would cause a lot of problems.
 
 That's why the concept of shared memory was isolated to a single type: [`SharedArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer).
-More on that later.
 
 </Aside>
 
@@ -100,7 +104,7 @@ The animation doesn't come to a complete standstill, but it has an ugly "start-s
 
 In other words, [not threading makes your event listeners sad](https://macarthur.me/posts/use-web-workers-for-your-event-listeners).
 
-Eventhough I just said JavaScript is a single threaded language and doesn't have threads, you can still use multiple threads on the web!
+Eventhough I just said JavaScript is a single threaded language and doesn't have threads, you can still use multiple threads on the web to do work in parallel!
 
 The browser has the [Web Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) for this.
 
@@ -118,6 +122,11 @@ This talk about the [event loop](https://www.youtube.com/watch?v=cCOL7MC4Pl0) is
 While blocking the event loop on the main thread will stop new frames from being shipped,
 blocking a Web Worker leaves the main thread free to respond to user interaction and ship new frames.
 
+A real-world analogue would be a street with two lanes.
+One lane represents the main thread and the second lane represents a web worker.
+The second lane is a dedicated bus lane.
+When the main lane is blocked, that doesn't affect the buslane and vice versa.
+
 ### Demo
 
 The same demo as before, only this time the first two buttons do not affect the main thread, but a worker thread.
@@ -130,17 +139,321 @@ Open your system monitor and you will see a jump in CPU usage when you click on 
 
 <SolutionDemo />
 
+## How
+
+The [Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Worker/Worker) API has been around for a long time. Since IE10.
+
+[The browser support for web workers](https://caniuse.com/webworkers) is excellent, it's even better than [the browser support for `fetch`](https://caniuse.com/mdn-api_fetch).
+
+A worker can be created by passing the path to a seperate JavaScript file to its constructor.
+
+```js title=index.js
+const worker = new Worker("./worker.js");
+```
+
+Everything in that file will be executed in a seperate thread.
+Because of [the required isolation](#a-problem) between the main thread and a worker thread, the threads don't have access to any variables or other code from eachother.
+
+This combined with the fact that workers have an entirely seperate execution context means they don't have access to a bunch of things you expect to "just be there", like the [DOM](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model).
+In other words: web workers can't update the UI directly!
+
+An other result of that isolation is that the threads have to exchange data by passing messages.
+
+This is done through the [`postMessage` API](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage).
+It will copy the message, and fire an event in the other thread with that copied data.
+
+<MainToWorkerChart />
+
+On the main thread, the `postMessage` function is available on that `worker` object you got from calling the `new Worker()` constructor.
+
+In the worker file, `postMessage` is one of the functions global to the worker.
+
+On both sides, you can listen to the `"message"` event this causes.
+The data you provided as an argument to `postMessage` will be available on the `.data` property of the event.
+
+To listen to that event, add an [`addEventListener` method](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener).
+On the main thread, that method is available on the worker object.
+
+In the worker, it's the same deal as with `postMessage`.
+The `addEventListener` method is available on the [global webworker scope](https://developer.mozilla.org/en-US/docs/Web/API/DedicatedWorkerGlobalScope).
+
+This way, the threads can still communicate with eachother while adhering to that needed strict seperation, great!
+
+This method of using webworkers can be summed up in the same way the [Go programming language](https://go.dev/) approaches multithreading.
+
+> Don't communicate by sharing memory; share memory by communicating.
+>
+> <footer>
+>
+> [The Go docs](https://go.dev/doc/codewalk/sharemem/#:~:text=Go's%20approach%20to%20concurrency%20differs,to%20data%20structures%20between%20goroutines.)
+>
+> </footer>
+
+You can handle different messages with your favourite method of controlling code flow.
+In this example, I used a `switch` statement to respond differently to certain messages.
+
+```js title=index.js
+const worker = new Worker("./worker.js");
+worker.addEventListener("message", (event) => {
+  console.log(event.data);
+});
+
+worker.postMessage("tick");
+```
+
+```js title=worker.js
+addEventListener("message", (event) => {
+  switch (event.data) {
+    case "tic": {
+      postMessage("tac");
+      break;
+    }
+    case "ping": {
+      postMessage("pong");
+      break;
+    }
+    default: {
+      postMessage("A hotdog is a sandwich");
+    }
+  }
+});
+```
+
+This example used strings as arguments to `postMessage`, but it can handle way more.
+
+`postMessage` uses the [structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm) to copy the messages.
+It can handle a lot!
+
+Even complex data structures like `Map` and `Set`, or cyclical data structures.
+It can't handle functions, trying to copy those will cause an error.
+A class will be converted to a standard JavaScript object, losing methods in the process.
+
+<Aside variant="success">
+
+[The `structuredClone()` method](https://developer.mozilla.org/en-US/docs/Web/API/structuredClone) is available directly too!
+You can use it to make deep clones of things.
+
+no mo' lodash!
+
+```js
+const original = makeLinkedList();
+const clone = structuredClone(original);
+```
+
+</Aside>
+
+## The main thread is still needed
+
+Sometimes, even if your code doesn't touch the DOM.
+You still need to run it on the main thread as a bunch of APIs aren't available in workers.
+
+<Aside variant="info">
+
+[The list of web APIs available in a worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API#supported_web_apis) is quite large.
+
+It doesn't include a bunch of APIs that are available on the main thread though. (eg. `Image`, `Video`, `USB`)
+I hope that list grows smaller and smaller as time goes on.
+The less I have to think about the difference between code I write for the main thread versus for a web worker, the better.
+
+</Aside>
+
+But because we cannot move everything to a worker doesn't mean we should abandon it altogether for those chunks of work.
+A webworker still might be able to perform most of the work before passing off a result to the main thread that then handles the needed mainthread work.
+
+The following example expands on the previous one.
+It plays a sound-clip in response to a message of a certain type.
+
+The messages sent to and from the worker are now objects with a `type` property.
+This is done to make it possible to send messages with seperate data attached to them.
+
+If you ever worked with the Flux-pattern (like [Redux](https://redux.js.org/usage/reducing-boilerplate#actions)), these messages might seem familiar.
+
+They're actions.
+In fact, [the actor model](https://www.youtube.com/watch?v=Vg60lf92EkM) is a perfect fit here.
+
+Because `Audio` is one of those APIs that _needs_ the main thread, it is created and listened to on the main thread.
+But everything involved in getting the things that audio object needs to be created in the first place is done on the worker thread.
+
+```js title=index.js numberLines hl=4,7,20
+const worker = new Worker("./worker.js");
+
+worker.addEventListener("message", (event) => {
+  switch (event.data.type) {
+    // ...
+    case "hiResponse": {
+      const audio = new Audio(event.data.audioPath);
+      audio.addEventListener("ended", () => {
+        console.log("It's quiet...");
+      });
+      audio.play();
+      break;
+    }
+    default: {
+      console.log(event.data);
+    }
+  }
+});
+
+worker.postMessage({ type: "hi" });
+```
+
+The callback that is passed to the event listener is now `async` in order to be able to use `await` in combination with the call to `fetch`.
+
+```js title=worker.js numberLines hl=1-2,5,9
+addEventListener("message", async (event) => {
+  switch (event.data.type) {
+    // ...
+    case "hi": {
+      const res = await fetch("./cereal-is-soup.json");
+      const json = await res.json();
+      // ...lots of data janitor work here...
+      const audioPath = json.audioPath;
+      postMessage({ type: "hiResponse", audioPath });
+      break;
+    }
+    // ...
+  }
+});
+```
+
+## Importing packages
+
+Using code you didn't write is ubiquitous.
+Web workers originally weren't built with module imports in mind, because modules didn't exist yet.
+
+That changed!
+
+The `Worker` constructor takes an options object where you can specify it will use modules.
+
+You can now `import` inside a webworker, yay!
+
+```js title=index.js
+const worker = new Worker("worker.js", {
+  type: "module",
+});
+```
+
+<Aside variant="info">
+
+The [browser support for module workers](https://caniuse.com/mdn-api_worker_worker_ecmascript_modules) one is decent, but Firefox is lagging behind.
+This is being [actively worked on](https://bugzilla.mozilla.org/show_bug.cgi?id=1247687), so expect support soon™.
+
+If you use a bundler for your code like [Webpack](https://webpack.js.org/), [Vite](https://vitejs.dev/), ... this will be supported regardless of browser.
+If you do not, be aware Firefox (and IE) don't support ESModules in workers.
+
+</Aside>
+
+Expanding on the example again, let's import a heavy [machine vision](https://en.wikipedia.org/wiki/Machine_vision) library that detects what object is in a photo.
+
+The photo grabbed from a `canvas` element as an [`ImageData` object](https://developer.mozilla.org/en-US/docs/Web/API/ImageData).
+Because it's so big, cloning all that data would take a large amount of time.
+It's [**transferred** to the worker](https://developer.mozilla.org/en-US/docs/Glossary/Transferable_objects) instead of copied.
+
+```js title=index.js numberLines hl=1,33-35
+const worker = new Worker("./worker.js", { type: "module" });
+
+worker.addEventListener("message", (event) => {
+  switch (event.data.type) {
+    // ...
+    case "detectionResult": {
+      console.log(
+        `There was ${
+          event.data.result === true ? "a" : "no"
+        } sandwich in this picture`
+      );
+      break;
+    }
+    default: {
+      console.log(event.data);
+    }
+  }
+});
+
+const input = document.querySelector("input");
+const canvas = document.querySelector("canvas");
+const ctx = canvas.getContext("2d");
+
+input.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  const bitmap = await createImageBitmap(file);
+
+  canvas.height = bitmap.height;
+  canvas.width = bitmap.width;
+  ctx.drawImage(bitmap, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+  worker.postMessage({ type: "isSandwich", imageData }, [
+    imageData.data.buffer,
+  ]);
+});
+```
+
+```js title=worker.js numberLines
+import { whatIsThis } from "some-machine-vision-library";
+
+addEventListener("message", async (event) => {
+  switch (event.data.type) {
+    // ...
+    case "isSandwich": {
+      const item = await whatIsThis(event.data.imageData);
+      postMessage({ type: "detectionResult", result: item === "hotdog" });
+      break;
+    }
+    default: {
+      postMessage("A hotdog is a sandwich");
+    }
+  }
+});
+```
+
 ---
 
-TODO:
-leaving my notes visible here while I write
+## Performance
 
-This won't make your app faster if that logic isn't parallellizable, on the contrary, the postMessage calls aren't magic, they aren't free.
-While the worker is busy, the main thread stays free and is able to react to user interaction and ship updated frames to the browser (eg. hovering over a button)
-It's often better to make the user wait a little bit longer than to drop a frame.
-The time to drop a frame is on the order of milliseconds.
-The time to maka a user wait is on the oder os 100s of milliseconds.
--DasSurma in https://www.youtube.com/watch?v=7Rrv9qFMWNM
+-a Paul Lewis post-
+
+Using more than one thread won't make your app any faster if the logic it uses isn't parallellizable, on the contrary, calls to `postMessage` aren't magic, they aren't free.
+
+For most uses, using a webworker means moving a chunk of work to a worker thread unchanged.
+The overall amount of work will rise slightly due to the added overhead between the worker and the main thread.
+The big difference is that the main thread is able to react to user events and ship updates frames while that chunk of work is happening in a worker.
+
+> It's often better to make the user wait a little bit longer than to drop a frame.
+> The time to drop a frame is on the order of milliseconds.
+> The time to maka a user wait is on the oder os 100s of milliseconds.
+>
+> <footer>
+>   [Surma](https://twitter.com/DasSurma) in [The main thread is overworked &
+>   underpaid](https://www.youtube.com/watch?v=7Rrv9qFMWNM)
+> </footer>
+
+TODO: mention the performance of the device your code runs on is unknown to you.
+On your dev machine, a function might complete in 10ms, but on your friend's slow phone, it takes a whopping 200ms.
+also: different screen Hz.
+60 popular, 1s/60frames is 16,666ms that available per frame.
+but EVERYTHING has to happen inside that timeframe if you want the browser to ship a frame: from running your JS, to calculating the layout, to painting the screen and compositing.
+-insert render pipeline post-
+
+### `postMessage`
+
+About that cost of `postMessage`.
+Surma wrote a great post called [is `postMessage` slow](https://surma.dev/things/is-postmessage-slow/).
+
+The TL;DR is: payloads up to 10KiB are risk-free. (and 10 kilobytes is quite a lot)
+
+#### Transferring objects
+
+transfer objects
+transferred objects are no longer available after they are transferred.
+
+```diff
+-   worker.postMessage({ type: "isSandwich", imageData });
++   worker.postMessage({ type: "isSandwich", imageData }, [
++   imageData.data.buffer,
++ ]);
+```
+
+### load
 
 You are moving execution costs off the main thread.
 If that logic uses a module that the main thread doesn't need, you're also moving paring costs off the main thread.
@@ -148,7 +461,14 @@ This makes that initial load performance better.
 Your UI thread is ready to show something faster: better FCP and TTI
 -link that firebase blogpost-
 
-WEBWORKERS have been around since IE10
+## It's time to stop
+
+`webworker.terminate()` on the main thread and that thing you call in a webworker that has a different name because the web is a mess and standards are weird sometimes.
+
+## show progress
+
+TODO:
+leaving my notes visible here while I write
 
 Webworkers aren't silver bullets that solve all problems.
 
