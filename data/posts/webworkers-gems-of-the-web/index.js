@@ -2,7 +2,6 @@
 /** @jsx jsx */
 import { jsx } from "theme-ui";
 import React, { useState, useEffect, useRef } from "react";
-import { keyframes } from "@emotion/react";
 import partyCorgiSrc from "./party-corgi.gif";
 
 const Button = ({ children, onClick, ...props }) => {
@@ -122,212 +121,6 @@ const Output = ({ title, children, passedSx, ...props }) => {
       </p>
       {children}
     </div>
-  );
-};
-
-const WebWorkerDemo = () => {
-  const jsBar = useRef(null);
-  const animationContainer = useRef(null);
-  const [animationContainerWidth, setAnimationContainerWidth] = useState(0);
-  const [countWorker, setCountWorker] = useState(null);
-  const [count, setCount] = useState(0);
-  const [helloWorker, setHelloWorker] = useState(null);
-  const [adele, setAdele] = useState("Quiet...");
-
-  useEffect(() => {
-    const worker = new Worker(new URL("./worker.js", import.meta.url), {
-      name: "helloWorker2",
-      type: "module",
-    });
-
-    let audio;
-    async function getSound() {
-      const soundModule = await import(`./other-side.mp3`);
-      const path = soundModule.default;
-      audio = new Audio(path);
-      audio.addEventListener("ended", () => {
-        setAdele("Quiet...");
-      });
-    }
-
-    worker.addEventListener("message", () => {
-      audio.play();
-      setAdele("HELLO FROM THE OTHER SIIIIIIDE");
-    });
-
-    getSound();
-    setHelloWorker(worker);
-  }, []);
-
-  useEffect(() => {
-    const worker = new Worker(new URL("./countWorker.js", import.meta.url), {
-      name: "countWorker",
-      type: "module",
-    });
-
-    worker.addEventListener("message", (event) => {
-      setCount(event.data);
-    });
-
-    setCountWorker(worker);
-  }, []);
-
-  useEffect(() => {
-    if (jsBar.current) {
-      const jsBarFrames = [
-        { transform: "translateX(0px)" },
-        {
-          transform: `translateX(${
-            animationContainerWidth ? animationContainerWidth - 25 : 180
-          }px)`,
-        },
-        { transform: "translateX(0px)" },
-      ];
-
-      const jsBarTiming = {
-        duration: 4000,
-        iterations: Infinity,
-      };
-
-      jsBar.current.animate(jsBarFrames, jsBarTiming);
-    }
-  }, [jsBar.current]);
-
-  useEffect(() => {
-    if (animationContainer.current) {
-      setAnimationContainerWidth(animationContainer.current.offsetWidth);
-    }
-  }, [animationContainer.current]);
-
-  const slide = keyframes({
-    "0%": {
-      transform: "translateX(0px)",
-    },
-    "50%": {
-      transform: `translateX(${`${
-        animationContainerWidth ? animationContainerWidth - 25 : 180
-      }px`})`,
-    },
-    "100%": {
-      transform: "translateX(0px)",
-    },
-  });
-
-  return (
-    <React.Fragment>
-      <DemoArea
-        title="input area"
-        internalSx={{
-          gridTemplateColumns: ["1fr", null, null, "1fr 1fr"],
-        }}
-      >
-        <Input title="Sync">
-          <Button
-            type="button"
-            onClick={() => {
-              const startTime = Date.now();
-              let currCount = 0;
-
-              while (Date.now() < startTime + 2500) {
-                currCount += 1;
-                if (currCount % 50_000 === 0) {
-                  setCount(currCount);
-                }
-              }
-
-              setCount(currCount);
-            }}
-          >
-            Start counting
-          </Button>
-        </Input>
-        <Input title="Async">
-          <Button
-            type="button"
-            onClick={async () => {
-              const countPromise = new Promise((resolve, reject) => {
-                const startTime = Date.now();
-                let currCount = 0;
-
-                while (Date.now() < startTime + 2500) {
-                  currCount += 1;
-                  if (currCount % 50_000 === 0) {
-                    console.log("hi");
-                    setCount(currCount);
-                  }
-                }
-
-                resolve(currCount);
-              });
-
-              const finalCount = await countPromise;
-              setCount(finalCount);
-            }}
-          >
-            Start counting
-          </Button>
-        </Input>
-        <Input title="Web Worker">
-          <Button
-            type="button"
-            onClick={() => {
-              countWorker.postMessage("go");
-            }}
-          >
-            Start counting
-          </Button>
-        </Input>
-        <Input title="Web Worker">
-          <Button
-            type="button"
-            onClick={() => {
-              helloWorker.postMessage("");
-            }}
-          >
-            Call Adele
-          </Button>
-        </Input>
-      </DemoArea>
-      <DemoArea
-        title="output area"
-        internalSx={{
-          gridTemplateColumns: ["1fr", null, null, "1fr 1fr"],
-        }}
-      >
-        <Output title="CSS animation">
-          <div
-            ref={animationContainer}
-            sx={{ backgroundColor: "mutedBackground" }}
-          >
-            <div
-              sx={{
-                height: 4,
-                width: "25px",
-                backgroundColor: "primary",
-                animation: `${slide} 4s linear infinite`,
-              }}
-            />
-          </div>
-        </Output>
-        <Output title="JS animation">
-          <div sx={{ backgroundColor: "mutedBackground" }}>
-            <div
-              ref={jsBar}
-              sx={{
-                height: 4,
-                width: 5,
-                backgroundColor: "primary",
-              }}
-            />
-          </div>
-        </Output>
-        <Output title="GIF">
-          <img src={partyCorgiSrc} alt="walking rainbow corgi" />
-        </Output>
-        <Output title="count">{count}</Output>
-        <Output title="Adele">{adele}</Output>
-      </DemoArea>
-    </React.Fragment>
   );
 };
 
@@ -834,4 +627,163 @@ const MainToWorkerChart = () => {
   );
 };
 
-export { ProblemDemo, SolutionDemo, MainToWorkerChart, WebWorkerDemo };
+const MainStillNeededDemo = () => {
+  const [message, setMessage] = useState("It's quiet");
+  const [helloWorker, setHelloWorker] = useState(null);
+
+  useEffect(() => {
+    const worker = new Worker(new URL("./worker.js", import.meta.url), {
+      name: "helloWorker2",
+      type: "module",
+    });
+
+    let audio;
+    async function getSound() {
+      const soundModule = await import(`./other-side.mp3`);
+      const path = soundModule.default;
+      audio = new Audio(path);
+      audio.addEventListener("ended", () => {
+        setMessage("Quiet...");
+      });
+    }
+
+    worker.addEventListener("message", () => {
+      audio.play();
+      setMessage("HELLO FROM THE OTHER SIIIIIIDE");
+    });
+
+    getSound();
+    setHelloWorker(worker);
+  }, []);
+
+  return (
+    <React.Fragment>
+      <DemoArea>
+        <Input title="Communicate with worker">
+          <Button
+            type="button"
+            onClick={() => {
+              helloWorker.postMessage("");
+            }}
+          >
+            Say hi
+          </Button>
+        </Input>
+        <Output title="Message from Worker">{message}</Output>
+      </DemoArea>
+    </React.Fragment>
+  );
+};
+
+const ProgressDemo = () => {
+  const jsAnimEl = useRef(null);
+  const [count, setCount] = useState(0);
+  const [countWorker, setCountWorker] = useState(null);
+
+  useEffect(() => {
+    let degrees = 0;
+    function animate() {
+      // eslint-disable-next-line no-use-before-define
+      requestId = requestAnimationFrame(animate);
+      degrees += 1;
+      jsAnimEl?.current.style.setProperty(`--degrees`, `${degrees}deg`);
+    }
+    let requestId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(requestId);
+  }, []);
+
+  useEffect(() => {
+    const worker = new Worker(new URL("./countWorker.js", import.meta.url), {
+      name: "countWorker",
+      type: "module",
+    });
+
+    worker.addEventListener("message", (event) => {
+      setCount(event.data);
+    });
+
+    setCountWorker(worker);
+  }, []);
+
+  return (
+    <React.Fragment>
+      <DemoArea>
+        <Input title="Main Thread">
+          <Button
+            type="button"
+            onClick={() => {
+              let mainthreadCount = 0;
+              const startTime = Date.now();
+              while (Date.now() < startTime + 3000) {
+                mainthreadCount += 1;
+                if (mainthreadCount % 50_000 === 0) {
+                  // The next line never executes because this entire function is one task
+                  // only the last value for the new count is considered
+                  // explanation: https://www.youtube.com/watch?v=cCOL7MC4Pl0
+                  setCount(mainthreadCount);
+                }
+              }
+              setCount(mainthreadCount);
+            }}
+          >
+            Count for 3 seconds
+          </Button>
+        </Input>
+        <Input title="Web Worker">
+          <Button
+            type="button"
+            onClick={() => {
+              countWorker.postMessage("block");
+            }}
+          >
+            Count for 3 seconds
+          </Button>
+        </Input>
+        <Input title="Main thread">
+          <Button
+            type="button"
+            onClick={() => {
+              setCount(count + 1);
+            }}
+          >
+            increment
+          </Button>
+        </Input>
+      </DemoArea>
+      <DemoArea>
+        <Output
+          title="JS Animation"
+          sx={{
+            display: "grid",
+            gridTemplateRows: "auto 1fr",
+          }}
+        >
+          <div
+            ref={jsAnimEl}
+            sx={{
+              backgroundColor: "primary",
+              transform: `rotate(var(--degrees))`,
+              minWidth: "1rem",
+              minHeight: "4rem",
+              alignSelf: "center",
+              justifySelf: "center",
+              borderRadius: "sm",
+            }}
+          />
+        </Output>
+        <Output title="GIF">
+          <img src={partyCorgiSrc} alt="walking rainbow corgi" />
+        </Output>
+        <Output title="Count">{count}</Output>
+      </DemoArea>
+    </React.Fragment>
+  );
+};
+
+export {
+  ProblemDemo,
+  SolutionDemo,
+  MainToWorkerChart,
+  ProgressDemo,
+  MainStillNeededDemo,
+};

@@ -11,7 +11,8 @@ import {
   ProblemDemo,
   SolutionDemo,
   MainToWorkerChart,
-  WebWorkerDemo,
+  MainStillNeededDemo,
+  ProgressDemo,
 } from "./";
 
 <!-- Photo by <a href="https://unsplash.com/@rewdew?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Kyle Larivee</a> on <a href="https://unsplash.com/s/photos/bus-lane?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
@@ -108,6 +109,8 @@ Eventhough I just said JavaScript is a single threaded language and doesn't have
 
 The browser has the [Web Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) for this.
 
+It's not a JavaScript -the language- thing, it's a browser thing.
+
 A Web Worker executes your code in a new thread that has an entire seperate [execution context](https://www.youtube.com/watch?v=Fd9VaW0M7K4).
 You can think of it like a seperate tab without a UI. It shares nothing with the main thread.
 
@@ -155,7 +158,7 @@ Everything in that file will be executed in a seperate thread.
 Because of [the required isolation](#a-problem) between the main thread and a worker thread, the threads don't have access to any variables or other code from eachother.
 
 This combined with the fact that workers have an entirely seperate execution context means they don't have access to a bunch of things you expect to "just be there", like the [DOM](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model).
-In other words: web workers can't update the UI directly!
+That means web workers can't update the UI directly!
 
 An other result of that isolation is that the threads have to exchange data by passing messages.
 
@@ -224,7 +227,7 @@ This example used strings as arguments to `postMessage`, but it can handle way m
 `postMessage` uses the [structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm) to copy the messages.
 It can handle a lot!
 
-Even complex data structures like `Map` and `Set`, or cyclical data structures.
+Even complex data structures like `Set`, `Map`, `Blob`, or cyclical data structures!  
 It can't handle functions, trying to copy those will cause an error.
 A class will be converted to a standard JavaScript object, losing methods in the process.
 
@@ -316,6 +319,10 @@ addEventListener("message", async (event) => {
 });
 ```
 
+### Demo
+
+<MainStillNeededDemo />
+
 ## Importing packages
 
 Using code you didn't write is ubiquitous.
@@ -325,7 +332,7 @@ That changed!
 
 The `Worker` constructor takes an options object where you can specify it will use modules.
 
-You can now `import` inside a webworker, yay!
+You can now use `import` inside a webworker, yay!
 
 ```js title=index.js
 const worker = new Worker("worker.js", {
@@ -335,7 +342,7 @@ const worker = new Worker("worker.js", {
 
 <Aside variant="info">
 
-The [browser support for module workers](https://caniuse.com/mdn-api_worker_worker_ecmascript_modules) one is decent, but Firefox is lagging behind.
+The [browser support for module workers](https://caniuse.com/mdn-api_worker_worker_ecmascript_modules) is decent, but Firefox is lagging behind.
 This is being [actively worked on](https://bugzilla.mozilla.org/show_bug.cgi?id=1247687), so expect support soon™.
 
 If you use a bundler for your code like [Webpack](https://webpack.js.org/), [Vite](https://vitejs.dev/), ... this will be supported regardless of browser.
@@ -345,11 +352,9 @@ If you do not, be aware Firefox (and IE) don't support ESModules in workers.
 
 Expanding on the example again, let's import a heavy [machine vision](https://en.wikipedia.org/wiki/Machine_vision) library that detects what object is in a photo.
 
-The photo grabbed from a `canvas` element as an [`ImageData` object](https://developer.mozilla.org/en-US/docs/Web/API/ImageData).
-Because it's so big, cloning all that data would take a large amount of time.
-It's [**transferred** to the worker](https://developer.mozilla.org/en-US/docs/Glossary/Transferable_objects) instead of copied.
+The photo is grabbed from a `canvas` element as an [`ImageData` object](https://developer.mozilla.org/en-US/docs/Web/API/ImageData).
 
-```js title=index.js numberLines hl=1,33-35
+```js title=index.js numberLines hl=1
 const worker = new Worker("./worker.js", { type: "module" });
 
 worker.addEventListener("message", (event) => {
@@ -382,13 +387,11 @@ input.addEventListener("change", async (e) => {
   ctx.drawImage(bitmap, 0, 0);
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-  worker.postMessage({ type: "isSandwich", imageData }, [
-    imageData.data.buffer,
-  ]);
+  worker.postMessage({ type: "isSandwich", imageData });
 });
 ```
 
-```js title=worker.js numberLines
+```js title=worker.js numberLines hl=1
 import { whatIsThis } from "some-machine-vision-library";
 
 addEventListener("message", async (event) => {
@@ -406,45 +409,107 @@ addEventListener("message", async (event) => {
 });
 ```
 
----
-
 ## Performance
 
--a Paul Lewis post-
+Runtime performance is just as important as startup experience.
 
-Using more than one thread won't make your app any faster if the logic it uses isn't parallellizable, on the contrary, calls to `postMessage` aren't magic, they aren't free.
+If your app loads in 0.05ms but stutters on every action I try to take, it's not a performant app.
 
-For most uses, using a webworker means moving a chunk of work to a worker thread unchanged.
+It might score straight 100s on a [Lighthouse test](https://web.dev/measure/), but using it will suck.
+
+<Aside variant="info">
+
+I know the Google team is actively trying to include metrics that consider runtime performance and that statement was plain wrong.
+Now that I've got your attention.
+My point is that the web developers seem to be hyperfocused on load performance, sadly often dismissing the importance of runtime performance.
+
+</Aside>
+
+In [a talk from way back in 2014](https://www.youtube.com/watch?v=RCFQu0hK6bU), [Paul Lewis](https://twitter.com/aerotwist) discusses this.
+
+Performance doesn't always mean doing work faster.
+I consider a responsive page that does a task slightly slower more performant than a blocked page that completes the task a little faster.
+
+Using more than one thread won't make your app any faster if the logic it uses isn't parallellizable.
+On the contrary, calls to `postMessage` aren't magic, they aren't free.
+
+In most cases, using a webworker means moving a chunk of work to a worker thread unchanged.
 The overall amount of work will rise slightly due to the added overhead between the worker and the main thread.
-The big difference is that the main thread is able to react to user events and ship updates frames while that chunk of work is happening in a worker.
+The big difference is that the main thread is able to react to user events and ship updated frames while that chunk of work is happening in a worker.
+
+This behaviour has a significant impact on how an app feels.
+Sometimes, slower feels faster.
 
 > It's often better to make the user wait a little bit longer than to drop a frame.
-> The time to drop a frame is on the order of milliseconds.
-> The time to maka a user wait is on the oder os 100s of milliseconds.
+>
+> - The time to drop a frame is on the order of milliseconds.
+> - The time to maka a user wait is on the oder os 100s of milliseconds.
 >
 > <footer>
->   [Surma](https://twitter.com/DasSurma) in [The main thread is overworked &
->   underpaid](https://www.youtube.com/watch?v=7Rrv9qFMWNM)
+>
+> [Surma](https://twitter.com/DasSurma) in [The main thread is overworked &
+> underpaid](https://www.youtube.com/watch?v=7Rrv9qFMWNM)
+>
 > </footer>
 
-TODO: mention the performance of the device your code runs on is unknown to you.
-On your dev machine, a function might complete in 10ms, but on your friend's slow phone, it takes a whopping 200ms.
-also: different screen Hz.
-60 popular, 1s/60frames is 16,666ms that available per frame.
-but EVERYTHING has to happen inside that timeframe if you want the browser to ship a frame: from running your JS, to calculating the layout, to painting the screen and compositing.
--insert render pipeline post-
+This becomes even more important when you consider the devices your code will run on are unknown to you.
+
+The web is the most accessible UI in the world.
+
+Your code might be ran on a high-end desktop computer, or a low-end smartphone.
+A task that took the machine you write code on 5ms to complete might take 100ms on a different device.
+
+You don't know, you **can't** know.
+
+Different screens run at different refresh rates.
+60Hz is a very popular frequency for a screen (60 images per second).
+But that's far from a universal number.
+And guess what, that number determines the time that is available for a frame to either be shown on the screen, or not.
+
+For a 60Hz screen, that's 16.666ms.
+Remember, **everything** has to happen inside that timeframe if you want the browser to ship a frame: from running your JS, to calculating the layout, to painting the screen and compositing.
+
+Dropping a frame here and there might not be a big deal, it might even be unnoticable to visitors of the site.
+But do it too often and you've got a case of my pick for word of the year: **jank**.
+
+### Load
+
+Remember that time I had that mini-rant about loadtime performance?
+Of course you do, it was a paragraph ago.
+This is the part where I tell you that you can have your cake and eat it.
+
+When you move logic to a worker thread, you are not only moving execution costs off the main thread.
+If that logic uses a module the main thread doesn't need, you're also moving parsing costs off the main thread.
+
+This makes that initial load performance better.
+Your UI thread is ready to show something faster: better [First Contentful Paint](https://web.dev/fcp/) and [Time to Interactive](https://web.dev/tti/).
+
+[David East](https://twitter.com/_davideast) dropped [95% of their bundle size](https://davidea.st/articles/firebase-bundle-size/) by loading the heaviest part of their site in a webworker.
 
 ### `postMessage`
 
-About that cost of `postMessage`.
-Surma wrote a great post called [is `postMessage` slow](https://surma.dev/things/is-postmessage-slow/).
+About that cost of a call to `postMessage`.
+[Surma](https://twitter.com/DasSurma) wrote a great post called [is `postMessage` slow](https://surma.dev/things/is-postmessage-slow/).
 
-The TL;DR is: payloads up to 10KiB are risk-free. (and 10 kilobytes is quite a lot)
+The TL;DR is: Nope. Payloads up to 10KiB are risk-free. (and 10 kilobytes is quite a lot)
 
 #### Transferring objects
 
-transfer objects
-transferred objects are no longer available after they are transferred.
+In situations where the message you want to send is huge, calls to `postMessage` can become slow, because copying a huge object takes time.
+Thankfully, there is a method to make these calls fast again, very fast, regardless of the message-size.
+
+[Transferable objects](https://developer.mozilla.org/en-US/docs/Glossary/Transferable_objects) can be sent to a different thread.
+That process is very fast, regardless of the size of the object.
+
+These objects aren't copied.
+Instead, a pointer to the same piece of memory is created.
+
+Because the [required isolation](#a-problem) between threads in JavaScript to ensure thread safety,
+transferred objects are no longer available to the thread that sent them after they are transferred.
+
+In the last example in this post, we sent an image through `postMessage`.
+Because that image could be huge in size, coning all that data would take a large amount of time.
+It's a great candidate to be **transferred** instead of copied.
 
 ```diff
 -   worker.postMessage({ type: "isSandwich", imageData });
@@ -453,22 +518,78 @@ transferred objects are no longer available after they are transferred.
 + ]);
 ```
 
-### load
-
-You are moving execution costs off the main thread.
-If that logic uses a module that the main thread doesn't need, you're also moving paring costs off the main thread.
-This makes that initial load performance better.
-Your UI thread is ready to show something faster: better FCP and TTI
--link that firebase blogpost-
-
 ## It's time to stop
 
-`webworker.terminate()` on the main thread and that thing you call in a webworker that has a different name because the web is a mess and standards are weird sometimes.
+A great feature of webworkers is the ability to stop them at a whim.
+No. Really.
+
+A webworker might be responsible for a type of work that can block an entire thread while an algorithm crunches numbers.
+
+If a new input from the main thread comes in that causes the same work, a blocked thread won't be able to start until it's done with the previous work.
+
+That's where a [`.terminate()` on the worker](https://developer.mozilla.org/en-US/docs/Web/API/Worker/terminate) comes in.
+It can be called on the main thread and stops a webworker regardless of what it's doing.
+In the middle of a million long for-loop? Don't care, it will stop the webworker immediately.
+
+That means a partially done heavy calculation that became useless because of a new user input can be stopped, saving wasted CPU cycles.
+
+A neat pattern is terminating a worker that's busy and spinning up a new identical one with the new input.
+
+A way to stop the worker from within itself exists on the global scope of the worker called [`close`](https://developer.mozilla.org/en-US/docs/Web/API/DedicatedWorkerGlobalScope/close).
+It's annoying these two methods don't have the same name, but, eeeeh, web standards are weird sometimes.
 
 ## show progress
 
-TODO:
-leaving my notes visible here while I write
+Performing a large task in a webworker provides the opportunity to show the user that something is happening.
+
+While a multi-second calculation is happening, the webworker can periodically call `postMessage`.
+The main thread is then free to display those updates to the screen.
+Be it in the form of a progress bar or partially rendered picture.
+
+If that task was done on the main thread, the UI would be frozen, and there would be no indication anything is really happening.
+(No, a CSS spinner you started before the operation doesn't count.)
+
+### Demo
+
+In this demo, a button starts a three second long while loop that increments a counter.
+
+The web worker sends a message with the progress so far every 50,000 ticks.
+
+```js title=worker.js
+addEventListener("message", (msg) => {
+  let count = 0;
+
+  const startTime = Date.now();
+  while (Date.now() < startTime + 3000) {
+    count += 1;
+
+    // communicate progress
+    if (count % 50_000 === 0) {
+      postMessage(count);
+    }
+  }
+  // final count
+  postMessage(count);
+});
+```
+
+The message listener on the main thread updates the UI with the received number.
+
+Trying to do the same thing on the main thread would block the thread, preventing any updates from being shown.
+
+<ProgressDemo />
+
+---
+
+TODO: something about WASM, XState, a conclusion of some sort.
+
+put more into workers: entire state. State can be seperate from the UI.
+
+perfect storm: AoCsolver
+
+## Do it
+
+Go and use workers!
 
 Webworkers aren't silver bullets that solve all problems.
 
@@ -479,9 +600,3 @@ Webworkers aren't silver bullets that solve all problems.
 > [Sunil Pai](https://twitter.com/threepointone) (paraphrased)
 >
 > </footer>
-
-## Demo
-
-Try calling Adele while counting (in a webworker).
-
-<WebWorkerDemo />

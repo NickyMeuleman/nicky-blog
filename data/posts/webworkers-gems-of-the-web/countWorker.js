@@ -1,11 +1,10 @@
 /* eslint-disable no-restricted-globals */
-let count = 0;
-
 addEventListener("message", (msg) => {
+  let count = 0;
   switch (msg.data) {
     case "block": {
       const startTime = Date.now();
-      while (Date.now() < startTime + 2500) {
+      while (Date.now() < startTime + 3000) {
         count += 1;
         if (count % 50_000 === 0) {
           postMessage(count);
@@ -17,7 +16,7 @@ addEventListener("message", (msg) => {
     case "jank": {
       const intervalId = setInterval(() => {
         const startTime = Date.now();
-        while (Date.now() < startTime + 2500) {
+        while (Date.now() < startTime + 3000) {
           count += 1;
           if (count % 50_000 === 0) {
             postMessage(count);
