@@ -230,7 +230,7 @@ const SolutionDemo = () => {
 
   useEffect(() => {
     const worker = new Worker(new URL("./countWorker.js", import.meta.url), {
-      name: "countWorker2",
+      name: "countWorker",
       type: "module",
     });
 
@@ -633,7 +633,7 @@ const MainStillNeededDemo = () => {
 
   useEffect(() => {
     const worker = new Worker(new URL("./worker.js", import.meta.url), {
-      name: "helloWorker2",
+      name: "helloWorker",
       type: "module",
     });
 
