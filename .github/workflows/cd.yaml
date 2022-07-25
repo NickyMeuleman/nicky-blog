@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install Deps
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       - name: Build Site
         run: npm run build
       - name: Deploy Site
