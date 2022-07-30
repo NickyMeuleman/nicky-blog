@@ -1,6 +1,7 @@
 ---
 title: "Underused gems of the web: WebWorkers"
 date: "2022-07-25"
+updatedAt: "2022-07-30"
 authors: ["nicky"]
 cover: "./cover.jpg"
 tags: ["JavaScript"]
@@ -408,6 +409,30 @@ addEventListener("message", async (event) => {
 });
 ```
 
+## Third-party-scripts
+
+Including third-party scripts in your website is an other very common way JavaScript you didn't write ends up executing.
+These are often code snippets for analytics, metrics, tracking, advertising, ...
+
+Executing on the main thread.
+Consuming valuable performance budget you might need to ensure a smooth experience.
+
+<Tweet tweetLink="floydophone/status/1549408445597716480" theme="dark" />
+
+Because these script are outside of your control, they're a common source of frustration.
+You can carefully design an entire webapp that's tuned for performance, and a (few) third-party script(s) can easily dwarf all of those efforts.
+
+But chucking those scripts in a webworker can't easily be done because [sometimes you still need the main thread](#the-main-thread-is-still-needed).
+One call to anything on `window` or `document`, and it _needs_ to run that piece of code on the main thread.
+
+[Partytown](https://partytown.builder.io/) offers a solution to that problem.
+It lets you run third-party scripts in a webworker.
+
+They use an ingenious method to make synchronous calls to things on the main thread.
+
+The method they use is [explained in this video](https://www.youtube.com/watch?v=eP6Mti85HeQ).
+The TL;DW is: it uses a synchronous [`XMLHttpRequest`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) (remember those?) to block the worker thread until data the script needs from the main thread arrives.
+
 ## Performance
 
 Runtime performance is just as important as startup performance.
@@ -688,6 +713,42 @@ The path to the file is typically provided by [creating a `URL`](https://develop
 const worker = new Worker(new URL("./worker.js", import.meta.url), {
   name: "my-worker",
   type: "module",
+});
+```
+
+## [Comlink](https://github.com/GoogleChromeLabs/comlink)
+
+`postMessage` isn't the most ergonomic API to use.
+It can be awesome (especially when used as part of the actor pattern/combined with a state machine) but you have to have take into account it's a fire and forget function.
+It sends a message to an other thread, that's it.
+
+If you want to wait for a response to that message specifically, you have to build that logic yourself.
+
+[Comlink](https://github.com/GoogleChromeLabs/comlink) makes it seem like objects from a worker are accessible from the main thread.
+But every "thing" that's returned is a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) to that "thing" now.
+
+Combined with the `async`/`await` syntax, this leads to a very nice developer experience where you don't need to think about `postMessage` to use code that's in a worker.
+
+A lightly modified version of the example in the Comlink docs, using the npm package and a module worker:
+
+```js title=index.js
+import { wrap } from "comlink";
+
+const counter = wrap(new Worker("./worker.js", { type: "module" }));
+
+console.log(await counter.count); // 0
+await counter.increment();
+console.log(await counter.count); // 1
+```
+
+```js title=worker.js
+import { expose } from "comlink";
+
+expose({
+  count: 0,
+  increment() {
+    this.count++;
+  },
 });
 ```
 
