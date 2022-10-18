@@ -1,5 +1,3 @@
-const remarkMath = require(`remark-math`);
-
 module.exports = {
   siteMetadata: {
     title: "Nicky blogs",
@@ -24,7 +22,6 @@ module.exports = {
             contentPath: "data/garden",
           },
         ],
-        remarkPlugins: [remarkMath],
       },
     },
     "gatsby-plugin-theme-ui",

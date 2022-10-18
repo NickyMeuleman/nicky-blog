@@ -5,3 +5,6 @@ public/
 .netlify/
 package-lock.json
 schema.json
+
+# while I get mdx to compile, it keeps changing {/* comment */} to {/_ comment _/} which also errors
+*mdx
