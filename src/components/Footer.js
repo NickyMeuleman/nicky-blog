@@ -1,24 +1,25 @@
 /** @jsx jsx */
-import { jsx, Themed } from "theme-ui";
+import { jsx } from "theme-ui";
+import { Themed } from "@theme-ui/mdx";
 
 const Footer = () => {
   return (
     <footer
       sx={{
-        display: "grid",
-        gridTemplateColumns: "1fr minmax(20ch, 70ch) 1fr",
-        alignItems: "center",
+        display: `grid`,
+        gridTemplateColumns: `1fr minmax(20ch, 70ch) 1fr`,
+        alignItems: `center`,
         py: 4,
-        px: "5vw", // relates to width of Main
-        color: "mutedText",
-        backgroundColor: "mutedBackground",
+        px: `5vw`, // relates to width of Main
+        color: `mutedText`,
+        backgroundColor: `mutedBackground`,
       }}
     >
       <div
         sx={{
-          gridColumn: "2/3",
-          gridRow: "1/2",
-          justifySelf: "start",
+          gridColumn: `2/3`,
+          gridRow: `1/2`,
+          justifySelf: `start`,
           fontSize: 0,
         }}
       >
@@ -26,7 +27,7 @@ const Footer = () => {
           Designed and developed by Nicky Meuleman
         </Themed.p>
         <Themed.p sx={{ m: 0 }}>
-          Built with{" "}
+          Built with{` `}
           <Themed.a
             href="https://gatsbyjs.org"
             target="_blank"
@@ -34,7 +35,7 @@ const Footer = () => {
           >
             Gatsby
           </Themed.a>
-          . Hosted on{" "}
+          . Hosted on{` `}
           <Themed.a
             href="https://www.netlify.com/"
             target="_blank"
@@ -47,11 +48,11 @@ const Footer = () => {
       </div>
       <nav
         sx={{
-          gridColumn: "2/3",
-          gridRow: ["2/3", "1/2"],
-          justifySelf: ["start", "end"],
+          gridColumn: `2/3`,
+          gridRow: [`2/3`, `1/2`],
+          justifySelf: [`start`, `end`],
           mt: [3, 0],
-          display: "flex",
+          display: `flex`,
           //   Chrome doesn't support "gap" for flexbox yet, sadface
           span: {
             marginLeft: 4,
@@ -63,8 +64,8 @@ const Footer = () => {
           aria-label="Twitter"
           sx={{
             lineHeight: 0,
-            path: { fill: "mutedText" },
-            ":hover": { path: { fill: "rgb(29, 161, 242)" } },
+            path: { fill: `mutedText` },
+            ":hover": { path: { fill: `rgb(29, 161, 242)` } },
           }}
         >
           <svg
@@ -85,8 +86,8 @@ const Footer = () => {
           sx={{
             lineHeight: 0,
             marginLeft: 3,
-            path: { fill: "mutedText" },
-            ":hover": { path: { fill: "mutedPrimary" } },
+            path: { fill: `mutedText` },
+            ":hover": { path: { fill: `mutedPrimary` } },
           }}
         >
           <svg

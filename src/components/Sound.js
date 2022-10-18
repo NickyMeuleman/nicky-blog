@@ -1,7 +1,7 @@
 /** @jsx jsx */
 import { jsx } from "theme-ui";
 import { Fragment, useState, useEffect, useRef } from "react";
-import Tooltip from "@reach/tooltip";
+import { Tooltip } from "@reach/tooltip";
 import "@reach/tooltip/styles.css";
 
 const Span = ({ fileName, inner }) => {
@@ -29,16 +29,16 @@ const Span = ({ fileName, inner }) => {
         type="button"
         onClick={handlePlay}
         sx={{
-          display: "inline-flex",
-          alignItems: "center",
-          cursor: "pointer",
-          textDecoration: "underline",
-          textDecorationStyle: "dashed",
-          backgroundColor: "inherit",
-          color: "inherit",
-          border: "inherit",
-          fontSize: "inherit",
-          fontFamily: "inherit",
+          display: `inline-flex`,
+          alignItems: `center`,
+          cursor: `pointer`,
+          textDecoration: `underline`,
+          textDecorationStyle: `dashed`,
+          backgroundColor: `inherit`,
+          color: `inherit`,
+          border: `inherit`,
+          fontSize: `inherit`,
+          fontFamily: `inherit`,
           p: 0,
         }}
       >
@@ -50,7 +50,7 @@ const Span = ({ fileName, inner }) => {
           xmlns="http://www.w3.org/2000/svg"
           fill="currentColor"
           viewBox="0 0 20 20"
-          sx={{ display: "inline", marginLeft: 1 }}
+          sx={{ display: `inline`, marginLeft: 1 }}
         >
           <title>speaker icon</title>
           <path
