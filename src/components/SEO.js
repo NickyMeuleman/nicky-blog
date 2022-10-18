@@ -1,4 +1,3 @@
-import React from "react";
 import { useStaticQuery, graphql } from "gatsby";
 import * as path from "path";
 import { generateSocialImage } from "../utils/og-image";
@@ -13,7 +12,7 @@ const SEO = ({
   twitterHandle,
   date,
   author,
-  basePath = "",
+  basePath = ``,
   children,
 }) => {
   const result = useStaticQuery(graphql`
@@ -38,17 +37,17 @@ const SEO = ({
     metaImage = generateSocialImage({
       title,
       date: new Date(date)
-        .toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
+        .toLocaleDateString(`en-US`, {
+          year: `numeric`,
+          month: `long`,
+          day: `numeric`,
         })
         .toUpperCase(),
-      dateColor: "99A8CF",
-      dateExtraConfig: "letter_spacing_2",
-      author: author.name || "Nicky Meuleman",
+      dateColor: `99A8CF`,
+      dateExtraConfig: `letter_spacing_2`,
+      author: author.name || `Nicky Meuleman`,
       twitter:
-        `@${author.twitter}` || siteMetadata.social.twitter || "@NMeuleman",
+        `@${author.twitter}` || siteMetadata.social.twitter || `@NMeuleman`,
       titleFontSize: 64,
       dateFontSize: 36,
       authorFontSize: 36,

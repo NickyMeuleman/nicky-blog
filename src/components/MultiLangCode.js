@@ -14,7 +14,7 @@ const MultiLangCode = ({ children, values }) => {
         // returns an object per child where the items in the values array take precedence over child properties
         .map(([child, value]) => {
           const codeBlockProps = child?.props?.children?.props;
-          const [language] = codeBlockProps?.className
+          const [language] = codeBlockProps.className
             .replace(/language-/, ``)
             .split(` `);
           // split off title from the props so it isn't used later, the title prop controls CodeBlock having a header and that's this component's responsibility now
@@ -37,16 +37,16 @@ const MultiLangCode = ({ children, values }) => {
     <Tabs index={tabIndex} onChange={handleTabsChange}>
       <header
         sx={{
-          display: "flex",
-          alignItems: "center",
+          display: `flex`,
+          alignItems: `center`,
           variant: `styles.CodeBlock.title`,
         }}
       >
         <div sx={{ flex: 1 }}>{codeblocks[tabIndex].title}</div>
         <TabList
           sx={{
-            color: "mutedText",
-            "[data-selected]": { color: "mutedPrimary" },
+            color: `mutedText`,
+            "[data-selected]": { color: `mutedPrimary` },
           }}
         >
           {codeblocks.map(({ label }) => (
