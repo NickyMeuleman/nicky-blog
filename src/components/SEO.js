@@ -1,16 +1,13 @@
 import React from "react";
-import Helmet from "react-helmet";
 import { useStaticQuery, graphql } from "gatsby";
 import * as path from "path";
 import { generateSocialImage } from "../utils/og-image";
 
 const SEO = ({
-  meta,
   image,
   title,
   description,
   slug,
-  lang = `en`,
   keywords,
   canonicalUrl,
   twitterHandle,
@@ -70,14 +67,13 @@ const SEO = ({
     url = url.slice(0, -1);
   }
 
+  const formattedTitle = title
+    ? `${title} | ${siteMetadata.title}`
+    : siteMetadata.title;
+
   return (
-    <Helmet
-      title={title}
-      defaultTitle={siteMetadata.title}
-      titleTemplate={`%s | ${siteMetadata.title}`}
-      meta={meta}
-    >
-      <html lang={lang || `en`} />
+    <>
+      <title>{formattedTitle}</title>
       <meta name="description" content={metaDescription} />
       {metaImage && <meta name="image" content={metaImage} />}
       <meta property="og:title" content={title || siteMetadata.title} />
@@ -98,7 +94,7 @@ const SEO = ({
       {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
       {keywords && <meta name="keywords" content={keywords.join(`, `)} />}
       {children}
-    </Helmet>
+    </>
   );
 };
 
