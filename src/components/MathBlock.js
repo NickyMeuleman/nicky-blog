@@ -20,6 +20,7 @@ const MathBlock = ({ title, children, math }) => {
           },
         }}
         math={math}
+        settings={{ strict: false }}
       >
         {/*
             either use the math prop or the children prop. So children can be undefined.
