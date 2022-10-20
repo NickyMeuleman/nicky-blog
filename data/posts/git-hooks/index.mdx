@@ -7,7 +7,7 @@ cover: "./cover.jpg"
 tags: ["git", "Lint", "Format", "Howto", "DX"]
 ---
 
-<!-- Photo by Christian Derick Fernandez on Unsplash -->
+{/\* Photo by Christian Derick Fernandez on Unsplash \*/}
 
 Automation shines when it's ...well... automatic.
 
@@ -147,10 +147,11 @@ yarn lint-staged
 
 As example, below is a (badly formatted) piece of code that was added to git before running `lint-staged`.
 
-<!-- prettier-ignore -->
+{/\* prettier-ignore \*/}
+
 ```js
-var num=1
-var newNum=num+5;;
+var num = 1;
+var newNum = num + 5;
 ```
 
 The `eslint --fix` command that is ran during `lint-staged` exits with a `1`, signalling an error.

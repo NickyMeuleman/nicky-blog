@@ -1,7 +1,7 @@
 ---
 title: "Adding math support to a Gatsby MDX blog"
 date: "2021-06-14"
-updatedAt: "2021-06-15"
+updatedAt: "2022-10-20"
 authors: ["nicky"]
 tags: ["math", "Gatsby"]
 cover: "./cover.jpg"
@@ -9,10 +9,9 @@ cover: "./cover.jpg"
 
 import { MathBlock } from "./../../../src/components/MathBlock";
 
-<!-- Photo by <a href="https://unsplash.com/@jeshoots?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">JESHOOTS.COM</a> on <a href="https://unsplash.com/s/photos/math?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a> -->
+{/* Photo by <a href="https://unsplash.com/@jeshoots?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">JESHOOTS.COM</a> on <a href="https://unsplash.com/s/photos/math?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a> */}
 
 <Aside>
-
 TL;DR
 
 1. Add [`remark-math`](https://www.npmjs.com/package/remark-math).
@@ -21,7 +20,6 @@ TL;DR
 Show me a minimal [code example](https://github.com/NickyMeuleman/gatsby-mdx-math-example).
 
 I'd like to see [a demo](https://nickymeuleman.github.io/gatsby-mdx-math-example/) of that code example in action!
-
 </Aside>
 
 I wanted to add support to display equations on my blog.
@@ -85,7 +83,6 @@ Turns into `<div class="math math-display">T_n = a + (n-1)d</div>`
 ### Wiring up remark-math
 
 <Aside variant="danger">
-
 Make sure to install version 3 of [`remark-math`](https://www.npmjs.com/package/remark-math) if you are using [`gatsby-plugin-mdx`](https://github.com/gatsbyjs/gatsby/tree/master/packages/gatsby-plugin-mdx).
 Internally, the mdx plugin uses version 10 of [`remark`](https://github.com/remarkjs/remark), while version 4 of [`remark-math`](https://www.npmjs.com/package/remark-math) requires version 13 of [`remark`](https://github.com/remarkjs/remark).
 
@@ -94,7 +91,6 @@ YAY dependencies!
 ```bash
 npm i remark-math@3.0.1
 ```
-
 </Aside>
 
 Install the [`remark-math`](https://www.npmjs.com/package/remark-math) plugin, and add it to the configuration option of [`gatsby-plugin-mdx`](https://github.com/gatsbyjs/gatsby/tree/master/packages/gatsby-plugin-mdx) in [`gatsby-config.js`](https://www.gatsbyjs.com/docs/reference/config-files/gatsby-config/).
@@ -120,7 +116,6 @@ There are several ways to continue from here.
 Wichever way you choose, adding the required KaTeX CSS file whenever math is rendered is crucial.
 
 <Aside variant="danger">
-
 The KaTeX CSS file needs to be imported on a page to render the math correctly.
 
 You can do this manually in every mdx file, or once in a layout file, or in [`gatsby-browser.js`](https://www.gatsbyjs.com/docs/reference/config-files/gatsby-browser/),...
@@ -147,7 +142,6 @@ Or a `<link>` tag in an HTML file:
   crossorigin="anonymous"
 />
 ```
-
 </Aside>
 
 ### Option 1: a Rehype plugin
@@ -204,10 +198,8 @@ The React package I went with is [@matejmazur/react-katex
 It has a `<TeX />` component that can turn the string of raw KaTeX into a form that's ready to turn into a pretty equation on your screen.
 
 <Aside variant="info">
-
 I also chose this method because I wanted to create a custom component.
 Make it pop ✨ with some custom CSS, and add some extra features like giving a math block a title.
-
 </Aside>
 
 #### Using `react-katex`
@@ -260,9 +252,7 @@ I created a specialized `<MathBlock />` component that handles math blocks,
 and gives it some extra capabilities you can specify inside mdx, by adding options next to the opening `$$`.
 
 <Aside variant="success">
-
 Pretty math blocks that look like my code blocks! ✨✨
-
 </Aside>
 
 Inline math expressions are sent straight to the `<TeX />` component.
@@ -292,7 +282,7 @@ or by including the KaTeX string in between the opening and closing tags.
 
 Input:
 
-<!-- prettier-ignore -->
+{/* prettier-ignore */}
 ```mdx title=index.mdx numberLines
 import { MathBlock } from "./../src/components/MathBlock";
 <MathBlock title="Arithmetic progression sum" math="S_n = \frac{n(a + l)}{2}" />
@@ -306,23 +296,27 @@ Output:
 
 Input:
 
-<!-- prettier-ignore -->
+{/* prettier-ignore */}
 ```mdx title=index.mdx numberLines
 import { MathBlock } from "./../src/components/MathBlock";
 <MathBlock title="Arithmetic progression sum">
-
-S_n = \frac{n(2a + (n-1)d)}{2}
-
+{"S_n = \\frac{n(2a + (n-1)d)}{2}"}
 </MathBlock>
 ```
 
 Output:
 
 <MathBlock title="Arithmetic progression sum">
-
-S_n = \frac{n(2a + (n-1)d)}{2}
-
+{"S_n = \\frac{n(2a + (n-1)d)}{2}"}
 </MathBlock>
+
+<Aside variant="danger">
+Notice I had to pass the math as a JavaScript string by opening and closing curly brackets:  
+`{"math here"}`
+
+Because `\` is the escape character in JavaScript, but the LaTeX needs it, I had to escape it with an additional `\`:  
+`\\frac`
+</Aside>
 
 ### Using `$$` signs in mdx
 
@@ -346,7 +340,7 @@ $$
 
 Input:
 
-<!-- prettier-ignore -->
+{/* prettier-ignore */}
 ```mdx title=index.mdx numberLines
 $$ title=Arithmetic-progression-sum
 S_n = \frac{n(a + l)}{2}
@@ -357,7 +351,7 @@ $$
 
 Output:
 
-<!-- prettier-ignore -->
+{/* prettier-ignore */}
 $$ title=Arithmetic-progression-sum
 S_n = \frac{n(a + l)}{2}
 \newline
@@ -365,10 +359,8 @@ S_n = \frac{n(2a + (n-1)d)}{2}
 $$
 
 <Aside variant="info">
-
 Because of the method I chose to parse that string after the opening `$$`,
 the `title` value is not able to have spaces in it.
 I could rectify this with a little effort,
 but I'm happy with the way it is right now.
-
 </Aside>

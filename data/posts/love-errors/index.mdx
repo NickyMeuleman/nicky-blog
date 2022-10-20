@@ -8,15 +8,13 @@ tags: ["DX"]
 published: true
 ---
 
-<!-- Photo by Andrea Piacquadio from Pexels -->
+{/\* Photo by Andrea Piacquadio from Pexels \*/}
 
 <Aside>
-
 
 TL;DR: Error messages are useful. **Read them.**
 
 </Aside>
-
 
 _"Error messages are pretty scary, right?"_
 
@@ -33,12 +31,10 @@ That was **wrong**.
 >
 > <footer>
 >
->
 > [Jason Lengstorf and Chris Biscardi (on the
 > LWJshow)](https://www.twitch.tv/jlengstorf/clip/KitschySteamyPicklesKippa)
 >
 > </footer>
->
 
 While errors used to exclusively cause a sense of dread and frustration. Now they are often a source of relief, provide an answer to questions, etc.
 
@@ -113,11 +109,9 @@ When faced with multiple errors, the top one will usually provide you with the m
 
 <Aside variant="info">
 
-
 The same rule of thumb often applies within a single error too, with the top lines being the most relevant ones.
 
 </Aside>
-
 
 If one thing is broken, that might cause other things to break (and show errors).
 Fixing the original problem will then also solve the other errors.
@@ -192,11 +186,9 @@ Followed by the error message.
 
 <Aside>
 
-
 The error message is usually the piece of information that'll be the most useful.
 
 </Aside>
-
 
 The next part is the [stacktrace](https://nodejs.org/api/errors.html#errors_error_stack).
 
@@ -232,11 +224,9 @@ I'm not going to pretend like I know what's going on in most of those lines, bec
 
 <Aside>
 
-
 Stacktraces are useful to find out how the code got to the place that produced the error, but in the vast majority of cases you're only interested in the top line(s).
 
 </Aside>
-
 
 When using frameworks, it is common for stacktraces to filled with lines from deep within that framework.  
 Most of the time, it's fine to ignore those and look for the entries that mention code you wrote.
@@ -307,11 +297,9 @@ Another example is an error that appears when trying to use a [`ref`](https://re
 >
 > <footer>
 >
->
 > My [refs in React blogpost](https://nickymeuleman.netlify.app/blog/react-refs#referring-to-a-dom-element-inside-a-react-component)
 >
 > </footer>
->
 
 ### A pseudo-element
 
@@ -319,9 +307,7 @@ While working on my blog, specifically on the block quotes, the following error 
 
 <Aside variant="danger">
 
-
 <details>
-
 
 <summary>A long error</summary>
 
@@ -385,9 +371,7 @@ You seem to be using a value for 'content' without quotes, try replacing it with
 
 </details>
 
-
 </Aside>
-
 
 This time, the first line did not immediately point me to the correct location.
 
@@ -421,9 +405,7 @@ Working on my blog again, I was presented with these error messages:
 
 <Aside variant="danger">
 
-
 <details>
-
 
 <summary>5 errors</summary>
 
@@ -458,9 +440,7 @@ Found 5 errors.
 
 </details>
 
-
 </Aside>
-
 
 At first sight, those messages were quite the unhelpful.
 I'm styling lots of things on my site in the same way, and this is wrong. Why?

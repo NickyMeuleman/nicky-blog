@@ -3,10 +3,10 @@ import { jsx } from "theme-ui";
 import TeX from "@matejmazur/react-katex";
 
 const Span = ({ className, children, ...rest }) => {
-  if (className.includes("math-inline")) {
-    import("katex/dist/katex.min.css");
+  if (className.includes(`math-inline`)) {
+    import(`katex/dist/katex.min.css`);
     return (
-      <TeX className={className} {...rest}>
+      <TeX className={className} settings={{ strict: false }} {...rest}>
         {children}
       </TeX>
     );

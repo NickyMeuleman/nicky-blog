@@ -17,31 +17,31 @@ const IndexPage = ({ data }) => {
       <SEO />
       <div
         sx={{
-          minHeight: "100vh",
+          minHeight: `100vh`,
         }}
       >
         <div
           sx={{
-            backgroundColor: "mutedBackground",
+            backgroundColor: `mutedBackground`,
           }}
         >
           <Header
-            passedSx={{ backgroundColor: "transparent", border: "none" }}
+            passedSx={{ backgroundColor: `transparent`, border: `none` }}
           />
           <div
             sx={{
-              display: "grid",
-              gridTemplateColumns: "1fr minmax(20ch, 70ch) 1fr",
-              gridTemplateRows: "1fr",
-              px: "5vw", // relates to width of Main
+              display: `grid`,
+              gridTemplateColumns: `1fr minmax(20ch, 70ch) 1fr`,
+              gridTemplateRows: `1fr`,
+              px: `5vw`, // relates to width of Main
             }}
           >
             <div
               sx={{
-                gridColumn: "2/3",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "flex-end",
+                gridColumn: `2/3`,
+                display: `flex`,
+                flexDirection: `column`,
+                justifyContent: `flex-end`,
                 mt: 5,
                 mb: 4,
               }}
@@ -51,7 +51,7 @@ const IndexPage = ({ data }) => {
                   fontSize: [2, null, 3],
                   my: 0,
                   lineHeight: 1,
-                  fontWeight: "normal",
+                  fontWeight: `normal`,
                 }}
               >
                 Hey!
@@ -61,17 +61,18 @@ const IndexPage = ({ data }) => {
                   fontSize: [5, null, 6],
                   my: 0,
                   lineHeight: 1,
-                  fontWeight: "normal",
+                  fontWeight: `normal`,
                 }}
               >
                 <span
                   sx={{
-                    color: "mutedPrimary",
-                    fontWeight: "bold",
+                    color: `mutedPrimary`,
+                    fontWeight: `bold`,
                   }}
                 >
                   Build
-                </span>{" "}
+                </span>
+                {` `}
                 for the modern web
               </h1>
             </div>
@@ -79,47 +80,47 @@ const IndexPage = ({ data }) => {
         </div>
         <div
           sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr minmax(20ch, 70ch) 1fr",
+            display: `grid`,
+            gridTemplateColumns: `1fr minmax(20ch, 70ch) 1fr`,
             my: 5,
-            px: "5vw", // relates to width of Main
+            px: `5vw`, // relates to width of Main
           }}
         >
           <div
             sx={{
-              gridColumn: "2/3",
-              display: "flex",
-              justifyContent: "space-between",
+              gridColumn: `2/3`,
+              display: `flex`,
+              justifyContent: `space-between`,
               mb: 3,
             }}
           >
             <div
               sx={{
-                color: "text",
+                color: `text`,
                 fontSize: 2,
-                position: "relative",
+                position: `relative`,
                 mb: 2,
                 "::before": {
-                  content: "''",
+                  content: `''`,
                   bottom: 0,
-                  position: "absolute",
-                  height: "2px",
-                  width: "3ch",
-                  backgroundColor: "mutedPrimary",
+                  position: `absolute`,
+                  height: `2px`,
+                  width: `3ch`,
+                  backgroundColor: `mutedPrimary`,
                 },
               }}
             >
               Latest blogposts
             </div>
-            <div sx={{ textTransform: "uppercase", color: "mutedTextBg" }}>
+            <div sx={{ textTransform: `uppercase`, color: `mutedTextBg` }}>
               <Link
                 to="/blog"
                 sx={{
-                  textDecoration: "none",
-                  color: "inherit",
-                  letterSpacing: "wide",
+                  textDecoration: `none`,
+                  color: `inherit`,
+                  letterSpacing: `wide`,
                   ":hover": {
-                    color: "mutedPrimary",
+                    color: `mutedPrimary`,
                   },
                 }}
               >
@@ -129,8 +130,8 @@ const IndexPage = ({ data }) => {
           </div>
           <div
             sx={{
-              gridColumn: "2/3",
-              display: "grid",
+              gridColumn: `2/3`,
+              display: `grid`,
               gap: 4,
               fontSize: 1,
             }}
@@ -154,33 +155,33 @@ const IndexPage = ({ data }) => {
           </div>
           <div
             sx={{
-              gridColumn: "2/3",
-              display: "flex",
-              justifyContent: "space-between",
+              gridColumn: `2/3`,
+              display: `flex`,
+              justifyContent: `space-between`,
               mb: 3,
               mt: 5,
             }}
           >
             <div
               sx={{
-                color: "text",
+                color: `text`,
                 fontSize: 2,
-                position: "relative",
+                position: `relative`,
                 mb: 2,
                 "::before": {
-                  content: "''",
+                  content: `''`,
                   bottom: 0,
-                  position: "absolute",
-                  height: "2px",
-                  width: "3ch",
-                  backgroundColor: "mutedPrimary",
+                  position: `absolute`,
+                  height: `2px`,
+                  width: `3ch`,
+                  backgroundColor: `mutedPrimary`,
                 },
               }}
             >
-              Latest digital garden{" "}
+              Latest digital garden{` `}
               <a
                 href="https://joelhooks.com/digital-garden"
-                sx={{ color: "text", verticalAlign: "middle" }}
+                sx={{ color: `text`, verticalAlign: `middle` }}
               >
                 <svg
                   role="img"
@@ -189,7 +190,7 @@ const IndexPage = ({ data }) => {
                   xmlns="http://www.w3.org/2000/svg"
                   fill="currentColor"
                   viewBox="0 0 20 20"
-                  sx={{ display: "inline" }}
+                  sx={{ display: `inline` }}
                 >
                   <title>questionmark</title>
                   <path
@@ -198,18 +199,19 @@ const IndexPage = ({ data }) => {
                     clipRule="evenodd"
                   />
                 </svg>
-              </a>{" "}
-              posts{" "}
+              </a>
+              {` `}
+              posts{` `}
             </div>
-            <div sx={{ textTransform: "uppercase", color: "mutedTextBg" }}>
+            <div sx={{ textTransform: `uppercase`, color: `mutedTextBg` }}>
               <Link
                 to="/garden"
                 sx={{
-                  textDecoration: "none",
-                  color: "inherit",
-                  letterSpacing: "wide",
+                  textDecoration: `none`,
+                  color: `inherit`,
+                  letterSpacing: `wide`,
                   ":hover": {
-                    color: "mutedPrimary",
+                    color: `mutedPrimary`,
                   },
                 }}
               >
@@ -219,8 +221,8 @@ const IndexPage = ({ data }) => {
           </div>
           <div
             sx={{
-              gridColumn: "2/3",
-              display: "grid",
+              gridColumn: `2/3`,
+              display: `grid`,
               gap: 4,
               fontSize: 1,
             }}

@@ -8,9 +8,9 @@ export const aocMachine =
         day: 1,
         min: 1,
         max: 25,
-        input: "",
+        input: ``,
         worker: null,
-        calculationStatus: "",
+        calculationStatus: ``,
         fileInputRef: null,
         errorStatus: null,
         renderError: false,
@@ -18,138 +18,138 @@ export const aocMachine =
         renderSolution: false,
         queuedFile: null,
       },
-      id: "aocMachine",
-      initial: "withoutWorker",
+      id: `aocMachine`,
+      initial: `withoutWorker`,
       on: {
         errorAnimatedOut: {
-          actions: "stopRenderingError",
+          actions: `stopRenderingError`,
         },
         solutionAnimatedOut: {
-          actions: "stopRenderingSolution",
+          actions: `stopRenderingSolution`,
         },
         setFileInputRef: {
-          actions: "setFileInputRef",
+          actions: `setFileInputRef`,
         },
       },
       states: {
         withoutWorker: {
           always: {
-            target: "withWorker",
+            target: `withWorker`,
           },
         },
         withWorker: {
           invoke: {
-            src: "setupWorker",
+            src: `setupWorker`,
           },
-          initial: "setup",
+          initial: `setup`,
           states: {
             setup: {
               on: {
                 ready: {
-                  actions: "setWorker",
-                  target: "idle",
+                  actions: `setWorker`,
+                  target: `idle`,
                 },
               },
             },
             idle: {
-              entry: "clearCalculationStatus",
+              entry: `clearCalculationStatus`,
               always: [
                 {
-                  cond: "hasQueuedFile",
-                  target: "readingFile",
+                  cond: `hasQueuedFile`,
+                  target: `readingFile`,
                 },
                 {
-                  cond: "hasBothInputs",
-                  target: "calculate",
+                  cond: `hasBothInputs`,
+                  target: `calculate`,
                 },
               ],
               on: {
                 chooseDay: {
-                  actions: "setDay",
+                  actions: `setDay`,
                 },
                 chooseFile: {
-                  target: "readingFile",
+                  target: `readingFile`,
                 },
               },
             },
             readingFile: {
               invoke: {
-                src: "readFile",
+                src: `readFile`,
               },
               on: {
                 clearFileQueue: {
-                  actions: "clearFileQueue",
+                  actions: `clearFileQueue`,
                 },
                 readerLoaded: {
-                  actions: "setInput",
-                  target: "idle",
+                  actions: `setInput`,
+                  target: `idle`,
                 },
                 readerError: {
-                  actions: "clearInput",
-                  target: "#aocMachine.withWorker.withError.fileReadError",
+                  actions: `clearInput`,
+                  target: `#aocMachine.withWorker.withError.fileReadError`,
                 },
               },
             },
             calculate: {
-              entry: "setCalculating",
+              entry: `setCalculating`,
               invoke: {
-                src: "doCalculation",
+                src: `doCalculation`,
               },
               on: {
                 calculated: {
-                  actions: "setSolution",
-                  target: "withSolution",
+                  actions: `setSolution`,
+                  target: `withSolution`,
                 },
                 error: {
-                  target: "#aocMachine.withWorker.withError.calculationError",
+                  target: `#aocMachine.withWorker.withError.calculationError`,
                 },
                 chooseDay: {
                   actions: [
-                    "clearInput",
-                    "setDay",
-                    "stopWorker",
-                    "clearCalculationStatus",
+                    `clearInput`,
+                    `setDay`,
+                    `stopWorker`,
+                    `clearCalculationStatus`,
                   ],
-                  target: "#aocMachine.withoutWorker",
+                  target: `#aocMachine.withoutWorker`,
                 },
                 chooseFile: {
                   actions: [
-                    "clearDay",
-                    "stopWorker",
-                    "clearCalculationStatus",
-                    "queueFile",
+                    `clearDay`,
+                    `stopWorker`,
+                    `clearCalculationStatus`,
+                    `queueFile`,
                   ],
-                  target: "#aocMachine.withoutWorker",
+                  target: `#aocMachine.withoutWorker`,
                 },
               },
             },
             withError: {
-              entry: "enterError",
-              initial: "calculationError",
+              entry: `enterError`,
+              initial: `calculationError`,
               states: {
                 calculationError: {},
                 fileReadError: {},
               },
               on: {
                 chooseDay: {
-                  actions: "setDay",
-                  target: "idle",
+                  actions: `setDay`,
+                  target: `idle`,
                 },
                 chooseFile: {
-                  target: "readingFile",
+                  target: `readingFile`,
                 },
               },
             },
             withSolution: {
-              entry: "enterSolution",
+              entry: `enterSolution`,
               on: {
                 chooseDay: {
-                  actions: ["clearInput", "setDay"],
-                  target: "idle",
+                  actions: [`clearInput`, `setDay`],
+                  target: `idle`,
                 },
                 chooseFile: {
-                  actions: "clearDay",
-                  target: "readingFile",
+                  actions: `clearDay`,
+                  target: `readingFile`,
                 },
               },
             },
@@ -169,24 +169,24 @@ export const aocMachine =
       services: {
         setupWorker: (ctx, evt) => (callback, onReceive) => {
           const worker = new Worker(
-            new URL("../utils/worker.js", import.meta.url),
+            new URL(`../utils/worker.js`, import.meta.url),
             {
-              name: "AoCWorker",
-              type: "module",
+              name: `AoCWorker`,
+              type: `module`,
             }
           );
           worker.onmessage = (msg) => {
             switch (msg.data.type) {
-              case "ready": {
+              case `ready`: {
                 callback({
-                  type: "ready",
+                  type: `ready`,
                   worker,
                 });
                 break;
               }
-              case "solved": {
+              case `solved`: {
                 callback({
-                  type: "calculated",
+                  type: `calculated`,
                   part1: msg.data.payload.part1,
                   part2: msg.data.payload.part2,
                   elapsed: msg.data.payload.elapsed,
@@ -194,7 +194,7 @@ export const aocMachine =
                 break;
               }
               default: {
-                callback({ type: "error", day: msg.data.payload.day });
+                callback({ type: `error`, day: msg.data.payload.day });
                 break;
               }
             }
@@ -206,20 +206,20 @@ export const aocMachine =
         readFile: (ctx, evt) => (callback, onReceive) => {
           const file = ctx.queuedFile ? ctx.queuedFile : evt.file;
           if (ctx.queuedFile) {
-            callback({ type: "clearFileQueue" });
+            callback({ type: `clearFileQueue` });
           }
           const reader = new FileReader();
           reader.addEventListener(
-            "load",
+            `load`,
             () => {
-              callback({ type: "readerLoaded", data: reader.result });
+              callback({ type: `readerLoaded`, data: reader.result });
             },
             { once: true }
           );
           reader.addEventListener(
-            "error",
+            `error`,
             () => {
-              callback({ type: "readerError", fileName: file.name });
+              callback({ type: `readerError`, fileName: file.name });
             },
             { once: true }
           );
@@ -257,11 +257,11 @@ export const aocMachine =
           };
         }),
         setCalculating: assign((ctx, evt) => {
-          return { calculationStatus: "Calculating" };
+          return { calculationStatus: `Calculating` };
         }),
         setDay: assign((ctx, evt) => {
-          if (evt.day === "") {
-            return { day: "" };
+          if (evt.day === ``) {
+            return { day: `` };
           }
           const num = Number(evt.day);
           if (num >= ctx.min && num <= ctx.max) {
@@ -274,7 +274,7 @@ export const aocMachine =
           return { input: evt.data };
         }),
         clearCalculationStatus: assign((ctx, evt) => {
-          return { calculationStatus: "" };
+          return { calculationStatus: `` };
         }),
         enterSolution: assign((ctx, evt) => {
           return { renderSolution: true };
@@ -284,7 +284,7 @@ export const aocMachine =
             ? { day: evt.day }
             : { fileName: evt.fileName };
           return {
-            calculationStatus: "Error",
+            calculationStatus: `Error`,
             errorStatus,
             renderError: true,
           };
@@ -297,13 +297,13 @@ export const aocMachine =
         }),
         clearDay: assign((ctx, evt) => {
           return {
-            day: "",
+            day: ``,
           };
         }),
         clearInput: assign((ctx, evt) => {
-          ctx.fileInputRef.current.value = "";
+          ctx.fileInputRef.current.value = ``;
           return {
-            input: "",
+            input: ``,
           };
         }),
       },

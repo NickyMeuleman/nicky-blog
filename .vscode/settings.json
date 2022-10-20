@@ -7,12 +7,27 @@
   ],
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "[javascript]": {
-    "editor.formatOnSave": false
-  },
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": true
   },
   "eslint.alwaysShowStatus": true,
-  "prettier.disableLanguages": ["javascript"]
+  "eslint.options": {
+    "extensions": [".js", ".cjs", ".jsx"]
+  },
+  "eslint.validate": [
+    // This is an old legacy setting and should in normal cases not be necessary anymore. Defaults to ["javascript", "javascriptreact"].
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "mdx"
+  ],
+  "[javascript]": {
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": null
+  },
+  "[javascriptreact]": {
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": null
+  }
 }

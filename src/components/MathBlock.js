@@ -20,13 +20,13 @@ const MathBlock = ({ title, children, math }) => {
           },
         }}
         math={math}
+        settings={{ strict: false }}
       >
         {/*
             either use the math prop or the children prop. So children can be undefined.
-            if children exists, extra whitespace is required around them so it's not a string but an object,
-            the string with the raw katex will be inside children.props.children 
+            If children is passed, it should be a JavaScript string with valid LaTeX syntax (require some escaping of \ characters)
           */}
-        {children?.props?.children}
+        {children ? children : null}
       </TeX>
     </React.Fragment>
   );

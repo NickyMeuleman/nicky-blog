@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
 /** @jsx jsx */
 import React, { useState, useEffect, useRef } from "react";
 import { graphql } from "gatsby";
@@ -10,7 +9,7 @@ import { SEO } from "../components/SEO";
 import { Layout } from "../components/Layout";
 import { aocMachine } from "../machines/aoc";
 
-const ellipsis = keyframes({ to: { width: "3ch" } });
+const ellipsis = keyframes({ to: { width: `3ch` } });
 const inAnimation = keyframes({
   "0%": {
     opacity: 0,
@@ -33,7 +32,7 @@ const DemoArea = ({ title, children }) => {
     <div
       sx={{
         border: `1px solid`,
-        borderColor: "watermarkBg",
+        borderColor: `watermarkBg`,
         padding: 3,
         mb: 2,
         flex: 1,
@@ -46,7 +45,7 @@ const DemoArea = ({ title, children }) => {
           textTransform: `uppercase`,
           letterSpacing: `wider`,
           fontWeight: `bold`,
-          color: "mutedTextBg",
+          color: `mutedTextBg`,
           fontSize: 1,
         }}
       >
@@ -54,8 +53,8 @@ const DemoArea = ({ title, children }) => {
       </p>
       <div
         sx={{
-          display: "grid",
-          gridTemplateColumns: "repeat( auto-fit, minmax(260px, 1fr) )",
+          display: `grid`,
+          gridTemplateColumns: `repeat( auto-fit, minmax(260px, 1fr) )`,
           gap: 3,
         }}
       >
@@ -127,40 +126,40 @@ const Solution = ({ val }) => {
       type="button"
       sx={{
         fontSize: 1,
-        cursor: "pointer",
+        cursor: `pointer`,
         px: 2,
         // horizontally visually align the text inside the button with the text above the button
         mx: -2,
         py: 1,
-        backgroundColor: "transparent",
-        color: "text",
-        borderWidth: "1px",
-        borderRadius: "sm",
-        borderColor: "transparent",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        width: "100%",
-        transition: "border-color ease 0.3s",
+        backgroundColor: `transparent`,
+        color: `text`,
+        borderWidth: `1px`,
+        borderRadius: `sm`,
+        borderColor: `transparent`,
+        display: `flex`,
+        alignItems: `center`,
+        justifyContent: `space-between`,
+        width: `100%`,
+        transition: `border-color ease 0.3s`,
         svg: {
           opacity: 0,
-          fill: "mutedText",
-          transition: "opacity ease 0.3s",
+          fill: `mutedText`,
+          transition: `opacity ease 0.3s`,
           "&:hover": {
             opacity: 1,
           },
         },
         ":hover": {
-          borderColor: "mutedText",
+          borderColor: `mutedText`,
           svg: {
             opacity: 1,
           },
         },
         // reset default button styles
-        borderStyle: "solid",
+        borderStyle: `solid`,
       }}
     >
-      <span sx={{ mr: 2 }}> {copied ? "Copied" : val}</span>
+      <span sx={{ mr: 2 }}> {copied ? `Copied` : val}</span>
       <svg
         width="24"
         height="25"
@@ -177,17 +176,17 @@ const Solution = ({ val }) => {
 };
 
 function getExectionText(executionState) {
-  if (executionState === "Calculating") {
+  if (executionState === `Calculating`) {
     return (
       <span
         sx={{
           ":after": {
-            overflow: "hidden",
-            display: "inline-block",
-            verticalAlign: "bottom",
+            overflow: `hidden`,
+            display: `inline-block`,
+            verticalAlign: `bottom`,
             animation: `${ellipsis} steps(4,end) 2s infinite`,
-            content: '"\\2026"' /* ascii code for the ellipsis character */,
-            width: "0px",
+            content: `"\\2026"` /* ascii code for the ellipsis character */,
+            width: `0px`,
           },
         }}
       >
@@ -195,14 +194,14 @@ function getExectionText(executionState) {
       </span>
     );
   }
-  if (executionState.includes("ms")) {
+  if (executionState.includes(`ms`)) {
     return executionState;
   }
-  return "Nothing calculating yet";
+  return `Nothing calculating yet`;
 }
 
 function getCodeLink(day) {
-  const padded = String(day).padStart(2, "0");
+  const padded = String(day).padStart(2, `0`);
   return `https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2021/src/day_${padded}.rs`;
 }
 
@@ -212,7 +211,7 @@ const AoC2021Solver = ({ data }) => {
 
   useEffect(() => {
     send({
-      type: "setFileInputRef",
+      type: `setFileInputRef`,
       fileInputRef,
     });
   }, [send]);
@@ -228,23 +227,23 @@ const AoC2021Solver = ({ data }) => {
       />
       <div
         sx={{
-          display: "flex",
-          maxWidth: "60ch",
-          margin: "auto",
+          display: `flex`,
+          maxWidth: `60ch`,
+          margin: `auto`,
           gap: 2,
-          flexWrap: "wrap",
+          flexWrap: `wrap`,
           my: 4,
-          justifyContent: "center",
+          justifyContent: `center`,
         }}
       >
         <DemoArea title="Input area">
           <Input title="Day">
             <select
               sx={{ fontSize: 1 }}
-              disabled={state.matches({ withWorker: "setup" })}
+              disabled={state.matches({ withWorker: `setup` })}
               value={state.context.day}
               onChange={(evt) => {
-                send("chooseDay", { day: evt.target.value });
+                send(`chooseDay`, { day: evt.target.value });
               }}
             >
               <option key="default" value="default">
@@ -259,12 +258,12 @@ const AoC2021Solver = ({ data }) => {
           </Input>
           <Input title="Input File">
             <input
-              sx={{ fontSize: 1, width: "100%" }}
+              sx={{ fontSize: 1, width: `100%` }}
               ref={fileInputRef}
               type="file"
-              disabled={state.matches({ withWorker: "setup" })}
+              disabled={state.matches({ withWorker: `setup` })}
               onChange={(evt) => {
-                send("chooseFile", { file: evt.target.files[0] });
+                send(`chooseFile`, { file: evt.target.files[0] });
               }}
             />
           </Input>
@@ -273,7 +272,7 @@ const AoC2021Solver = ({ data }) => {
           <Output title={`Day ${state.context.day} code`}>
             <a
               href={getCodeLink(state.context.day)}
-              sx={{ variant: "styles.a" }}
+              sx={{ variant: `styles.a` }}
             >
               Rust
             </a>
@@ -285,25 +284,26 @@ const AoC2021Solver = ({ data }) => {
             <Output
               title="Error"
               passedSx={{
-                gridColumn: "1/-1",
-                gridRow: "2/3",
+                gridColumn: `1/-1`,
+                gridRow: `2/3`,
                 animation: `${
-                  state.matches({ withWorker: "withError" })
+                  state.matches({ withWorker: `withError` })
                     ? `${inAnimation} 300ms ease-in`
                     : `${outAnimation} 300ms ease-in`
                 }`,
               }}
               onAnimationEnd={() => {
-                if (!state.matches({ withWorker: "withError" })) {
-                  send("errorAnimatedOut");
+                if (!state.matches({ withWorker: `withError` })) {
+                  send(`errorAnimatedOut`);
                 }
               }}
             >
-              <div sx={{ color: alpha("danger", 0.9) }}>
+              <div sx={{ color: alpha(`danger`, 0.9) }}>
                 {state.context.errorStatus?.day ? (
                   <React.Fragment>
                     <p>
-                      Failed to calculate day {state.context.errorStatus.day}{" "}
+                      Failed to calculate day {state.context.errorStatus.day}
+                      {` `}
                       with the current input file. Please make sure the selected
                       day and input match.
                     </p>
@@ -328,18 +328,18 @@ const AoC2021Solver = ({ data }) => {
               <Output
                 title="Part 1 solution"
                 passedSx={{
-                  gridColumn: "1/2",
-                  gridRow: "2/3",
+                  gridColumn: `1/2`,
+                  gridRow: `2/3`,
                   animation: `${
-                    state.matches({ withWorker: "withSolution" })
+                    state.matches({ withWorker: `withSolution` })
                       ? `${inAnimation} 300ms ease-in`
                       : `${outAnimation} 300ms ease-in`
                   }`,
                 }}
                 onAnimationEnd={() => {
-                  if (!state.matches({ withWorker: "withSolution" })) {
+                  if (!state.matches({ withWorker: `withSolution` })) {
                     // both solutions are animated out at the same time and should have the same animation duration
-                    send("solutionAnimatedOut");
+                    send(`solutionAnimatedOut`);
                   }
                 }}
               >
@@ -349,10 +349,10 @@ const AoC2021Solver = ({ data }) => {
               <Output
                 title="Part 2 solution"
                 passedSx={{
-                  gridColumn: "2/3",
-                  gridRow: "2/3",
+                  gridColumn: `2/3`,
+                  gridRow: `2/3`,
                   animation: `${
-                    state.matches({ withWorker: "withSolution" })
+                    state.matches({ withWorker: `withSolution` })
                       ? `${inAnimation} 300ms ease-in`
                       : `${outAnimation} 300ms ease-in`
                   }`,
