@@ -219,7 +219,7 @@ const theme = merge(themeConfig, {
     img: {
       maxWidth: `100%`,
     },
-    inlineCode: {
+    code: {
       fontSize: `0.85em`,
       overflowWrap: `break-word`,
     },
