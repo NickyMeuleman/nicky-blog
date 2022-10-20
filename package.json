@@ -40,7 +40,7 @@
     "prismjs": "^1.29.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "remark-math": "^4.0.0",
+    "remark-math": "^5.1.1",
     "theme-ui": "^0.15.3",
     "typeface-source-sans-pro": "0.0.75",
     "unist-util-visit": "^2.0.3",
