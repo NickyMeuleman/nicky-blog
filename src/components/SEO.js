@@ -1,3 +1,4 @@
+import React from "react";
 import { useStaticQuery, graphql } from "gatsby";
 import * as path from "path";
 import { generateSocialImage } from "../utils/og-image";
@@ -71,7 +72,7 @@ const SEO = ({
     : siteMetadata.title;
 
   return (
-    <>
+    <React.Fragment>
       <title>{formattedTitle}</title>
       <meta name="description" content={metaDescription} />
       {metaImage && <meta name="image" content={metaImage} />}
@@ -93,7 +94,7 @@ const SEO = ({
       {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
       {keywords && <meta name="keywords" content={keywords.join(`, `)} />}
       {children}
-    </>
+    </React.Fragment>
   );
 };
 
