@@ -19,6 +19,7 @@
   "dependencies": {
     "@emotion/react": "^11.10.4",
     "@matejmazur/react-katex": "^3.1.3",
+    "@mdx-js/react": "^2.1.5",
     "@nickymeuleman/aoc2021": "^0.4.5",
     "@nickymeuleman/gatsby-theme-blog": "^3.0.0",
     "@reach/tabs": "^0.18.0",
@@ -35,11 +36,14 @@
     "gatsby-plugin-manifest": "^4.24.0",
     "gatsby-plugin-sitemap": "^5.24.0",
     "gatsby-plugin-theme-ui": "^0.15.3",
+    "katex": "^0.16.2",
     "prismjs": "^1.29.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "remark-math": "^4.0.0",
     "theme-ui": "^0.15.3",
     "typeface-source-sans-pro": "0.0.75",
+    "unist-util-visit": "^2.0.3",
     "wasm-game-of-life-nmeuleman": "^0.1.0",
     "xstate": "^4.33.6"
   },
