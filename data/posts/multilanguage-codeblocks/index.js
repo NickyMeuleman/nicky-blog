@@ -33,8 +33,8 @@ const HardCodedTabsAboveCode = (props) => {
       </TabList>
 
       <TabPanels>
-        {props.children.map((child) => {
-          return <TabPanel>{child}</TabPanel>;
+        {props.children.map((child, idx) => {
+          return <TabPanel key={idx}>{child}</TabPanel>;
         })}
       </TabPanels>
     </Tabs>
@@ -45,61 +45,90 @@ const TabsAboveCode = (props) => {
   return (
     <Tabs>
       <TabList>
-        {props.children.map((child) => {
+        {props.children.map((child, idx) => {
           const [language] = child.props.children.props.className
             .replace(/language-/, ``)
             .split(` `);
-          return <Tab>{language}</Tab>;
+          return <Tab key={idx}>{language}</Tab>;
         })}
       </TabList>
 
       <TabPanels>
-        {props.children.map((child) => {
-          return <TabPanel>{child}</TabPanel>;
+        {props.children.map((child, idx) => {
+          return <TabPanel key={idx}>{child}</TabPanel>;
         })}
       </TabPanels>
     </Tabs>
   );
 };
 
-const TabsInTitle = ({ children, values }) => {
-  const codeTitles = children.map(
-    (child) => child?.props?.children?.props?.title
-  );
-  const tabLabels = children.map((child) =>
-    child?.props?.children?.props?.className.replace(/language-/, ``).split(` `)
-  );
+const TabsInTitle = ({ children }) => {
+  const codeblocks = children.map((child) => {
+    const codeBlockProps = child?.props?.children?.props;
+    const [language] = codeBlockProps.className
+      .replace(/language-/, ``)
+      .split(` `);
+    // split off title from the props so it isn't used later, the title prop controls CodeBlock having a header and that's this component's responsibility now
+    const { title, ...blockProps } = codeBlockProps;
+    return {
+      title,
+      label: language,
+      blockProps,
+    };
+  });
 
   const [tabIndex, setTabindex] = useState(0);
-  const [title, setTitle] = useState(codeTitles[0]);
-
   const handleTabsChange = (index) => {
     setTabindex(index);
-    setTitle(codeTitles[index]);
   };
 
   return (
     <Tabs index={tabIndex} onChange={handleTabsChange}>
-      <div sx={{ display: "flex", variant: `styles.CodeBlock.title` }}>
-        <div sx={{ flex: 1 }}>{title}</div>
+      <header
+        sx={{
+          display: `flex`,
+          alignItems: `center`,
+          variant: `styles.CodeBlock.title`,
+        }}
+      >
+        <div sx={{ flex: 1 }}>{codeblocks[tabIndex].title}</div>
         <TabList
           sx={{
-            color: "mutedText",
-            "[data-selected]": { color: "mutedPrimary" },
+            color: `mutedText`,
+            "[data-selected]": { color: `mutedPrimary` },
           }}
         >
-          {tabLabels.map((label) => (
-            <Tab key={label}>{label}</Tab>
+          {codeblocks.map(({ label }, idx) => (
+            <Tab key={idx}>{label}</Tab>
           ))}
         </TabList>
-      </div>
+      </header>
       <TabPanels>
-        {children.map((child) => {
-          // split off title so the CodeBlock from the theme doesn't render a header, this component does that and add language tabs
-          const { title, ...blockProps } = child.props.children.props;
+        {codeblocks.map((block, idx) => {
+          const { blockProps } = block;
+          const preToCodeBlock = (preProps) => {
+            if (preProps) {
+              const {
+                children: codeString,
+                className = ``,
+                ...props
+              } = preProps;
+              const match = className.match(/language-([\0-\uFFFF]*)/);
+
+              return {
+                codeString: codeString?.trim() ?? ``,
+                className: className,
+                language: match !== null ? match[1] : ``,
+                ...props,
+              };
+            }
+
+            return undefined;
+          };
+          const props = preToCodeBlock(blockProps);
           return (
-            <TabPanel key={blockProps.className}>
-              <CodeBlock {...blockProps} />
+            <TabPanel key={idx}>
+              <CodeBlock {...props} />
             </TabPanel>
           );
         })}

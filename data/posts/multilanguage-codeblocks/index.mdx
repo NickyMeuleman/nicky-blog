@@ -1,7 +1,7 @@
 ---
 title: "Multilingual codeblocks"
 date: "2021-08-16"
-updatedAt: "2021-08-17"
+updatedAt: "2022-12-01"
 authors: ["nicky"]
 cover: "./cover.jpg"
 tags: ["React", "mdx"]
@@ -76,7 +76,7 @@ Be sure to check out all tabs.
   {[
     "They're taking the",
     "Hobbits to Isengard!",
-    <YouTube youTubeId="uE-1RPDqJAY" skipTo={{ h: 0, m: 0, s: 18 }} />,
+    <YouTube key="hobbit-vid" youTubeId="uE-1RPDqJAY" skipTo={{ h: 0, m: 0, s: 18 }} />,
   ]}
 </FirstAttempt>
 
@@ -297,6 +297,34 @@ const MultiLangCodeBlock = ({ children }) => {
 Behold! A Multilingual codeblock!
 
 </Aside>
+
+What's in the `.mdx` file:
+
+````mdx title=mypost.mdx
+<TabsInTitle>
+
+```js title=index.js numberLines hl=1
+const language = "JavaScript";
+
+console.log(language);
+```
+
+```python title=index.py numberLines hl=1
+language = "Python"
+
+print(language)
+```
+
+```rust title=index.rs numberLines hl=1
+let language = "Rust";
+
+println!("{}", language);
+```
+
+</TabsInTitle>
+````
+
+The resulting output:
 
 <TabsInTitle>
 
