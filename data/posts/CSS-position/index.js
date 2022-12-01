@@ -277,9 +277,7 @@ ${top != null ? `  top: ${top}px;\n` : ""}${
           setVal={setRight}
         />
       </div>
-      <CodeBlock className="language-css" title="styles.css">
-        {codeStr}
-      </CodeBlock>
+      <CodeBlock className="language-css" title="styles.css" codeString={codeStr} />
     </div>
   );
 };
@@ -371,9 +369,7 @@ ${top != null ? `  top: ${top}px;\n` : ""}${
           setVal={setRight}
         />
       </div>
-      <CodeBlock className="language-css" title="styles.css">
-        {codeStr}
-      </CodeBlock>
+      <CodeBlock className="language-css" title="styles.css" codeString={codeStr} />
     </div>
   );
 };
@@ -493,9 +489,7 @@ ${top != null ? `  top: ${top}px;\n` : ""}}`;
           setVal={setTop}
         />
       </div>
-      <CodeBlock className="language-css" title="styles.css">
-        {codeStr}
-      </CodeBlock>
+      <CodeBlock className="language-css" title="styles.css" codeString={codeStr} />
     </div>
   );
 };
