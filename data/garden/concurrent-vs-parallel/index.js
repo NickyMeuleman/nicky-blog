@@ -7,12 +7,12 @@ const DemoBase = ({ children }) => {
   return (
     <div
       sx={{
-        position: "relative",
-        overflow: "hidden",
+        position: `relative`,
+        overflow: `hidden`,
         ":hover": {
           ".line": {
-            left: "100%",
-            transform: "translateX(100%)",
+            left: `100%`,
+            transform: `translateX(100%)`,
           },
         },
       }}
@@ -20,13 +20,13 @@ const DemoBase = ({ children }) => {
       <div
         className="line"
         sx={{
-          position: "absolute",
-          width: "10px",
-          height: "100%",
-          backgroundColor: "primary",
+          position: `absolute`,
+          width: `10px`,
+          height: `100%`,
+          backgroundColor: `primary`,
           left: 0,
-          transform: "translateX(-100%)",
-          transition: "left 4s linear",
+          transform: `translateX(-100%)`,
+          transition: `left 4s linear`,
           opacity: 0.3,
         }}
       />
@@ -40,14 +40,14 @@ const Core = ({ children }) => {
     <React.Fragment>
       <p
         sx={{
-          position: "relative",
+          position: `relative`,
           m: 0,
           p: 0,
-          backgroundColor: "background",
-          textTransform: "uppercase",
+          backgroundColor: `background`,
+          textTransform: `uppercase`,
           letterSpacing: 1,
           fontWeight: 700,
-          color: "mutedTextBg",
+          color: `mutedTextBg`,
         }}
       >
         Core
@@ -56,8 +56,8 @@ const Core = ({ children }) => {
         className="core"
         sx={{
           p: 1,
-          border: "5px solid ",
-          borderColor: alpha("mutedTextBg", 0.2),
+          border: `5px solid `,
+          borderColor: alpha(`mutedTextBg`, 0.2),
         }}
       >
         {children}
@@ -71,13 +71,13 @@ const Thread = ({ children }) => {
     <React.Fragment>
       <p
         sx={{
-          position: "relative",
+          position: `relative`,
           m: 0,
           p: 0,
-          textTransform: "uppercase",
+          textTransform: `uppercase`,
           letterSpacing: 1,
           fontWeight: 700,
-          color: "mutedPrimary",
+          color: `mutedPrimary`,
         }}
       >
         Thread
@@ -85,13 +85,13 @@ const Thread = ({ children }) => {
       <div
         className="thread"
         sx={{
-          position: "relative",
-          display: "flex",
+          position: `relative`,
+          display: `flex`,
           gap: 1,
           p: 1,
-          border: "5px solid",
-          textAlign: "center",
-          borderColor: alpha("mutedPrimary", 0.2),
+          border: `5px solid`,
+          textAlign: `center`,
+          borderColor: alpha(`mutedPrimary`, 0.2),
         }}
       >
         {children}
@@ -105,13 +105,13 @@ const Sequential = () => {
     <DemoBase>
       <Core>
         <Thread>
-          <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+          <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
             TASK 1
           </div>
-          <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+          <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
             TASK 2
           </div>
-          <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+          <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
             TASK 3
           </div>
         </Thread>
@@ -125,20 +125,20 @@ const Concurrent = () => {
     <DemoBase>
       <Core>
         <Thread>
-          <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+          <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
             TASK 1
           </div>
-          <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }} />
-          <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+          <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }} />
+          <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
             TASK 3
           </div>
         </Thread>
         <Thread>
-          <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }} />
-          <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+          <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }} />
+          <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
             TASK 2
           </div>
-          <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }} />
+          <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }} />
         </Thread>
       </Core>
     </DemoBase>
@@ -149,26 +149,26 @@ const Parallel = () => (
   <DemoBase>
     <Core>
       <Thread>
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
           TASK 1
         </div>
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
           TASK 2
         </div>
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
           TASK 3
         </div>
       </Thread>
     </Core>
     <Core>
       <Thread>
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
           TASK 4
         </div>
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
           TASK 5
         </div>
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
           TASK 6
         </div>
       </Thread>
@@ -180,38 +180,38 @@ const Both = () => (
   <DemoBase>
     <Core>
       <Thread>
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
           TASK 1
         </div>
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
           TASK 2
         </div>
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }} />
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }} />
       </Thread>
       <Thread>
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }} />
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }} />
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }} />
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }} />
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
           TASK 3
         </div>
       </Thread>
     </Core>
     <Core>
       <Thread>
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
           TASK 4
         </div>
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }} />
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }} />
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
           TASK 6
         </div>
       </Thread>
       <Thread>
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }} />
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }}>
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }} />
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }}>
           TASK 5
         </div>
-        <div sx={{ flex: 1, border: "2px solid rgba(0, 0, 0, 0.3)" }} />
+        <div sx={{ flex: 1, border: `2px solid rgba(0, 0, 0, 0.3)` }} />
       </Thread>
     </Core>
   </DemoBase>
