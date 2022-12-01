@@ -1,8 +1,8 @@
 /* eslint-disable no-restricted-globals */
-addEventListener("message", (msg) => {
+addEventListener(`message`, (msg) => {
   let count = 0;
   switch (msg.data) {
-    case "block": {
+    case `block`: {
       const startTime = Date.now();
       while (Date.now() < startTime + 3000) {
         count += 1;
@@ -13,7 +13,7 @@ addEventListener("message", (msg) => {
       postMessage(count);
       break;
     }
-    case "jank": {
+    case `jank`: {
       const intervalId = setInterval(() => {
         const startTime = Date.now();
         while (Date.now() < startTime + 3000) {
@@ -28,7 +28,7 @@ addEventListener("message", (msg) => {
       break;
     }
     default: {
-      console.log("default case");
+      console.log(`default case`);
     }
   }
 });
