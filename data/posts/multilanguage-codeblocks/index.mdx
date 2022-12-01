@@ -246,43 +246,72 @@ The `MultiLangCodeBlock` looked great after a little CSS to display the tab butt
 
 ```js title=MultiLangCodeBlock.js
 const MultiLangCodeBlock = ({ children }) => {
-  const codeTitles = children.map(
-    (child) => child?.props?.children?.props?.title
-  );
-  const tabLabels = children.map((child) =>
-    child?.props?.children?.props?.className.replace(/language-/, ``).split(` `)
-  );
+  const codeblocks = children
+    .map((child) => {
+      const codeBlockProps = child?.props?.children?.props;
+      const [language] = codeBlockProps.className
+        .replace(/language-/, ``)
+        .split(` `);
+      // split off title from the props so it isn't used later, the title prop controls CodeBlock having a header and that's this component's responsibility now
+      const { title, ...blockProps } = codeBlockProps;
+      return {
+        title,
+        label: language,
+        blockProps,
+      };
+    });
 
   const [tabIndex, setTabindex] = useState(0);
-  const [title, setTitle] = useState(codeTitles[0]);
-
   const handleTabsChange = (index) => {
     setTabindex(index);
-    setTitle(codeTitles[index]);
   };
 
   return (
     <Tabs index={tabIndex} onChange={handleTabsChange}>
-      <div sx={{ display: "flex", variant: `styles.CodeBlock.title` }}>
-        <div sx={{ flex: 1 }}>{title}</div>
+      <header
+        sx={{
+          display: `flex`,
+          alignItems: `center`,
+          variant: `styles.CodeBlock.title`,
+        }}
+      >
+        <div sx={{ flex: 1 }}>{codeblocks[tabIndex].title}</div>
         <TabList
           sx={{
-            color: "mutedText",
-            "[data-selected]": { color: "mutedPrimary" },
+            color: `mutedText`,
+            "[data-selected]": { color: `mutedPrimary` },
           }}
         >
-          {tabLabels.map((label) => (
+          {codeblocks.map(({ label }) => (
             <Tab key={label}>{label}</Tab>
           ))}
         </TabList>
-      </div>
+      </header>
       <TabPanels>
-        {children.map((child) => {
-          // split off title so the CodeBlock from the theme doesn't render a header, this component does that
-          const { title, ...blockProps } = child.props.children.props;
+        {codeblocks.map((block) => {
+          const preToCodeBlock = (preProps) => {
+            if (preProps) {
+              const {
+                children: codeString,
+                className = ``,
+                ...props
+              } = preProps;
+              const match = className.match(/language-([\0-\uFFFF]*)/);
+
+              return {
+                codeString: codeString?.trim() ?? ``,
+                className: className,
+                language: match !== null ? match[1] : ``,
+                ...props,
+              };
+            }
+
+            return undefined;
+          };
+          const props = preToCodeBlock(block.blockProps);
           return (
-            <TabPanel key={blockProps.className}>
-              <CodeBlock {...blockProps} />
+            <TabPanel key={block.label}>
+              <CodeBlock {...props} />
             </TabPanel>
           );
         })}
@@ -297,6 +326,34 @@ const MultiLangCodeBlock = ({ children }) => {
 Behold! A Multilingual codeblock!
 
 </Aside>
+
+What is written inside an `.mdx` file:
+
+````mdx title=mypost.mdx
+<MultiLangCodeBlock>
+
+```js title=index.js numberLines hl=1
+const language = "JavaScript";
+
+console.log(language);
+```
+
+```python title=index.py numberLines hl=1
+language = "Python"
+
+print(language)
+```
+
+```rust title=index.rs numberLines hl=1
+let language = "Rust";
+
+println!("{}", language);
+```
+
+</MultiLangCodeBlock>
+````
+
+The rendered output:
 
 <TabsInTitle>
 

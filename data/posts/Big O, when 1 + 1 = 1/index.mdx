@@ -282,7 +282,7 @@ A "term" is a part of the equation that typically gets added to (or subtracted f
 As example, if you have an algorithm that takes exactly `n² + 4 * n + 10` steps to complete.
 When `n` gets large enough, the `n²` will always dominate the lower order terms.
 
-|         | n²     | 4 \* n | 10  | total  |
+|         | n²     | 4 * n | 10  | total  |
 | ------- | ------ | ------ | --- | ------ |
 | n = 1   | 1      | 4      | 10  | 15     |
 | n = 10  | 100    | 40     | 10  | 150    |
@@ -441,8 +441,7 @@ It's the length of the `array` parameter.
 Then, mark the big O of every individual line.
 In this case, they're all `O(1)`.
 
-{/\* prettier-ignore \*/}
-
+{/* prettier-ignore */}
 ```js title=bigO.js
 function importantLogic(array) {
   let a = 1; // 1
@@ -495,8 +494,7 @@ but that coefficient is thrown away.
 
 </Aside>
 
-{/\* prettier-ignore \*/}
-
+{/* prettier-ignore */}
 ```js title=bigO.js hl=5,8,10
 function importantLogic(array) {
   let a = 1; // 1
@@ -535,8 +533,7 @@ We take the highest term, `n²`, and throw away the coefficient.
 That coefficient happens to be 1, which means there is no change.
 That's the big O of that single loop, it's `O(n²)`.
 
-{/\* prettier-ignore \*/}
-
+{/* prettier-ignore */}
 ```js title=bigO.js hl=4,7,9
 let a = 1; // 1
 let b = 2; // 1

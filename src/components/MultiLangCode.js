@@ -55,7 +55,8 @@ const MultiLangCode = ({ children, values }) => {
         </TabList>
       </header>
       <TabPanels>
-        {codeblocks.map(({ blockProps }) => {
+        {codeblocks.map((block) => {
+          const { blockProps } = block;
           const preToCodeBlock = (preProps) => {
             if (preProps) {
               const {
@@ -66,7 +67,7 @@ const MultiLangCode = ({ children, values }) => {
               const match = className.match(/language-([\0-\uFFFF]*)/);
 
               return {
-                codeString: codeString.trim(),
+                codeString: codeString?.trim() ?? ``,
                 className: className,
                 language: match !== null ? match[1] : ``,
                 ...props,
@@ -77,7 +78,7 @@ const MultiLangCode = ({ children, values }) => {
           };
           const props = preToCodeBlock(blockProps);
           return (
-            <TabPanel key={blockProps.className}>
+            <TabPanel key={block.label}>
               <CodeBlock {...props} />
             </TabPanel>
           );

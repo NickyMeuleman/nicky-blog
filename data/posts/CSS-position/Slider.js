@@ -4,12 +4,12 @@ import { jsx } from "theme-ui";
 function Slider({ val, setVal, labelText, idPrepend, passedSx }) {
   return (
     <label htmlFor={idPrepend + labelText} sx={passedSx}>
-      <div sx={{ display: "flex", justifyContent: "space-between" }}>
+      <div sx={{ display: `flex`, justifyContent: `space-between` }}>
         <label htmlFor={`${idPrepend + labelText}checkbox`}>
           <input
             id={`${idPrepend + labelText}checkbox`}
             type="checkbox"
-            checked={typeof val === "number" || typeof val === "string"}
+            checked={typeof val === `number` || typeof val === `string`}
             onChange={(e) => {
               if (!e.target.checked) {
                 setVal(null);
@@ -34,9 +34,9 @@ function Slider({ val, setVal, labelText, idPrepend, passedSx }) {
           setVal(value);
         }}
         sx={{
-          width: "100%",
-          outlineOffset: "6px",
-          cursor: "pointer",
+          width: `100%`,
+          outlineOffset: `6px`,
+          cursor: `pointer`,
         }}
       />
     </label>
