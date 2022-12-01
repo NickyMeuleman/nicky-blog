@@ -49,13 +49,13 @@ const MultiLangCode = ({ children, values }) => {
             "[data-selected]": { color: `mutedPrimary` },
           }}
         >
-          {codeblocks.map(({ label }) => (
-            <Tab key={label}>{label}</Tab>
+          {codeblocks.map(({ label }, idx) => (
+            <Tab key={idx}>{label}</Tab>
           ))}
         </TabList>
       </header>
       <TabPanels>
-        {codeblocks.map(({ blockProps }) => {
+        {codeblocks.map(({ blockProps }, idx) => {
           const preToCodeBlock = (preProps) => {
             if (preProps) {
               const {
@@ -77,7 +77,7 @@ const MultiLangCode = ({ children, values }) => {
           };
           const props = preToCodeBlock(blockProps);
           return (
-            <TabPanel key={blockProps.className}>
+            <TabPanel key={idx}>
               <CodeBlock {...props} />
             </TabPanel>
           );
