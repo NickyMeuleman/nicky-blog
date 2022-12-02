@@ -1,0 +1,120 @@
+---
+title: "Advent of Code 2022 Day 1"
+date: "2022-12-01"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+---
+
+## Day 1: Calorie Counting
+
+https://adventofcode.com/2022/day/1
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_01.rs)
+</Aside>
+
+We're on an expedition with the elves.
+The input file represents the amount of calories each elf carries with them.
+Each elf has several items.
+The inventories of each elf is seperated by two line breaks.
+
+```txt title=input.txt
+1000
+2000
+3000
+
+4000
+
+5000
+6000
+
+7000
+8000
+9000
+
+10000
+```
+
+## Part 1
+
+Find the Elf carrying the most Calories.
+How many total Calories is that Elf carrying?
+
+For each elf we want to calculate the sum of the items they are carrying.
+Then, find the largest of those sums.
+
+I did today with one iterator chain.
+
+Get the input string.
+Split it on double newlines.
+Each iterator element is now a string that represents the inventory of a single elf.
+
+For every element: split on a single linebreak.
+Turn that line into a number.
+Take the sum of every number.
+
+Now, every element is the sum a single elf is carrying.
+Find the maximum of those sums.
+
+```rust title=day_01.rs
+fn part_1() -> u32 {
+    let input = std::fs::read_to_string("src/day_01.txt").unwrap();
+
+    input
+    .split("\n\n")
+    .map(|elf| {
+        elf.lines()
+            .filter_map(|s| s.parse::<u32>().ok())
+            .sum::<u32>()
+    })
+    .max()
+    .unwrap()
+}
+```
+
+## Part 2
+
+Part 2 is very similar.
+
+Find the top three Elves carrying the most Calories.
+How many Calories are those Elves carrying in total?
+
+Get the input string.
+Split it on double newlines.
+Each iterator element is now a string that represents the inventory of a single elf.
+
+For every element: split on a single linebreak.
+Turn that line into a number.
+Take the sum of every number.
+
+Now, every element is the sum a single elf is carrying.
+Sort those sums.
+Take the 3 largest sums, and sum those.
+
+To sort the iterator directly, I used the `sorted()` method from the `itertools` crate.
+I could have also called `.collect()` on the iterator of all sums, and store that result in a variable with type `Vec<u32>`.
+Then sort that resulting vector with `.sort()`.
+
+This sorts in ascending order, and I want the sum of the 3 last ones.
+So I reverse the iterator.
+Take 3 items of that iterator.
+Sum those.
+
+```rust title=day_01.rs
+use itertools::Itertools;
+
+pub fn part2() -> u32 {
+    let input = std::fs::read_to_string("src/day_01.txt").unwrap();
+
+    input
+    .split("\n\n")
+    .map(|elf| {
+        elf.lines()
+            .filter_map(|s| s.parse::<u32>().ok())
+            .sum::<u32>()
+    })
+    .sorted()
+    .rev()
+    .take(3)
+    .sum::<u32>()
+}
