@@ -1,0 +1,155 @@
+---
+title: "Advent of Code 2022 Day 2"
+date: "2022-12-02"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+---
+
+## Day 2: Rock Paper Scissors
+
+https://adventofcode.com/2022/day/2
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_02.rs)
+</Aside>
+
+We're playing a [Rock, Paper, Scissors](https://en.wikipedia.org/wiki/Rock_paper_scissors) tournament with the elves.
+The input represents an encryped strategy guide.
+
+Each line has 2 letters seperated by a space.
+
+- The first letter is `A`, `B`, or `C`.
+- The second letter is `X`, `Y`, or `Z`.
+
+An example input looks like this:
+
+```txt title=input.txt
+A Y
+B X
+C Z
+```
+
+Each round is worth some points, all scores get summed up, and whoever has the highest total at the end of the tournament wins.
+
+Your score for a single round is the sum of the score for the _shape_ you played, and the score for the _outcome_ of the round.
+
+Shape scores:
+- Rock: 1
+- Paper: 2
+- Scissors: 3
+
+Outcome scores:
+- Loss: 0
+- Draw: 3
+- Win: 6
+
+The first letter in the input is what your opponent is going to play.
+`A`for Rock, `B` for Paper, and `C` for Scissors.
+
+Before the elf can tell you what the second letter means, they leave.
+
+## Part 1
+
+Winning every round would be suspicious, so whatever that second letter is, it has to be important.
+
+You assume the second letter is the shape you should play.
+`X`for Rock, `Y` for Paper, and `Z` for Scissors.
+
+If "Rock", "Paper", and "Scissors" have positions in a list.
+
+- To win, move 1 position to the right (and wrap around from "Scissors" to "Rock"!)
+- To draw, keep the same position
+- To lose, move 1 position to the left (and wrap around from "Rock" to "Scissors"!)
+
+So I translated both `A`, `B`, `C`, and `X`, `Y`, `Z` to `0`, `1`, and `2` respectively.
+Thankfully, both ABC and XYZ are sequences where the [ASCII](https://en.wikipedia.org/wiki/ASCII) value of a letter increases by 1 each step.
+
+- The value for the _shape_ the opponent plays is known.
+- The value for the _shape_ I play is known.
+- To calculate the score for this round, we need to know the _outcome_ of the round.
+
+With those two pieces of information a game of Rock, Paper, Scissors can be expressed as the following equation:
+
+`outcome = my_shape - opponent_shape + 1 (mod 3)`
+
+This expresses `outcome` as a number from 0 to 2:
+- 0 for loss
+- 1 for draw
+- 2 for win
+
+<Aside variant="info">
+The `mod 3` handles the wrapping around logic.
+</Aside>
+
+```rust title=day_02.rs
+pub fn part_1() -> String {
+    let input = std::fs::read_to_string("src/day02.txt").unwrap();
+
+    input
+        .lines()
+        // map every line to the score for that round
+        .map(|line| {
+            // transform A B C and X Y Z to 0 1 2 respectively by using their ASCII order
+            let bytes = line.as_bytes();
+            let left = (bytes[0] - b'A') as i8;
+            let right = (bytes[2] - b'X') as i8;
+
+            // 0 for rock, 1 for paper, 2 for scissors
+            // 0 for loss, 1 for draw, 2 for win
+            let opponent_shape = left;
+            let my_shape = right;
+            let outcome = (my_shape - opponent_shape + 1).rem_euclid(3);
+
+            let shape_score = my_shape + 1;
+            let outcome_score = 3 * outcome;
+            (shape_score + outcome_score) as u32
+        })
+        .sum::<u32>()
+        .to_string()
+}
+```
+
+## Part 2
+
+The elf returns and tells you that the second letter in the input is the desired _outcome_.
+`X` for loss, `Y` for draw, `Z` for win.
+
+- The value for the _shape_ the opponent plays is known.
+- The value for the _outcome_ of the round is known.
+- To calculate the score for this round, we need to know the _shape_ we need to play.
+
+We rearrange the equation from part1 to solve for `my_shape` instead of `outcome`:
+
+`my_shape = opponent_shape - 1 + outcome (mod 3)`
+
+<Aside variant="info">
+The `mod 3` handles the wrapping around logic.
+</Aside>
+
+```rust title=day_02.rs
+pub fn part_2() -> String {
+    let input = std::fs::read_to_string("src/day02.txt").unwrap();
+
+    input
+        .lines()
+        // map every line to the score for that round
+        .map(|line| {
+            // transform A B C and X Y Z to 0 1 2 respectively by using their ASCII order
+            let bytes = line.as_bytes();
+            let left = (bytes[0] - b'A') as i8;
+            let right = (bytes[2] - b'X') as i8;
+
+            // 0 for rock, 1 for paper, 2 for scissors
+            // 0 for loss, 1 for draw, 2 for win
+            let opponent_shape = left;
+            let outcome = right;
+            let my_shape = (opponent_shape - 1 + outcome).rem_euclid(3);
+
+            let shape_score = my_shape + 1;
+            let outcome_score = 3 * outcome;
+            (shape_score + outcome_score) as u32
+        })
+        .sum::<u32>()
+        .to_string()
+}
+```
