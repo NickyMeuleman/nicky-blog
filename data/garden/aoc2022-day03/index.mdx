@@ -8,7 +8,7 @@ series: "Advent of Code 2022"
 
 ## Day 3: Rucksack Reorganization
 
-https://adventofcode.com/2022/day/2
+https://adventofcode.com/2022/day/3
 
 <Aside>
 TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_03.rs)
@@ -33,8 +33,9 @@ CrZsJsPPZsGzwwsLwLmpwMDw
 ## Part 1
 
 - Each backpack has 2 equally sized compartments.
-- Each elf if carrying an even number of items.
+- Each elf is carrying an even number of items.
 - The amount of items stored in each compartment is equal.
+- The first half of the characters represent items in the first compartment, while the second half of the characters represent items in the second compartment.
 
 All items of a given type are meant to go into exactly one of the two compartments.
 The Elf that did the packing failed to follow this rule for exactly one item type per rucksack.
@@ -78,9 +79,10 @@ left.iter()
 ```
 
 With the mispacked item found, all that is left is converting it to a priority.
-As with day2, I'll use the fact that for both `a` to `z` and `A` to `Z` every value in that sequence has an incrementing [ASCII](https://en.wikipedia.org/wiki/ASCII) values.
+As with day2, I'll use the fact that for both `a` to `z` and `A` to `Z` every value in that sequence has an incrementing [ASCII](https://en.wikipedia.org/wiki/ASCII) value.
 
 That means I can map `a` to `z` into 0 to 25.
+
 Adding 1 each time to get to the numbers the question gives us.
 
 Same thing for `A` to `Z`, but instead of adding 1, I add 27.
