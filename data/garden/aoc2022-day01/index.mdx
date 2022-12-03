@@ -58,8 +58,8 @@ Now, every element is the sum a single elf is carrying.
 Find the maximum of those sums.
 
 ```rust title=day_01.rs
-fn part_1() -> u32 {
-    let input = std::fs::read_to_string("src/day_01.txt").unwrap();
+pub fn part_1() -> u32 {
+    let input = std::fs::read_to_string("src/day01.txt").unwrap();
 
     input
     .split("\n\n")
@@ -104,8 +104,8 @@ Sum those.
 ```rust title=day_01.rs
 use itertools::Itertools;
 
-pub fn part2() -> u32 {
-    let input = std::fs::read_to_string("src/day_01.txt").unwrap();
+pub fn part_2() -> u32 {
+    let input = std::fs::read_to_string("src/day01.txt").unwrap();
 
     input
     .split("\n\n")
@@ -119,3 +119,4 @@ pub fn part2() -> u32 {
     .take(3)
     .sum::<u32>()
 }
+```
