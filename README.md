@@ -16,3 +16,8 @@ Primarily home to my blog, using [my Gatsby blog theme](https://github.com/Nicky
 - [ ] More sections for index page. (email? Newsletter? Something about racing 🏎?)
 - [ ] RSS feed
 - [ ] Simpler analytics, or none. I'm only interested in amount of visitors, roughly.
+
+Remove `.trim()` here:
+https://github.com/NickyMeuleman/gatsby-theme-nicky-blog/blob/291e16080135b570d065026fde9decc183956ccb/theme/src/components/CodeBlock.tsx#L97
+
+Caused Advent of Code input that starts with significant spaces to be changed.

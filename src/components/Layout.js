@@ -21,7 +21,7 @@ const preToCodeBlock = (preProps) => {
     const match = className.match(/language-([\0-\uFFFF]*)/);
 
     return {
-      codeString: codeString?.trim() ?? ``,
+      codeString: codeString ?? ``,
       className: className,
       language: match !== null ? match[1] : ``,
       ...props,
@@ -38,6 +38,7 @@ const mdxComponents = {
   blockquote: BlockQuote,
   pre: (preProps) => {
     const props = preToCodeBlock(preProps);
+    console.log({ preProps, props });
     // if there's a codeString and some props, we passed the test
     if (props) {
       return <CodeBlock {...props} />;
