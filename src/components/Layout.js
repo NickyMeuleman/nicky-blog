@@ -38,7 +38,6 @@ const mdxComponents = {
   blockquote: BlockQuote,
   pre: (preProps) => {
     const props = preToCodeBlock(preProps);
-    console.log({ preProps, props });
     // if there's a codeString and some props, we passed the test
     if (props) {
       return <CodeBlock {...props} />;

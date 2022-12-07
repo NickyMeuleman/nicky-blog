@@ -1,0 +1,216 @@
+---
+title: "Advent of Code 2022 Day 7"
+date: "2022-12-07"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+---
+
+## Day 7: No Space Left On Device
+
+https://adventofcode.com/2022/day/7
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_07.rs)
+</Aside>
+
+Yesterday, we got a communication device from an elf.
+
+It needs a software update and there is not enough free space to apply it.
+
+We browse around the file system using the command line and record what it displays.
+That's our puzzle input for today.
+
+An example input looks like this:
+
+```txt title=input.txt
+$ cd /
+$ ls
+dir a
+14848514 b.txt
+8504156 c.dat
+dir d
+$ cd a
+$ ls
+dir e
+29116 f
+2557 g
+62596 h.lst
+$ cd e
+$ ls
+584 i
+$ cd ..
+$ cd ..
+$ cd d
+$ ls
+4060174 j
+8033020 d.log
+5626152 d.ext
+7214296 k
+```
+
+A line that starts with a `$` indicates a command we typed.
+
+- `cd` means **change directory**, it changes the current directory that future commands affect.
+    - `cd ..` goes **up** a directory (to the parent directory).
+    - `cd X` moves **down** a directory, to the child directory named `X`.
+    - `cd /` is a special case of `cd X` where the current directory moves all the way up, to the root of the file tree.
+- `ls` means **list**, it prints all files and directories the current directory contains.
+
+The files and directories shown by `ls` are represented as seperate lines in the input.
+
+- Files start with the size of a file, followed by a space, and then the name of the file.
+    - So line `123 abc` is a file that has a size of `123`, and is named `abc`.
+- Directories start with `dir`, followed by a space, and then the name of the directory.
+    - So line `dir xyz` is a directory named `xyz`.
+
+With the input, we can completely map out the filesystem starting at the root directory, `/`.
+
+The total size of a directory is the sum of the sizes of all the files it contains, including the ones that are inside subfolders.
+
+
+## Part 1
+
+The question asks to find the sum of all directories with a size of **at most 100000**.
+
+
+My goal was to build up a map of all directories where the key is a path, and the value is the size of the directory at that path.
+Then I could filter out every entry that is too big, and sum up the remaining ones.
+
+```rust
+sizes
+    .values()
+    .filter(|size| *size <= 100_000)
+    .sum()
+```
+
+I kept track of 2 variables.
+- One that holds the map of path to size. (the `HashMap` called `sizes`)
+- One with a list of all paths that are affected if we encounter a new file. (the `Vec` called `affected`)
+
+If we encounter a file, then its size should be added to all paths above it.
+
+- Every time I `cd` **down**, the name gets added to the end of `affected`.
+- Every time I `cd` **up**, the last item in `affected` gets removed.
+
+Every file I encounter, I add its size to all paths that are affected.
+
+I loop through `affected` to construct the affected paths, and add the size to that path's entry in `sizes`.
+
+The affected path can be built by constructing a path from increasing amounts of items in `affected`.
+
+For example, if `affected` was `["/", "a", "b", "a"]`, the affected paths would be:
+- `"/"`
+- `"/a"`
+- `"/a/b"`
+- `"/a/b/a"`
+
+I did this by using [a `PathBuf`](https://doc.rust-lang.org/std/path/struct.PathBuf.html), but any method will do (if this were JavaScript, I'd reach for [`path.join`](https://nodejs.org/api/path.html#pathjoinpaths)).
+
+```rust title=day_07.rs
+pub fn part_1() -> u32 {
+    let input = std::fs::read_to_string("src/day07.txt").unwrap();
+    let mut sizes = HashMap::new();
+    let mut affected = Vec::new();
+
+    for line in input.lines() {
+        if line.starts_with("$ ls") || line.starts_with("dir") {
+            continue;
+        }
+
+        let parts: Vec<_> = line.split_whitespace().collect();
+        match parts[..] {
+            ["$", "cd", ".."] => {
+                affected.pop();
+            }
+            ["$", "cd", name] => {
+                affected.push(name);
+            }
+            [size, _name] => {
+                let size: u32 = size.parse().unwrap();
+                for idx in 0..affected.len() {
+                    let path = PathBuf::from_iter(&affected[..=idx]);
+                    *sizes.entry(path).or_insert(0) += size;
+                }
+            }
+            _ => {}
+        };
+    }
+
+    sizes
+        .into_values()
+        .filter(|size| *size <= 100_000)
+        .sum()
+}
+```
+
+## Part 2
+
+- The size of the filesystem is 70000000.
+- The amount of unused space you need for the update is 30000000.
+
+The question asks to find the size of the smallest directory you can delete to free enough space.
+
+The part where the map of sizes is created is identical to part1.
+
+We keep every directory that would result in enough free space if it's deleted.
+
+The minimum of those options is the answer to part2!
+
+```rust
+let disk = 70_000_000;
+let needed = 30_000_000;
+let root = sizes.get(&PathBuf::from("/")).unwrap();
+let available = disk - root;
+
+sizes
+    .into_values()
+    .filter(|size| available + size >= needed)
+    .min()
+    .unwrap()
+```
+
+```rust title=day_07.rs
+pub fn part_2() -> u32 {
+    let input = std::fs::read_to_string("src/day07.txt").unwrap();
+
+    let mut sizes = HashMap::new();
+    let mut affected = Vec::new();
+
+    for line in input.lines() {
+        if line.starts_with("$ ls") || line.starts_with("dir") {
+            continue;
+        }
+
+        let parts: Vec<_> = line.split_whitespace().collect();
+        match parts[..] {
+            ["$", "cd", ".."] => {
+                affected.pop();
+            }
+            ["$", "cd", name] => {
+                affected.push(name);
+            }
+            [size, _name] => {
+                let size: u32 = size.parse().unwrap();
+                for idx in 0..affected.len() {
+                    let path = PathBuf::from_iter(&affected[..=idx]);
+                    *sizes.entry(path).or_insert(0) += size;
+                }
+            }
+            _ => {}
+        };
+    }
+
+    let disk = 70_000_000;
+    let needed = 30_000_000;
+    let root = sizes.get(&PathBuf::from("/")).unwrap();
+    let available = disk - root;
+
+    sizes
+        .into_values()
+        .filter(|size| available + size >= needed)
+        .min()
+        .unwrap()
+}
+```
