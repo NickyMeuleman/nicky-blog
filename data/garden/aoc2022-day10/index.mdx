@@ -54,12 +54,9 @@ addx -5
     - start: `addx -5` continues executing. `X` is still 4
     - end: `addx -5` finishes executing, subtracting 5 from `X` (`X` is -1)
 
-
-
 ## Part 1
 
 The **signal strength** is the cycle number multiplied by the value in `X` **during** a cycle. (not after!)
-
 
 The question asks to find the sum of the signal strength during the 20th, 60th, 100th, 140th, 180th, and 220th cycles.
 
@@ -72,7 +69,8 @@ That means we have to add the signal strength **during** a cycle to a total when
 - the `total` starts at 0
 - whenever `cycle % 40 == 20`, add `cycle * x` to `total`
 
-Every instruction completes before an other one is executed.
+Every instruction completes before an other one starts.
+
 So for `noop`, the `cycle` counter gets incremented once.
 For `addx`, the cycle counter gets incremented twice.
 
@@ -130,17 +128,17 @@ pub fn part_1() -> i32 {
 
 Part 2 is about figuring out what the broken screen would have displayed given the instructions in your input.
 
-The `X` register controls horizontal middle of a 3 block wide sprite.
+The `X` register controls the horizontal middle of a 3 block wide sprite.
 
-There is no concept of vertical position.
+There is no concept of a vertical position.
 
 - The screen and the CPU are tied to the same clock cycles.
-- The screen draws a pixel every cycle. It's position incrementing by one every cycle.
+- The screen draws a pixel every cycle. Its position incrementing by one every cycle.
 - If any of the 3 blocks of the sprite is at the position the screen is currently drawing, a lit pixel is drawn, else a dim one.
 
 The screen is 40 pixels wide and 6 high.
 
-Some constant that are mentioned in the question:
+Some constants that are mentioned in the question:
 
 ```rust
 const COLS: usize = 40;
@@ -148,11 +146,11 @@ const ROWS: usize = 6;
 const SPRITE_WIDTH: u32 = 3;
 ```
 
-It draws left to right, top to button.
+It draws left to right, top to bottom.
 Every time it begins drawing a new row, it starts at the left edge again.
 
 <Aside variant="danger">
-    The `cycle` starts at 1, and the index on the `screen` start at 0!
+    The `cycle` starts at 1, and the index on the `screen` starts at 0!
 </Aside>
 
 We can write a small helper function to determine if a pixel should be lit or dim.
@@ -172,7 +170,7 @@ fn get_pixel(cycle: usize, x: i32) -> char {
 }
 ```
 
-We represent the screen as a big a array of length `ROWS * COLS`.
+We represent the screen as a big array of length `ROWS * COLS`.
 Each item in that array is a pixel.
 
 Our initial setup for the variables we keep track of in part2:
@@ -190,11 +188,13 @@ At the end, we have a filled `screen` array.
 As a fun trick, you can end part 2 here, print that array as a string and resize your terminal until you can read it (so until it's 40 characters wide).
 Line wrapping will do the trick.
 
-My screen is larger so I split the array up in chunks of `COLS`, converted each chunk to a string, and joined those strings with a newline.
+A more universal solution involves splitting the array into chunks of `COLS` long,
+converted each chunk to a string,
+and joining those strings with a newline.
 
 ```rust
 let image = screen
-    .chunks(40)
+    .chunks(COLS)
     .map(|row| row.iter().collect())
     .collect::<Vec<String>>()
     .join("\n");
