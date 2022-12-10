@@ -1,0 +1,247 @@
+---
+title: "Advent of Code 2022 Day 10"
+date: "2022-12-10"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+---
+
+## Day 10: Cathode-Ray Tube
+
+https://adventofcode.com/2022/day/10
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_10.rs)
+</Aside>
+
+After falling from the bridge yesterday, you want to use the communication device from a few days ago to get in touch with the elves.
+
+The screen broke, but the CPU still works.
+
+The screen and CPU are both driven by a **clock circuit**, each tick of the clock is called a **cycle**.
+
+The CPU has a single register (a place that stores a number) named `X`, which **starts at 1**.
+
+It supports 2 instructions:
+
+1. `addx N` takes 2 cycles to complete. **After** two cycles, the number `N` gets added to the `X` register.
+2. `noop` takes 1 cycle to complete. It does nothing.
+
+Today's input is a list of instructions for the CPU.
+
+An example input looks like this:
+
+```txt title=input.txt
+noop
+addx 3
+addx -5
+```
+
+1. The first cycle:
+    - start: `noop` begins executing. `X` is 1 (the starting value).
+    - end: `noop` finishes executing, doing nothing (`X` is 1)
+2. The second cycle:
+    - start: `addx 3` begins executing. `X` is 1
+    - end: nothing finishes executing, doing nothing (`X` is 1)
+3. The third cycle:
+    - start: `addx 3` continues executing. `X` is still 1
+    - end: `addx 3` finishes executing, adding 3 to `X` (`X` is 4)
+4. The fourth cycle:
+    - start: `addx -5` begins executing. `X` is 4
+    - end: nothing finishes executing, doing nothing (`X` is 4)
+5. The fifth cycle:
+    - start: `addx -5` continues executing. `X` is still 4
+    - end: `addx -5` finishes executing, subtracting 5 from `X` (`X` is -1)
+
+
+
+## Part 1
+
+The **signal strength** is the cycle number multiplied by the value in `X` **during** a cycle. (not after!)
+
+
+The question asks to find the sum of the signal strength during the 20th, 60th, 100th, 140th, 180th, and 220th cycles.
+
+That's the 20th cycle and every 40 cycles after that.
+
+That means we have to add the signal strength **during** a cycle to a total whenever `cycle % 40 == 20` (up to 220).
+
+- `X` starts at 1
+- `cycle` starts at 1 (I know, an index starting at 1? The humanity!)
+- the `total` starts at 0
+- whenever `cycle % 40 == 20`, add `cycle * x` to `total`
+
+Every instruction completes before an other one is executed.
+So for `noop`, the `cycle` counter gets incremented once.
+For `addx`, the cycle counter gets incremented twice.
+
+In pseudocode, that would be:
+
+```rust title=pseudocode.rs
+let mut x = 1;
+let mut cycle = 1;
+let mut total = 0;
+
+for instruction in all_instructions {
+    // if noop or addx:
+    // check signal strength
+    // increment cycle
+
+    // if addx:
+    // check signal strength
+    // add to x and increment cycle
+}
+```
+
+This maps directly to the solution for part1!
+
+### Final code
+
+```rust title=day_10.rs
+pub fn part_1() -> i32 {
+    let input = std::fs::read_to_string("src/day10.txt").unwrap();
+
+    let mut x = 1;
+    let mut cycle = 1;
+    let mut total = 0;
+
+    for line in input.lines() {
+        if cycle % 40 == 20 {
+            total += cycle * x;
+        }
+        cycle += 1;
+
+        if let Some(("addx", num)) = line.split_once(' ') {
+            if cycle % 40 == 20 {
+                total += cycle * x;
+            }
+            let num: i32 = num.parse().unwrap();
+            x += num;
+            cycle += 1;
+        }
+    }
+
+    total
+}
+```
+
+## Part 2
+
+Part 2 is about figuring out what the broken screen would have displayed given the instructions in your input.
+
+The `X` register controls horizontal middle of a 3 block wide sprite.
+
+There is no concept of vertical position.
+
+- The screen and the CPU are tied to the same clock cycles.
+- The screen draws a pixel every cycle. It's position incrementing by one every cycle.
+- If any of the 3 blocks of the sprite is at the position the screen is currently drawing, a lit pixel is drawn, else a dim one.
+
+The screen is 40 pixels wide and 6 high.
+
+Some constant that are mentioned in the question:
+
+```rust
+const COLS: usize = 40;
+const ROWS: usize = 6;
+const SPRITE_WIDTH: u32 = 3;
+```
+
+It draws left to right, top to button.
+Every time it begins drawing a new row, it starts at the left edge again.
+
+<Aside variant="danger">
+    The `cycle` starts at 1, and the index on the `screen` start at 0!
+</Aside>
+
+We can write a small helper function to determine if a pixel should be lit or dim.
+
+The function takes in the current value of `x`, and the current `cycle`.
+
+If the 3 wide sprite is at the location the screen is currently drawing, the pixel is lit.
+
+```rust
+fn get_pixel(cycle: usize, x: i32) -> char {
+    let curr_col = (cycle - 1) % COLS;
+    if (curr_col as i32).abs_diff(x) <= SPRITE_WIDTH / 2 {
+        '█'
+    } else {
+        ' '
+    }
+}
+```
+
+We represent the screen as a big a array of length `ROWS * COLS`.
+Each item in that array is a pixel.
+
+Our initial setup for the variables we keep track of in part2:
+
+```rust
+let mut x = 1;
+let mut cycle = 1;
+let mut screen = [' '; COLS * ROWS];
+```
+
+Instead of checking the signal strength during each cycle, we draw a pixel to the screen.
+
+At the end, we have a filled `screen` array.
+
+As a fun trick, you can end part 2 here, print that array as a string and resize your terminal until you can read it (so until it's 40 characters wide).
+Line wrapping will do the trick.
+
+My screen is larger so I split the array up in chunks of `COLS`, converted each chunk to a string, and joined those strings with a newline.
+
+```rust
+let image = screen
+    .chunks(40)
+    .map(|row| row.iter().collect())
+    .collect::<Vec<String>>()
+    .join("\n");
+```
+
+Put everything together and presto, Advent of Code 2022 day10 part2 is complete!
+
+### Final code
+
+```rust title=day_10.rs
+const COLS: usize = 40;
+const ROWS: usize = 6;
+const SPRITE_WIDTH: u32 = 3;
+
+fn get_pixel(cycle: usize, x: i32) -> char {
+    let curr_col = (cycle - 1) % COLS;
+    if (curr_col as i32).abs_diff(x) <= SPRITE_WIDTH / 2 {
+        '█'
+    } else {
+        ' '
+    }
+}
+
+pub fn part_2() -> String {
+    let input = std::fs::read_to_string("src/day10.txt").unwrap();
+    let mut x = 1;
+    let mut cycle = 1;
+    let mut screen = [' '; COLS * ROWS];
+
+    for line in input.lines() {
+        screen[cycle - 1] = get_pixel(cycle, x);
+        cycle += 1;
+
+        if let Some(("addx", num)) = line.split_once(' ') {
+            screen[cycle - 1] = get_pixel(cycle, x);
+            cycle += 1;
+            let num: i32 = num.parse().unwrap();
+            x += num;
+        }
+    }
+
+    let image = screen
+        .chunks(COLS)
+        .map(|row| row.iter().collect())
+        .collect::<Vec<String>>()
+        .join('\n');
+
+    image
+}
+```
