@@ -2,8 +2,8 @@
 // !WARNING: paths have to be double quoted or there are weird errors
 // backticks are not allowed. because. why David K Piano, why?
 import { assign, createMachine } from "xstate";
-export const aocMachine =
-  /** @xstate-layout N4IgpgJg5mDOIC5QEMD2BjAss9ALAlgHZgB0A7vgC66oCulA6qgE4DWYzAxIqAA6qwq+VIR4gAHogCsAdgA0IAJ6IAzFIBsJGTPUAGAEwAOKVP0yALAE5D5gL62FaLDgLFyVXEzYcSsMJVpeTmYwZAhlJBB+QUphUUjJBH19cxIARjVzNMM1FJUrKQUI9Ut9EllLFRL9NOyZUvtHDGw8IlIKai92ZhJ8CAAbME48VAEwABFkCL4BIRExRI0VEnNzUxk1E2M0osR1GTLdQ2t9ww3KtP1GkCcW13aPLp8+weGaMYAxfEGxaLn40CJCypKQqSy6FS6eoqQxHSy7BA5NIkI76Ay6S5SI4yNLXW4uNruTosbq9AZDX6zWLzBKIYHlMEQqGVWHHBG1DEkdRSQyGNJZDRncwqPHNAluDqeEk+EJhIhQL6vdCDZDMRVgACKtDA2spMTiC0QaV0VhIvKkwsuwv0JwRNksDKkaSklmhJqhoucrQlj2lPVlEHl6uCoQgHAAMqgwpA9f9DQh6aDwZDoaz4Uo6at0uYcc60ZZTClPXdCZKnv7Q0HvkMAxwAKLMZgsWPUgESI1Q5Y1XSVWQyYwqDYI13I-sw9TCi1WXTqYvih7E7w9dDIfroWj9ZCUIYrtcbrcxyJ-VvxlQ1LTc9T6F058w1Szmdn38qyfSDtLg6yyOfehdSpckLu66btunAcE2zAtgatIIJcnKVFYaiXIYKT6Oo7IzroJApHCD78uozo-vcRL-qSQH7qBIxjJM0xRFS0GAkaeiaCcro6HUBiPhmsHZFIWgwscroqCoH7aERpa+gB5EgTu7x+OqUE0oxsHMSQrHaARZycRhtRmliBa8vyZh3uJPqLqSkoNhBbyjH4NGKW2QJZkmTKpnCCJ6HxaT1OoV4yE6FgGKZf7liRVksDZnzVg58bGj2Ky6BiPkFsKPYIvUMgkDCSXmH5V7csFJGhZKADKqD9PQcSRXZUwxTBZ6jpe14PhY95cRE2gOk61our5rp2A4Nxir+RV+iRZUVa21VgApR70Up7YIA1F4aM1t5tcOBFqSYuZWOog7CsFYGNiwACChD4AAtgeEAAPL0HVymVGUqylMkGyWio7LGGaJSwrUlhwcCR2wOVlUiOdV03fdlCPYtb1ZTiPaWL5JhVDs3HWGp+THH5Gh3mcIP+OqACShC8PQABKYAAGZw4kD58f5iXGqc145k+9iDYQqBhvAkT4iNkp0Iwfr00afKHP2H77BseiVBhOJZT2KSGARKsioNgvEWWY1+AEvDiwgpTpTOKIERkvlq7y-aFbrAEvGARtrMsePJjaehq-I3E6KknE4m+cXCoYduSaSAZVj8c36gtiRCth-a+f5No1IYw5ZCsMiJetZxXqH5k+NJB5GyjmW5WcWIlCakLphEtTcthLozjCLpGLiWvDTrYc+JZJ3LquwFbnE4WQdHcYwRkKRZRo-mDgRawWBhFrYVUlj9czxgDU0XpdwXPS9xBJA09W1NhCPRuT6kaj7KC7EL+1iBfthl7o1YuUYvnpE9x459jyeE+QiwtfWed9ZAP0RFtfIg5ShownBoT+xUPATXBm2Y8DF4b6GHKYFYV40Kwh0BiNYCCxZ-3QYkdQaduLmD5I3bQNhepvksMFI2wkERGGWLCXKVgWpGB7FILmtggA */
+export const aoc2022Machine =
+  /** @xstate-layout N4IgpgJg5mDOIC5QEMD2BjATABk5gtsugBYCWAdmAHQDupALsagK70DqqATgNZicDEAbWwBdRKAAOqWA1Kpy4kAA9EAVkwAaEAE9EARkwBOVVQBsADlyZzAZgAsAdifnMAX1da0WK4RIVqdIwcPHxUsGD0zBL8nGDIENrCYkggUjL0cgopKgh22KZUeqbFpnYGNqoVRVq6CAZGZjY46pWm2Hr57p4YOHi+ZJS0DMTBvJxUpBAANmD8JKjSYAAiyImiimmy8oo5bdiFNnqODhWqxg41+no2DlRl5qrY2HZ2mI92hl0gXr0ERAMBYajUKTGZzJiLABipBmSQ20i2WVAOQcRyo2EMpiM2FU5lsDnMhkudUwNkMVEJpnsmLJhMwpi+Px8-38QyCXDGE2mszhKU2GW22UQqLs6Mx2Nx+MJxIMhn2FUMhj0qjsxRs2HMDI83x6zL8g0CIw5IO5Qj0yUkCIFSOUiGKeioxlMKtUqj0ejx1R0iDl+xeqLw7raePMjN1fRZBqBxvGsXiFCg0LB6BmyE4SbAAEVmGAc7zLelMjsfViqI8nNdDgTUXoZQYTMq2vW8i6w94I-rAeyQrG4hAExmYn2+AAZVDxSD51JWotChAisVYuWSm7S711I42Ck2GwuUwON0ODFt379VmG4G9+PkRMw2ZxiB8ACinE4XCn-NnyP0z1FGqa1yWKYyqkjKeAFGUbo3EYpTPDYJ56gCbJGj2VDoMgUzoMwUzIPQszoZh2G4ZO6x8jOgrfgg9j7IY5h2DuFiVLgJx2MSliirudhnIYeAOMu8HakyHZIReMZoRhWE4Xh-B8G+nAfuRNo5Iq5L2DYVKumcGqaOuljkpgqq4jxuB4hqCHCee0aoQRknEeCCzhCsawWtOhYUbaCCGA4BSqN5DiYO6Sp5FixJUlu1FNGSLwYh65l-J2yGXuJhFSfhELhBmCluUpPpOFQDivBqth6NW7rElxtz0S2moPOqmAOHFZ5Rt2nKGi+cn2YsTlZYixa5PkhQlKU5SVG6pgyhU+ztLYFROI4ZJat07bxSJVmtcM7VcJ1GV3j11p9cFg0lGUpKjV6tRHJUjpnOqzrXKqdGNZGXYoetjAAMqoFMrCZNtyyrHtX4eZNjp0QxtXMfYdYDcYHz0RW6l4E9CWiahhqfd91p-ZlpEFr1c4g7R9HqRD9VQ+uipbni-m7oqdHXHo7jauQqCPvAKRCSt-jwtlfUALTjeuAvI6tjAsOwMY8-jlGvGxDqOEqw2nVUi06stTUvZeUv7XO7oOvkbrtFiFQq8STSYKD5gFcBpMNYJ4Zc81r2hOEkQSNrQM5CVtwGx0RTK2NYHqI6HrqEYHwBZqIuWS1JozB77k5K6+zezio0hvuYG7nc5gdKSO75HiqjR07SUPgOd4JzlCBW+YdxebdLg3OqqhgfSVCR6NrxW9Yxf2+rz2JWJNlEXhVd9fTjrqg9BnXCc5hsaU+V+8nRgwZ8-enoPqNvcQm2cOPutnOid1GwH536EYW55LnOLtBimpuJviEx874xta+XDJbZ1r74flE4B9qff2JtA7riOPVCklQygHg6LRLEJdNZiQ-nJKgAAzO8AAlPsf8yK8znAFW4ZN4at3AXYTUVB7BGEVL5eqlRQzPwsqXZBwwMY-Xcp+RO+g8q+zPqAi+dQMSVUPNgQ4mpRF93cEAA */
   createMachine(
     {
       context: {
@@ -20,8 +20,9 @@ export const aocMachine =
         renderSolution: false,
         queuedFile: null,
       },
-      id: "aocMachine",
+      id: "aoc2022machine",
       initial: "withoutWorker",
+
       on: {
         errorAnimatedOut: {
           actions: "stopRenderingError",
@@ -33,28 +34,30 @@ export const aocMachine =
           actions: "setFileInputRef",
         },
       },
+
       states: {
         withoutWorker: {
           always: {
             target: "withWorker",
           },
         },
+
         withWorker: {
+          initial: "setup",
           invoke: {
             src: "setupWorker",
           },
-          initial: "setup",
           states: {
             setup: {
               on: {
                 ready: {
-                  actions: "setWorker",
+                  actions: ["setWorker"],
                   target: "idle",
                 },
               },
             },
             idle: {
-              entry: "clearCalculationStatus",
+              entry: ["clearCalculationStatus"],
               always: [
                 {
                   cond: "hasQueuedFile",
@@ -75,20 +78,13 @@ export const aocMachine =
               },
             },
             readingFile: {
-              invoke: {
-                src: "readFile",
-              },
+              invoke: { src: "readFile" },
               on: {
-                clearFileQueue: {
-                  actions: "clearFileQueue",
-                },
-                readerLoaded: {
-                  actions: "setInput",
-                  target: "idle",
-                },
+                clearFileQueue: { actions: ["clearFileQueue"] },
+                readerLoaded: { actions: ["setInput"], target: "idle" },
                 readerError: {
-                  actions: "clearInput",
-                  target: "#aocMachine.withWorker.withError.fileReadError",
+                  actions: ["clearInput"],
+                  target: "#aoc2022machine.withWorker.withError.fileReadError",
                 },
               },
             },
@@ -103,7 +99,8 @@ export const aocMachine =
                   target: "withSolution",
                 },
                 error: {
-                  target: "#aocMachine.withWorker.withError.calculationError",
+                  target:
+                    "#aoc2022machine.withWorker.withError.calculationError",
                 },
                 chooseDay: {
                   actions: [
@@ -112,7 +109,7 @@ export const aocMachine =
                     "stopWorker",
                     "clearCalculationStatus",
                   ],
-                  target: "#aocMachine.withoutWorker",
+                  target: "#aoc2022machine.withoutWorker",
                 },
                 chooseFile: {
                   actions: [
@@ -121,7 +118,7 @@ export const aocMachine =
                     "clearCalculationStatus",
                     "queueFile",
                   ],
-                  target: "#aocMachine.withoutWorker",
+                  target: "#aoc2022machine.withoutWorker",
                 },
               },
             },
@@ -171,15 +168,16 @@ export const aocMachine =
       services: {
         setupWorker: (ctx, evt) => (callback, onReceive) => {
           const worker = new Worker(
-            new URL("../utils/worker.js", import.meta.url),
+            new URL("../utils/aoc2022-worker.js", import.meta.url),
             {
-              name: "AoCWorker",
+              name: "AoC2022Worker",
               type: "module",
             }
           );
           worker.onmessage = (msg) => {
             switch (msg.data.type) {
               case "ready": {
+                console.log("MACHINE WORKER: received ready");
                 callback({
                   type: "ready",
                   worker,
