@@ -216,7 +216,6 @@ const AoC2022Solver = ({ data }) => {
       fileInputRef,
     });
   }, [send]);
-
   return (
     <Layout>
       <SEO
@@ -371,7 +370,7 @@ const AoC2022Solver = ({ data }) => {
 
 export const aoc2021Query = graphql`
   query aoc2021Query {
-    file(name: { regex: "/aoc2021/" }) {
+    file(name: { regex: "/aoc2022/" }) {
       childImageSharp {
         original {
           src

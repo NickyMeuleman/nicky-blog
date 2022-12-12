@@ -76,6 +76,7 @@ const SEO = ({
       <title>{formattedTitle}</title>
       <meta name="description" content={metaDescription} />
       {metaImage && <meta name="image" content={metaImage} />}
+      {metaImage && <meta property="og:image" content={metaImage} />}
       <meta property="og:title" content={title || siteMetadata.title} />
       <meta property="og:url" content={url} />
       <meta property="og:description" content={metaDescription} />
