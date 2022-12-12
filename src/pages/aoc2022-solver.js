@@ -250,7 +250,7 @@ const AoC2022Solver = ({ data }) => {
               <option key="default" value="default">
                 Pick a day
               </option>
-              {Array(25)
+              {Array(12)
                 .fill()
                 .map((_, idx) => {
                   return <option key={`day-${idx + 1}`}>{idx + 1}</option>;
