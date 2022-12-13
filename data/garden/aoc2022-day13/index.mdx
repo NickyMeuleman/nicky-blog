@@ -1,0 +1,469 @@
+---
+title: "Advent of Code 2022 Day 13"
+date: "2022-12-13"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+---
+## Day 13: Distress Signal
+
+https://adventofcode.com/2022/day/13
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_13.rs)
+</Aside>
+
+You communication device is receiving a signal, it's a distress signal!
+
+It receives pairs of packets, and some of those pairs are out of order (because of course they are, it wouldn't be a puzzle if everything was hunky dory now would it?).
+
+You need to be able to identify when a pair is ordered wrong so you can swap the packets.
+
+Today's input are the pairs of packets you receive.
+
+An example input looks like this:
+
+```txt title=input.txt
+[1,1,3,1,1]
+[1,1,5,1,1]
+
+[[1],[2,3,4]]
+[[1],4]
+
+[9]
+[[8,7,6]]
+
+[[4,4],4,4]
+[[4,4],4,4,4]
+
+[7,7,7,7]
+[7,7,7]
+
+[]
+[3]
+
+[[[]]]
+[[]]
+
+[1,[2,[3,[4,[5,6,7]]]],8,9]
+[1,[2,[3,[4,[5,6,0]]]],8,9]
+```
+
+Each pair is seperated by an empty line.
+A packet is that array looking thing on a single line.
+And [they look familiar](https://adventofcode.com/2021/day/18).
+
+A packet consists of lists and integers.
+
+- A list starts with `[` and ends with `]`.
+- A list can be empty
+- Each item in a list is seperated by a `,`
+
+The two packets in a pair are called **left** and **right**.
+
+A pair where the left packet is **smaller** than the right packet is in the correct order.
+
+To determine which of two packets is smaller, there are a few rules:
+
+- If both values are integers, the lower integer is smaller.
+    - If both integers are identical, continue to the next part of the package.
+- If both values are lists, compare each value in the 2 lists step by step.
+    - If the left list runs out of values to compare first, it is smaller.
+    - If the right list runs out of values to compare first, it is smaller.
+- If one value is an integer and the other a list, turn the integer into a list of one integer, and run the comparison again.
+
+## Parsing
+
+I parsed the input into a list of pairs.
+Each item in a pair is a packet, so I used a `Packet` data structure.
+
+```rust
+enum Packet {
+    Num(u8),
+    List(Vec<Packet>),
+}
+```
+
+The main `parse` function splits the input in a double newline.
+Parses the 2 packets seperatly, and return a list of those pairs.
+
+```rust title=day_13.rs
+fn parse() -> Vec<[Packet; 2]> {
+    let input = std::fs::read_to_string("src/day13.txt").unwrap();
+
+    input
+        .split("\n\n")
+        .map(|pair| {
+            let mut lines = pair.lines();
+            let left = lines.next().unwrap();
+            let right = lines.next().unwrap();
+
+            [parse_packet(left), parse_packet(right)]
+        })
+        .collect()
+}
+```
+
+> Yeah, yeah, ... show us `parse_packet`!
+
+Now. If you wanted to be cheeky, every packet is valid [JSON](https://nl.wikipedia.org/wiki/JSON).
+So you could use your favourite way to parse JSON and call it a victory.
+
+I didn't.
+
+`parse_packet` takes a string, and returns a `Packet`.
+
+```rust
+fn parse_packet(s: &str) -> Packet {
+    let chars: Vec<_> = s.chars().collect();
+    // parse_list returns the first parsed packet and the rest of the input
+    // the rest of the input will be empty when it is done
+    let (packet, _) = parse_list(&chars);
+    packet
+}
+```
+
+It uses the `parse_list` function, what's that?
+
+It's one of 2 other helper functions.
+A packet is either a `Num(u8)` or a `Packet(Vec<Packet>)`.
+
+- The number variant gets parsed by `parse_num`.
+- The list variant gets parsed by `parse_num`.
+
+They both use the same pattern.
+It consumes a part of what is passed in, and returns the thing it parsed, and the remaining input after that thing.
+
+- for `parse_num` it returns `(Packet::Num(u8), &[char])`
+- for `parse_list` it returns `(Packet::List(Vec<Packet>, &[char])`
+
+Where that `&[char]` bit is the remaining input.
+
+At the very top, when we first call `parse_list` in `parse_packet`.
+We call `parse_list` on an entire packet, the remaining part will be empty.
+That's why I throw it away with that `_`.
+
+<Aside variant="info">
+This is a popular pattern.
+An example of this pattern implemented in a much more robust and universal way is the [`nom` crate](https://docs.rs/nom/7.1.1/nom/)
+</Aside>
+
+```rust
+fn parse_num(list: &[char]) -> (Packet, &[char]) {
+    // find the index where the first number ends
+    let mut i = 0;
+    while i < list.len() && list[i].is_ascii_digit() {
+        i += 1;
+    }
+
+    // parse the number
+    // uses math to concatenate numbers instead of turning them into a string first to parse that
+    let mut num = 0;
+    let mut offset = 1;
+    for c in list[..i].iter().rev() {
+        num += (*c as u8 - b'0') * offset;
+        offset *= 10;
+    }
+
+    // return the number and the rest of the packet
+    (Packet::Num(num), &list[i..])
+}
+
+fn parse_list(list: &[char]) -> (Packet, &[char]) {
+    // start by removing the starting [ of the passed in list
+    // at the end of this function, we remove the ending ] of the passed in list
+    let mut list = &list[1..];
+    let mut packets = Vec::new();
+
+    loop {
+        match list[0] {
+            // list ended, break the loop
+            ']' => break,
+            // skip over ,
+            ',' => list = &list[1..],
+            // beginning of new list, time for recursion to parse the inner list
+            '[' => {
+                let (packet, rest) = parse_list(list);
+                packets.push(packet);
+                list = rest;
+            }
+            // beginning of a number
+            _ => {
+                let (n, rest) = parse_num(list);
+                packets.push(n);
+                list = rest;
+            }
+        }
+    }
+
+    // return the parsed list and the remaining characters minus the ] that terminates the list this function just parsed
+    (Packet::List(packets), &list[1..])
+}
+```
+
+## Part 1
+
+The question asks what the sum of the indices of the pairs that arrived correctly is.
+
+<Aside variant="danger">
+It's one of those days again where Advent of Code insist indices start at 1.
+</Aside>
+
+in pseudocode:
+
+```rust title=pseudocode.rs
+pairs
+    .iter()
+    .positions(|[left, right]| left < right)
+    .map(|idx| idx + 1)
+    .sum()
+```
+
+It's that comparison where the next bit of interesting code happens.
+
+I wanted to tell my code how it can compare two `Packet`s.
+Make it understand what a less than operation means.
+
+The rules for such a comparison are described in the intro.
+
+### Helpers
+
+To make that comparison possible, I implemented [the `Ord` trait](https://doc.rust-lang.org/std/cmp/trait.Ord.html) in Rust.
+
+Basically, I wrote the code that Rust uses when you do a comparison.
+
+Turns out that you can not only compare 2 numbers, but you can compare 2 lists!
+And the logic it uses happens to be the same one described in the problem statement.
+That's convenient!
+
+I take the inner "thing" out of a `Packet`, and call them `a` and `b`.
+Both are either a `u8`, or a `Vec`.
+
+`a.cmp(b)`, and if only one of them is a vec, wrap the other in a vec and compare that instead!
+
+```rust
+#[derive(PartialEq, Eq)]
+enum Packet {
+    Num(u8),
+    List(Vec<Packet>),
+}
+
+impl Ord for Packet {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        match (self, other) {
+            (Self::List(a), Self::List(b)) => a.cmp(b),
+            (Self::List(a), Self::Num(b)) => a.cmp(&vec![Self::Num(*b)]),
+            (Self::Num(a), Self::List(b)) => vec![Self::Num(*a)].cmp(&b),
+            (Self::Num(a), Self::Num(b)) => a.cmp(b),
+        }
+    }
+}
+
+impl PartialOrd for Packet {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+```
+
+With this trait implemented, that skeleton code from earlier works.
+
+### Final code
+
+```rust title=day_13.rs
+use itertools::Itertools;
+
+pub fn part_1() -> usize {
+    let pairs = parse();
+
+    pairs
+        .iter()
+        .positions(|[left, right]| left < right)
+        .map(|idx| idx + 1)
+        .sum()
+}
+```
+
+## Part 2
+
+We need to put all packets in the correct order now.
+Ignoring the empty lines.
+
+Two **divider packets** are inserted too.
+
+```txt
+[[2]]
+[[6]]
+```
+
+The question asks what the **decoder key** is.
+
+The **decoder key** is the product of the indices of those 2 divider packets when all packets are in the correct order.
+
+I reused the parsing logic for pairs.
+Since we only care about individual packages, I turned the list of pair into a single list with `flatten`.
+
+I parsed those 2 divider packets and inserted them into the list of packets.
+
+Then, sort all packets and search for the divider packets.
+
+The product of their indices (reminder: 1 based indices!) is the answer to part2!
+
+### Final code
+
+```rust title=day_13.rs
+use itertools::Itertools;
+
+pub fn part_2() -> usize {
+    let pairs = parse();
+    let mut packets: Vec<_> = pairs.iter().flatten().collect();
+
+    let divider_1 = parse_packet("[[2]]");
+    let divider_2 = parse_packet("[[6]]");
+
+    packets.push(&divider_1);
+    packets.push(&divider_2);
+
+    packets.sort_unstable();
+
+    packets
+        .into_iter()
+        .positions(|packet| packet == &divider_1 || packet == &divider_2)
+        .map(|idx| idx + 1)
+        .product()
+}
+```
+
+## Final code
+
+```rust title=day_13.rs numberLines
+use std::cmp::Ordering;
+
+use itertools::Itertools;
+
+#[derive(Debug, PartialEq, Clone, Eq)]
+enum Packet {
+    Num(u8),
+    List(Vec<Packet>),
+}
+
+impl Ord for Packet {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        match (self, other) {
+            (Self::List(a), Self::List(b)) => a.cmp(b),
+            (Self::List(a), Self::Num(b)) => a.cmp(&vec![Self::Num(*b)]),
+            (Self::Num(a), Self::List(b)) => vec![Self::Num(*a)].cmp(&b),
+            (Self::Num(a), Self::Num(b)) => a.cmp(b),
+        }
+    }
+}
+
+impl PartialOrd for Packet {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+fn parse() -> Vec<[Packet; 2]> {
+    let input = std::fs::read_to_string("src/day13.txt").unwrap();
+
+    input
+        .split("\n\n")
+        .map(|pair| {
+            let mut lines = pair.lines();
+            let left = lines.next().unwrap();
+            let right = lines.next().unwrap();
+
+            [parse_packet(left), parse_packet(right)]
+        })
+        .collect()
+}
+
+fn parse_packet(s: &str) -> Packet {
+    let chars: Vec<_> = s.chars().collect();
+    // parse_list returns the first parsed packet and the rest of the input
+    // the rest of the input will be empty when it is done
+    let (packet, _) = parse_list(&chars);
+    packet
+}
+
+fn parse_num(list: &[char]) -> (Packet, &[char]) {
+    // find the index where the first number ends
+    let mut i = 0;
+    while i < list.len() && list[i].is_ascii_digit() {
+        i += 1;
+    }
+
+    // parse the number
+    // uses math to concatenate numbers instead of turning them into a string first to parse that
+    let mut num = 0;
+    let mut offset = 1;
+    for c in list[..i].iter().rev() {
+        num += (*c as u8 - b'0') * offset;
+        offset *= 10;
+    }
+
+    // return the number and the rest of the packet
+    (Packet::Num(num), &list[i..])
+}
+
+fn parse_list(list: &[char]) -> (Packet, &[char]) {
+    // start by removing the starting [ of the passed in list
+    // at the end of this function, we remove the ending ] of the passed in list
+    let mut list = &list[1..];
+    let mut packets = Vec::new();
+
+    loop {
+        match list[0] {
+            // list ended, break the loop
+            ']' => break,
+            // skip over ,
+            ',' => list = &list[1..],
+            // beginning of new list, time for recursion to parse the inner list
+            '[' => {
+                let (packet, rest) = parse_list(list);
+                packets.push(packet);
+                list = rest;
+            }
+            // beginning of a number
+            _ => {
+                let (n, rest) = parse_num(list);
+                packets.push(n);
+                list = rest;
+            }
+        }
+    }
+
+    // return the parsed list and the remaining characters minus the ] that terminates the list this just parsed
+    (Packet::List(packets), &list[1..])
+}
+
+pub fn part_1() -> usize {
+    let pairs = parse();
+
+    pairs
+        .iter()
+        .positions(|[left, right]| left < right)
+        .map(|idx| idx + 1)
+        .sum()
+}
+
+pub fn part_2() -> usize {
+    let pairs = parse();
+    let mut packets: Vec<_> = pairs.iter().flatten().collect();
+
+    let divider_1 = parse_packet("[[2]]");
+    let divider_2 = parse_packet("[[6]]");
+
+    packets.push(&divider_1);
+    packets.push(&divider_2);
+
+    packets.sort_unstable();
+
+    packets
+        .into_iter()
+        .positions(|packet| packet == &divider_1 || packet == &divider_2)
+        .map(|idx| idx + 1)
+        .product()
+}
+```
