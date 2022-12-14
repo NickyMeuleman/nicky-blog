@@ -126,7 +126,7 @@ fn parse_packet(s: &str) -> Packet {
 It uses the `parse_list` function, what's that?
 
 It's one of 2 other helper functions.
-A packet is either a `Num(u8)` or a `Packet(Vec<Packet>)`.
+A packet is either a `Num(u8)` or a `List(Vec<Packet>)`.
 
 - The number variant gets parsed by `parse_num`.
 - The list variant gets parsed by `parse_num`.

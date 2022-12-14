@@ -11,6 +11,7 @@ init().then((res) => {
 
 self.onmessage = async ({ data }) => {
   try {
+    console.log(data);
     const startTime = performance.now();
     const result = await solve(data.day, data.input);
     self.postMessage({
