@@ -1,0 +1,437 @@
+---
+title: "Advent of Code 2022 Day 18"
+date: "2022-12-18"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+---
+## Day 18: Boiling Boulders
+
+https://adventofcode.com/2022/day/18
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_18.rs)
+</Aside>
+
+You exit the vulcano.
+
+A piece of lava (it's above ground now, magma no more!) flies past you.
+
+Your device quickly scans it.
+
+It's in low resolution and it approximates the droplet of lava as a bunch of **1x1x1 cubes on a 3D grid**.
+
+That's todays input.
+
+An example input looks like this:
+
+```txt title=input.txt
+2,2,2
+1,2,2
+3,2,2
+2,1,2
+2,3,2
+2,2,1
+2,2,3
+2,2,4
+2,2,6
+1,2,5
+3,2,5
+2,1,5
+2,3,5
+```
+
+## Parsing
+
+That's right, it's time for `Coord`!
+3D ones today!
+
+I want to put all the coordinates in a set, so I derive a few things.
+Coordinates can get negative, so signed integers as coordinates it is!
+
+```rust title=day_18.rs
+use std::collections::HashSet;
+
+#[derive(Hash, PartialEq, Eq, Clone, Copy, Default)]
+struct Coord {
+    x: i16,
+    y: i16,
+    z: i16,
+}
+
+fn parse() -> HashSet<Coord> {
+    let input = std::fs::read_to_string("src/day18.txt").unwrap();
+
+    input
+        .lines()
+        .map(|line| {
+            let mut nums = line.split(",").map(|s| s.parse().unwrap());
+            Coord {
+                x: nums.next().unwrap(),
+                y: nums.next().unwrap(),
+                z: nums.next().unwrap(),
+            }
+        })
+        .collect()
+}
+```
+
+## Part 1
+
+The question asks what the surface area of your scanned lava droplet is.
+
+To get that surface area, count the number of sides of each cube that are not immediately connected to another cube.
+
+For every coordinate in the droplet, I want to count the amount of neighbouring coordinates that are not in the droplet.
+
+In skeleton code:
+
+```rust title=pseudocode.rs
+let cubes = parse();
+
+cubes
+    .iter()
+    .flat_map(|coord| coord.neighbours())
+    // only keep neighbours that are not a cube
+    .filter(|coord| !cubes.contains(coord))
+    .count()
+```
+
+### Helpers
+
+The goal is to define that `neighbours` method from the skeleton code.
+
+But first, an `enum` to represent the three dimensions!
+
+```rust
+enum Dimension {
+    X,
+    Y,
+    Z,
+}
+```
+
+Ok, ok. NOW the `neighbours` method.
+
+```rust
+impl Coord {
+    fn neighbours(&self) -> Vec<Coord> {
+        let mut neighbours = Vec::new();
+
+        // loop over every dimension in a cube
+        for dimension in [Dimension::X, Dimension::Y, Dimension::Z] {
+            // add or remove 1 to coordinate in current dimension
+            for offset in [-1, 1] {
+                // resulting coordinates are from the coord to a side of a cube
+                let mut neighbour = self.clone();
+                match dimension {
+                    Dimension::X => neighbour.x += offset,
+                    Dimension::Y => neighbour.y += offset,
+                    Dimension::Z => neighbour.z += offset,
+                }
+                neighbours.push(neighbour);
+            }
+        }
+
+        neighbours
+    }
+}
+```
+
+Here's an alternative that returns an iterator, uses `Itertools`, and uses the [struct update syntax](https://doc.rust-lang.org/book/ch05-01-defining-structs.html#creating-instances-from-other-instances-with-struct-update-syntax)
+
+```rust
+fn neighbours(&self) -> impl Iterator<Item = Coord> + '_ {
+    [Dimension::X, Dimension::Y, Dimension::Z]
+        .iter()
+        .cartesian_product([-1, 1])
+        .map(|(dimension, offset)| match dimension {
+            Dimension::X => Coord {
+                x: self.x + offset,
+                ..*self
+            },
+            Dimension::Y => Coord {
+                y: self.y + offset,
+                ..*self
+            },
+            Dimension::Z => Coord {
+                z: self.z + offset,
+                ..*self
+            },
+        })
+}
+```
+
+With this helper, the skeleton code above is exactly the final code for part1.
+
+### Final code
+
+```rust title=day_18.rs
+pub fn part_1() -> usize {
+    let cubes = parse();
+
+    cubes
+        .iter()
+        .flat_map(|coord| coord.neighbours())
+        // only keep neighbours that are not a cube
+        .filter(|coord| !cubes.contains(coord))
+        .count()
+}
+```
+
+## Part 2
+
+The question asks what the surface area of your scanned lava droplet is.
+
+That's exactly the same question as part1?!
+
+This time, only consider sides that can be reached from the outside and ignore trapped pockets of air.
+
+skeleton code:
+
+```rust title=skeleton.rs
+let cubes = parse();
+let exposed = exposed(&cubes);
+
+cubes
+    .iter()
+    .flat_map(|coord| coord.neighbours())
+    // only keep neighbours that are also exposed
+    .filter(|coord| exposed.contains(coord))
+    .count()
+```
+
+That's 1 extra method (`exposed`), and a slight logic change in the step where we choose what to filter.
+
+The `exposed` in that code is the collection of all coordinates that are reachable from outside.
+
+Because we can't represent literally all coordinates outside, we calculate all the ones in a bounding box the lava droplet would barely fit in.
+
+### Helpers
+
+An extra function to return all maxima and minima in the set of scanned coordinates.
+
+```rust
+fn bounds(cubes: &HashSet<Coord>) -> [Coord; 2] {
+    cubes.iter().fold(
+        [Coord::default(), Coord::default()],
+        |[mut mins, mut maxs], cube| {
+            mins.x = mins.x.min(cube.x);
+            mins.y = mins.y.min(cube.y);
+            mins.z = mins.z.min(cube.z);
+            maxs.x = maxs.x.max(cube.x);
+            maxs.y = maxs.y.max(cube.y);
+            maxs.z = maxs.z.max(cube.z);
+            [mins, maxs]
+        },
+    )
+}
+```
+
+<Aside variant="info">
+There are many ways to do this and I had fun coding a couple.
+I like this way where we iterate through the list of cubes once, and keep track of all minima and maxima so far.
+
+That `default` that was derived earlier is used here. It's the same as `Coord { x: 0, y: 0, z: 0 }`.
+</Aside>
+
+Now the most interesting function: `exposed()`.
+
+It runs a [floodfill algorithm](https://en.wikipedia.org/wiki/Flood_fill) that starts filling at `Coord { x: 0, y: 0, z: 0 }`.
+
+The result is every coordinate (within the bounds plus and minus one!) that is not blocked by the lava droplet.
+
+```rust
+fn exposed(cubes: &HashSet<Coord>) -> HashSet<Coord> {
+    let bounds = bounds(cubes);
+    let mut exposed = HashSet::new();
+
+    let start = Coord::default();
+    let mut stack = Vec::new();
+    let mut seen = HashSet::new();
+
+    stack.push(start);
+    seen.insert(start);
+
+    while let Some(coord) = stack.pop() {
+        for neighbour in coord.neighbours() {
+            if cubes.contains(&neighbour) || !neighbour.in_bounds(&bounds) {
+                continue;
+            }
+            if seen.insert(neighbour) {
+                stack.push(neighbour);
+                exposed.insert(neighbour);
+            }
+        }
+    }
+
+    exposed
+}
+```
+
+`in_bounds` is a method on `Coord` that returns true if the checked `Coord` has coordinates that are at most one more, or one less than the `bounds` in any dimension.
+
+```rust
+fn in_bounds(&self, bounds: &[Self; 2]) -> bool {
+    let [mins, maxs] = bounds;
+    self.x >= mins.x - 1
+        && self.x <= maxs.x + 1
+        && self.y >= mins.y - 1
+        && self.y <= maxs.y + 1
+        && self.z >= mins.z - 1
+        && self.z <= maxs.z + 1
+}
+```
+
+With those helpers, the skeleton code above is exactly the final code for part2.
+
+
+### Final code
+
+```rust title=day_18.rs
+pub fn part_2() -> usize {
+    let cubes = parse();
+    let exposed = exposed(&cubes);
+
+    cubes
+        .iter()
+        .flat_map(|coord| coord.neighbours())
+        // only keep neighbours that are also exposed
+        .filter(|coord| exposed.contains(coord))
+        .count()
+}
+```
+
+## Final code
+
+```rust title=day_18.rs numberLines
+use std::collections::HashSet;
+
+use itertools::Itertools;
+
+#[derive(Hash, PartialEq, Eq, Clone, Copy, Default)]
+struct Coord {
+    x: i16,
+    y: i16,
+    z: i16,
+}
+
+impl Coord {
+    fn neighbours(&self) -> impl Iterator<Item = Coord> + '_ {
+        [Dimension::X, Dimension::Y, Dimension::Z]
+            .iter()
+            .cartesian_product([-1, 1])
+            .map(|(dimension, offset)| match dimension {
+                Dimension::X => Coord {
+                    x: self.x + offset,
+                    ..*self
+                },
+                Dimension::Y => Coord {
+                    y: self.y + offset,
+                    ..*self
+                },
+                Dimension::Z => Coord {
+                    z: self.z + offset,
+                    ..*self
+                },
+            })
+    }
+
+    fn in_bounds(&self, bounds: &[Self; 2]) -> bool {
+        let [mins, maxs] = bounds;
+        self.x >= mins.x - 1
+            && self.x <= maxs.x + 1
+            && self.y >= mins.y - 1
+            && self.y <= maxs.y + 1
+            && self.z >= mins.z - 1
+            && self.z <= maxs.z + 1
+    }
+}
+
+enum Dimension {
+    X,
+    Y,
+    Z,
+}
+
+fn parse() -> HashSet<Coord> {
+    let input = std::fs::read_to_string("src/day18.txt").unwrap();
+
+    input
+        .lines()
+        .map(|line| {
+            let mut nums = line.split(",").map(|s| s.parse().unwrap());
+            Coord {
+                x: nums.next().unwrap(),
+                y: nums.next().unwrap(),
+                z: nums.next().unwrap(),
+            }
+        })
+        .collect()
+}
+
+fn bounds(cubes: &HashSet<Coord>) -> [Coord; 2] {
+    cubes.iter().fold(
+        [Coord::default(), Coord::default()],
+        |[mut mins, mut maxs], cube| {
+            mins.x = mins.x.min(cube.x);
+            mins.y = mins.y.min(cube.y);
+            mins.z = mins.z.min(cube.z);
+            maxs.x = maxs.x.max(cube.x);
+            maxs.y = maxs.y.max(cube.y);
+            maxs.z = maxs.z.max(cube.z);
+            [mins, maxs]
+        },
+    )
+}
+
+fn exposed(cubes: &HashSet<Coord>) -> HashSet<Coord> {
+    let bounds = bounds(cubes);
+    let mut exposed = HashSet::new();
+
+    let start = Coord::default();
+    let mut stack = Vec::new();
+    let mut seen = HashSet::new();
+
+    stack.push(start);
+    seen.insert(start);
+
+    while let Some(coord) = stack.pop() {
+        for neighbour in coord.neighbours() {
+            if cubes.contains(&neighbour) || !neighbour.in_bounds(&bounds) {
+                continue;
+            }
+            if seen.insert(neighbour) {
+                stack.push(neighbour);
+                exposed.insert(neighbour);
+            }
+        }
+    }
+
+    exposed
+}
+
+pub fn part_1() -> usize {
+    let cubes = parse();
+
+    cubes
+        .iter()
+        .flat_map(|coord| coord.neighbours())
+        // only keep neighbours that are not a cube
+        .filter(|coord| !cubes.contains(coord))
+        .count()
+}
+
+pub fn part_2() -> usize {
+    let cubes = parse();
+    let exposed = exposed(&cubes);
+
+    cubes
+        .iter()
+        .flat_map(|coord| coord.neighbours())
+        // only keep neighbours that are also exposed
+        .filter(|coord| exposed.contains(coord))
+        .count()
+}
+
+```
