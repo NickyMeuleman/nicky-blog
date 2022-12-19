@@ -1,0 +1,185 @@
+---
+title: "Advent of Code 2022 Day 16"
+date: "2022-12-16"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+---
+## Day 16: Proboscidea Volcanium
+
+https://adventofcode.com/2022/day/16
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_16.rs)
+isn't available yet.
+</Aside>
+
+The distress signal lead you into a vulcano!
+
+It came from an other communication device just like yours.
+An elephant is standing beside it, it somehow must have triggered a distress signal, clever elephant.
+
+The vulcano will erupt in 30 minutes!
+Not enough time to leave the way you came.
+
+There appear to be a series of pressure-release valves and pipes nearby.
+
+Each valve has a **flow rate** of relieved pressure per minute if opened.
+You can use the pipes to move between valves.
+
+You want to relieve as much pressure as you can in those 30 minutes.
+
+Your device scans the network of valves and pipes.
+Today's input is the results of that scan.
+
+Some of the valves are blocked, and opening them does not result in relieved pressure.
+
+An example input looks like this:
+
+```txt title=input.txt
+Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
+Valve BB has flow rate=13; tunnels lead to valves CC, AA
+Valve CC has flow rate=2; tunnels lead to valves DD, BB
+Valve DD has flow rate=20; tunnels lead to valves CC, AA, EE
+Valve EE has flow rate=3; tunnels lead to valves FF, DD
+Valve FF has flow rate=0; tunnels lead to valves EE, GG
+Valve GG has flow rate=0; tunnels lead to valves FF, HH
+Valve HH has flow rate=22; tunnel leads to valve GG
+Valve II has flow rate=0; tunnels lead to valves AA, JJ
+Valve JJ has flow rate=21; tunnel leads to valve II
+```
+
+- Opening a valve takes exactly 1 minute.
+- Traversing a pipe takes exactly 1 minute.
+
+## Parsing
+
+A valve in the input can be represented by:
+
+```rust
+struct Valve {
+    flow: u32,
+    neighbours: HashSet<&str>,
+}
+```
+
+and each `Valve` has a name.
+
+The series of valves and pipes can be represented as a `HashMap<&str, Valve>`:
+
+<Aside variant="info">
+    I'm doing this in Rust, and the `Valve`s have references to strings.
+    Prepare for a bunch of lifetimes!
+</Aside>
+
+```rust title=day_16.rs
+use std::collections::{HashMap, HashSet};
+
+struct Valve<'a> {
+    flow: u32,
+    neighbours: HashSet<&'a str>,
+}
+
+fn parse<'a>(input: &'a str) -> HashMap<&'a str, Valve> {
+    let mut valves = HashMap::new();
+    for line in input.trim().lines() {
+        let (valve, neighbours) = line.split_once("; ").unwrap();
+        let valve = valve.strip_prefix("Valve ").unwrap();
+        let (name, flow) = valve.split_once(" has flow rate=").unwrap();
+        let flow = flow.parse().unwrap();
+        let neighbours = neighbours
+            .strip_prefix("tunnels lead to valves ")
+            .or_else(|| neighbours.strip_prefix("tunnel leads to valve "))
+            .unwrap();
+        let neighbours = neighbours.split_terminator(", ").collect();
+
+        valves.insert(name, Valve { flow, neighbours });
+    }
+    valves
+}
+```
+
+## Part 1
+
+The question asks what the largest amount of pressure you can release in 30 minutes is.
+
+I want to tackle this problem in 2 parts.
+
+1. figuring out the shortest path in minutes from any flowing valve (and the start) to an other flowing valve
+2. figuring out the greatest relieved pressure by checking the relieved pressure when visiting every combination of those locations
+
+That way, this problem is reduced to 2 more manageable problems.
+
+1. A bunch of shortest path problems
+2. A travelling salesman-ish problem
+
+```rust title=pseudocode.rs
+let map = parse(input);
+let dist_map = min_distances(map); // key: (from, to), value: move_cost 
+let valves = dist_map.keys();
+let paths = valves.combinations.filter(/* only keep paths that start in AA */);
+let mut max_relieved = 0;
+
+for path in paths {
+    let relieved = relieved_for(path);
+    max_relieved = max_relieved.max(relieved);
+}
+
+max_relieved
+```
+
+### Helpers
+
+A helper to calculate the shortest path from one valve to an other valve.
+
+[Edsger](https://nl.wikipedia.org/wiki/Edsger_Dijkstra) gave me a hammer, and I will wield it!
+
+```rust
+fn min_cost(from: &'a str, to: &'a str, map: &HashMap<&'a str, Valve>) -> u32 {
+ // TODO - Dijkstra it up in here
+}
+```
+
+The helper function that puts all of those shorest paths together in a map:
+
+```rust
+fn min_distances(map: &HashMap<&'a str, Valve>) -> HashMap<(&'a str, &'a str), u32> {
+// shortest distance from AA to any flowing node
+// for all flowing nodes:
+    // shortest distance from node to any other flowing node
+}
+```
+
+### Final code
+
+```rust title=day_16.rs
+pub fn part_1() -> usize {
+    // TODO
+}
+```
+
+## Part 2
+
+Wait a minute, that's one smart, magical elephant.
+
+You can teach it to open valves.
+
+It takes you 4 minutes to teach the elephant how to open a series of valves.
+
+After that, there are 26 minutes left and you both start opening valves.
+
+The question asks what the largest amount of pressure is that you and an elephant working together for 26 minutes could release.
+
+### Final code
+
+```rust title=day_16.rs
+pub fn part_2() -> i64 {
+    // TODO
+}
+```
+
+## Final code
+
+```rust title=day_16.rs numberLines
+// TODO
+```
