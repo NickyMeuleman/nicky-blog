@@ -21,7 +21,7 @@
     "@matejmazur/react-katex": "^3.1.3",
     "@mdx-js/react": "^2.1.5",
     "@nickymeuleman/aoc2021": "^0.4.5",
-    "@nickymeuleman/aoc2022": "^0.0.6",
+    "@nickymeuleman/aoc2022": "^0.0.7",
     "@nickymeuleman/gatsby-theme-blog": "^3.0.0",
     "@reach/tabs": "^0.18.0",
     "@reach/tooltip": "^0.18.0",
