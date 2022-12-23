@@ -1,6 +1,7 @@
 ---
 title: "Advent of Code 2022 Day 16"
 date: "2022-12-16"
+updatedAt: "2022-12-23"
 authors: ["nicky"]
 tags: ["Advent of Code", "Rust"]
 series: "Advent of Code 2022"
@@ -11,20 +12,19 @@ https://adventofcode.com/2022/day/16
 
 <Aside>
 TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_16.rs)
-isn't available yet.
 </Aside>
 
 The distress signal lead you into a vulcano!
 
 It came from an other communication device just like yours.
-An elephant is standing beside it, it somehow must have triggered a distress signal, clever elephant.
+An elephant is standing beside it, it must have triggered a distress signal somehow, clever elephant.
 
 The vulcano will erupt in 30 minutes!
-Not enough time to leave the way you came.
+There's not enough time to leave the way you came.
 
 There appear to be a series of pressure-release valves and pipes nearby.
 
-Each valve has a **flow rate** of relieved pressure per minute if opened.
+Each valve has a **flow rate** with a number for relieved pressure per minute if opened.
 You can use the pipes to move between valves.
 
 You want to relieve as much pressure as you can in those 30 minutes.
@@ -80,22 +80,23 @@ struct Valve<'a> {
     neighbours: HashSet<&'a str>,
 }
 
-fn parse<'a>(input: &'a str) -> HashMap<&'a str, Valve> {
-    let mut valves = HashMap::new();
-    for line in input.trim().lines() {
-        let (valve, neighbours) = line.split_once("; ").unwrap();
-        let valve = valve.strip_prefix("Valve ").unwrap();
-        let (name, flow) = valve.split_once(" has flow rate=").unwrap();
-        let flow = flow.parse().unwrap();
-        let neighbours = neighbours
-            .strip_prefix("tunnels lead to valves ")
-            .or_else(|| neighbours.strip_prefix("tunnel leads to valve "))
-            .unwrap();
-        let neighbours = neighbours.split_terminator(", ").collect();
+fn parse(input: &str) -> HashMap<&str, Valve> {
+    input
+        .lines()
+        .map(|line| {
+            let (valve, neighbours) = line.split_once("; ").unwrap();
+            let valve = valve.strip_prefix("Valve ").unwrap();
+            let (name, flow) = valve.split_once(" has flow rate=").unwrap();
+            let flow = flow.parse().unwrap();
+            let neighbours = neighbours
+                .strip_prefix("tunnels lead to valves ")
+                .or_else(|| neighbours.strip_prefix("tunnel leads to valve "))
+                .unwrap();
+            let neighbours = neighbours.split_terminator(", ").collect();
 
-        valves.insert(name, Valve { flow, neighbours });
-    }
-    valves
+            (name, Valve { flow, neighbours })
+        })
+        .collect()
 }
 ```
 
@@ -110,20 +111,14 @@ I want to tackle this problem in 2 parts.
 
 That way, this problem is reduced to 2 more manageable problems.
 
-1. A bunch of shortest path problems
+1. A bunch of shortest path problems (Hello Dijkstra my old friend)
 2. A travelling salesman-ish problem
 
 ```rust title=pseudocode.rs
 let map = parse(input);
-let dist_map = min_distances(map); // key: (from, to), value: move_cost 
-let valves = dist_map.keys();
-let paths = valves.combinations.filter(/* only keep paths that start in AA */);
-let mut max_relieved = 0;
+let dist_map = min_distances(map); // key: (from, to), value: move_cost
 
-for path in paths {
-    let relieved = relieved_for(path);
-    max_relieved = max_relieved.max(relieved);
-}
+// simulate all possible routes, recording the max_relieved as you go
 
 max_relieved
 ```
@@ -135,26 +130,262 @@ A helper to calculate the shortest path from one valve to an other valve.
 [Edsger](https://nl.wikipedia.org/wiki/Edsger_Dijkstra) gave me a hammer, and I will wield it!
 
 ```rust
-fn min_cost(from: &'a str, to: &'a str, map: &HashMap<&'a str, Valve>) -> u32 {
- // TODO - Dijkstra it up in here
+#[derive(PartialEq, Eq)]
+struct Node<'a> {
+    cost: u32,
+    curr: &'a str,
+}
+
+impl<'a> Ord for Node<'a> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl<'a> PartialOrd for Node<'a> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+/// return lowest cost to move from a valve to an other valve
+fn min_cost(from: &str, to: &str, map: &HashMap<&str, Valve>) -> u32 {
+    // shortest path:
+    // Dijkstra's algorithm
+    // nodes in the priority queue are sorted so the lowest cost gets popped first
+    let mut pq = BinaryHeap::new();
+    // prevent backtracking by keeping track of valve rooms we already saw
+    let mut seen = HashSet::new();
+
+    pq.push(Node {
+        cost: 0,
+        curr: from,
+    });
+    seen.insert(from);
+
+    while let Some(Node { cost, curr }) = pq.pop() {
+        if curr == to {
+            return cost;
+        }
+
+        for neighbour in map[curr].neighbours.iter() {
+            // only insert into the pq if we did not already see the neighbour valve
+            if seen.insert(neighbour) {
+                pq.push(Node {
+                    cost: cost + 1,
+                    curr: neighbour,
+                });
+            }
+        }
+    }
+
+    u32::MAX
 }
 ```
 
-The helper function that puts all of those shorest paths together in a map:
+Now the helper function I wrote in the pseudocode above.
+
+It creates a map with shortest distances:
+- key: `(from_name, to_name)`
+- value: `move_cost`
+
+It starts by only keeping the flowing valves from the input.
+
+- It records the shortest distance from our starting point `"AA"` to that valve.
+- It records the shortest distance from that flowing valve to every other flowing valve.
 
 ```rust
-fn min_distances(map: &HashMap<&'a str, Valve>) -> HashMap<(&'a str, &'a str), u32> {
-// shortest distance from AA to any flowing node
-// for all flowing nodes:
-    // shortest distance from node to any other flowing node
+/// map shortest distance from "AA" to any flowing valve
+/// map shortest distance from any flowing valve to an other
+fn min_distances<'a>(map: &'a HashMap<&str, Valve>) -> HashMap<(&'a str, &'a str), u32> {
+    map.iter()
+        // only keep flowing valves
+        .filter(|(_, valve)| valve.flow > 0)
+        // get the name of flowing valves
+        .map(|(&name, _)| name)
+        // iterate over every combination of 2 flowing valves
+        .tuple_combinations()
+        // record shortest distance between those 2
+        // (and the dist from "AA" to a flowing valve because we start there)
+        .fold(HashMap::new(), |mut acc, (name1, name2)| {
+            // from AA to name1
+            acc.entry(("AA", name1))
+                .or_insert_with(|| min_cost("AA", name1, map));
+            // from AA to name2
+            acc.entry(("AA", name2))
+                .or_insert_with(|| min_cost("AA", name2, map));
+
+            let dist = min_cost(name1, name2, map);
+            // from name1 to name2
+            acc.insert((name1, name2), dist);
+            // from name2 to name1
+            acc.insert((name2, name1), dist);
+
+            acc
+        })
 }
 ```
+
+With that done, time for the simulation.
+
+We represent each state in the simulation as a `State` struct.
+
+```rust
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+struct State<'a> {
+    opened: BTreeSet<&'a str>,
+    curr: &'a str,
+    elapsed: u32,
+    relieved: u32,
+}
+```
+
+It has information about the state a simulation is currently in:
+- which valves are open (starting at an empty set)
+- which room we are in (starting at `"AA"`)
+- how many time has elapsed (starting at `0`)
+- how much pressure was relieved so far (starting at `0`)
+
+We start at:
+```rust
+State {
+    curr: "AA",
+    opened: BTreeSet::new(),
+    elapsed: 0,
+    relieved: 0,
+}
+```
+
+and insert that state into a queue.
+
+Then, every iteration of the loop, we pop off a state and continue until the queue is empty.
+
+Inside the loop:
+- If all valves are open, there's nothing more we can do but wait until the end and let all the valves relieve pressure.
+- If the time limit has been met, we record how much pressure has been relieved and move on to the next state in the queue.
+
+```rust
+// if all flowing valves are opened, wait until the end
+if opened.len() == flowing.len() || elapsed >= 30 {
+    let relieved_at_end = wait_until_ending(30, elapsed, relieved, &opened, &map);
+    max_relieved = max_relieved.max(relieved_at_end);
+    continue;
+}
+```
+
+The helper function is quite short.
+Given a few parameters about the state and a time limit, it returns how much pressure would be relieved when that time limit is reached.
+
+```rust
+fn wait_until_ending(
+    max_time: u32,
+    elapsed: u32,
+    relieved: u32,
+    opened: &BTreeSet<&str>,
+    map: &HashMap<&str, Valve>,
+) -> u32 {
+    let time_left = max_time - elapsed;
+    let relieved_per_min: u32 = opened.iter().map(|name| &map[name].flow).sum();
+    relieved + (relieved_per_min * time_left)
+}
+```
+
+Then, for every choice of valve to open next, we potentially add a new state to the queue.
+
+We only consider flowing valves, moving to a non-flowing one makes no sense.
+We know how long it will take to move there because we have a `dist_map`.
+Opening that valve will take 1 additional minute.
+
+We add the valve we just opened to the `opened` for that new state.
+
+We also know the `elapsed` time for that new state now:
+The time that was already elapsed + the cost to move + 1 to open the valve.
+
+We also know the `relieved` for that new state:
+While we move, and open the valve, pressure releases.
+
+If the new elapsed time would exceed (or match) the time limit.
+We calculate how much pressure would be relieved by the valves that are already open using our `wait_until_ending` helper and update our `max_relieved` variable.
+
+Eventually, the queue empties.
+The value in `max_relieved` at that time is the maximum that can possibly be relieves in that time limit.
+
+To speed the algorithm up a bit, I added a `seen` set.
+That set contains items that are almost the same as a `State`, but the current position doesn't matter.
+
+We only add a new state to the queue if we haven't seen a state with the same valves open that's also at the same elapsed time, and has the same amount relieved.
 
 ### Final code
 
 ```rust title=day_16.rs
-pub fn part_1() -> usize {
-    // TODO
+pub fn part_1(input: &str) -> u32 {
+    let map = parse(input);
+    let dist_map = min_distances(&map); // key: (from, to), value: move_cost
+    let flowing: HashSet<_> = map
+        .iter()
+        .filter(|(_, valve)| valve.flow > 0)
+        .map(|(&name, _)| name)
+        .collect();
+
+    let mut max_relieved = 0;
+    let mut q = VecDeque::new();
+    let mut seen = HashSet::new();
+
+    q.push_back(State {
+        curr: "AA",
+        opened: BTreeSet::new(),
+        elapsed: 0,
+        relieved: 0,
+    });
+    // current position doesn't matter for seen
+    seen.insert((BTreeSet::new(), 0, 0));
+
+    while let Some(State {
+        opened,
+        curr,
+        elapsed,
+        relieved,
+    }) = q.pop_front()
+    {
+        // if all flowing valves are opened, wait until the end
+        if opened.len() == flowing.len() || elapsed >= 30 {
+            let relieved_at_end = wait_until_ending(30, elapsed, relieved, &opened, &map);
+            max_relieved = max_relieved.max(relieved_at_end);
+            continue;
+        }
+        // for every unopened valve, run simulation
+        let unopened = flowing.iter().filter(|name| !opened.contains(*name));
+
+        for dest in unopened {
+            // how long would moving to dest take? +1 to open the valve
+            let cost = dist_map[&(curr, *dest)] + 1;
+            let new_elapsed = elapsed + cost;
+            // if opening the dest valve would exceed the time limit, wait until the end
+            if new_elapsed >= 30 {
+                let relieved_at_end = wait_until_ending(30, elapsed, relieved, &opened, &map);
+                max_relieved = max_relieved.max(relieved_at_end);
+                continue;
+            }
+
+            // relieve pressure of opened valves while we move to dest and open it
+            let relieved_per_min: u32 = opened.iter().map(|name| &map[name].flow).sum();
+            let new_relieved = relieved + (relieved_per_min * cost);
+            // add opened valve to opened valves
+            let mut new_opened = opened.clone();
+            new_opened.insert(dest);
+
+            if seen.insert((new_opened.clone(), new_elapsed, new_relieved)) {
+                q.push_back(State {
+                    opened: new_opened,
+                    curr: dest,
+                    elapsed: new_elapsed,
+                    relieved: new_relieved,
+                });
+            }
+        }
+    }
+
+    max_relieved
 }
 ```
 
@@ -170,16 +401,412 @@ After that, there are 26 minutes left and you both start opening valves.
 
 The question asks what the largest amount of pressure is that you and an elephant working together for 26 minutes could release.
 
+For part2, run the same simulation.
+Record the maximum relieved pressure per opened valve combination at the end.
+It doesn't matter in wich order they were opened, only which ones were, and the maximum amount of pressure that was released at the end.
+
+To track this, introduce a map that starts off empty before we even start the simulation.
+
+```rust
+// key: opened, val: relieved_at_end
+let mut max_relieved_states: HashMap<BTreeSet<&str>, u32> = HashMap::new();
+```
+
+While going through the simulation (every time a state is popped off the queue).
+Calculate how much pressure would be released at the end with that combination of open valves.
+If it beats the number that already exists for a same combination, update it.
+
+```rust
+let relieved_at_end = wait_until_ending(26, elapsed, relieved, &opened, &map);
+// record state. only update state if it beats the `relieved_at_end` number for this combination of opened valves
+max_relieved_states
+    .entry(opened.clone())
+    .and_modify(|val| *val = relieved_at_end.max(*val))
+    .or_insert(relieved_at_end);
+```
+
+We exited the loop and arrived at the end of the part2 function.
+
+The elephant and the human both have to choose a path to take that results in the most relieved pressure when combined.
+
+That means they each have to take a path that visits valves that don't overlap!
+Trying to open the same valve twice is a waste of effort.
+
+In our code that means that the set of visited valves can not have overlap, it has to be disjoint.
+
+The path they each take for a combination of valves is the one with the most relieved pressure at the end.
+We tracked those, in `max_relieved_states`.
+
+```rust
+max_relieved_states
+    .iter()
+    .tuple_combinations()
+    .filter(|(human, elephant)| human.0.is_disjoint(elephant.0))
+    .map(|(human, elephant)| human.1 + elephant.1)
+    .max()
+    .unwrap()
+```
+
 ### Final code
 
 ```rust title=day_16.rs
-pub fn part_2() -> i64 {
-    // TODO
+pub fn part_2(input: &str) -> u32 {
+    let map = parse(input);
+    let dist_map = min_distances(&map); // key: (from, to), value: move_cost
+    let flowing: HashSet<_> = map
+        .iter()
+        .filter(|(_, valve)| valve.flow > 0)
+        .map(|(&name, _)| name)
+        .collect();
+
+    // key: opened, val: relieved_at_end
+    let mut max_relieved_states: HashMap<BTreeSet<&str>, u32> = HashMap::new();
+
+    let mut q = VecDeque::new();
+    q.push_back(State {
+        curr: "AA",
+        opened: BTreeSet::new(),
+        elapsed: 0,
+        relieved: 0,
+    });
+
+    while let Some(State {
+        opened,
+        curr,
+        elapsed,
+        relieved,
+    }) = q.pop_front()
+    {
+        let relieved_at_end = wait_until_ending(26, elapsed, relieved, &opened, &map);
+        // record state. only update state if it beats the `relieved_at_end` number
+        max_relieved_states
+            .entry(opened.clone())
+            .and_modify(|val| *val = relieved_at_end.max(*val))
+            .or_insert(relieved_at_end);
+
+        // if all flowing valves are opened or the timelimit was reached, skip
+        if opened.len() == flowing.len() || elapsed >= 26 {
+            continue;
+        }
+        // for every unopened valve, run simulation
+        let unopened = flowing.iter().filter(|name| !opened.contains(*name));
+
+        for dest in unopened {
+            // how long would moving to dest take? +1 to open the valve
+            let cost = dist_map[&(curr, *dest)] + 1;
+            let new_elapsed = elapsed + cost;
+            // if opening the dest valve would exceed the time limit, skip
+            if new_elapsed >= 26 {
+                continue;
+            }
+
+            // relieve pressure of opened valves while we move to dest and open it
+            let relieved_per_min: u32 = opened.iter().map(|name| &map[name].flow).sum();
+            let new_relieved = relieved + (relieved_per_min * cost);
+
+            // add opened valve to opened valves
+            let mut new_opened = opened.clone();
+            new_opened.insert(dest);
+
+            q.push_back(State {
+                opened: new_opened,
+                curr: dest,
+                elapsed: new_elapsed,
+                relieved: new_relieved,
+            });
+        }
+    }
+
+    max_relieved_states
+        .iter()
+        .tuple_combinations()
+        .filter(|(human, elephant)| human.0.is_disjoint(elephant.0))
+        .map(|(human, elephant)| human.1 + elephant.1)
+        .max()
+        .unwrap()
 }
 ```
 
 ## Final code
 
 ```rust title=day_16.rs numberLines
-// TODO
+use std::{
+    cmp::Ordering,
+    collections::{BTreeSet, BinaryHeap, HashMap, HashSet, VecDeque},
+};
+
+use itertools::Itertools;
+
+#[derive(Debug)]
+struct Valve<'a> {
+    flow: u32,
+    neighbours: HashSet<&'a str>,
+}
+
+fn parse(input: &str) -> HashMap<&str, Valve> {
+    input
+        .lines()
+        .map(|line| {
+            let (valve, neighbours) = line.split_once("; ").unwrap();
+            let valve = valve.strip_prefix("Valve ").unwrap();
+            let (name, flow) = valve.split_once(" has flow rate=").unwrap();
+            let flow = flow.parse().unwrap();
+            let neighbours = neighbours
+                .strip_prefix("tunnels lead to valves ")
+                .or_else(|| neighbours.strip_prefix("tunnel leads to valve "))
+                .unwrap();
+            let neighbours = neighbours.split_terminator(", ").collect();
+
+            (name, Valve { flow, neighbours })
+        })
+        .collect()
+}
+
+#[derive(PartialEq, Eq)]
+struct Node<'a> {
+    cost: u32,
+    curr: &'a str,
+}
+
+impl<'a> Ord for Node<'a> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl<'a> PartialOrd for Node<'a> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+/// return lowest cost to move from a valve to an other valve
+fn min_cost(from: &str, to: &str, map: &HashMap<&str, Valve>) -> u32 {
+    // shortest path:
+    // Dijkstra's algorithm
+    // nodes in the priority queue are sorted so the lowest cost gets popped first
+    let mut pq = BinaryHeap::new();
+    // prevent backtracking by keeping track of valve rooms we already saw
+    let mut seen = HashSet::new();
+
+    pq.push(Node {
+        cost: 0,
+        curr: from,
+    });
+    seen.insert(from);
+
+    while let Some(Node { cost, curr }) = pq.pop() {
+        if curr == to {
+            return cost;
+        }
+
+        for neighbour in map[curr].neighbours.iter() {
+            // only insert into the pq if we did not already see the neighbour valve
+            if seen.insert(neighbour) {
+                pq.push(Node {
+                    cost: cost + 1,
+                    curr: neighbour,
+                });
+            }
+        }
+    }
+
+    u32::MAX
+}
+
+/// map shortest distance from "AA" to any flowing valve
+/// map shortest distance from any flowing valve to an other
+fn min_distances<'a>(map: &'a HashMap<&str, Valve>) -> HashMap<(&'a str, &'a str), u32> {
+    map.iter()
+        // only keep flowing valves
+        .filter(|(_, valve)| valve.flow > 0)
+        // get the name of flowing valves
+        .map(|(&name, _)| name)
+        // iterate over every combination of 2 flowing valves
+        .tuple_combinations()
+        // record shortest distance between those 2
+        // (and the dist from "AA" to a flowing valve because we start there)
+        .fold(HashMap::new(), |mut acc, (name1, name2)| {
+            // from AA to name1
+            acc.entry(("AA", name1))
+                .or_insert_with(|| min_cost("AA", name1, map));
+            // from AA to name2
+            acc.entry(("AA", name2))
+                .or_insert_with(|| min_cost("AA", name2, map));
+
+            let dist = min_cost(name1, name2, map);
+            // from name1 to name2
+            acc.insert((name1, name2), dist);
+            // from name2 to name1
+            acc.insert((name2, name1), dist);
+
+            acc
+        })
+}
+
+fn wait_until_ending(
+    max_time: u32,
+    elapsed: u32,
+    relieved: u32,
+    opened: &BTreeSet<&str>,
+    map: &HashMap<&str, Valve>,
+) -> u32 {
+    let time_left = max_time - elapsed;
+    let relieved_per_min: u32 = opened.iter().map(|name| &map[name].flow).sum();
+    relieved + (relieved_per_min * time_left)
+}
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+struct State<'a> {
+    opened: BTreeSet<&'a str>,
+    curr: &'a str,
+    elapsed: u32,
+    relieved: u32,
+}
+
+pub fn part_1(input: &str) -> u32 {
+    let map = parse(input);
+    let dist_map = min_distances(&map); // key: (from, to), value: move_cost
+    let flowing: HashSet<_> = map
+        .iter()
+        .filter(|(_, valve)| valve.flow > 0)
+        .map(|(&name, _)| name)
+        .collect();
+
+    let mut max_relieved = 0;
+    let mut q = VecDeque::new();
+    let mut seen = HashSet::new();
+
+    q.push_back(State {
+        curr: "AA",
+        opened: BTreeSet::new(),
+        elapsed: 0,
+        relieved: 0,
+    });
+    // current position doesn't matter for seen
+    seen.insert((BTreeSet::new(), 0, 0));
+
+    while let Some(State {
+        opened,
+        curr,
+        elapsed,
+        relieved,
+    }) = q.pop_front()
+    {
+        // if all flowing valves are opened, wait until the end
+        if opened.len() == flowing.len() || elapsed >= 30 {
+            let relieved_at_end = wait_until_ending(30, elapsed, relieved, &opened, &map);
+            max_relieved = max_relieved.max(relieved_at_end);
+            continue;
+        }
+        // for every unopened valve, run simulation
+        let unopened = flowing.iter().filter(|name| !opened.contains(*name));
+
+        for dest in unopened {
+            // how long would moving to dest take? +1 to open the valve
+            let cost = dist_map[&(curr, *dest)] + 1;
+            let new_elapsed = elapsed + cost;
+            // if opening the dest valve would exceed the time limit, wait until the end
+            if new_elapsed >= 30 {
+                let relieved_at_end = wait_until_ending(30, elapsed, relieved, &opened, &map);
+                max_relieved = max_relieved.max(relieved_at_end);
+                continue;
+            }
+
+            // relieve pressure of opened valves while we move to dest and open it
+            let relieved_per_min: u32 = opened.iter().map(|name| &map[name].flow).sum();
+            let new_relieved = relieved + (relieved_per_min * cost);
+            // add opened valve to opened valves
+            let mut new_opened = opened.clone();
+            new_opened.insert(dest);
+
+            if seen.insert((new_opened.clone(), new_elapsed, new_relieved)) {
+                q.push_back(State {
+                    opened: new_opened,
+                    curr: dest,
+                    elapsed: new_elapsed,
+                    relieved: new_relieved,
+                });
+            }
+        }
+    }
+
+    max_relieved
+}
+
+pub fn part_2(input: &str) -> u32 {
+    let map = parse(input);
+    let dist_map = min_distances(&map); // key: (from, to), value: move_cost
+    let flowing: HashSet<_> = map
+        .iter()
+        .filter(|(_, valve)| valve.flow > 0)
+        .map(|(&name, _)| name)
+        .collect();
+
+    // key: opened, val: relieved_at_end
+    let mut max_relieved_states: HashMap<BTreeSet<&str>, u32> = HashMap::new();
+
+    let mut q = VecDeque::new();
+    q.push_back(State {
+        curr: "AA",
+        opened: BTreeSet::new(),
+        elapsed: 0,
+        relieved: 0,
+    });
+
+    while let Some(State {
+        opened,
+        curr,
+        elapsed,
+        relieved,
+    }) = q.pop_front()
+    {
+        let relieved_at_end = wait_until_ending(26, elapsed, relieved, &opened, &map);
+        // record state. only update state if it beats the `relieved_at_end` number
+        max_relieved_states
+            .entry(opened.clone())
+            .and_modify(|val| *val = relieved_at_end.max(*val))
+            .or_insert(relieved_at_end);
+
+        // if all flowing valves are opened or the timelimit was reached, skip
+        if opened.len() == flowing.len() || elapsed >= 26 {
+            continue;
+        }
+        // for every unopened valve, run simulation
+        let unopened = flowing.iter().filter(|name| !opened.contains(*name));
+
+        for dest in unopened {
+            // how long would moving to dest take? +1 to open the valve
+            let cost = dist_map[&(curr, *dest)] + 1;
+            let new_elapsed = elapsed + cost;
+            // if opening the dest valve would exceed the time limit, skip
+            if new_elapsed >= 26 {
+                continue;
+            }
+
+            // relieve pressure of opened valves while we move to dest and open it
+            let relieved_per_min: u32 = opened.iter().map(|name| &map[name].flow).sum();
+            let new_relieved = relieved + (relieved_per_min * cost);
+
+            // add opened valve to opened valves
+            let mut new_opened = opened.clone();
+            new_opened.insert(dest);
+
+            q.push_back(State {
+                opened: new_opened,
+                curr: dest,
+                elapsed: new_elapsed,
+                relieved: new_relieved,
+            });
+        }
+    }
+
+    max_relieved_states
+        .iter()
+        .tuple_combinations()
+        .filter(|(human, elephant)| human.0.is_disjoint(elephant.0))
+        .map(|(human, elephant)| human.1 + elephant.1)
+        .max()
+        .unwrap()
+}
 ```
