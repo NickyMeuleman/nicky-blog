@@ -581,9 +581,9 @@ pub fn part_2(input: &str) -> usize {
         blizzard_maps,
     };
 
-    let there = shortest_dijkstra(start, end, 0, &map_info);
-    let back = shortest_dijkstra(end, start, there, &map_info);
-    shortest_dijkstra(start, end, back, &map_info)
+    let there = shortest(start, end, 0, &map_info);
+    let back = shortest(end, start, there, &map_info);
+    shortest(start, end, back, &map_info)
 }
 ```
 
