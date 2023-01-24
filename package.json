@@ -44,7 +44,7 @@
     "remark-math": "^4.0.0",
     "theme-ui": "^0.15.3",
     "typeface-source-sans-pro": "0.0.75",
-    "unist-util-visit": "^2.0.3",
+    "unist-util-visit": "^4.1.2",
     "wasm-game-of-life-nmeuleman": "^0.1.0",
     "xstate": "^4.33.6"
   },
