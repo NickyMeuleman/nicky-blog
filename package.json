@@ -46,7 +46,7 @@
     "typeface-source-sans-pro": "0.0.75",
     "unist-util-visit": "^2.0.3",
     "wasm-game-of-life-nmeuleman": "^0.1.0",
-    "xstate": "^4.33.6"
+    "xstate": "^4.37.2"
   },
   "license": "GPL-3.0-or-later",
   "scripts": {
