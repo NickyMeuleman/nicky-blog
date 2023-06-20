@@ -1,0 +1,143 @@
+---
+title: "Advent of Code 2015 Day 2"
+date: "2023-01-12"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2015"
+---
+## Day 2: I Was Told There Would Be No Math
+
+https://adventofcode.com/2015/day/2
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2015/src/day_02.rs)
+</Aside>
+
+The elves would like to order the exact amount of wrapping paper they need to wrap all presents.
+
+Each present is a perfectly rectangular box.
+
+Today's input is a list with the dimensions of each gift.
+
+An example input looks like this:
+
+```txt title=input.txt
+29x13x26
+11x11x14
+27x2x5
+```
+
+Each line has the form of `LxWxH`.
+
+For the first present in the list above:
+- length: 29
+- width: 13
+- height: 26
+
+Those numbers are unitless.
+Let's say Santa uses the imperial system to measure presents.
+They're measured in feet.
+
+## Part 1
+
+The required amount of wrapping paper for one present:
+- Enough to cover all sides
+- Some extra: the area of the smallest side
+
+The question asks how many square foot of wrapping paper is needed to wrap all presents.
+
+### Main code for part 1
+
+```rust title=day_02.rs
+pub fn part_1(input: &str) -> i32 {
+    input
+        .lines()
+        .map(|line| {
+            let mut nums = line.split('x').map(|s| s.parse::<i32>().unwrap());
+            // dimensions
+            let l = nums.next().unwrap();
+            let w = nums.next().unwrap();
+            let h = nums.next().unwrap();
+            // sides
+            let lw = l * w;
+            let wh = w * h;
+            let lh = l * h;
+            let smallest = lw.min(wh).min(lh);
+
+            2 * lw + 2 * wh + 2 * lh + smallest
+        })
+        .sum()
+}
+```
+
+## Part 2
+
+The elves need to order ribbon too.
+
+The required amount of ribbon for one present:
+- Enough to wrap around the smallest perimeter
+- Some extra for a bow: the cubic feet of volume for the present
+
+The question asks how many feet of ribbon is needed to wrap all presents with a bow.
+
+A minor change from part 1: I sorted the dimensions to be able to use the 2 smallest ones.
+
+### Main code for part 2
+
+```rust title=day_01.rs
+pub fn part_2(input: &str) -> i32 {
+    input
+    .lines()
+    .map(|line| {
+        let mut nums = line.split('x').map(|s| s.parse::<i32>().unwrap()).sorted_unstable();
+        // dimensions from small to big
+        let dim1 = nums.next().unwrap();
+        let dim2 = nums.next().unwrap();
+        let dim3 = nums.next().unwrap();
+    
+        2 * dim1 + 2 * dim2 + dim1 * dim2 * dim3
+    })
+    .sum()
+}
+```
+
+## Final code
+
+```rust title=day_02.rs numberLines
+use itertools::Itertools;
+
+pub fn part_1(input: &str) -> i32 {
+    input
+        .lines()
+        .map(|line| {
+            let mut nums = line.split('x').map(|s| s.parse::<i32>().unwrap());
+            // dimensions
+            let l = nums.next().unwrap();
+            let w = nums.next().unwrap();
+            let h = nums.next().unwrap();
+            // sides
+            let lw = l * w;
+            let wh = w * h;
+            let lh = l * h;
+            let smallest = lw.min(wh).min(lh);
+
+            2 * lw + 2 * wh + 2 * lh + smallest
+        })
+        .sum()
+}
+
+pub fn part_2(input: &str) -> i32 {
+    input
+    .lines()
+    .map(|line| {
+        let mut nums = line.split('x').map(|s| s.parse::<i32>().unwrap()).sorted_unstable();
+        // dimensions from small to big
+        let dim1 = nums.next().unwrap();
+        let dim2 = nums.next().unwrap();
+        let dim3 = nums.next().unwrap();
+    
+        2 * dim1 + 2 * dim2 + dim1 * dim2 * dim3
+    })
+    .sum()
+}
+```
