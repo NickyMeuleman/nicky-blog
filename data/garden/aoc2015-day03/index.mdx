@@ -1,0 +1,298 @@
+---
+title: "Advent of Code 2015 Day 3"
+date: "2023-01-12"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2015"
+---
+## Day 3: Perfectly Spherical Houses in a Vacuum
+
+https://adventofcode.com/2015/day/3
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2015/src/day_03.rs)
+</Aside>
+
+Santa is delivering presents to an infinite two-dimensional grid of houses.
+
+Today's input is a list of move instructions for Santa.
+
+Moves are always a single step:
+- `^` North
+- `v` South
+- `>` East
+- `<` West
+
+An example input looks like this:
+
+```txt title=input.txt
+^^<<v<<v><v^^<><>^^<
+```
+
+After every move, Santa delivers a present to the house at that coordinate.
+
+## Part 1
+
+By following these instructions, Santa ends up visiting some houses multiple times.
+
+The question asks how many houses receive at least one present.
+
+### Helpers
+
+A data structure to keep track of a coordinate in that 2D space.
+
+```rust
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+struct Coord {
+    x: i32,
+    y: i32,
+}
+```
+
+About that `derive` bit on top:
+Those are some [automatically derived `traits`](https://doc.rust-lang.org/rust-by-example/trait/derive.html) I use to be able to use `Coord` in a few different ways.
+They enable several behaviours of our `Coord` struct.
+Like `Eq` to be able to tell if two `Coord`s are equal.
+
+### Option 1: A set of coordinates
+
+Santa starts at a random coordinate.
+I picked 0,0 but the starting location doesn't matter.
+
+After every move, the new coordinate is added to a set of visited houses.
+Because it's a set, it won't store duplicates and only count a specific coordinate once.
+
+At the end, the length of that set is the answer to part 1.
+
+```rust
+pub fn part_1(input: &str) -> usize {
+    let mut santa = Coord { x: 0, y: 0 };
+    let mut visited: HashSet<Coord> = HashSet::new();
+    // visit starting point
+    visited.insert(santa);
+
+    for c in input.chars() {
+        // move to a house
+        match c {
+            '>' => santa.x += 1,
+            '<' => santa.x -= 1,
+            '^' => santa.y -= 1,
+            'v' => santa.y += 1,
+            _ => panic!("invalid input"),
+        }
+        // visit a house
+        visited.insert(santa);
+    }
+
+    visited.len()
+}
+```
+
+### Option 2: Turning the list of moves into a list of coordinates
+
+This solution turns the iterator of moves into an iterator of coordinates.
+Only the unique coordinates in that iterator are kept.
+The amount of items in that iterator is the answer to part 1.
+
+```rust
+use itertools::Itertools;
+
+pub fn part_1(input: &str) -> usize {
+    input
+        .chars()
+        // turn into iterator of coordinates santa is at
+        .scan(Coord { x: 0, y: 0 }, |santa, c| {
+            match c {
+                '>' => santa.x += 1,
+                '<' => santa.x -= 1,
+                '^' => santa.y -= 1,
+                'v' => santa.y += 1,
+                _ => panic!("invalid input"),
+            }
+            Some(*santa)
+        })
+        // filter out duplicates
+        .unique()
+        .count()
+}
+```
+
+### Main code for part 1
+
+```rust title=day_03.rs
+use itertools::Itertools;
+
+pub fn part_1(input: &str) -> usize {
+    input
+        .chars()
+        // turn into iterator of coordinates santa is at
+        .scan(Coord { x: 0, y: 0 }, |santa, c| {
+            match c {
+                '>' => santa.x += 1,
+                '<' => santa.x -= 1,
+                '^' => santa.y -= 1,
+                'v' => santa.y += 1,
+                _ => panic!("invalid input"),
+            }
+            Some(*santa)
+        })
+        // filter out duplicates
+        .unique()
+        .count()
+}
+```
+
+## Part 2
+
+The next year, Santa creates a robot that can deliver presents too, "Robo-Santa".
+
+They both start at the same coordinate.
+
+They take turns moving based on the instructions.
+
+The list of instructions is still the same one.
+
+The question asks how many houses receive at least one present.
+
+### Option 1: A set of coordinates
+
+Similar to part 1, but keep track of 2 coordinates.
+To check which santa moves, check if the index of the move is divisible by 2.
+
+```rust
+pub fn part_2(input: &str) -> usize {
+    let mut santa = Coord { x: 0, y: 0 };
+    let mut robo_santa = Coord { x: 0, y: 0 };
+    let mut visited: HashSet<Coord> = HashSet::new();
+    visited.insert(santa);
+    visited.insert(robo_santa);
+
+    for (idx, c) in input.chars().enumerate() {
+        let mover = if idx % 2 == 0 { &mut santa } else { &mut robo_santa };
+        match c {
+            '>' => mover.x += 1,
+            '<' => mover.x -= 1,
+            '^' => mover.y -= 1,
+            'v' => mover.y += 1,
+            _ => panic!("invalid input"),
+        }
+        visited.insert(*mover);
+    }
+
+    visited.len()
+}
+```
+
+### Option 2: Turning the list of moves into a list of coordinates
+
+Identical logic changes to convert from part 1 to part 2 as in Option 1:
+
+```rust
+pub fn part_2(input: &str) -> usize {
+    input
+        .chars()
+        .enumerate()
+        // turn into iterator of coordinates (robo-)santa is at
+        .scan(
+            (Coord { x: 0, y: 0 }, Coord { x: 0, y: 0 }),
+            |(santa, robo_santa), (idx, c)| {
+                let mover = if idx % 2 == 0 { santa } else { robo_santa };
+                match c {
+                    '>' => mover.x += 1,
+                    '<' => mover.x -= 1,
+                    '^' => mover.y -= 1,
+                    'v' => mover.y += 1,
+                    _ => panic!("invalid input"),
+                }
+                Some(*mover)
+            },
+        )
+        // filter out duplicates
+        .unique()
+        .count()
+}
+```
+### Main code for part 2
+
+```rust title=day_03.rs
+use itertools::Itertools;
+
+pub fn part_2(input: &str) -> usize {
+    input
+        .chars()
+        .enumerate()
+        // turn into iterator of coordinates (robo-)santa is at
+        .scan(
+            (Coord { x: 0, y: 0 }, Coord { x: 0, y: 0 }),
+            |(santa, robo_santa), (idx, c)| {
+                let mover = if idx % 2 == 0 { santa } else { robo_santa };
+                match c {
+                    '>' => mover.x += 1,
+                    '<' => mover.x -= 1,
+                    '^' => mover.y -= 1,
+                    'v' => mover.y += 1,
+                    _ => panic!("invalid input"),
+                }
+                Some(*mover)
+            },
+        )
+        // filter out duplicates
+        .unique()
+        .count()
+}
+```
+
+## Final code
+
+```rust title=day_03.rs numberLines
+use itertools::Itertools;
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+struct Coord {
+    x: i32,
+    y: i32,
+}
+
+pub fn part_1(input: &str) -> usize {
+    input
+        .chars()
+        // turn into iterator of coordinates santa is at
+        .scan(Coord { x: 0, y: 0 }, |santa, c| {
+            match c {
+                '>' => santa.x += 1,
+                '<' => santa.x -= 1,
+                '^' => santa.y -= 1,
+                'v' => santa.y += 1,
+                _ => panic!("invalid input"),
+            }
+            Some(*santa)
+        })
+        // filter out duplicates
+        .unique()
+        .count()
+}
+
+pub fn part_2(input: &str) -> usize {
+    input
+        .chars()
+        .enumerate()
+        // turn into iterator of coordinates (robo-)santa is at
+        .scan(
+            (Coord { x: 0, y: 0 }, Coord { x: 0, y: 0 }),
+            |(santa, robo_santa), (idx, c)| {
+                let mover = if idx % 2 == 0 { santa } else { robo_santa };
+                match c {
+                    '>' => mover.x += 1,
+                    '<' => mover.x -= 1,
+                    '^' => mover.y -= 1,
+                    'v' => mover.y += 1,
+                    _ => panic!("invalid input"),
+                }
+                Some(*mover)
+            },
+        )
+        // filter out duplicates
+        .unique()
+        .count()
+}
+```
