@@ -1,0 +1,376 @@
+---
+title: "Advent of Code 2023 Day 2"
+date: "2023-12-02"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+---
+
+## Day 2: Cube Conundrum
+
+https://adventofcode.com/2023/day/2
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_02.rs)
+</Aside>
+
+You arrive at a sky island and an elf comes to greet you.
+They want to play a game while you walk to your destination.
+
+In a small bag, there are an unknown amount of coloured cubes.
+The cubes are all either red, green, or blue.
+
+Each round, the elf draws some cubes from the bag and shows them to you.
+
+The goal of the game is to figure out which cubes are in the bag.
+
+The input today is a list of game-reports.
+
+- Each line describes one game.
+- Each round (that lists the cubes the elf drew from the bag) is separated by a semicolon.
+
+An example input looks like this:
+
+```txt title=input.txt
+Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
+```
+
+That means in game 1 there were 3 draws:
+1. 3 blue cubes, and 4 red cubes
+2. 1 red cube, 2 green cubes, and 6 blue cubes
+3. 2 green cubes
+
+After a draw is shown, all cubes are placed back into to bag before drawing from the bag again.
+
+## Part 1
+
+The elf wants to know which games in your input would have been possible if the bag contained only **12 red cubes, 13 green cubes, and 14 blue cubes**.
+
+The question asks for the sum of each possible game ID.
+
+In the example, game 1, 2, and 5 would have been possible, summing those IDs gives 8.
+
+
+### Option 1: Nested for loops
+
+I decided to build up the sum while iterating through the lines of my input.
+
+Some skeleton/pseudocode:
+
+```rust
+let mut sum = 0;
+
+for line in input.lines() {
+    let id = // id of game;
+    let draws = // list of draws in the current game
+
+    for draw in draws {
+        // check if a draw is possible
+    }
+    if all_draws_were_possible {
+        sum += id;
+    }
+}
+
+sum
+```
+
+Starting to fill out that skeleton:
+
+```rust
+fn part_1(input: &str) -> usize {
+    let mut sum = 0;
+    for (idx, line) in input.lines().enumerate() {
+        let id = idx + 1;
+        let (_, draws) = line.split_once(": ").unwrap();
+        for draw in draws.split("; ") {
+            // check if a draw is possible
+        }
+        if all_draws_were_possible {
+            sum += id;
+        }
+    }
+    sum
+}
+```
+
+For each draw, several number/color pairs can be shown (ie: 3 blue, 4 red).
+I decided to implement a check to see if a certain pair was possible with the given cubes.
+
+If it's not, I skip to the next game.
+If all pairs in the current game are possible however, I increment the sum.
+
+#### Code
+
+```rust title=day_02.rs
+pub fn part_1(input: &str) -> usize {
+    let mut sum = 0;
+    'game: for (idx, line) in input.lines().enumerate() {
+        let id = idx + 1;
+        let (_, draws) = line.split_once(": ").unwrap();
+        for draw in draws.split("; ") {
+            for pair in draw.split(", ") {
+                let (num, color) = pair.split_once(" ").unwrap();
+                let num: u32 = num.parse().unwrap();
+                let possible = match color {
+                    "red" => num <= 12,
+                    "green" => num <= 13,
+                    "blue" => num <= 14,
+                    _ => panic!("at the disco"),
+                };
+                if !possible {
+                    // a check failed, move on to next game
+                    continue 'game;
+                }
+            }
+        }
+        // all checks in this game passed, add to sum
+        sum += id;
+    }
+    sum
+}
+```
+
+### Option 2: An iterator chain
+
+A more organized, but slower solution.
+
+This involves parsing each game first, then filtering out impossible games, and finally summing up the IDs of every remaining game.
+
+In skeleton/pseudocode:
+
+```rust
+input
+    .lines()
+    .map(/* turn a line into a Game */)
+    .filter(/* filter out Games that are impossible */)
+    .map(/* get id of remaining Games */)
+    .sum()
+```
+
+#### Helpers
+
+Each line represents a `Game`.
+
+```rust
+struct Game {
+    id: usize,
+    draws: Vec<Draw>,
+}
+```
+
+Within a game, several draws happen, represented by a list of `Draw`.
+
+```rust
+struct Draw {
+    red: u32,
+    green: u32,
+    blue: u32,
+}
+```
+
+Each draw has a number of red, green, and blue cubes.
+If no cubes of a color were drawn, the value of the field is 0.
+
+I created a way to turn strings like "3 blue, 4 red", or "1 red, 2 green, 6 blue" into a `Draw` struct.
+
+```rust
+impl Draw {
+    fn new(s: &str) -> Draw {
+        s.split(", ").fold(
+            Draw {
+                red: 0,
+                green: 0,
+                blue: 0,
+            },
+            |mut acc, item| {
+                let (num, color) = item.split_once(" ").unwrap();
+                let num = num.parse().unwrap();
+                match color {
+                    "red" => acc.red = num,
+                    "green" => acc.green = num,
+                    "blue" => acc.blue = num,
+                    _ => panic!("at the disco"),
+                };
+                acc
+            },
+        )
+    }
+}
+```
+
+That way, turning each line into a `Game` looks like this:
+
+```rust
+input
+    .lines()
+    .enumerate()
+    .map(|(idx, line)| {
+        let (_, draws) = line.split_once(": ").unwrap();
+        let draws = draws.split("; ").map(Draw::new).collect();
+        Game { id: idx + 1, draws }
+    })
+```
+
+All that is left then, is to filter out invalid games, and sum the remaining games' IDs.
+
+#### Code
+
+```rust title=day_02.rs
+struct Game {
+    id: usize,
+    draws: Vec<Draw>,
+}
+
+struct Draw {
+    red: u32,
+    green: u32,
+    blue: u32,
+}
+
+impl Draw {
+    fn new(s: &str) -> Draw {
+        s.split(", ").fold(
+            Draw {
+                red: 0,
+                green: 0,
+                blue: 0,
+            },
+            |mut acc, item| {
+                let (num, color) = item.split_once(" ").unwrap();
+                let num = num.parse().unwrap();
+                match color {
+                    "red" => acc.red = num,
+                    "green" => acc.green = num,
+                    "blue" => acc.blue = num,
+                    _ => panic!("at the disco"),
+                };
+                acc
+            },
+        )
+    }
+}
+
+fn part_1(input: &str) -> usize {
+    input
+        .lines()
+        .enumerate()
+        .map(|(idx, line)| {
+            let (_, draws) = line.split_once(": ").unwrap();
+            let draws = draws.split("; ").map(Draw::new).collect();
+            Game { id: idx + 1, draws }
+        })
+        .filter(|game| {
+            game.draws
+                .iter()
+                .all(|draw| draw.red <= 12 && draw.green <= 13 && draw.blue <= 14)
+        })
+        .map(|game| game.id)
+        .sum()
+}
+```
+
+## Part 2
+
+As you continue your walk, the Elf poses a second question: 
+in each game you played, what is the fewest number of cubes of each color that could have been in the bag to make the game possible?
+
+The question asks for sum of the **power levels** of all games.
+
+The power level can be found by multiplying the minimum amount of red, blue, and green cubes to make a game valid.
+
+The setup looks very similar to part one.
+
+This time, per game, we keep track of the minimum amount of cubes of a certain color.
+
+If we come across a draw with a larger amount of cubes for that color, that minimum is increased.
+
+Per game, the power level is then calculated and added to a sum.
+
+### Code
+
+```rust title=day_02.rs
+
+pub fn part_2(input: &str) -> u32 {
+    let mut sum = 0;
+    for line in input.lines() {
+        let mut min_red = 0;
+        let mut min_green = 0;
+        let mut min_blue = 0;
+        let (_, draws) = line.split_once(": ").unwrap();
+        for draw in draws.split("; ") {
+            for pair in draw.split(", ") {
+                let (num, color) = pair.split_once(" ").unwrap();
+                let num: u32 = num.parse().unwrap();
+                match color {
+                    "red" => min_red = min_red.max(num),
+                    "green" => min_green = min_green.max(num),
+                    "blue" => min_blue = min_blue.max(num),
+                    _ => panic!("at the disco"),
+                }
+            }
+        }
+        sum += min_red * min_green * min_blue;
+    }
+    sum
+}
+```
+
+## Final code
+
+```rust title=day_02.rs numberLines
+pub fn part_1(input: &str) -> usize {
+    let mut sum = 0;
+    'game: for (idx, line) in input.lines().enumerate() {
+        let id = idx + 1;
+        let (_, draws) = line.split_once(": ").unwrap();
+        for draw in draws.split("; ") {
+            for pair in draw.split(", ") {
+                let (num, color) = pair.split_once(" ").unwrap();
+                let num: u32 = num.parse().unwrap();
+                let possible = match color {
+                    "red" => num <= 12,
+                    "green" => num <= 13,
+                    "blue" => num <= 14,
+                    _ => panic!("at the disco"),
+                };
+                if !possible {
+                    // a check failed, move on to next game
+                    continue 'game;
+                }
+            }
+        }
+        // all checks in this game passed, add to sum
+        sum += id;
+    }
+    sum
+}
+
+pub fn part_2(input: &str) -> u32 {
+    let mut sum = 0;
+    for line in input.lines() {
+        let mut min_red = 0;
+        let mut min_green = 0;
+        let mut min_blue = 0;
+        let (_, draws) = line.split_once(": ").unwrap();
+        for draw in draws.split("; ") {
+            for pair in draw.split(", ") {
+                let (num, color) = pair.split_once(" ").unwrap();
+                let num: u32 = num.parse().unwrap();
+                match color {
+                    "red" => min_red = min_red.max(num),
+                    "green" => min_green = min_green.max(num),
+                    "blue" => min_blue = min_blue.max(num),
+                    _ => panic!("at the disco"),
+                }
+            }
+        }
+        sum += min_red * min_green * min_blue;
+    }
+    sum
+}
+```
