@@ -1,0 +1,255 @@
+---
+title: "Advent of Code 2023 Day 4"
+date: "2023-12-04"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+---
+
+## Day 4: Scratchcards
+
+https://adventofcode.com/2023/day/4
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_04.rs)
+</Aside>
+
+The gondola took you up to a different sky-island (the best kind).
+
+An elf wants your help with this giant pile of scratchcards in front of them.
+
+Today's input file is a list of information on each scratchcard.
+
+An example input looks like this:
+
+```txt title=input.txt
+Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
+Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19
+Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1
+Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83
+Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36
+Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11
+```
+
+- To the **left** of the pipe `|` are the **winning numbers**.
+- To the **right** of the pipe `|` are the **numbers on card**.
+
+In the above example, card 1 has five winning numbers (41, 48, 83, 86, and 17), and you have eight numbers (83, 86, 6, 31, 17, 9, 48, and 53).
+Of the numbers you have, four of them (48, 83, 17, and 86) are winning numbers!
+
+## Part 1
+
+Each card has a score.
+The first winning number is worth 1 point.
+Every matching number after that doubles your score.
+
+For the first card in the example, there were 4 winning numbers.
+
+- The first match is worth 1 point
+- The second match doubles that to 2
+- The third match doubles that to 4
+- The fourth match doubles that to 8
+
+The question asks what the sum is of all card scores.
+
+### Option 1: for loop
+
+We keep track of a `sum` variable while iterating through the cards.
+
+For each card, we determine how many winning numbers match with the numbers we have.
+
+Using the amount of matches, we calculate the card's score.
+
+If there are 0 matches, the score is 0.
+If the score is higher, the score is a power of 2 thanks to that doubling logic.
+
+For each card, we add that score to the sum.
+
+#### Code
+
+```rust title=day_04.rs
+pub fn part_1(input: &str) -> u32 {
+    let mut sum = 0;
+    for line in input.lines() {
+        let (_, numbers) = line.split_once(": ").unwrap();
+        let (winning, holding) = numbers.split_once("|").unwrap();
+        let winning = winning.split_whitespace();
+        let holding: Vec<_> = holding.split_whitespace().collect();
+        let num_winners = winning.filter(|s| holding.contains(s)).count() as u32;
+        let score = match num_winners {
+            0 => 0,
+            n => 2u32.pow(n - 1),
+        };
+        sum += score;
+    }
+    sum
+}
+```
+
+### Option 2: An iterator chain
+
+Same idea, but we no longer explicitly keep track of a sum.
+We transform each line into a score, and call `.sum()` at the end of the chain to sum all those scores.
+
+#### Code
+
+```rust title=day_04.rs
+pub fn part_1(input: &str) -> u32 {
+    input
+        .lines()
+        .map(|line| {
+            let (_, numbers) = line.split_once(": ").unwrap();
+            let (winning, holding) = numbers.split_once(" | ").unwrap();
+            let winning = winning.split_whitespace();
+            let holding: Vec<_> = holding.split_whitespace().collect();
+            let num_winners = winning.filter(|s| holding.contains(s)).count();
+            match num_winners {
+                0 => 0,
+                n => 2u32.pow(n as u32 - 1),
+            }
+        })
+        .sum()
+}
+```
+
+## Part 2
+
+Turns out the rules were different!
+
+Each scratchcard can cause you to win more scratchcards (how useful).
+
+You win scratchcards equal to the amount of winning numbers your numbers match.
+
+So in the example where the first scratchcard had 4 winning numbers, you would win 4 extra sratchcards.
+
+You win one copy each of the cards numbers after your winning card.
+So in the example, card 1 won 4 extra cards:
+1. a copy of card 2
+2. a copy of card 3
+3. a copy of card 4
+4. a copy of card 5
+
+The question asks how many cards we end up with when no more cards are won.
+
+### Option 1: for loop
+
+We keep track of a `counts` list that tells us how many cards of each type we have.
+It starts off filled with ones, because we start the game with one card of each type.
+
+We loop through every card in the input.
+For every card, we calculate the amount of matches.
+
+For every match, the card count of the card we win gets incremented.
+
+Not by 1, but by the total amount of cards we have of the current card.
+(Each one of those will win 1 card, so all of them together wins "current card amount".)
+
+
+At the end, we sum all card amounts in that list we kept track of.
+
+#### Code
+
+```rust title=day_04.rs
+pub fn part_2(input: &str) -> u32 {
+    let mut counts = vec![1; input.lines().count()];
+
+    for (idx, line) in input.lines().enumerate() {
+        let (_, numbers) = line.split_once(": ").unwrap();
+        let (winning, holding) = numbers.split_once("|").unwrap();
+        let winning = winning.split_whitespace();
+        let holding: Vec<_> = holding.split_whitespace().collect();
+        let num_winners = winning.filter(|s| holding.contains(s)).count();
+
+        // update the card counts for every card we win
+        let num_cards = counts[idx];
+        for i in (idx + 1)..=(idx + num_winners) {
+            counts[i] += num_cards;
+        }
+    }
+
+    counts.iter().sum()
+}
+```
+
+### Option 2: An iterator chain
+
+We iterate through every card.
+Each item in our iterator chain is transformed to the amount of those cards we have when the iteration ends.
+At the end, these amounts are summed together.
+
+The `.scan` iterator adapter keeps track of the counts of every card.
+
+<Aside variant="info">
+
+A card can only win next cards, never previous ones.
+
+</Aside>
+
+#### Code
+
+```rust title=day_04.rs
+pub fn part_2(input: &str) -> u32 {
+    input
+        .lines()
+        .enumerate()
+        .scan(vec![1; input.lines().count()], |counts, (idx, line)| {
+            let (_, numbers) = line.split_once(": ").unwrap();
+            let (winning, holding) = numbers.split_once("|").unwrap();
+            let winning = winning.split_whitespace();
+            let holding: Vec<_> = holding.split_whitespace().collect();
+            let num_winners = winning.filter(|s| holding.contains(s)).count();
+
+            // update the card counts for every card we win
+            let num_cards = counts[idx];
+            for i in idx + 1..=idx + num_winners {
+                counts[i] += num_cards;
+            }
+
+            Some(num_cards)
+        })
+        .sum()
+}
+```
+
+## Final code
+
+```rust title=day_04.rs numberLines
+pub fn part_1(input: &str) -> u32 {
+    input
+        .lines()
+        .map(|line| {
+            let (_, numbers) = line.split_once(": ").unwrap();
+            let (winning, holding) = numbers.split_once(" | ").unwrap();
+            let winning = winning.split_whitespace();
+            let holding: Vec<_> = holding.split_whitespace().collect();
+            let num_winners = winning.filter(|s| holding.contains(s)).count();
+
+            match num_winners {
+                0 => 0,
+                n => 2u32.pow(n as u32 - 1),
+            }
+        })
+        .sum()
+}
+
+pub fn part_2(input: &str) -> u32 {
+    input
+        .lines()
+        .enumerate()
+        .scan(vec![1; input.lines().count()], |counts, (idx, line)| {
+            let (_, numbers) = line.split_once(": ").unwrap();
+            let (winning, holding) = numbers.split_once("|").unwrap();
+            let winning = winning.split_whitespace();
+            let holding: Vec<_> = holding.split_whitespace().collect();
+            let num_winners = winning.filter(|s| holding.contains(s)).count();
+
+            let num_cards = counts[idx];
+            for i in idx + 1..=idx + num_winners {
+                counts[i] += num_cards;
+            }
+
+            Some(num_cards)
+        })
+        .sum()
+}
+```

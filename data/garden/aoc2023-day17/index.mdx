@@ -1,0 +1,750 @@
+---
+title: "Advent of Code 2023 Day 17"
+date: "2023-12-17"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+---
+
+## Day 17: Clumsy Crucible
+
+https://adventofcode.com/2023/day/17
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_17.rs)
+</Aside>
+
+The lava starts flowing down to Metal Island.
+
+There, elves are busy taking the lava to the factory in big crucibles (cups for molten stuff).
+
+They want to get the crucibles to the factory as fast as possible to lose the least amount of heat.
+
+Figuring out the ideal route to take is your job.
+
+The elves prepared a map that list how much heat is lost if you enter a tile.
+The starting location is in the top-left, the ending location in the bottom-right.
+
+An example input looks like this:
+```txt title=input.txt
+2413432311323
+3215453535623
+3255245654254
+3446585845452
+4546657867536
+1438598798454
+4457876987766
+3637877979653
+4654967986887
+4564679986453
+1224686865563
+2546548887735
+4322674655533
+```
+
+## Parsing
+
+A 2D list of digits:
+```rust
+fn parse(input: &str) -> Vec<Vec<u8>> {
+    input
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|c| c.to_digit(10).unwrap() as u8)
+                .collect()
+        })
+        .collect()
+}
+```
+
+## Part 1
+
+The crucibles are unwieldy, pretty hard to "drive" (is that the right word? Hard to move.)
+
+- They cannot move in a straight line for more than 3 tiles.
+- They cannot reverse direction
+
+The question asks for the minimum amount of heatloss when you reach the destination.
+
+---
+
+This is a shortest path problem, time to pull out the [Dijkstra](https://nl.wikipedia.org/wiki/Kortstepad-algoritme).
+
+### Helpers
+
+To do some Dijkstra's algorithm, I need a priority queue.
+In Rust, I'll use a [`BinaryHeap`](https://doc.rust-lang.org/std/collections/struct.BinaryHeap.html) for this.
+
+Some skeleton/pseudo-code I want to work towards:
+```rust
+pub fn part_1(input: &str) -> u32 {
+    let grid = parse(input);
+    let goal = Coord {
+        row: grid.len() - 1,
+        col: grid[0].len() - 1,
+    };
+
+    let mut pq = BinaryHeap::new();
+
+    // push the initial 2 directions the crucible can move onto the pq
+    pq.push(initial_crucibles);
+
+    // loop until the goal is reached, or the pq is empty
+    while let Some(crucible) = pq.pop() {
+        if crucible.pos == goal {
+            return crucible.cost;
+        }
+        // determine the next possible crucibles and push them onto the pq
+        for successor in node.successors(&grid) {
+            pq.push(successor);
+        }
+    }
+}
+```
+
+The things I'll push onto that queue and pop off it are my own data structures, `Crucible`:
+```rust
+struct Crucible {
+    cost: u32,
+    pos: Coord,
+    dir: Direction,
+    moves_in_dir: u8,
+}
+```
+
+The position it has is tracked by a `Coord`:
+```rust
+struct Coord {
+    row: usize,
+    col: usize,
+}
+```
+
+The direction the crucible is moving in is a `Direction`:
+```rust
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+```
+
+Now, to handle the soring of the `Crucible`s in that priority queue, I specified how they should be sorted, by cost, from low to high.
+That way, every time I pop from the queue, I get the crucible with the lowest cost.
+
+```rust
+// The priority queue holds Crucible
+// We define an ordering trait so the one with the lowest cost gets popped from the pq first.
+// We do this by flipping the ordering on cost (comparing "other to self" instead of "self to other")
+// that way, nodes with a lower cost will compare as Ordering::Greater, and get sent to the front of the pq
+impl Ord for Crucible {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+// Ensure partialOrd is consistent with Ord. From the docs:
+// > If Ord is also implemented for Self and Rhs, it must also be consistent with partial_cmp (see the documentation of that trait for the exact requirements).
+// > It’s easy to accidentally make them disagree by deriving some of the traits and manually implementing others.
+// tl;dr: implement PartialOrd in terms of the Ord we just specified to ensure correctness. Letting it be automatically determined is wrong sometimes.
+impl PartialOrd for Crucible {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+```
+
+The next step is the function that determines the successors (a fancy word for the next possible crucibles).
+It tries to move in every direction, and only does so if the rules from the question pass:
+```rust
+impl Crucible {
+    fn successors(&self, grid: &Vec<Vec<u8>>) -> Vec<Self> {
+        let rows = grid.len();
+        let cols = grid[0].len();
+
+        let mut successors = Vec::new();
+        for dir in [
+            Direction::Up,
+            Direction::Down,
+            Direction::Left,
+            Direction::Right,
+        ] {
+            if self.dir == dir && self.moves_in_dir == 3 {
+                // already moved 3 tiles in a straight line, can't move further
+                continue;
+            }
+            if self.dir.opposite() == dir {
+                // can't move in opposite direction
+                continue;
+            }
+            // simulate a move inside the bounds
+            if let Some(pos) = self.pos.forward(&dir, rows, cols) {
+                // calculate the total cost to get to that neighbour
+                // it's the total cost to get to the current node + the cost to travel to the neighbour
+                let cost = self.cost + grid[pos.row][pos.col] as u32;
+
+                // increment straight_moves if we went straight, else we moved 1 tile in the current direction
+                let moves_in_dir = if self.dir == dir {
+                    self.moves_in_dir + 1
+                } else {
+                    1
+                };
+
+                successors.push(Crucible {
+                    pos,
+                    cost,
+                    dir,
+                    moves_in_dir,
+                })
+            }
+        }
+
+        successors
+    }
+}
+```
+
+This handles some of the rules crucibles must adhere to, like:
+- Not moving more than 3 tiles in a straight line
+- Not reversing direction
+
+The not reversing direction rule uses another helper:
+```rust
+impl Direction {
+    fn opposite(&self) -> Self {
+        match self {
+            Direction::Up => Direction::Down,
+            Direction::Down => Direction::Up,
+            Direction::Left => Direction::Right,
+            Direction::Right => Direction::Left,
+        }
+    }
+}
+```
+
+It also makes sure a crucible doesn't go off the map with that `forward` helper, it only adds a new crucible if it's inside the grid.
+That's because that `forward` helper only returns a valid coordinate if it's inside the grid:
+```rust
+impl Coord {
+    fn forward(&self, dir: &Direction, rows: usize, cols: usize) -> Option<Self> {
+        let coord = match dir {
+            Direction::Up if self.row > 0 => Coord {
+                row: self.row - 1,
+                col: self.col,
+            },
+            Direction::Down if self.row < (rows - 1) => Coord {
+                row: self.row + 1,
+                col: self.col,
+            },
+            Direction::Left if self.col > 0 => Coord {
+                row: self.row,
+                col: self.col - 1,
+            },
+            Direction::Right if self.col < (cols - 1) => Coord {
+                row: self.row,
+                col: self.col + 1,
+            },
+            _ => return None,
+        };
+        Some(coord)
+    }
+}
+```
+
+### Code
+
+This worked, but went very slow, so I kept track of previous crucibles in a `HashSet`.
+Only tracking the `Crucible` position is not enough, as it matters which direction the crucible is travelling in, and how far it already has in a straight line.
+
+So every time I want to add a successor to the priority queue, I check if that `(coord, dir, moves_in_dir)` triplet has already been seen.
+If it hasn't, I add that crucible to the queue, and that triplet to the `seen` cache.
+
+```rust title=day_17.rs
+pub fn part_1(input: &str) -> u32 {
+    let grid = parse(input);
+    let goal = Coord {
+        row: grid.len() - 1,
+        col: grid[0].len() - 1,
+    };
+
+    let mut pq = BinaryHeap::new();
+    let mut seen = HashSet::new();
+
+    let right = Crucible {
+        cost: grid[0][1] as u32,
+        dir: Direction::Right,
+        pos: Coord { row: 0, col: 1 },
+        moves_in_dir: 1,
+    };
+    pq.push(right);
+
+    let down = Crucible {
+        cost: grid[1][0] as u32,
+        dir: Direction::Down,
+        pos: Coord { row: 1, col: 0 },
+        moves_in_dir: 1,
+    };
+    pq.push(down);
+
+    while let Some(crucible) = pq.pop() {
+        if crucible.pos == goal {
+            return crucible.cost;
+        }
+        for crucible in crucible.successors(&grid) {
+            if seen.insert((crucible.pos, crucible.dir, crucible.moves_in_dir)) {
+                pq.push(crucible);
+            }
+        }
+    }
+
+    panic!("No path found")
+}
+```
+
+## Part 2
+
+It's not going fast enough, to remedy this, the elves brought bigger crucibles, ultracrucibles.
+
+They can move more lava, but are also even more unwieldy.
+
+They need to move a minimum of 4 tiles in a single direction before they can turn or stop.
+
+They can't go further than 10 tiles in a single direction before they have to turn.
+
+The question asks for the minimum amount of heatloss when you reach the destination.
+
+### Helpers
+
+The nodes that go into the priority queue now are `UltraCrucible`s:
+```rust
+struct UltraCrucible {
+    cost: u32,
+    pos: Coord,
+    dir: Direction,
+    moves_in_dir: u8,
+}
+```
+
+The same logic is used to order them:
+```rust
+impl Ord for UltraCrucible {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for UltraCrucible {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+```
+
+And now, for the part that is different between part1 and part2, the `successors`:
+```rust
+impl UltraCrucible {
+    fn successors(&self, grid: &Vec<Vec<u8>>) -> Vec<Self> {
+        let rows = grid.len();
+        let cols = grid[0].len();
+
+        let mut successors = Vec::new();
+        for dir in [
+            Direction::Up,
+            Direction::Down,
+            Direction::Left,
+            Direction::Right,
+        ] {
+            // Once an ultra crucible starts moving in a direction, it needs to move a minimum of four blocks in that direction before it can turn
+            if self.moves_in_dir < 4 && dir != self.dir {
+                continue;
+            }
+            // an ultra crucible can move a maximum of ten consecutive blocks without turning.
+            if self.dir == dir && self.moves_in_dir == 10 {
+                // already moved 3 tiles in a straight line, can't move further
+                continue;
+            }
+            if self.dir.opposite() == dir {
+                // can't move in opposite direction
+                continue;
+            }
+            // simulate a move inside the bounds
+            if let Some(pos) = self.pos.forward(&dir, rows, cols) {
+                // calculate the total cost to get to that neighbour
+                // it's the total cost to get to the current node + the cost to travel to the neighbour
+                let cost = self.cost + grid[pos.row][pos.col] as u32;
+
+                // increment straight_moves if we went straight, else we moved 1 tile in the current direction
+                let moves_in_dir = if self.dir == dir {
+                    self.moves_in_dir + 1
+                } else {
+                    1
+                };
+
+                successors.push(UltraCrucible {
+                    pos,
+                    cost,
+                    dir,
+                    moves_in_dir,
+                })
+            }
+        }
+
+        successors
+    }
+}
+```
+
+This function encodes the movement rules laid out by the question.
+
+The only other minor change is the check to see if the destination has been reached in the loop.
+Since an `UltraCrucible` can't stop immediately, I added a check to see if it has been moving for at least 4 tiles.
+
+### Code
+
+```rust title=day_17.rs
+pub fn part_2(input: &str) -> u32 {
+    let grid = parse(input);
+    let goal = Coord {
+        row: grid.len() - 1,
+        col: grid[0].len() - 1,
+    };
+
+    let mut pq = BinaryHeap::new();
+    let mut seen = HashSet::new();
+
+    let right = UltraCrucible {
+        cost: grid[0][1] as u32,
+        dir: Direction::Right,
+        pos: Coord { row: 0, col: 1 },
+        moves_in_dir: 1,
+    };
+    pq.push(right);
+
+    let down = UltraCrucible {
+        cost: grid[1][0] as u32,
+        dir: Direction::Down,
+        pos: Coord { row: 1, col: 0 },
+        moves_in_dir: 1,
+    };
+    pq.push(down);
+
+    while let Some(ultra_crucible) = pq.pop() {
+        if ultra_crucible.pos == goal && ultra_crucible.moves_in_dir >= 4 {
+            return ultra_crucible.cost;
+        }
+        for ultra_crucible in ultra_crucible.successors(&grid) {
+            if seen.insert((
+                ultra_crucible.pos,
+                ultra_crucible.dir,
+                ultra_crucible.moves_in_dir,
+            )) {
+                pq.push(ultra_crucible);
+            }
+        }
+    }
+
+    panic!("No path found")
+}
+```
+
+## Final code
+
+```rust title=day_17.rs numberLines
+use std::{
+    cmp::Ordering,
+    collections::{BinaryHeap, HashSet},
+};
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
+struct Coord {
+    row: usize,
+    col: usize,
+}
+
+impl Coord {
+    fn forward(&self, dir: &Direction, rows: usize, cols: usize) -> Option<Self> {
+        let coord = match dir {
+            Direction::Up if self.row > 0 => Coord {
+                row: self.row - 1,
+                col: self.col,
+            },
+            Direction::Down if self.row < (rows - 1) => Coord {
+                row: self.row + 1,
+                col: self.col,
+            },
+            Direction::Left if self.col > 0 => Coord {
+                row: self.row,
+                col: self.col - 1,
+            },
+            Direction::Right if self.col < (cols - 1) => Coord {
+                row: self.row,
+                col: self.col + 1,
+            },
+            _ => return None,
+        };
+        Some(coord)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+impl Direction {
+    fn opposite(&self) -> Self {
+        match self {
+            Direction::Up => Direction::Down,
+            Direction::Down => Direction::Up,
+            Direction::Left => Direction::Right,
+            Direction::Right => Direction::Left,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+struct Crucible {
+    cost: u32,
+    pos: Coord,
+    dir: Direction,
+    moves_in_dir: u8,
+}
+
+// The priority queue holds Nodes
+// We define an ordering trait so the one with the lowest cost gets popped from the pq first.
+// We do this by flipping the ordering on cost (comparing "other to self" instead of "self to other")
+// that way, nodes with a lower cost will compare as Ordering::Greater, and get sent to the front of the pq
+impl Ord for Crucible {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+// Ensure partialOrd is consistent with Ord. If you #[derive(PartialOrd)] this it might not be the same as that implementation uses a top-down ordering on the Node struct fields
+// in this case, it would order by idx first (as that field occurs first in the source code where Node is defined) and would not be consistent.
+// From the docs:
+// > If Ord is also implemented for Self and Rhs, it must also be consistent with partial_cmp (see the documentation of that trait for the exact requirements).
+// > It’s easy to accidentally make them disagree by deriving some of the traits and manually implementing others.
+impl PartialOrd for Crucible {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Crucible {
+    fn successors(&self, grid: &Vec<Vec<u8>>) -> Vec<Self> {
+        let rows = grid.len();
+        let cols = grid[0].len();
+
+        let mut successors = Vec::new();
+        for dir in [
+            Direction::Up,
+            Direction::Down,
+            Direction::Left,
+            Direction::Right,
+        ] {
+            if self.dir == dir && self.moves_in_dir == 3 {
+                // already moved 3 tiles in a straight line, can't move further
+                continue;
+            }
+            if self.dir.opposite() == dir {
+                // can't move in opposite direction
+                continue;
+            }
+            // simulate a move inside the bounds
+            if let Some(pos) = self.pos.forward(&dir, rows, cols) {
+                // calculate the total cost to get to that neighbour
+                // it's the total cost to get to the current node + the cost to travel to the neighbour
+                let cost = self.cost + grid[pos.row][pos.col] as u32;
+
+                // increment straight_moves if we went straight, else we moved 1 tile in the current direction
+                let moves_in_dir = if self.dir == dir {
+                    self.moves_in_dir + 1
+                } else {
+                    1
+                };
+
+                successors.push(Crucible {
+                    pos,
+                    cost,
+                    dir,
+                    moves_in_dir,
+                })
+            }
+        }
+
+        successors
+    }
+}
+
+fn parse(input: &str) -> Vec<Vec<u8>> {
+    input
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|c| c.to_digit(10).unwrap() as u8)
+                .collect()
+        })
+        .collect()
+}
+
+pub fn part_1(input: &str) -> u32 {
+    let grid = parse(input);
+    let goal = Coord {
+        row: grid.len() - 1,
+        col: grid[0].len() - 1,
+    };
+
+    let mut pq = BinaryHeap::new();
+    let mut seen = HashSet::new();
+
+    let right = Crucible {
+        cost: grid[0][1] as u32,
+        dir: Direction::Right,
+        pos: Coord { row: 0, col: 1 },
+        moves_in_dir: 1,
+    };
+    pq.push(right);
+
+    let down = Crucible {
+        cost: grid[1][0] as u32,
+        dir: Direction::Down,
+        pos: Coord { row: 1, col: 0 },
+        moves_in_dir: 1,
+    };
+    pq.push(down);
+
+    while let Some(crucible) = pq.pop() {
+        if crucible.pos == goal {
+            return crucible.cost;
+        }
+        for crucible in crucible.successors(&grid) {
+            if seen.insert((crucible.pos, crucible.dir, crucible.moves_in_dir)) {
+                pq.push(crucible);
+            }
+        }
+    }
+
+    panic!("No path found")
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+struct UltraCrucible {
+    cost: u32,
+    pos: Coord,
+    dir: Direction,
+    moves_in_dir: u8,
+}
+
+impl Ord for UltraCrucible {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for UltraCrucible {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl UltraCrucible {
+    fn successors(&self, grid: &Vec<Vec<u8>>) -> Vec<Self> {
+        let rows = grid.len();
+        let cols = grid[0].len();
+
+        let mut successors = Vec::new();
+        for dir in [
+            Direction::Up,
+            Direction::Down,
+            Direction::Left,
+            Direction::Right,
+        ] {
+            // Once an ultra crucible starts moving in a direction, it needs to move a minimum of four blocks in that direction before it can turn
+            if self.moves_in_dir < 4 && dir != self.dir {
+                continue;
+            }
+            // an ultra crucible can move a maximum of ten consecutive blocks without turning.
+            if self.dir == dir && self.moves_in_dir == 10 {
+                // already moved 3 tiles in a straight line, can't move further
+                continue;
+            }
+            if self.dir.opposite() == dir {
+                // can't move in opposite direction
+                continue;
+            }
+            // simulate a move inside the bounds
+            if let Some(pos) = self.pos.forward(&dir, rows, cols) {
+                // calculate the total cost to get to that neighbour
+                // it's the total cost to get to the current node + the cost to travel to the neighbour
+                let cost = self.cost + grid[pos.row][pos.col] as u32;
+
+                // increment straight_moves if we went straight, else we moved 1 tile in the current direction
+                let moves_in_dir = if self.dir == dir {
+                    self.moves_in_dir + 1
+                } else {
+                    1
+                };
+
+                successors.push(UltraCrucible {
+                    pos,
+                    cost,
+                    dir,
+                    moves_in_dir,
+                })
+            }
+        }
+
+        successors
+    }
+}
+
+pub fn part_2(input: &str) -> u32 {
+    let grid = parse(input);
+    let goal = Coord {
+        row: grid.len() - 1,
+        col: grid[0].len() - 1,
+    };
+
+    let mut pq = BinaryHeap::new();
+    let mut seen = HashSet::new();
+
+    let right = UltraCrucible {
+        cost: grid[0][1] as u32,
+        dir: Direction::Right,
+        pos: Coord { row: 0, col: 1 },
+        moves_in_dir: 1,
+    };
+    pq.push(right);
+
+    let down = UltraCrucible {
+        cost: grid[1][0] as u32,
+        dir: Direction::Down,
+        pos: Coord { row: 1, col: 0 },
+        moves_in_dir: 1,
+    };
+    pq.push(down);
+
+    while let Some(ultra_crucible) = pq.pop() {
+        if ultra_crucible.pos == goal && ultra_crucible.moves_in_dir >= 4 {
+            return ultra_crucible.cost;
+        }
+        for ultra_crucible in ultra_crucible.successors(&grid) {
+            if seen.insert((
+                ultra_crucible.pos,
+                ultra_crucible.dir,
+                ultra_crucible.moves_in_dir,
+            )) {
+                pq.push(ultra_crucible);
+            }
+        }
+    }
+
+    panic!("No path found")
+}
+```

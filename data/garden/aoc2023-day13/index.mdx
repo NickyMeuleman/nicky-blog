@@ -1,0 +1,414 @@
+---
+title: "Advent of Code 2023 Day 13"
+date: "2023-12-13"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+---
+
+## Day 13: Point of Incidence
+
+https://adventofcode.com/2023/day/13
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_13.rs)
+</Aside>
+
+You arrive at Lava Island.
+There is a distinct lack of lava for an island named "Lava Island".
+
+The place you arrived at is full of mirrors.
+It's hard to see where they are -because of their mirrorness, you see-.
+
+Your input today are several patterns of what you see as you walk.
+
+An example input looks like this:
+```txt title=input.txt
+#.##..##.
+..#.##.#.
+##......#
+##......#
+..#.##.#.
+..##..##.
+#.#.##.#.
+
+#...##..#
+#....#..#
+..##..###
+#####.##.
+#####.##.
+..##..###
+#....#..#
+```
+
+- `#` are tiles of ash
+- `.` are tiles of rocks
+
+By analyzing the patterns, you can figure out where the mirrors are.
+
+## Parsing
+
+An enum to keep track of what a tile holds:
+```rust
+enum Tile {
+    Ash,
+    Rock,
+}
+```
+
+Because that enum has 2 variants, I assume many people chose booleans for this, or even flipping on/off bits in a list of numbers (or even better, one number!).
+
+The input represents a list of 2D grids:
+```rust
+fn parse(input: &str) -> Vec<VecDeque<Vec<Tile>>> {
+    input
+        .split("\n\n")
+        .map(|block| {
+            block
+                .lines()
+                .map(|line| {
+                    line.chars()
+                        .map(|c| match c {
+                            '.' => Tile::Ash,
+                            '#' => Tile::Rock,
+                            _ => panic!("at the disco"),
+                        })
+                        .collect()
+                })
+                .collect()
+        })
+        .collect()
+}
+```
+
+I chose to represent rows as a `VecDeque` as opposed to a `Vec`, more on why later.
+
+Non Rustacean friends reading this: basically, it's a list you can reverse.
+Chances are you don't even have to think about this in a language like Python or JavaScript.
+
+## Part 1
+
+To find the reflection in each pattern, you need to find a perfect reflection across **either** a horizontal line between two rows or across a vertical line between two columns.
+
+A reflection line does not have to be perfectly in the middle.
+If one half of the reflection is larger than the other half (in other words: it has nowhere to reflect onto), those extra lines can be ignored.
+
+In the example, the first pattern has a vertical reflection line between column 5 and 6:
+```txt
+123456789
+    ><   
+#.##..##.
+..#.##.#.
+##......#
+##......#
+..#.##.#.
+..##..##.
+#.#.##.#.
+    ><   
+123456789
+```
+
+Each pattern has a numerical value, to find it:
+
+If the pattern has a vertical reflection:
+- the number of columns to the left of that line
+
+If the pattern has a horizontal reflection:
+- the number of rows above that line multiplied by 100
+
+
+The question asks for the sum of all number values for a pattern.
+
+So, some skeleton code that uses the parsing logic above:
+```rust
+let grid = parse(input);
+grid.iter()
+    .map(/* get number for each pattern */)
+    .sum()
+```
+### Helpers
+
+I use a helper that returns the offset a 2D grid reflects at horizontally.
+
+A grid is not guaranteed to have a reflection point, so I express that as an `Option<usize>`.
+Either it has a reflection line, and I return its offset, or it doesn't reflect, and I return nothing.
+
+This finds the first offset where a grid is perfectly mirrorred.
+
+First, I divide the grid into 2 halves.
+Then I check if those two halves are identical, making sure to take into account the length of the smallest half.
+
+This helper is also why I chose a `VecDeque` earlier, I reverse the first half, so I can easier compare the two halves.
+A normal `Vec` wouldn't let me do that.
+
+```rust
+fn reflects_at(grid: &VecDeque<Vec<Tile>>) -> Option<usize> {
+    (1..grid.len()).find(|&offset| {
+        let half1 = grid.iter().take(offset).rev();
+        let half2 = grid.iter().skip(offset);
+        let mut combined = half1.zip(half2); // the shortest half determines how long this is!
+        combined.all(|(row1, row2)| row1 == row2)
+    })
+}
+```
+
+So, if I pass a regular grid into this, I get the row offset it reflects at.
+To check which offset it reflects at vertically, I pass a 2D grid of columns into that same function.
+
+Now, for each pattern I can check if it has a vertical mirrorring point.
+If it doesn't, I transform the grid of rows into a grid of columns and do the check again.
+
+### Code
+
+```rust title=day_13.rs
+se std::collections::VecDeque;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Tile {
+    Ash,
+    Rock,
+}
+
+// parse input to a list of 2D grids
+fn parse(input: &str) -> Vec<VecDeque<Vec<Tile>>> {
+    input
+        .split("\n\n")
+        .map(|block| {
+            block
+                .lines()
+                .map(|line| {
+                    line.chars()
+                        .map(|c| match c {
+                            '.' => Tile::Ash,
+                            '#' => Tile::Rock,
+                            _ => panic!("at the disco"),
+                        })
+                        .collect()
+                })
+                .collect()
+        })
+        .collect()
+}
+
+fn reflects_at(grid: &VecDeque<Vec<Tile>>) -> Option<usize> {
+    (1..grid.len()).find(|&offset| {
+        let half1 = grid.iter().take(offset).rev();
+        let half2 = grid.iter().skip(offset);
+        let mut combined = half1.zip(half2); // the shortest half determines how long this is!
+        combined.all(|(row1, row2)| row1 == row2)
+    })
+}
+
+pub fn part_1(input: &str) -> usize {
+    let grid = parse(input);
+    grid.iter()
+        .map(|grid| {
+            // check horizontal
+            if let Some(i) = reflects_at(grid) {
+                return i * 100;
+            }
+
+            // check vertical
+            let cols = (0..grid[0].len())
+                .map(|i| grid.iter().map(|row| row[i]).collect())
+                .collect();
+            if let Some(i) = reflects_at(&cols) {
+                return i;
+            }
+
+            // no reflection found
+            0
+        })
+        .sum()
+}
+```
+
+## Part 2
+
+Each mirror has one smudge.
+Exactly one `#` or `#` should be the opposite type.
+
+### Helpers
+
+The `reflects_at` helper changes a bit.
+
+Instead of checking for a perfect mirrorring, I now check for exactly 1 different tile in the two halves.
+
+I count how many differences a potential mirror has, that amount should be exactly 1.
+
+```rust
+fn reflects_at(grid: &VecDeque<Vec<Tile>>) -> Option<usize> {
+    (1..grid.len()).find(|&offset| {
+        let half1 = grid.iter().take(offset).rev();
+        let half2 = grid.iter().skip(offset);
+        let combined = half1.zip(half2); // the shortest half determines how long this is!
+        let differences: usize = combined
+            .map(|(row1, row2)| row1.iter().zip(row2.iter()).filter(|(a, b)| a != b).count())
+            .sum();
+
+        differences == 1
+    })
+}
+```
+
+### Code
+
+```rust title=day_13.rs
+use std::collections::VecDeque;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Tile {
+    Ash,
+    Rock,
+}
+
+fn parse(input: &str) -> Vec<VecDeque<Vec<Tile>>> {
+    input
+        .split("\n\n")
+        .map(|block| {
+            block
+                .lines()
+                .map(|line| {
+                    line.chars()
+                        .map(|c| match c {
+                            '.' => Tile::Ash,
+                            '#' => Tile::Rock,
+                            _ => panic!("at the disco"),
+                        })
+                        .collect()
+                })
+                .collect()
+        })
+        .collect()
+}
+
+fn reflects_at(grid: &VecDeque<Vec<Tile>>) -> Option<usize> {
+    (1..grid.len()).find(|&offset| {
+        let half1 = grid.iter().take(offset).rev();
+        let half2 = grid.iter().skip(offset);
+        let combined = half1.zip(half2); // the shortest half determines how long this is!
+        let differences: usize = combined
+            .map(|(row1, row2)| row1.iter().zip(row2.iter()).filter(|(a, b)| a != b).count())
+            .sum();
+
+        differences == 1
+    })
+}
+
+pub fn part_2(input: &str) -> usize {
+    let grid = parse(input);
+    grid.iter()
+        .map(|grid| {
+            // check horizontal
+            if let Some(i) = reflects_at(grid) {
+                return i * 100;
+            }
+
+            // check vertical
+            let cols = (0..grid[0].len())
+                .map(|i| grid.iter().map(|row| row[i]).collect())
+                .collect();
+            if let Some(i) = reflects_at(&cols) {
+                return i;
+            }
+
+            // no reflection found
+            0
+        })
+        .sum()
+}
+```
+
+The differences between part1 and part2 are minor, so I made that helper function take a variable amount of smudges.
+
+## Final code
+
+```rust title=day_13.rs numberLines
+use std::collections::VecDeque;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Tile {
+    Ash,
+    Rock,
+}
+
+// parse input to a list of 2D grids
+fn parse(input: &str) -> Vec<VecDeque<Vec<Tile>>> {
+    input
+        .split("\n\n")
+        .map(|block| {
+            block
+                .lines()
+                .map(|line| {
+                    line.chars()
+                        .map(|c| match c {
+                            '.' => Tile::Ash,
+                            '#' => Tile::Rock,
+                            _ => panic!("at the disco"),
+                        })
+                        .collect()
+                })
+                .collect()
+        })
+        .collect()
+}
+
+fn reflects_at(grid: &VecDeque<Vec<Tile>>, smudges: usize) -> Option<usize> {
+    (1..grid.len()).find(|&offset| {
+        let half1 = grid.iter().take(offset).rev();
+        let half2 = grid.iter().skip(offset);
+        let combined = half1.zip(half2); // the shortest half determines how long this is!
+        let found_smudges: usize = combined
+            .map(|(row1, row2)| row1.iter().zip(row2.iter()).filter(|(a, b)| a != b).count())
+            .sum();
+
+        found_smudges == smudges
+    })
+}
+
+pub fn part_1(input: &str) -> usize {
+    let grid = parse(input);
+    grid.iter()
+        .map(|grid| {
+            // check horizontal
+            if let Some(i) = reflects_at(grid, 0) {
+                return i * 100;
+            }
+
+            // check vertical
+            let cols = (0..grid[0].len())
+                .map(|i| grid.iter().map(|row| row[i]).collect())
+                .collect();
+            if let Some(i) = reflects_at(&cols, 0) {
+                return i;
+            }
+
+            // no reflection found
+            0
+        })
+        .sum()
+}
+
+pub fn part_2(input: &str) -> usize {
+    let grid = parse(input);
+    grid.iter()
+        .map(|grid| {
+            // check horizontal
+            if let Some(i) = reflects_at(grid, 1) {
+                return i * 100;
+            }
+
+            // check vertical
+            let cols = (0..grid[0].len())
+                .map(|i| grid.iter().map(|row| row[i]).collect())
+                .collect();
+            if let Some(i) = reflects_at(&cols, 1) {
+                return i;
+            }
+
+            // no reflection found
+            0
+        })
+        .sum()
+}
+```

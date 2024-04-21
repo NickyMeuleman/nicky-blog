@@ -1,0 +1,434 @@
+---
+title: "Advent of Code 2023 Day 16"
+date: "2023-12-16"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+---
+
+## Day 16: The Floor Will Be Lava
+
+https://adventofcode.com/2023/day/16
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_16.rs)
+</Aside>
+
+The light is focussed somewhere.
+
+It goes into a big cavern with a bunch of mirrors and splitters in it.
+
+Today's input is a map of the cavern.
+
+An example input looks like this:
+
+```txt title=input.txt
+.|...\....
+|.-.\.....
+.....|-...
+........|.
+..........
+.........\
+..../.\\..
+.-.-/..|..
+.|....-|.\
+..//.|....
+```
+
+- `.` empty space
+- '\\' left mirror
+- '/' right mirror
+- '-' horizontal splitter
+- '|' vertical splitter
+
+If a beam hits an empty space, it keeps going like nothing happened (Because it didn't you see? Nothing. It happened.)
+
+If a beam hits a mirror, it is reflected 90 degrees according to the angle of the mirror it hit.
+
+If a beam hits a splitter on the pointy end, it passes through like nothing happened.
+
+If a beam hits a splitter on the flat end, it gets split and exits through the 2 pointy ends.
+
+Beams do not interact, they pass right through eachother.
+
+## Parsing
+
+I represent the cave as a 2D list of `Tile`:
+
+```rust
+enum Tile {
+    Empty,
+    SplitHoriz,
+    SplitVert,
+    MirrorForward,
+    MirrorBack,
+}
+
+fn parse(s: &str) -> Vec<Vec<Tile>> {
+    s.lines()
+        .map(|line| {
+            line.chars()
+                .map(|c| match c {
+                    '\\' => Tile::MirrorBack,
+                    '/' => Tile::MirrorForward,
+                    '.' => Tile::Empty,
+                    '-' => Tile::SplitHoriz,
+                    '|' => Tile::SplitVert,
+                    _ => panic!("at the disco"),
+                })
+                .collect()
+        })
+        .collect()
+}
+```
+
+## Part 1
+
+The beam enters the cave from the top left, going right.
+
+The question asks how many tiles are energized (1 or more beams pass through it).
+
+### Helpers
+
+A `Beam` struct represents a beam of light:
+```rust
+struct Beam {
+    pos: Coord,
+    dir: Direction,
+}
+```
+
+The position of a beam is stored as a `Coord`:
+```rust
+struct Coord {
+    x: usize,
+    y: usize,
+}
+```
+
+And the direction a beam is currently travelling in as `Direction`:
+```rust
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+```
+
+Some skeleton-code I want to work towards:
+```rust
+pub fn part_1(input: &str) -> usize {
+    let grid = parse(input);
+    let start = Beam {
+        pos: Coord { x: 0, y: 0 },
+        dir: Direction::Right,
+    };
+    energized(start, &grid)
+}
+```
+
+The main logic is in the `energized` helper.
+
+It keeps track of a set of energized coordinates.
+At the end, it returns how large that set is.
+
+It starts by pushing a starting `Beam` onto a queue.
+
+Then it pops a beam off that queue until it's empty.
+For each beam, it determines the next positions and directions, and adds those to the queue.
+
+To prevent infinite loops (the beams might get trapped in the cave, going around forever), I keep track of every instance of `Beam` I saw so far.
+If I pop a beam off the stack I have already seen, I know I'm in a loop and can ignore that beam.
+
+For every beam I pop off the queue, I determine the next direction(s) it will travel in:
+Either 1 direction if it reflects or keeps going, or 2 directions if the beam gets split.
+
+For each direction, I try to move the beam in that direction.
+If it didn't go off the sides of the map, I add a beam with that new direction and updated position to the queue.
+
+```rust
+fn energized(start: Beam, grid: &[Vec<Tile>]) -> usize {
+    let rows = grid.len();
+    let cols = grid[0].len();
+
+    let mut q = VecDeque::new();
+    let mut energized = HashSet::new();
+    let mut seen = HashSet::new();
+    q.push_back(start);
+
+    while let Some(mut beam) = q.pop_front() {
+        if seen.contains(&beam) {
+            continue;
+        }
+        energized.insert(beam.pos);
+        seen.insert(beam);
+
+        let dirs = match (grid[beam.pos.y][beam.pos.x], beam.dir) {
+            (Tile::Empty, _)
+            | (Tile::SplitHoriz, Direction::Left)
+            | (Tile::SplitHoriz, Direction::Right)
+            | (Tile::SplitVert, Direction::Up)
+            | (Tile::SplitVert, Direction::Down) => vec![beam.dir],
+            (Tile::SplitHoriz, _) => {
+                vec![Direction::Left, Direction::Right]
+            }
+            (Tile::SplitVert, _) => {
+                vec![Direction::Up, Direction::Down]
+            }
+            (Tile::MirrorForward, Direction::Up) | (Tile::MirrorBack, Direction::Down) => {
+                vec![Direction::Right]
+            }
+            (Tile::MirrorForward, Direction::Down) | (Tile::MirrorBack, Direction::Up) => {
+                vec![Direction::Left]
+            }
+            (Tile::MirrorForward, Direction::Left) | (Tile::MirrorBack, Direction::Right) => {
+                vec![Direction::Down]
+            }
+            (Tile::MirrorForward, Direction::Right) | (Tile::MirrorBack, Direction::Left) => {
+                vec![Direction::Up]
+            }
+        };
+        for dir in dirs {
+            beam.dir = dir;
+            if let Some(beam) = beam.forward(rows, cols) {
+                q.push_back(beam);
+            }
+        }
+    }
+    energized.len()
+}
+```
+
+The `forward` helper that only returns a beam if it didn't go off the edges of the map:
+```rust
+impl Beam {
+    fn forward(mut self, rows: usize, cols: usize) -> Option<Self> {
+        match self.dir {
+            Direction::Up if self.pos.y > 0 => self.pos.y -= 1,
+            Direction::Down if self.pos.y < rows - 1 => self.pos.y += 1,
+            Direction::Left if self.pos.x > 0 => self.pos.x -= 1,
+            Direction::Right if self.pos.x < cols - 1 => self.pos.x += 1,
+            _ => return None,
+        }
+        Some(self)
+    }
+}
+```
+
+### Code
+
+```rust title=day_16.rs
+pub fn part_1(input: &str) -> usize {
+    let grid = parse(input);
+    let start = Beam {
+        pos: Coord { x: 0, y: 0 },
+        dir: Direction::Right,
+    };
+    energized(start, &grid)
+}
+```
+
+## Part 2
+
+The beam can enter the cave from any position along the edges (heading directly away from that edge).
+
+The question asks for the maximum amount of tiles that can be energized.
+
+I brute forced this.
+I looped through every possible starting configuration, calculated the amount of energized tiles, and took the maximum.
+
+### Code
+
+```rust title=day_16.rs
+    let grid = parse(input);
+    let from_left = (0..grid.len()).map(|row| Beam {
+        dir: Direction::Right,
+        pos: Coord { x: 0, y: row },
+    });
+    let from_right = (0..grid.len()).map(|row| Beam {
+        dir: Direction::Left,
+        pos: Coord {
+            x: grid[0].len() - 1,
+            y: row,
+        },
+    });
+    let from_up = (0..grid[0].len()).map(|col| Beam {
+        dir: Direction::Down,
+        pos: Coord { x: col, y: 0 },
+    });
+    let from_down = (0..grid[0].len()).map(|col| Beam {
+        dir: Direction::Up,
+        pos: Coord {
+            x: col,
+            y: grid.len() - 1,
+        },
+    });
+
+    from_left
+        .chain(from_right)
+        .chain(from_up)
+        .chain(from_down)
+        .map(|start| energized(start, &grid))
+        .max()
+        .unwrap()
+```
+
+## Final code
+
+```rust title=day_16.rs numberLines
+use std::collections::{HashSet, VecDeque};
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+struct Coord {
+    x: usize,
+    y: usize,
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+struct Beam {
+    pos: Coord,
+    dir: Direction,
+}
+
+impl Beam {
+    fn forward(mut self, rows: usize, cols: usize) -> Option<Self> {
+        match self.dir {
+            Direction::Up if self.pos.y > 0 => self.pos.y -= 1,
+            Direction::Down if self.pos.y < rows - 1 => self.pos.y += 1,
+            Direction::Left if self.pos.x > 0 => self.pos.x -= 1,
+            Direction::Right if self.pos.x < cols - 1 => self.pos.x += 1,
+            _ => return None,
+        }
+        Some(self)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+enum Tile {
+    Empty,
+    SplitHoriz,
+    SplitVert,
+    MirrorForward,
+    MirrorBack,
+}
+
+fn parse(s: &str) -> Vec<Vec<Tile>> {
+    s.lines()
+        .map(|line| {
+            line.chars()
+                .map(|c| match c {
+                    '\\' => Tile::MirrorBack,
+                    '/' => Tile::MirrorForward,
+                    '.' => Tile::Empty,
+                    '-' => Tile::SplitHoriz,
+                    '|' => Tile::SplitVert,
+                    _ => panic!("at the disco"),
+                })
+                .collect()
+        })
+        .collect()
+}
+
+fn energized(start: Beam, grid: &[Vec<Tile>]) -> usize {
+    let rows = grid.len();
+    let cols = grid[0].len();
+
+    let mut q = VecDeque::new();
+    let mut energized = HashSet::new();
+    let mut seen = HashSet::new();
+    q.push_back(start);
+
+    while let Some(mut beam) = q.pop_front() {
+        if seen.contains(&beam) {
+            continue;
+        }
+        energized.insert(beam.pos);
+        seen.insert(beam);
+
+        let dirs = match (grid[beam.pos.y][beam.pos.x], beam.dir) {
+            (Tile::Empty, _)
+            | (Tile::SplitHoriz, Direction::Left)
+            | (Tile::SplitHoriz, Direction::Right)
+            | (Tile::SplitVert, Direction::Up)
+            | (Tile::SplitVert, Direction::Down) => vec![beam.dir],
+            (Tile::SplitHoriz, _) => {
+                vec![Direction::Left, Direction::Right]
+            }
+            (Tile::SplitVert, _) => {
+                vec![Direction::Up, Direction::Down]
+            }
+            (Tile::MirrorForward, Direction::Up) | (Tile::MirrorBack, Direction::Down) => {
+                vec![Direction::Right]
+            }
+            (Tile::MirrorForward, Direction::Down) | (Tile::MirrorBack, Direction::Up) => {
+                vec![Direction::Left]
+            }
+            (Tile::MirrorForward, Direction::Left) | (Tile::MirrorBack, Direction::Right) => {
+                vec![Direction::Down]
+            }
+            (Tile::MirrorForward, Direction::Right) | (Tile::MirrorBack, Direction::Left) => {
+                vec![Direction::Up]
+            }
+        };
+        for dir in dirs {
+            beam.dir = dir;
+            if let Some(beam) = beam.forward(rows, cols) {
+                q.push_back(beam);
+            }
+        }
+    }
+    energized.len()
+}
+
+pub fn part_1(input: &str) -> usize {
+    let grid = parse(input);
+    let start = Beam {
+        pos: Coord { x: 0, y: 0 },
+        dir: Direction::Right,
+    };
+    energized(start, &grid)
+}
+
+pub fn part_2(input: &str) -> usize {
+    let grid = parse(input);
+    let from_left = (0..grid.len()).map(|row| Beam {
+        dir: Direction::Right,
+        pos: Coord { x: 0, y: row },
+    });
+    let from_right = (0..grid.len()).map(|row| Beam {
+        dir: Direction::Left,
+        pos: Coord {
+            x: grid[0].len() - 1,
+            y: row,
+        },
+    });
+    let from_up = (0..grid[0].len()).map(|col| Beam {
+        dir: Direction::Down,
+        pos: Coord { x: col, y: 0 },
+    });
+    let from_down = (0..grid[0].len()).map(|col| Beam {
+        dir: Direction::Up,
+        pos: Coord {
+            x: col,
+            y: grid.len() - 1,
+        },
+    });
+
+    from_left
+        .chain(from_right)
+        .chain(from_up)
+        .chain(from_down)
+        .map(|start| energized(start, &grid))
+        .max()
+        .unwrap()
+}
+```

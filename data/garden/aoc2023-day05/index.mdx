@@ -1,0 +1,631 @@
+---
+title: "Advent of Code 2023 Day 5"
+date: "2023-12-05"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+---
+
+## Day 5: If You Give A Seed A Fertilizer
+
+https://adventofcode.com/2023/day/5
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_05.rs)
+</Aside>
+
+The previous elf sent you to see a gardener elf that needs your help.
+
+There is a problem with this year's planting of seeds.
+Your input is a guide that tells you which seeds to plant.
+
+It also lists what type of soil to use with each kind of seed,
+what type of fertilizer to use with each kind of soil,
+what type of water to use with each kind of fertilizer, and so on.
+
+Every type of seed, soil, fertilizer and so on is identified with a number
+
+<Aside variant="danger">
+
+Numbers are reused by each category.  
+For example: soil 123 and fertilizer 123 aren't necessarily related to each other.
+
+</Aside>
+
+An example input looks like this:
+
+```txt title=input.txt
+seeds: 79 14 55 13
+
+seed-to-soil map:
+50 98 2
+52 50 48
+
+soil-to-fertilizer map:
+0 15 37
+37 52 2
+39 0 15
+
+fertilizer-to-water map:
+49 53 8
+0 11 42
+42 0 7
+57 7 4
+
+water-to-light map:
+88 18 7
+18 25 70
+
+light-to-temperature map:
+45 77 23
+81 45 19
+68 64 13
+
+temperature-to-humidity map:
+0 69 1
+1 0 69
+
+humidity-to-location map:
+60 56 37
+56 93 4
+```
+
+The guide first lists which seeds should be planted.
+
+What follows are a bunch of maps that tell you how to convert a number of a certain type to a number of a different type.
+
+Instead of having one rule per number, the rule lines in a map apply to a range of numbers.
+
+Each rule in a map has 3 numbers:
+1. The destination range start
+2. The source range start
+3. The range length
+
+Consider again the example seed-to-soil map, it has 2 rules:
+1. 50 98 2
+2. 52 50 48
+
+For the first rule, the three parts are:
+1. Destination range start: 50
+2. Source range start 98
+3. Range length 2
+
+So that rule maps to:
+1. Destinations: 50, 51
+2. Sources: 98, 99
+
+A source number that falls in the range, gets converted to a destination number with the same offset.
+
+Applying that rule:
+- Seed number 98 maps to soil number 50
+- Seed number 99 maps to soil number 51
+
+If a number has no rule that applies to it, it remains unchanged.
+So seed number 10 maps to soil number 10.
+
+## Part 1
+
+The question asks what the lowest numbered location where a seed will be planted is.
+
+To do this, we need to convert each seed number through every category until we end up with a location number.
+
+In this example, the corresponding types are:
+
+- Seed 79, soil 81, fertilizer 81, water 81, light 74, temperature 78, humidity 78, location 82.
+- Seed 14, soil 14, fertilizer 53, water 49, light 42, temperature 42, humidity 43, location 43.
+- Seed 55, soil 57, fertilizer 57, water 53, light 46, temperature 82, humidity 82, location 86.
+- Seed 13, soil 13, fertilizer 52, water 41, light 34, temperature 34, humidity 35, location 35.
+
+### Option 1: for loop
+
+First up, parsing the input into useful data!
+
+I want to end up with a list of seed numbers, and a list of maps.
+
+Each map holds a list of rules.
+To not confuse what's a destination and what's a source while coding, I created a `Rule` data type for this.
+Now I can access a destination with `rule.destination`, and not `rule[0]` like I would have to do if I stored the rule in a list too (or was it `rule[1]`? I forget).
+
+```rust
+struct Rule {
+    destination: i64,
+    source: i64,
+    range: i64,
+}
+```
+
+The order of the rule maps in the input is sequential, how considerate of the puzzle creator.
+This means I can ignore the headers of each map.
+
+That order is:
+1. seed to soil
+1. soil to fertilizer
+1. fertilizer to water
+1. water to light
+1. light to temperature
+1. temperature to humidity
+1. humidity to location
+
+```rust
+let (seeds_str, maps_str) = input.split_once("\n\n").unwrap();
+let seeds = seeds_str.strip_prefix("seeds: ").unwrap();
+let seeds = seeds.split_whitespace().map(|s| s.parse::<i64>().unwrap());
+
+let mut maps = Vec::new();
+for block in maps_str.split("\n\n") {
+    // ignore header of map
+    let (_, rules) = block.split_once("\n").unwrap();
+    let mut map = Vec::new();
+    for line in rules.lines() {
+        let mut nums = line.splitn(3, " ");
+        let destination: i64 = nums.next().unwrap().parse().unwrap();
+        let source: i64 = nums.next().unwrap().parse().unwrap();
+        let range: i64 = nums.next().unwrap().parse().unwrap();
+        map.push(Rule {
+            destination,
+            source,
+            range,
+        });
+    }
+    maps.push(map);
+}
+```
+
+Next, the part where I calculate the location every seed is planted at.
+
+I keep track of the minimum location and update it when a location is calculated.
+
+some pseudocode:
+```rust
+let mut min = infinity;
+
+// map each seed to a location
+for seed in seeds {
+    let mut curr = seed; // keep track of the current number, start it off as the seed number
+
+    // apply every rule-map sequentially, first comes seed-to-soil, then soil-to-fertilizer, etc...
+    for map in maps {
+        if map_has_rule_that_applies {
+            // apply rule, change the number in curr to the number it maps to
+        }
+    }
+
+    // we applied all rule-maps, the number in curr is now the number of a location
+    // update minimum location
+    min = // minimum of min and curr
+}
+
+return min
+```
+
+Translated to valid Rust code:
+
+```rust
+let mut min = i64::MAX;
+
+for seed in seeds {
+    let mut curr = seed;
+
+    'maps: for map in &maps {
+        for rule in map {
+            let rule_applies = curr >= rule.source && curr <= rule.source + rule.range;
+            if rule_applies {
+                // map curr
+                let offset = curr - rule.source;
+                curr = rule.destination + offset;
+                // a mapping was applied, on to the next map!
+                continue 'maps;
+            }
+            // curr stays the same
+        }
+    }
+
+    // once all maps are applied, the location is in curr
+    min = min.min(curr);
+}
+min
+```
+
+#### Code
+
+```rust title=day_05.rs
+pub fn part_1(input: &str) -> i64 {
+    let (seeds_str, maps_str) = input.split_once("\n\n").unwrap();
+    let seeds = seeds_str.strip_prefix("seeds: ").unwrap();
+    let seeds = seeds.split_whitespace().map(|s| s.parse::<i64>().unwrap());
+
+    let mut maps = Vec::new();
+    for block in maps_str.split("\n\n") {
+        // ignore header of map
+        let (_, rules) = block.split_once("\n").unwrap();
+        let mut map = Vec::new();
+        for line in rules.lines() {
+            let mut nums = line.splitn(3, " ");
+            let destination: i64 = nums.next().unwrap().parse().unwrap();
+            let source: i64 = nums.next().unwrap().parse().unwrap();
+            let range: i64 = nums.next().unwrap().parse().unwrap();
+            map.push(Rule {
+                destination,
+                source,
+                range,
+            });
+        }
+        maps.push(map);
+    }
+
+    let mut min = i64::MAX;
+
+    for seed in seeds {
+        let mut curr = seed;
+
+        'maps: for map in &maps {
+            for rule in map {
+                let rule_applies = curr >= rule.source && curr <= rule.source + rule.range;
+                if rule_applies {
+                    // map curr
+                    let offset = curr - rule.source;
+                    curr = rule.destination + offset;
+                    // a mapping was applied, on to the next map!
+                    continue 'maps;
+                }
+                // curr stays the same
+            }
+        }
+
+        // once all maps are applied, the destination is in curr
+        min = min.min(curr);
+    }
+    min
+}
+```
+
+### Option 2: An iterator chain
+
+The iterator chain has less "bookkeeping", no more keeping track of a `curr`, and a `min` variable, the iterator adapters take care of that.
+
+#### Code
+
+```rust title=day_05.rs
+pub fn part_1(input: &str) -> i64 {
+    let (seeds_str, maps_str) = input.split_once("\n\n").unwrap();
+    let seeds = seeds_str.strip_prefix("seeds: ").unwrap();
+    let seeds = seeds.split_whitespace().map(|s| s.parse::<i64>().unwrap());
+
+    let maps: Vec<Vec<Rule>> = maps_str
+        .split("\n\n")
+        .map(|block| {
+            block
+                .lines()
+                .skip(1)
+                .map(|line| {
+                    let mut nums = line.splitn(3, " ");
+                    Rule {
+                        destination: nums.next().unwrap().parse().unwrap(),
+                        source: nums.next().unwrap().parse().unwrap(),
+                        range: nums.next().unwrap().parse().unwrap(),
+                    }
+                })
+                .collect()
+        })
+        .collect();
+
+    seeds
+        // map each seed to a location
+        .map(|seed| {
+            maps.iter().fold(seed, |curr, rules| {
+                if let Some(rule) = rules
+                    .iter()
+                    .find(|rule| curr >= rule.source && curr <= rule.source + rule.range)
+                {
+                    let offset = curr - rule.source;
+                    rule.destination + offset
+                } else {
+                    curr
+                }
+            })
+        })
+        .min()
+        .unwrap()
+}
+```
+
+## Part 2
+
+Turns out we read the list of seeds wrong!
+
+The "seeds:" line describes pairs of numbers.
+1. The first is the start of a range
+2. The second is the lengths of that range
+
+For example: "seeds: 79 14 55 13"
+
+Describes 2 ranges of seeds to be planted:
+1. Seeds numbered 79 to 92
+2. Seeds numbered 55 to 67
+
+The question asks what the lowest numbered location where a seed will be planted is.
+
+The brute-force approach would be to expand the list of seeds from part 1 to include all seeds.
+Then run the exact same logic as in part 1.
+
+But that solution takes a long time to run, and takes a lot of memory to complete.
+I tried, but my computer was not beefy enough.
+
+So instead of operating on single numbers, I operate on ranges of numbers in part 2.
+
+A `Range` struct allows me to stay organized while I code and avoid accessing start and end numbers via an index:
+
+```rust
+#[derive(Debug, Clone)]
+struct Range {
+    from: i64,
+    to: i64,
+}
+```
+
+### Code
+
+```rust title=day_05.rs
+pub fn part_2(input: &str) -> i64 {
+    let (seeds_str, maps_str) = input.split_once("\n\n").unwrap();
+    let seeds = seeds_str.strip_prefix("seeds: ").unwrap();
+    let seeds = seeds
+        .split_whitespace()
+        .map(|s| s.parse::<i64>().unwrap())
+        .chunks(2);
+    let seeds = seeds.into_iter().map(|mut chunk| {
+        let from = chunk.next().unwrap();
+        let range = chunk.next().unwrap();
+        Range {
+            from,
+            to: from + range,
+        }
+    });
+
+    let maps: Vec<Vec<Rule>> = maps_str
+        .split("\n\n")
+        .map(|block| {
+            block
+                .lines()
+                .skip(1)
+                .map(|line| {
+                    let mut nums = line.splitn(3, " ");
+                    Rule {
+                        destination: nums.next().unwrap().parse().unwrap(),
+                        source: nums.next().unwrap().parse().unwrap(),
+                        range: nums.next().unwrap().parse().unwrap(),
+                    }
+                })
+                .sorted_by(|a, b| a.source.cmp(&b.source))
+                .collect()
+        })
+        .collect();
+
+    // for every range in the seed ranges, transform it to a range of the next kind, repeat until all all maps are applied, at that point all ranges are location ranges
+    // loop1 transforms those ranges of seed to ranges of soils
+    // loop2 transforms those ranges of soil to ranges of fertilizer
+    // loop3 transforms those ranges of fertilizer to ranges of water
+    // loop4 transforms those ranges of water to ranges of light
+    // loop5 transforms those ranges of light to ranges of temperature
+    // loop6 transforms those ranges of temperature to ranges of humidity
+    // loop7 transforms those ranges of humidity to ranges of location
+    let mut curr_ranges: Vec<Range> = seeds.collect();
+
+    for map in &maps {
+        let mut new_ranges: Vec<Range> = Vec::new();
+
+        for range in &curr_ranges {
+            let mut curr = range.clone();
+
+            for rule in map {
+                let offset = rule.destination - rule.source;
+                let rule_applies = curr.from <= curr.to
+                    && curr.from <= rule.source + rule.range
+                    && curr.to >= rule.source;
+
+                if rule_applies {
+                    if curr.from < rule.source {
+                        new_ranges.push(Range {
+                            from: curr.from,
+                            to: rule.source - 1,
+                        });
+                        curr.from = rule.source;
+                        if curr.to < rule.source + rule.range {
+                            new_ranges.push(Range {
+                                from: curr.from + offset,
+                                to: curr.to + offset,
+                            });
+                            curr.from = curr.to + 1;
+                        } else {
+                            new_ranges.push(Range {
+                                from: curr.from + offset,
+                                to: rule.source + rule.range - 1 + offset,
+                            });
+                            curr.from = rule.source + rule.range;
+                        }
+                    } else if curr.to < rule.source + rule.range {
+                        new_ranges.push(Range {
+                            from: curr.from + offset,
+                            to: curr.to + offset,
+                        });
+                        curr.from = curr.to + 1;
+                    } else {
+                        new_ranges.push(Range {
+                            from: curr.from + offset,
+                            to: rule.source + rule.range - 1 + offset,
+                        });
+                        curr.from = rule.source + rule.range;
+                    }
+                }
+            }
+            if curr.from <= curr.to {
+                new_ranges.push(curr);
+            }
+        }
+        curr_ranges = new_ranges;
+    }
+
+    curr_ranges.iter().map(|range| range.from).min().unwrap()
+}
+```
+
+## Final code
+
+```rust title=day_05.rs numberLines
+use itertools::Itertools;
+
+struct Rule {
+    destination: i64,
+    source: i64,
+    range: i64,
+}
+
+#[derive(Debug, Clone)]
+struct Range {
+    from: i64,
+    to: i64,
+}
+
+pub fn part_1(input: &str) -> i64 {
+    let (seeds_str, maps_str) = input.split_once("\n\n").unwrap();
+    let seeds = seeds_str.strip_prefix("seeds: ").unwrap();
+    let seeds = seeds.split_whitespace().map(|s| s.parse::<i64>().unwrap());
+
+    let maps: Vec<Vec<Rule>> = maps_str
+        .split("\n\n")
+        .map(|block| {
+            block
+                .lines()
+                .skip(1)
+                .map(|line| {
+                    let mut nums = line.splitn(3, " ");
+                    Rule {
+                        destination: nums.next().unwrap().parse().unwrap(),
+                        source: nums.next().unwrap().parse().unwrap(),
+                        range: nums.next().unwrap().parse().unwrap(),
+                    }
+                })
+                .collect()
+        })
+        .collect();
+
+    seeds
+        .map(|seed| {
+            maps.iter().fold(seed, |curr, rules| {
+                if let Some(rule) = rules
+                    .iter()
+                    .find(|rule| curr >= rule.source && curr <= rule.source + rule.range)
+                {
+                    let offset = curr - rule.source;
+                    rule.destination + offset
+                } else {
+                    curr
+                }
+            })
+        })
+        .min()
+        .unwrap()
+}
+
+pub fn part_2(input: &str) -> i64 {
+    let (seeds_str, maps_str) = input.split_once("\n\n").unwrap();
+    let seeds = seeds_str.strip_prefix("seeds: ").unwrap();
+    let seeds = seeds
+        .split_whitespace()
+        .map(|s| s.parse::<i64>().unwrap())
+        .chunks(2);
+    let seeds = seeds.into_iter().map(|mut chunk| {
+        let from = chunk.next().unwrap();
+        let range = chunk.next().unwrap();
+        Range {
+            from,
+            to: from + range,
+        }
+    });
+
+    let maps: Vec<Vec<Rule>> = maps_str
+        .split("\n\n")
+        .map(|block| {
+            block
+                .lines()
+                .skip(1)
+                .map(|line| {
+                    let mut nums = line.splitn(3, " ");
+                    Rule {
+                        destination: nums.next().unwrap().parse().unwrap(),
+                        source: nums.next().unwrap().parse().unwrap(),
+                        range: nums.next().unwrap().parse().unwrap(),
+                    }
+                })
+                .sorted_by(|a, b| a.source.cmp(&b.source))
+                .collect()
+        })
+        .collect();
+
+    // for every range in the seed ranges, transform it to a range of the next kind, repeat until all all maps are applied, at that point all ranges are location ranges
+    // loop1 transforms those ranges of seed to ranges of soils
+    // loop2 transforms those ranges of soil to ranges of fertilizer
+    // loop3 transforms those ranges of fertilizer to ranges of water
+    // loop4 transforms those ranges of water to ranges of light
+    // loop5 transforms those ranges of light to ranges of temperature
+    // loop6 transforms those ranges of temperature to ranges of humidity
+    // loop7 transforms those ranges of humidity to ranges of location
+    let mut curr_ranges: Vec<Range> = seeds.collect();
+
+    for map in &maps {
+        let mut new_ranges: Vec<Range> = Vec::new();
+
+        for range in &curr_ranges {
+            let mut curr = range.clone();
+
+            for rule in map {
+                let offset = rule.destination - rule.source;
+                let rule_applies = curr.from <= curr.to
+                    && curr.from <= rule.source + rule.range
+                    && curr.to >= rule.source;
+
+                if rule_applies {
+                    if curr.from < rule.source {
+                        new_ranges.push(Range {
+                            from: curr.from,
+                            to: rule.source - 1,
+                        });
+                        curr.from = rule.source;
+                        if curr.to < rule.source + rule.range {
+                            new_ranges.push(Range {
+                                from: curr.from + offset,
+                                to: curr.to + offset,
+                            });
+                            curr.from = curr.to + 1;
+                        } else {
+                            new_ranges.push(Range {
+                                from: curr.from + offset,
+                                to: rule.source + rule.range - 1 + offset,
+                            });
+                            curr.from = rule.source + rule.range;
+                        }
+                    } else if curr.to < rule.source + rule.range {
+                        new_ranges.push(Range {
+                            from: curr.from + offset,
+                            to: curr.to + offset,
+                        });
+                        curr.from = curr.to + 1;
+                    } else {
+                        new_ranges.push(Range {
+                            from: curr.from + offset,
+                            to: rule.source + rule.range - 1 + offset,
+                        });
+                        curr.from = rule.source + rule.range;
+                    }
+                }
+            }
+            if curr.from <= curr.to {
+                new_ranges.push(curr);
+            }
+        }
+        curr_ranges = new_ranges;
+    }
+
+    curr_ranges.iter().map(|range| range.from).min().unwrap()
+}
+```

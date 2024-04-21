@@ -1,0 +1,481 @@
+---
+title: "Advent of Code 2023 Day 8"
+date: "2023-12-08"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+---
+
+## Day 8: Haunted Wasteland
+
+https://adventofcode.com/2023/day/8
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_08.rs)
+</Aside>
+
+You are still riding a camel on Desert Island.
+A sandstorm is coming and you need to <abbr title="get out of there">make yourself scarce</abbr>, quickly.
+
+Your guide just finished warning you about ghosts too, very spooky an not at all foreshadowing, nuh-uh.
+
+Your puzzle input today is a piece of paper labeled "maps", you use those maps to get out of there.
+
+The first line is a list of left/right instructions.
+
+The following block are a bunch of `key = value` pairs where a value is written as `(left, right)`.
+
+An example input looks like this:
+
+```txt title=input.txt
+RL
+
+AAA = (BBB, CCC)
+BBB = (DDD, EEE)
+CCC = (ZZZ, GGG)
+DDD = (DDD, DDD)
+EEE = (EEE, EEE)
+GGG = (GGG, GGG)
+ZZZ = (ZZZ, ZZZ)
+```
+
+The first line in the input tells you to go right first, then left.
+
+The letter combinations in the map are locations.
+Each location leads to two other locations, one if you go left, and one if you go right.
+
+## Part 1
+
+You start at location `AAA` and want to go to location `ZZZ`.
+
+If you follow the instructions over and over, you will get to `ZZZ` eventually.
+
+The question asks how many steps it takes to get to `ZZZ` if you start at `AAA`.
+
+I chose to parse the input into Rust `struct`s again.
+The top line of the input turns into a list of `Instruction`.
+
+```rust
+enum Instruction {
+    Left,
+    Right,
+}
+```
+
+The map in the input turns into a `HashMap` with a position as key, and a `Destinations` struct as value.
+
+```rust
+struct Destinations<'a> {
+    left: &'a str,
+    right: &'a str,
+}
+```
+
+The actual logic for this part was straightforward.
+I kept track of a `curr` variable that stores the location I'm currently at, it starts at `"AAA"`.
+
+Then I loop until my current location is `"ZZZ"`.
+
+For every iteration, I pull an instruction from the initial list of instructions I made repeat endlessly.
+I apply that instruction and update the `step` count.
+
+### Code
+
+```rust title=day_08.rs
+use std::collections::HashMap;
+
+enum Instruction {
+    Left,
+    Right,
+}
+
+struct Destinations<'a> {
+    left: &'a str,
+    right: &'a str,
+}
+
+pub fn part_1(input: &str) -> u32 {
+    let (instructions, map) = input.split_once("\n\n").unwrap();
+    let instructions = instructions.chars().map(|c| match c {
+        'L' => Instruction::Left,
+        'R' => Instruction::Right,
+        _ => panic!("at the disco"),
+    });
+    let map: HashMap<&str, Destinations> = map
+        .lines()
+        .map(|line| {
+            let (source, destinations) = line.split_once(" = ").unwrap();
+            let destinations = destinations
+                .strip_prefix("(")
+                .unwrap()
+                .strip_suffix(")")
+                .unwrap();
+            let destinations = destinations.split_once(", ").unwrap();
+            (
+                source,
+                Destinations {
+                    left: destinations.0,
+                    right: destinations.1,
+                },
+            )
+        })
+        .collect();
+
+    let mut instructions = instructions.cycle();
+    let mut steps = 0;
+    let mut curr = "AAA";
+
+    while curr != "ZZZ" {
+        let ins = instructions.next().unwrap();
+        let Destinations { left, right } = map.get(curr).unwrap();
+        curr = match ins {
+            Instruction::Left => left,
+            Instruction::Right => right,
+        };
+        steps += 1;
+    }
+
+    steps
+}
+```
+
+## Part 2
+
+The map isn't for people, it's for ghosts!
+
+The number of nodes with names ending in A is equal to the number ending in Z!
+
+If you were a ghost, you would start at all nodes ending with an A simultaneously and follow each path until **they all end in a Z at the same time**.
+
+- Each ghost has a different starting point
+- Each ghost follows the same instruction
+
+In the example:
+```txt title=input.txt
+LR
+
+11A = (11B, XXX)
+11B = (XXX, 11Z)
+11Z = (11B, XXX)
+22A = (22B, XXX)
+22B = (22C, 22C)
+22C = (22Z, 22Z)
+22Z = (22B, 22B)
+XXX = (XXX, XXX)
+```
+
+There are 2 ghosts:
+1. Starts at `11A`
+2. Starts at `22A`
+
+Following the instructions until all ghosts end up at a location ending in `Z`:
+- Step 0: You are at 11A and 22A.
+- Step 1: You choose all of the left paths, leading you to 11B and 22B.
+- Step 2: You choose all of the right paths, leading you to 11Z and 22C.
+- Step 3: You choose all of the left paths, leading you to 11B and 22Z.
+- Step 4: You choose all of the right paths, leading you to 11Z and 22B.
+- Step 5: You choose all of the left paths, leading you to 11B and 22C.
+- Step 6: You choose all of the right paths, leading you to 11Z and 22Z.
+
+The question asks how many steps it takes before all ghosts are on nodes that end with Z?
+
+I attempted to use the same code as in part1, and slightly modify it, but alas.
+Today is a day that is not going to be solved by brute-force in any reasonable time.
+
+It turns out today's input is specially crafted.
+The guiding text gives us some hints, but the specifics remain for us to discover (or, if you're like me, look up).
+
+It looks like part2 is the traditional cycle detection problem! Advent of Code has one every year. (or most years anyway)
+
+Like [AoC 2022 day 17](https://adventofcode.com/2022/day/17) part 2, which I also [have a blogpost on](https://nickymeuleman.netlify.app/garden/aoc2022-day17#part-2)
+Or [AoC 2017 day 16](https://adventofcode.com/2017/day/16) part 2, [my solution code](https://github.com/NickyMeuleman/scrapyard/blob/84a9f5e72474179f46827bd263bcd00ba0abe8e7/advent_of_code/2017/solutions/src/day_16.rs#L107)
+
+Back to how the input is special, and how you can use that fact.
+
+The first clue is in the guiding text:
+> After examining the maps a bit longer, your attention is drawn to a curious fact: the number of nodes with names ending in A is equal to the number ending in Z!
+
+The number of steps it takes for a ghost to get to the end is a clean multiple of the instruction length for every ghost.
+
+Each ghost has a seperate ending point, and never visits other ending points.
+
+All ghosts loop back around to their starting point, and then to their starting point, and then their ending point, until infinity.
+
+Every last location leads to the second location that ghost ever visited.
+That means every loop a ghost does is identical in length.
+
+tl;dr: Every ghost is on their own loop, they go round, and round, eventually all standing on a location that ends in a Z.
+
+All this put together means that, for every ghost you figure out how long it takes until they reach their ending location.
+A time where all ghosts are at their ending location at the same time is the [least common multiple](https://www.youtube.com/watch?v=znmPfDfsir8) of all those numbers.
+
+To find that, I first found the [greatest common divisor](https://www.youtube.com/watch?v=jFd-6EPfnec) using [the Euclidian algorithm](https://en.wikipedia.org/wiki/Euclidean_algorithm)
+
+In code, I kept track of how many full instruction lines were executed.
+
+Every time I execute a full set of instructions (the first line of the input without repeating),
+I check if any ghosts are at their ending, and keep track of how many sets of instructions it took.
+
+### Code
+
+```rust title=day_08.rs
+use std::collections::HashMap;
+
+enum Instruction {
+    Left,
+    Right,
+}
+
+struct Destinations<'a> {
+    left: &'a str,
+    right: &'a str,
+}
+
+struct Ghost<'a> {
+    pos: &'a str,
+    cycles: Option<u64>,
+}
+
+fn gcd(mut a: u64, mut b: u64) -> u64 {
+    while b != 0 {
+        let tmp = a;
+        a = b;
+        b = tmp % b;
+    }
+    a
+}
+
+fn lcm(a: u64, b: u64) -> u64 {
+    a * b / gcd(a, b)
+}
+
+pub fn part_2(input: &str) -> u64 {
+    let (instructions, map) = input.split_once("\n\n").unwrap();
+    let instructions: Vec<Instruction> = instructions
+        .chars()
+        .map(|c| match c {
+            'L' => Instruction::Left,
+            'R' => Instruction::Right,
+            _ => panic!("at the disco"),
+        })
+        .collect();
+    let map: HashMap<&str, Destinations> = map
+        .lines()
+        .map(|line| {
+            let (source, destinations) = line.split_once(" = ").unwrap();
+            let destinations = destinations
+                .strip_prefix("(")
+                .unwrap()
+                .strip_suffix(")")
+                .unwrap();
+            let destinations = destinations.split_once(", ").unwrap();
+            (
+                source,
+                Destinations {
+                    left: destinations.0,
+                    right: destinations.1,
+                },
+            )
+        })
+        .collect();
+
+    let mut cycle_count = 0;
+    let mut ghosts: Vec<Ghost> = map
+        .keys()
+        // start from all positions ending in 'A'
+        .filter(|source| source.ends_with('A'))
+        // map every location to a location with a cycle count
+        .map(|pos| Ghost { pos, cycles: None })
+        .collect();
+
+    while ghosts.iter().any(|ghost| ghost.cycles.is_none()) {
+        // Do a full cycle of instructions
+        for ins in &instructions {
+            for Ghost { pos, cycles } in ghosts.iter_mut() {
+                if cycles.is_some() {
+                    // this loop already has a known cycle length, no need to simulate further
+                    continue;
+                }
+                let Destinations { left, right } = map.get(pos).unwrap();
+                *pos = match ins {
+                    Instruction::Left => left,
+                    Instruction::Right => right,
+                };
+            }
+        }
+        cycle_count += 1;
+
+        // after a full cycle of instructions, save any found cycles (ghosts that arrived at a destination)
+        for Ghost { pos, cycles: cycle } in ghosts.iter_mut() {
+            if cycle.is_some() {
+                // already has a known cycle, no need to update
+                continue;
+            }
+            if pos.ends_with('Z') {
+                *cycle = Some(cycle_count);
+            }
+        }
+    }
+
+    let min_shared_cycles = ghosts
+        .into_iter()
+        .filter_map(|ghost| ghost.cycles)
+        .fold(1, |acc, item| lcm(acc, item));
+
+    min_shared_cycles * instructions.len() as u64
+}
+```
+
+## Final code
+
+```rust title=day_08.rs numberLines
+use std::collections::HashMap;
+
+enum Instruction {
+    Left,
+    Right,
+}
+
+struct Destinations<'a> {
+    left: &'a str,
+    right: &'a str,
+}
+
+pub fn part_1(input: &str) -> u32 {
+    let (instructions, map) = input.split_once("\n\n").unwrap();
+    let instructions = instructions.chars().map(|c| match c {
+        'L' => Instruction::Left,
+        'R' => Instruction::Right,
+        _ => panic!("at the disco"),
+    });
+    let map: HashMap<&str, Destinations> = map
+        .lines()
+        .map(|line| {
+            let (source, destinations) = line.split_once(" = ").unwrap();
+            let destinations = destinations
+                .strip_prefix("(")
+                .unwrap()
+                .strip_suffix(")")
+                .unwrap();
+            let destinations = destinations.split_once(", ").unwrap();
+            (
+                source,
+                Destinations {
+                    left: destinations.0,
+                    right: destinations.1,
+                },
+            )
+        })
+        .collect();
+
+    let mut instructions = instructions.cycle();
+    let mut steps = 0;
+    let mut curr = "AAA";
+
+    while curr != "ZZZ" {
+        let ins = instructions.next().unwrap();
+        let Destinations { left, right } = map.get(curr).unwrap();
+        curr = match ins {
+            Instruction::Left => left,
+            Instruction::Right => right,
+        };
+        steps += 1;
+    }
+
+    steps
+}
+
+struct Ghost<'a> {
+    pos: &'a str,
+    cycles: Option<u64>,
+}
+
+fn gcd(mut a: u64, mut b: u64) -> u64 {
+    while b != 0 {
+        let tmp = a;
+        a = b;
+        b = tmp % b;
+    }
+    a
+}
+
+fn lcm(a: u64, b: u64) -> u64 {
+    a * b / gcd(a, b)
+}
+
+pub fn part_2(input: &str) -> u64 {
+    let (instructions, map) = input.split_once("\n\n").unwrap();
+    let instructions: Vec<Instruction> = instructions
+        .chars()
+        .map(|c| match c {
+            'L' => Instruction::Left,
+            'R' => Instruction::Right,
+            _ => panic!("at the disco"),
+        })
+        .collect();
+    let map: HashMap<&str, Destinations> = map
+        .lines()
+        .map(|line| {
+            let (source, destinations) = line.split_once(" = ").unwrap();
+            let destinations = destinations
+                .strip_prefix("(")
+                .unwrap()
+                .strip_suffix(")")
+                .unwrap();
+            let destinations = destinations.split_once(", ").unwrap();
+            (
+                source,
+                Destinations {
+                    left: destinations.0,
+                    right: destinations.1,
+                },
+            )
+        })
+        .collect();
+
+    let mut cycle_count = 0;
+    let mut ghosts: Vec<Ghost> = map
+        .keys()
+        // start from all positions ending in 'A'
+        .filter(|source| source.ends_with('A'))
+        // map every location to a location with a cycle count
+        .map(|pos| Ghost { pos, cycles: None })
+        .collect();
+
+    while ghosts.iter().any(|ghost| ghost.cycles.is_none()) {
+        // Do a full cycle of instructions
+        for ins in &instructions {
+            for Ghost { pos, cycles } in ghosts.iter_mut() {
+                if cycles.is_some() {
+                    // this loop already has a known cycle length, no need to simulate further
+                    continue;
+                }
+                let Destinations { left, right } = map.get(pos).unwrap();
+                *pos = match ins {
+                    Instruction::Left => left,
+                    Instruction::Right => right,
+                };
+            }
+        }
+        cycle_count += 1;
+
+        // after a full cycle of instructions, save any found cycles (ghosts that arrived at a destination)
+        for Ghost { pos, cycles: cycle } in ghosts.iter_mut() {
+            if cycle.is_some() {
+                // already has a known cycle, no need to update
+                continue;
+            }
+            if pos.ends_with('Z') {
+                *cycle = Some(cycle_count);
+            }
+        }
+    }
+
+    let min_shared_cycles = ghosts
+        .into_iter()
+        .filter_map(|ghost| ghost.cycles)
+        .fold(1, |acc, item| lcm(acc, item));
+
+    min_shared_cycles * instructions.len() as u64
+}
+```

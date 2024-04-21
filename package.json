@@ -22,7 +22,7 @@
     "@mdx-js/react": "^2.1.5",
     "@nickymeuleman/aoc2021": "^0.4.5",
     "@nickymeuleman/aoc2022": "^0.0.8",
-    "@nickymeuleman/aoc2023": "^2023.12.2-2",
+    "@nickymeuleman/aoc2023": "^2023.12.23",
     "@nickymeuleman/gatsby-theme-blog": "^3.0.0",
     "@reach/tabs": "^0.18.0",
     "@reach/tooltip": "^0.18.0",

@@ -1,0 +1,518 @@
+---
+title: "Advent of Code 2023 Day 21"
+date: "2023-12-21"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+---
+
+## Day 21: Step Counter
+
+https://adventofcode.com/2023/day/21
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_21.rs)
+</Aside>
+
+After fixing the sand supply, you visit the gardener again.
+
+An elf heard of your exploits and wants your help.
+
+Today's input is a map of the gardens.
+
+An example input looks like this:
+
+```txt title=input.txt
+...........
+.....###.#.
+.###.##..#.
+..#.#...#..
+....#.#....
+.##..S####.
+.##..#...#.
+.......##..
+.##.#.####.
+.##..##.##.
+...........
+```
+
+- `#` is a rock
+- `.` is a garden
+- `S` is your starting position
+
+Your starting position is also a garden.
+
+The elf would like to know how many tiles they can reach in a given amount of steps.
+
+Each step the elf can move up/down/left/right given that there is no rock in the way.
+
+Backtracking is allowed, so the elf could go left/right forever if it wants to.
+
+## Parsing
+
+I went very imperative today as it was the first thing that came to mind, and it works!
+I parse the 2D grid of `Tile` and a starting `Coord`.
+
+```rust
+enum Tile {
+    Garden,
+    Rock,
+}
+
+struct Coord {
+    col: usize,
+    row: usize,
+}
+```
+
+```rust
+fn parse(input: &str) -> (Vec<Vec<Tile>>, Coord) {
+    let mut start = Coord { col: 0, row: 0 };
+    let mut grid = Vec::new();
+    for (y, line) in input.lines().enumerate() {
+        let mut row = Vec::new();
+        for (x, c) in line.chars().enumerate() {
+            let tile = match c {
+                '.' => Tile::Garden,
+                '#' => Tile::Rock,
+                'S' => {
+                    start.col = x;
+                    start.row = y;
+                    Tile::Garden
+                }
+                _ => panic!(),
+            };
+            row.push(tile);
+        }
+        grid.push(row);
+    }
+    (grid, start)
+}
+```
+
+## Part 1
+
+The Elf actually needs to get 64 steps today.
+
+Starting from the garden plot marked S on your map, how many garden plots could the Elf reach in exactly 64 steps?
+
+### Helpers
+
+A method on a `Coord` that returns every neighbour in the grid:
+```rust
+impl Coord {
+    fn neighbours(&self, rows: usize, cols: usize) -> Vec<Self> {
+        let mut res = Vec::new();
+        // up
+        if self.row > 0 {
+            res.push(Coord1 {
+                col: self.col,
+                row: self.row - 1,
+            });
+        }
+        // down
+        if self.row < rows - 1 {
+            res.push(Coord1 {
+                col: self.col,
+                row: self.row + 1,
+            });
+        }
+        // left
+        if self.col > 0 {
+            res.push(Coord1 {
+                col: self.col - 1,
+                row: self.row,
+            });
+        }
+        // right
+        if self.col < cols - 1 {
+            res.push(Coord1 {
+                col: self.col + 1,
+                row: self.row,
+            })
+        };
+
+        res
+    }
+}
+```
+
+---
+
+I kept track of the locations that could be visited in the same amount of steps in a set.
+
+For each amount of steps, for each position in the set, I inserted every possible neighbour into a new set.
+
+Before moving on to the next step, I update the old set to point to the new set.
+
+### Code
+
+```rust title=day_21.rs
+pub fn part_1(input: &str) -> usize {
+    let (grid, start) = parse(input);
+    let rows = grid.len();
+    let cols = grid[0].len();
+
+    let mut set = HashSet::new();
+    set.insert(start);
+
+    for _ in 0..64 {
+        let mut new_set = HashSet::new();
+        for pos in set {
+            for n in pos
+                .neighbours(rows, cols)
+                .into_iter()
+                .filter(|pos| grid[pos.row][pos.col] == Tile::Garden)
+            {
+                new_set.insert(n);
+            }
+        }
+        set = new_set
+    }
+    set.len()
+}
+```
+
+## Part 2
+
+Oopsie, turns out the grid is infinitely repeating in every direction.
+Something, something, magic.
+
+And the number of steps the elf gave you was also wrong, it should have been 26501365.
+
+## Helpers
+
+This infinity business means the helpers I wrote are wrong.
+
+A `Coord` should hold integers that can be negative.
+```rust
+struct Coord {
+    col: i64,
+    row: i64,
+}
+```
+
+And the neighbour logic is no longer limited by puny limits:
+```rust
+impl Coord {
+    fn neighbours(&self) -> Vec<Self> {
+        let mut res = Vec::new();
+        // up
+        res.push(Coord {
+            col: self.col,
+            row: self.row - 1,
+        });
+        // down
+        res.push(Coord {
+            col: self.col,
+            row: self.row + 1,
+        });
+        // left
+        res.push(Coord {
+            col: self.col - 1,
+            row: self.row,
+        });
+        // right
+        res.push(Coord {
+            col: self.col + 1,
+            row: self.row,
+        });
+        res
+    }
+}
+```
+
+This also means the parsing logic is slightly different, the part where I set the starting coordinate should now set signed integers instead of unsigned ones.
+
+---
+
+I read someone's solution, translated it to Rust, and tried to understand it as best I could.
+
+This part requires some investigation of the input again.
+It uses some properties of the input that are NOT ALL PRESENT in the example input.
+
+- The input is a square with an odd numbered size
+- The starting location is in the perfect middle of the square
+- All tiles on the starting row are gardens
+- All tiles on the starting column are gardens
+
+This means that the quickest way to reach any edge is half of (the size of the square - 1).
+
+It turns out that all the properties combined let you represent the amount of positions reachable in a certain amount of steps with a function.
+A quadratic function.
+
+<Aside variant="info">
+
+I dislike the single letter variable names that are so popular in math circles.
+So bear with me while I use reasonable names.
+
+</Aside>
+
+- Let $f(steps)$ be the number of spaces you can reach after an amount of steps.
+- Let $size$ be the length of the input grid.
+- Let $to \text{\textunderscore} edge$ be the amount of steps needed to reach the edge of that grid
+
+$f(to \text{\textunderscore} edge + 0 * size)$, $f(to \text{\textunderscore} edge + 1 * size)$, $f(to \text{\textunderscore} edge + 2 * size)$, ...
+are all quadratic functions.
+
+You can find that function by finding 3 values and then calculating which quadratic function satisfies all 3.
+
+In our code we keep track of the first 3 values: the results to those 3 functions I wrote above.
+
+What the question is looking for is $f(26501365)$.
+
+And $26501365 = to \text{\textunderscore} edge + x * size$
+
+Only $x$ is unknown here, plugging in the known numbers:
+
+So $x = \frac{26501365 - 65}{131} = 202300$
+
+With all those numbers known calculating $f(26501365)$ becomes, as my high-school math teacher would say, trivial.
+
+> Ugh, I just felt a pang of anger even typing those words.  
+> Nearly every time that word is said, it's a lie.  
+> It was then, and it certainly is now.
+
+And to repeat, I most certainly didn't do this myself.
+
+### Code
+
+```rust title=day_21.rs
+pub fn part_2(input: &str) -> usize {
+    let goal = 26_501_365;
+    let (grid, start) = parse(input);
+    let size = grid.len();
+    // the amount of steps it takes to reach an edge of the map (all tiles in the same row and column as start are gardens)
+    let to_edge = size / 2;
+    let mut fn_results = Vec::new();
+    let mut set = HashSet::new();
+    set.insert(start);
+
+    for count in 1.. {
+        let mut new_set = HashSet::new();
+
+        for pos in set {
+            for n in pos.infinite_neighbours().into_iter().filter(|pos| {
+                let y = pos.row.rem_euclid(size as i64) as usize;
+                let x = pos.col.rem_euclid(size as i64) as usize;
+                grid[y][x] == Tile::Garden
+            }) {
+                new_set.insert(n);
+            }
+        }
+        set = new_set;
+
+        if count == to_edge + size * fn_results.len() {
+            fn_results.push(set.len());
+
+            if fn_results.len() == 3 {
+                // EITHER
+                // let delta0 = fn_results[0];
+                // let delta1 = fn_results[1] - fn_results[0];
+                // let delta2 = fn_results[2] - 2 * fn_results[1] + fn_results[0];
+
+                // return delta0
+                //     + delta1 * (goal / size)
+                //     + delta2 * ((goal / size) * ((goal / size) - 1) / 2);
+
+                // OR, written differently:
+                let n = goal / size;
+
+                let a0 = fn_results[0];
+                let a1 = fn_results[1];
+                let a2 = fn_results[2];
+
+                let b0 = a0;
+                let b1 = a1 - a0;
+                let b2 = a2 - a1;
+                return b0 + b1 * n + (n * (n - 1) / 2) * (b2 - b1);
+            }
+        }
+    }
+
+    panic!()
+}
+```
+
+## Final code
+
+```rust title=day_21.rs numberLines
+use std::collections::HashSet;
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct Coord {
+    col: i64,
+    row: i64,
+}
+
+impl Coord {
+    fn neighbours(&self, rows: i64, cols: i64) -> Vec<Self> {
+        let mut res = Vec::new();
+        // up
+        if self.row > 0 {
+            res.push(Coord {
+                col: self.col,
+                row: self.row - 1,
+            });
+        }
+        // down
+        if self.row < rows - 1 {
+            res.push(Coord {
+                col: self.col,
+                row: self.row + 1,
+            });
+        }
+        // left
+        if self.col > 0 {
+            res.push(Coord {
+                col: self.col - 1,
+                row: self.row,
+            });
+        }
+        // right
+        if self.col < cols - 1 {
+            res.push(Coord {
+                col: self.col + 1,
+                row: self.row,
+            })
+        };
+
+        res
+    }
+
+    fn infinite_neighbours(&self) -> Vec<Self> {
+        let mut res = Vec::new();
+        // up
+        res.push(Coord {
+            col: self.col,
+            row: self.row - 1,
+        });
+        // down
+        res.push(Coord {
+            col: self.col,
+            row: self.row + 1,
+        });
+        // left
+        res.push(Coord {
+            col: self.col - 1,
+            row: self.row,
+        });
+        // right
+        res.push(Coord {
+            col: self.col + 1,
+            row: self.row,
+        });
+        res
+    }
+}
+
+#[derive(Debug, PartialEq)]
+enum Tile {
+    Garden,
+    Rock,
+}
+
+fn parse(input: &str) -> (Vec<Vec<Tile>>, Coord) {
+    let mut start = Coord { col: 0, row: 0 };
+    let mut grid = Vec::new();
+    for (y, line) in input.lines().enumerate() {
+        let mut row = Vec::new();
+        for (x, c) in line.chars().enumerate() {
+            let tile = match c {
+                '.' => Tile::Garden,
+                '#' => Tile::Rock,
+                'S' => {
+                    start.col = x as i64;
+                    start.row = y as i64;
+                    Tile::Garden
+                }
+                _ => panic!(),
+            };
+            row.push(tile);
+        }
+        grid.push(row);
+    }
+    (grid, start)
+}
+
+pub fn part_1(input: &str) -> usize {
+    let (grid, start) = parse(input);
+    let rows = grid.len();
+    let cols = grid[0].len();
+
+    let mut set = HashSet::new();
+    set.insert(start);
+
+    for _ in 0..64 {
+        let mut new_set = HashSet::new();
+        for pos in set {
+            for n in pos
+                .neighbours(rows as i64, cols as i64)
+                .into_iter()
+                .filter(|pos| grid[pos.row as usize][pos.col as usize] == Tile::Garden)
+            {
+                new_set.insert(n);
+            }
+        }
+        set = new_set
+    }
+    set.len()
+}
+
+// Let f(n) be the number of spaces you can reach after n steps. Let X be the length of your input grid. f(n), f(n+X), f(n+2X), ...., is a quadratic
+// You can find it by finding the first 3 values, then use that to interpolate the final answer.
+pub fn part_2(input: &str) -> usize {
+    let goal = 26_501_365;
+    let (grid, start) = parse(input);
+    let size = grid.len();
+    // the amount of steps it takes to reach an edge of the map (all tiles in the same row and column as start are gardens)
+    let to_edge = size / 2;
+    let mut fn_results = Vec::new();
+    let mut set = HashSet::new();
+    set.insert(start);
+
+    for count in 1.. {
+        let mut new_set = HashSet::new();
+
+        for pos in set {
+            for n in pos.infinite_neighbours().into_iter().filter(|pos| {
+                let y = pos.row.rem_euclid(size as i64) as usize;
+                let x = pos.col.rem_euclid(size as i64) as usize;
+                grid[y][x] == Tile::Garden
+            }) {
+                new_set.insert(n);
+            }
+        }
+        set = new_set;
+
+        if count == to_edge + size * fn_results.len() {
+            fn_results.push(set.len());
+
+            if fn_results.len() == 3 {
+                // EITHER
+                // let delta0 = fn_results[0];
+                // let delta1 = fn_results[1] - fn_results[0];
+                // let delta2 = fn_results[2] - 2 * fn_results[1] + fn_results[0];
+
+                // return delta0
+                //     + delta1 * (goal / size)
+                //     + delta2 * ((goal / size) * ((goal / size) - 1) / 2);
+
+                // OR, written differently:
+                let n = goal / size;
+
+                let a0 = fn_results[0];
+                let a1 = fn_results[1];
+                let a2 = fn_results[2];
+
+                let b0 = a0;
+                let b1 = a1 - a0;
+                let b2 = a2 - a1;
+                return b0 + b1 * n + (n * (n - 1) / 2) * (b2 - b1);
+            }
+        }
+    }
+
+    panic!()
+}
+```

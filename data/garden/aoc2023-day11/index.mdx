@@ -1,0 +1,530 @@
+---
+title: "Advent of Code 2023 Day 11"
+date: "2023-12-11"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+---
+
+## Day 11: Cosmic Expansion
+
+https://adventofcode.com/2023/day/11
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_11.rs)
+</Aside>
+
+You meet a researcher studying space.
+You want to help with today's analysis.
+
+It's a 2D map of space.
+
+An example input looks like this:
+
+```txt title=input.txt
+...#......
+.......#..
+#.........
+..........
+......#...
+.#........
+.........#
+..........
+.......#..
+#...#.....
+```
+
+- a # represents a galaxy
+- a . represents empty space
+
+## Parsing
+
+I represented every point in the grid as a `Tile` and stored them in a 2D list.
+
+```rust
+enum Tile {
+    Galaxy,
+    Empty,
+}
+```
+
+```rust
+fn parse(input: &str) -> Vec<Vec<Tile>> {
+    input
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|c| match c {
+                    '.' => Tile::Empty,
+                    '#' => Tile::Galaxy,
+                    _ => panic!("at the disco"),
+                })
+                .collect()
+        })
+        .collect()
+}
+```
+
+## Part 1
+
+The researcher is trying to figure out the sum of the lengths of the shortest path between every pair of galaxies.
+
+But because the universe is expanding, the readings are out of date.
+
+Because of ✨✨reasons✨✨ only some space expands.
+
+**Any rows or columns that contain no galaxies should all actually be twice as big.**
+
+The question asks for the sum of all distances between each pair galaxies.
+
+some skeleton/pseudo-code:
+```rust
+let grid = parse(input);
+let galaxies = galaxy_coordinates(&grid);
+
+galaxies
+    .iter()
+    .combinations(2)
+    .map(/* distance between those 2 galaxies */)
+    .sum()
+```
+
+### Helpers
+
+I represent each point as a `Coord`
+
+```rust
+struct Coord {
+    row: usize,
+    col: usize,
+}
+```
+
+Because it's a 2D list, the distance between 2 points can be calculated with the [Manhattan distance](https://en.wikipedia.org/wiki/Taxicab_geometry).
+
+```rust
+impl Coord {
+    fn manhattan_dist(&self, other: &Self) -> usize {
+        self.row.abs_diff(other.row) + self.col.abs_diff(other.col)
+    }
+}
+```
+
+Next is the helper that turns the 2D grid into a list of `Coord` of galaxies.
+Because of that expansion rule, I can't loop over the original grid and use those coordinates, so I keep track of them manually.
+
+Each time I come across an empty row or column, I increment the corresponding coordinate appropriately.
+If I come across a galaxy during my loop, I add the current coordinates to a list.
+
+```rust
+fn galaxy_coordinates(grid: &[Vec<Tile>]) -> Vec<Coord> {
+    let empty_rows = empty_rows(&grid);
+    let empty_cols = empty_cols(&grid);
+
+    let mut galaxies = Vec::new();
+    let mut curr_row = 0;
+    let mut curr_col = 0;
+
+    for (row_idx, row) in grid.iter().enumerate() {
+        if empty_rows.contains(&row_idx) {
+            curr_row += 2;
+            continue;
+        }
+        for (col_idx, c) in row.iter().enumerate() {
+            if empty_cols.contains(&col_idx) {
+                curr_col += 2;
+                continue;
+            }
+            if *c == Tile::Galaxy {
+                galaxies.push(Coord {
+                    row: curr_row,
+                    col: curr_col,
+                });
+            }
+            curr_col += 1
+        }
+        curr_col = 0;
+        curr_row += 1;
+    }
+
+    galaxies
+}
+```
+
+This function uses 2 helper functions to keep track of indexes for empty rows or empty columns.
+
+```rust
+fn empty_rows(grid: &[Vec<Tile>]) -> Vec<usize> {
+    grid.iter()
+        .enumerate()
+        .filter_map(|(idx, row)| {
+            if !row.contains(&Tile::Galaxy) {
+                Some(idx)
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+fn empty_cols(grid: &[Vec<Tile>]) -> Vec<usize> {
+    // this song and dance is only here so I can loop over columns
+    let mut cols: Vec<Vec<Tile>> = vec![vec![Tile::Empty; grid.len()]; grid[0].len()];
+    for (row_idx, row) in grid.iter().enumerate() {
+        for (col_idx, c) in row.iter().enumerate() {
+            cols[col_idx][row_idx] = *c;
+        }
+    }
+
+    empty_rows(&cols)
+}
+```
+
+Time to put it all together.
+
+### Code
+
+```rust title=day_11.rs
+use itertools::Itertools;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Tile {
+    Galaxy,
+    Empty,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct Coord {
+    row: usize,
+    col: usize,
+}
+
+impl Coord {
+    fn manhattan_dist(&self, other: &Self) -> usize {
+        self.row.abs_diff(other.row) + self.col.abs_diff(other.col)
+    }
+}
+
+fn parse(input: &str) -> Vec<Vec<Tile>> {
+    input
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|c| match c {
+                    '.' => Tile::Empty,
+                    '#' => Tile::Galaxy,
+                    _ => panic!("at the disco"),
+                })
+                .collect()
+        })
+        .collect()
+}
+
+fn empty_rows(grid: &[Vec<Tile>]) -> Vec<usize> {
+    grid.iter()
+        .enumerate()
+        .filter_map(|(idx, row)| {
+            if !row.contains(&Tile::Galaxy) {
+                Some(idx)
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+fn empty_cols(grid: &[Vec<Tile>]) -> Vec<usize> {
+    // this song and dance is only here so I can loop over columns
+    let mut cols: Vec<Vec<Tile>> = vec![vec![Tile::Empty; grid.len()]; grid[0].len()];
+    for (row_idx, row) in grid.iter().enumerate() {
+        for (col_idx, c) in row.iter().enumerate() {
+            cols[col_idx][row_idx] = *c;
+        }
+    }
+
+    empty_rows(&cols)
+}
+
+fn galaxy_coordinates(grid: &[Vec<Tile>]) -> Vec<Coord> {
+    let empty_rows = empty_rows(&grid);
+    let empty_cols = empty_cols(&grid);
+
+    let mut galaxies = Vec::new();
+    let mut curr_row = 0;
+    let mut curr_col = 0;
+
+    for (row_idx, row) in grid.iter().enumerate() {
+        if empty_rows.contains(&row_idx) {
+            curr_row += 2;
+            continue;
+        }
+        for (col_idx, c) in row.iter().enumerate() {
+            if empty_cols.contains(&col_idx) {
+                curr_col += 2;
+                continue;
+            }
+            if *c == Tile::Galaxy {
+                galaxies.push(Coord {
+                    row: curr_row,
+                    col: curr_col,
+                });
+            }
+            curr_col += 1
+        }
+        curr_col = 0;
+        curr_row += 1;
+    }
+
+    galaxies
+}
+
+pub fn part_1(input: &str) -> usize {
+    let grid = parse(input);
+    let galaxies = galaxy_coordinates(&grid);
+
+    galaxies
+        .iter()
+        .combinations(2)
+        .map(|pair| pair[0].manhattan_dist(pair[1]))
+        .sum()
+}
+```
+
+## Part 2
+
+Turns out the galaxies are much further apart.
+
+**Any rows or columns that contain no galaxies should all actually be one million times as big.**
+
+The question asks for the sum of all distances between each pair galaxies.
+
+### Code
+
+The `galaxy_coordinates` jumped 2 steps when it found an empty line in part1, it jumps 1_000_000 steps in part2.
+
+I normally don't do this Advent of Code, but I generalized a helper function so it can be used for part 1 and part 2.
+
+```rust title=day_11.rs
+use itertools::Itertools;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Tile {
+    Galaxy,
+    Empty,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct Coord {
+    row: usize,
+    col: usize,
+}
+
+impl Coord {
+    fn manhattan_dist(&self, other: &Self) -> usize {
+        self.row.abs_diff(other.row) + self.col.abs_diff(other.col)
+    }
+}
+
+fn parse(input: &str) -> Vec<Vec<Tile>> {
+    input
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|c| match c {
+                    '.' => Tile::Empty,
+                    '#' => Tile::Galaxy,
+                    _ => panic!("at the disco"),
+                })
+                .collect()
+        })
+        .collect()
+}
+
+fn empty_rows(grid: &[Vec<Tile>]) -> Vec<usize> {
+    grid.iter()
+        .enumerate()
+        .filter_map(|(idx, row)| {
+            if !row.contains(&Tile::Galaxy) {
+                Some(idx)
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+fn empty_cols(grid: &[Vec<Tile>]) -> Vec<usize> {
+    // this song and dance is only here so I can loop over columns
+    let mut cols: Vec<Vec<Tile>> = vec![vec![Tile::Empty; grid.len()]; grid[0].len()];
+    for (row_idx, row) in grid.iter().enumerate() {
+        for (col_idx, c) in row.iter().enumerate() {
+            cols[col_idx][row_idx] = *c;
+        }
+    }
+
+    empty_rows(&cols)
+}
+
+fn galaxy_coordinates(grid: &[Vec<Tile>], expansion: usize) -> Vec<Coord> {
+    let empty_rows = empty_rows(&grid);
+    let empty_cols = empty_cols(&grid);
+
+    let mut galaxies = Vec::new();
+    let mut curr_row = 0;
+    let mut curr_col = 0;
+
+    for (row_idx, row) in grid.iter().enumerate() {
+        if empty_rows.contains(&row_idx) {
+            curr_row += expansion;
+            continue;
+        }
+        for (col_idx, c) in row.iter().enumerate() {
+            if empty_cols.contains(&col_idx) {
+                curr_col += expansion;
+                continue;
+            }
+            if *c == Tile::Galaxy {
+                galaxies.push(Coord {
+                    row: curr_row,
+                    col: curr_col,
+                });
+            }
+            curr_col += 1
+        }
+        curr_col = 0;
+        curr_row += 1;
+    }
+
+    galaxies
+}
+
+pub fn part_2(input: &str) -> usize {
+    let grid = parse(input);
+    let galaxies = galaxy_coordinates(&grid, 1_000_000);
+
+    galaxies
+        .iter()
+        .combinations(2)
+        .map(|pair| pair[0].manhattan_dist(pair[1]))
+        .sum()
+}
+```
+
+## Final code
+
+```rust title=day_11.rs numberLines
+use itertools::Itertools;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Tile {
+    Galaxy,
+    Empty,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct Coord {
+    row: usize,
+    col: usize,
+}
+
+impl Coord {
+    fn manhattan_dist(&self, other: &Self) -> usize {
+        self.row.abs_diff(other.row) + self.col.abs_diff(other.col)
+    }
+}
+
+fn parse(input: &str) -> Vec<Vec<Tile>> {
+    input
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|c| match c {
+                    '.' => Tile::Empty,
+                    '#' => Tile::Galaxy,
+                    _ => panic!("at the disco"),
+                })
+                .collect()
+        })
+        .collect()
+}
+
+fn empty_rows(grid: &[Vec<Tile>]) -> Vec<usize> {
+    grid.iter()
+        .enumerate()
+        .filter_map(|(idx, row)| {
+            if !row.contains(&Tile::Galaxy) {
+                Some(idx)
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+fn empty_cols(grid: &[Vec<Tile>]) -> Vec<usize> {
+    // this song and dance is only here so I can loop over columns
+    let mut cols: Vec<Vec<Tile>> = vec![vec![Tile::Empty; grid.len()]; grid[0].len()];
+    for (row_idx, row) in grid.iter().enumerate() {
+        for (col_idx, c) in row.iter().enumerate() {
+            cols[col_idx][row_idx] = *c;
+        }
+    }
+
+    empty_rows(&cols)
+}
+
+fn galaxy_coordinates(grid: &[Vec<Tile>], expansion: usize) -> Vec<Coord> {
+    let empty_rows = empty_rows(&grid);
+    let empty_cols = empty_cols(&grid);
+
+    let mut galaxies = Vec::new();
+    let mut curr_row = 0;
+    let mut curr_col = 0;
+
+    for (row_idx, row) in grid.iter().enumerate() {
+        if empty_rows.contains(&row_idx) {
+            curr_row += expansion;
+            continue;
+        }
+        for (col_idx, c) in row.iter().enumerate() {
+            if empty_cols.contains(&col_idx) {
+                curr_col += expansion;
+                continue;
+            }
+            if *c == Tile::Galaxy {
+                galaxies.push(Coord {
+                    row: curr_row,
+                    col: curr_col,
+                });
+            }
+            curr_col += 1
+        }
+        curr_col = 0;
+        curr_row += 1;
+    }
+
+    galaxies
+}
+
+pub fn part_1(input: &str) -> usize {
+    let grid = parse(input);
+    let galaxies = galaxy_coordinates(&grid, 2);
+
+    galaxies
+        .iter()
+        .combinations(2)
+        .map(|pair| pair[0].manhattan_dist(pair[1]))
+        .sum()
+}
+
+pub fn part_2(input: &str) -> usize {
+    let grid = parse(input);
+    let galaxies = galaxy_coordinates(&grid, 1_000_000);
+
+    galaxies
+        .iter()
+        .combinations(2)
+        .map(|pair| pair[0].manhattan_dist(pair[1]))
+        .sum()
+}
+```

@@ -1,0 +1,445 @@
+---
+title: "Advent of Code 2023 Day 3"
+date: "2023-12-03"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+---
+
+## Day 3: Gear Ratios
+
+https://adventofcode.com/2023/day/3
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_03.rs)
+</Aside>
+
+<Aside variant="info">
+Today's code is heavily inspired by [Robin Malfait's solution](https://github.com/RobinMalfait/advent-of-code/blob/ae796769935ad568f4c16704bbfd455b367b0215/src/2023/day-03/rust/src/main.rs)
+</Aside>
+
+You reach a gondola lift, but it's broken (what a surprise).
+So you offer to help fix it.
+
+The engine is missing a part.
+
+Today's input file is the engine schematic, a visual representation of the engine.
+
+An example input looks like this:
+
+```txt title=input.txt
+467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..
+```
+
+## Part 1
+
+In the schematic, periods are empty spaces.
+
+Any number adjacent (even diagonally) to a symbol is a part number.
+
+The question asks what the sum is of all part numbers in the engine schematic.
+
+In the example, only 2 numbers are **not** part numbers: 114 (top right) and 58 (middle right).
+
+First, the engine schematic is built from the input as a 2D list where each point is a character (a point, a digit, or a symbol).
+
+We iterate through the schematic, checking every digit.
+
+While we do so, we keep track of a few temporary variables:
+1. The current number so far (a number can have multiple digits)
+2. If the current number is adjacent to a symbol
+
+For every digit we encounter, those temporary variables get updated:
+1. We concatenate the digit to the end of the current number.
+2. We check if any point adjacent to the digit is a symbol
+
+If the next horizontal point is not a digit (it's either the end of a line, a symbol, or an empty space), the current number is complete.
+
+At that point, we check if the current number is adjacent to a symbol.
+If it is, we increment our final sum.
+Finally, we reset the temporary variables before we start building up the next number.
+
+In pseudocode:
+
+```rust
+let engine = // a 2D grid where each point is a character (a point, a digit, or a symbol)
+let mut sum = 0;
+let mut current_num = 0;
+let mut has_adjacent_symbol = false;
+
+for point in engine {
+    // check if current point is a digit
+    if !point.is_digit() {
+        continue;
+    }
+
+    // concatenate digit to current number
+    current_num = current_num * 10 + point.value;
+
+    for neighbour in point.neighbours() {
+        if neighbour.is_symbol() {
+            has_adjacent_symbol = true;
+        }
+    }
+
+    // check if current_num is complete
+    if next_point.is_out_of_bounds() || next_point.is_symbol() || next_point.is_empty_space() {
+        // check if current_num is adjacent to a symbol
+        if has_adjacent_symbol {
+            sum = sum + current_num;
+        }
+        // reset temporary variables
+        current_num = 0;
+        has_adjacent_symbol = false;
+    }
+}
+
+sum
+```
+
+### Code
+
+```rust title=day_03.rs
+pub fn part_1(input: &str) -> u32 {
+    let grid = input
+        .trim()
+        .lines()
+        .map(|line| line.trim().chars().collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+
+    let mut sum = 0;
+    let mut current_num = 0;
+    let mut has_adjacent_symbol = false;
+
+    for row_idx in 0..grid.len() {
+        for col_idx in 0..grid[row_idx].len() {
+            let value = grid[row_idx][col_idx];
+
+            // Not a number, not interested
+            if !value.is_ascii_digit() {
+                continue;
+            }
+
+            // check if any adjacent tile is a symbol
+            for row_offset in -1..=1 {
+                for col_offset in -1..=1 {
+                    // Skip self
+                    if row_offset == 0 && col_offset == 0 {
+                        continue;
+                    }
+
+                    let adjacent_row_idx = row_idx as i32 + row_offset;
+                    let adjacent_col_idx = col_idx as i32 + col_offset;
+
+                    // Out of bounds
+                    if adjacent_row_idx < 0
+                        || adjacent_row_idx >= grid.len() as i32
+                        || adjacent_col_idx < 0
+                        || adjacent_col_idx >= grid[adjacent_row_idx as usize].len() as i32
+                    {
+                        continue;
+                    }
+
+                    let adjacent_value = grid[adjacent_row_idx as usize][adjacent_col_idx as usize];
+                    if !adjacent_value.is_ascii_digit() && adjacent_value != '.' {
+                        has_adjacent_symbol = true;
+                    }
+                }
+            }
+
+            // Adjust the number currently being built (concatenate a digit using math)
+            current_num *= 10;
+            current_num += value.to_digit(10).unwrap();
+
+            // If we reached the end of the line, or the next horizontal coordinate is not a digit, the current number is complete
+            // check if the number has an adjacent symbol, and reset the temporary values before starting on a new number
+            if col_idx + 1 >= grid[row_idx].len() || !grid[row_idx][col_idx + 1].is_ascii_digit() {
+                if has_adjacent_symbol {
+                    sum += current_num;
+                }
+
+                current_num = 0;
+                has_adjacent_symbol = false;
+            }
+        }
+    }
+
+    sum
+}
+```
+
+## Part 2
+
+The gondola starts working, but it's going painfully slow!
+The engineer tells you one of the gears in the engine is wrong.
+
+On your schematic, a gear is marked as a star (`*`) that is adjacent to exactly two part numbers.
+
+You can calculate the **gear ratio** of a gear by multiplying the numbers of the two adjacent parts.
+
+The question asks to find the sum of all gear ratios.
+
+The code is very similar to part 1.
+The variable we keep track of throughout the loop changes (`sum` in part1), and one temporary variable.
+
+The variable we keep track of throughout the loop is a map of all stars, with positions as keys, and a list of adjacent part numbers as value.
+
+
+We iterate through the schematic, checking every digit.
+
+While we do so, we keep track of a few temporary variables:
+1. The current number so far (a number can have multiple digits)
+2. A set of all star positions that are adjacent to the current number
+
+For every digit we encounter, those temporary variables get updated:
+1. We concatenate the digit to the end of the current number.
+2. We add any adjacent star positions to the adjacent stars set.
+
+If the next horizontal point is not a digit (it's either the end of a line, a symbol, or an empty space), the current number is complete.
+
+At that point, we add all stars in the set to the map we keep track of throughout the loop.
+Finally, we reset the temporary variables before we start building up the next number.
+
+After the loop over the engine schematics ends, we filter the map we kept track of so only the valid gears are left. (stars with exactly 2 adjacent numbers.)
+We multiply those numbers together, and sum those products.
+
+### Code
+
+```rust title=day_03.rs
+use std::collections::{HashMap, HashSet};
+
+pub fn part_2(input: &str) -> u32 {
+    let engine = input
+        .trim()
+        .lines()
+        .map(|line| line.trim().chars().collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+
+    // key: star coordinate, val: list of adjacent numbers
+    let mut stars: HashMap<(i32, i32), Vec<u32>> = HashMap::new();
+    let mut current_num = 0;
+    let mut adjacent_star_positions: HashSet<(i32, i32)> = HashSet::new();
+
+    for row_idx in 0..engine.len() {
+        for col_idx in 0..engine[row_idx].len() {
+            let value = engine[row_idx][col_idx];
+
+            // Not a number, not interested
+            if !value.is_ascii_digit() {
+                continue;
+            }
+
+            // check if any adjacent tile is a star
+            for row_offset in -1..=1 {
+                for col_offset in -1..=1 {
+                    // Skip self
+                    if row_offset == 0 && col_offset == 0 {
+                        continue;
+                    }
+
+                    let adjacent_row_idx = row_idx as i32 + row_offset;
+                    let adjacent_col_idx = col_idx as i32 + col_offset;
+
+                    // Out of bounds
+                    if adjacent_row_idx < 0
+                        || adjacent_row_idx >= engine.len() as i32
+                        || adjacent_col_idx < 0
+                        || adjacent_col_idx >= engine[adjacent_row_idx as usize].len() as i32
+                    {
+                        continue;
+                    }
+
+                    if engine[adjacent_row_idx as usize][adjacent_col_idx as usize] == '*' {
+                        adjacent_star_positions.insert((adjacent_row_idx, adjacent_col_idx));
+                    }
+                }
+            }
+
+            // Adjust the number currently being built (concatenate a digit using math)
+            current_num *= 10;
+            current_num += value.to_digit(10).unwrap();
+
+            // If we reached the end of the line, or the next horizontal coordinate is not a digit, the current number is complete
+            if col_idx + 1 >= engine[row_idx].len()
+                || !engine[row_idx][col_idx + 1].is_ascii_digit()
+            {
+                // add all stars to the variable keeping track of stars (potential gears)
+                for point in &adjacent_star_positions {
+                    stars.entry(*point).or_default().push(current_num);
+                }
+
+                // reset the temporary values before starting on a new number
+                current_num = 0;
+                adjacent_star_positions.clear();
+            }
+        }
+    }
+
+    stars
+        .values()
+        // only stars with exactly 2 adjacent numbers are gears
+        .filter(|numbers| numbers.len() == 2)
+        .map(|numbers| numbers[0] * numbers[1])
+        .sum()
+}
+```
+
+## Final code
+
+```rust title=day_03.rs numberLines
+use std::collections::{HashMap, HashSet};
+
+pub fn part_1(input: &str) -> u32 {
+    let engine = input
+        .trim()
+        .lines()
+        .map(|line| line.trim().chars().collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+
+    let mut sum = 0;
+    let mut current_num = 0;
+    let mut has_adjacent_symbol = false;
+
+    for row_idx in 0..engine.len() {
+        for col_idx in 0..engine[row_idx].len() {
+            let value = engine[row_idx][col_idx];
+
+            // Not a number, not interested
+            if !value.is_ascii_digit() {
+                continue;
+            }
+
+            // check if any adjacent tile is a symbol
+            for row_offset in -1..=1 {
+                for col_offset in -1..=1 {
+                    // Skip self
+                    if row_offset == 0 && col_offset == 0 {
+                        continue;
+                    }
+
+                    let adjacent_row_idx = row_idx as i32 + row_offset;
+                    let adjacent_col_idx = col_idx as i32 + col_offset;
+
+                    // Out of bounds
+                    if adjacent_row_idx < 0
+                        || adjacent_row_idx >= engine.len() as i32
+                        || adjacent_col_idx < 0
+                        || adjacent_col_idx >= engine[adjacent_row_idx as usize].len() as i32
+                    {
+                        continue;
+                    }
+
+                    let adjacent_value =
+                        engine[adjacent_row_idx as usize][adjacent_col_idx as usize];
+                    if !adjacent_value.is_ascii_digit() && adjacent_value != '.' {
+                        has_adjacent_symbol = true;
+                    }
+                }
+            }
+
+            // Adjust the number currently being built (concatenate a digit using math)
+            current_num *= 10;
+            current_num += value.to_digit(10).unwrap();
+
+            // If we reached the end of the line, or the next horizontal coordinate is not a digit, the current number is complete
+            // check if the number has an adjacent symbol, and reset the temporary values before starting on a new number
+            if col_idx + 1 >= engine[row_idx].len()
+                || !engine[row_idx][col_idx + 1].is_ascii_digit()
+            {
+                if has_adjacent_symbol {
+                    sum += current_num;
+                }
+
+                current_num = 0;
+                has_adjacent_symbol = false;
+            }
+        }
+    }
+
+    sum
+}
+
+pub fn part_2(input: &str) -> u32 {
+    let engine = input
+        .trim()
+        .lines()
+        .map(|line| line.trim().chars().collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+
+    // key: star coordinate, val: list of adjacent numbers
+    let mut stars: HashMap<(i32, i32), Vec<u32>> = HashMap::new();
+    let mut current_num = 0;
+    let mut adjacent_star_positions: HashSet<(i32, i32)> = HashSet::new();
+
+    for row_idx in 0..engine.len() {
+        for col_idx in 0..engine[row_idx].len() {
+            let value = engine[row_idx][col_idx];
+
+            // Not a number, not interested
+            if !value.is_ascii_digit() {
+                continue;
+            }
+
+            // check if any adjacent tile is a star
+            for row_offset in -1..=1 {
+                for col_offset in -1..=1 {
+                    // Skip self
+                    if row_offset == 0 && col_offset == 0 {
+                        continue;
+                    }
+
+                    let adjacent_row_idx = row_idx as i32 + row_offset;
+                    let adjacent_col_idx = col_idx as i32 + col_offset;
+
+                    // Out of bounds
+                    if adjacent_row_idx < 0
+                        || adjacent_row_idx >= engine.len() as i32
+                        || adjacent_col_idx < 0
+                        || adjacent_col_idx >= engine[adjacent_row_idx as usize].len() as i32
+                    {
+                        continue;
+                    }
+
+                    if engine[adjacent_row_idx as usize][adjacent_col_idx as usize] == '*' {
+                        adjacent_star_positions.insert((adjacent_row_idx, adjacent_col_idx));
+                    }
+                }
+            }
+
+            // Adjust the number currently being built (concatenate a digit using math)
+            current_num *= 10;
+            current_num += value.to_digit(10).unwrap();
+
+            // If we reached the end of the line, or the next horizontal coordinate is not a digit, the current number is complete
+            if col_idx + 1 >= engine[row_idx].len()
+                || !engine[row_idx][col_idx + 1].is_ascii_digit()
+            {
+                // add all stars to the variable keeping track of stars (potential gears)
+                for point in &adjacent_star_positions {
+                    stars.entry(*point).or_default().push(current_num);
+                }
+
+                // reset the temporary values before starting on a new number
+                current_num = 0;
+                adjacent_star_positions.clear();
+            }
+        }
+    }
+
+    stars
+        .values()
+        // only stars with exactly 2 adjacent numbers are gears
+        .filter(|numbers| numbers.len() == 2)
+        .map(|numbers| numbers[0] * numbers[1])
+        .sum()
+}
+```

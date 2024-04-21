@@ -1,0 +1,556 @@
+---
+title: "Advent of Code 2023 Day 7"
+date: "2023-12-07"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+---
+
+## Day 7: Camel Cards
+
+https://adventofcode.com/2023/day/7
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_07.rs)
+</Aside>
+
+You arrive at Desert Island, an elf is there waiting to take you to your destination.
+A trip by camel!
+
+The elf wants to play a game while travelling appropriately named camel cards.
+
+It's similar to poker, but a bit simpler, because that makes it easier to play while riding a camel.
+
+You get a list of hands of cards.
+You need to order those hands based on the strength of each hand.
+
+A hand consists of five cards.
+
+The cards are all one of:
+- A
+- K
+- Q
+- J
+- T
+- 9
+- 8
+- 7
+- 6
+- 5
+- 4
+- 3
+- 2
+
+Each hand of 5 cards has a type of:
+- Five of a kind
+
+    All cards have the same label.
+
+    eg: AAAAA
+- Four of a kind
+
+    Four cards have the same label.
+
+    eg: AA8AA
+- Full House
+
+    Three cards have the same label, the two other cards have the same label.
+
+    eg: 23332
+- Three of a kind
+
+    Three cards have the same label.
+
+    eg: TTT98
+- Two pair
+
+    Two cards have the same label.  
+    Two other cards also have the same label.
+
+    eg: 23432
+- One pair
+
+    Two cards have the same label.
+
+    eg: A23A4
+- High card
+
+    All card labels are different.
+
+    eg: 23456
+
+Each hand has a bid associated with it, it number.
+
+If two hands have the same type, their order is determined by looking which hand has a stronger card first.
+
+eg: hand1 is `33332`, and hand2 is `2AAAA`.
+
+Both hands have the same type (four of a kind).
+`33332` is stronger because the first card is stronger.
+If the first card is identical, the second card is compared, and so forth until one hand is stronger (two hands being completely identical never happens in the input).
+
+Today's input is a list of hands with their corresponding bids.
+
+An example input looks like this:
+
+```txt title=input.txt
+32T3K 765
+T55J5 684
+KK677 28
+KTJJT 220
+QQQJA 483
+```
+
+## Part 1
+
+Order the hands in the input.
+
+The weakest hand gets rank 1, the next one rank 2, and so on.
+
+For each hand, multiply its rank by its bid to determine the hands winnings.
+
+The question asks you determine the total winnings for all hands.
+
+### Option 1: lots of functions
+
+Starting with some pseudo/skeleton-code again:
+
+```rust
+input
+    .lines()
+    .map(/* turn a line into a (cards, bid) pair*/)
+    .sorted()
+    .map(/* multiply rank with bid */)
+    .sum()
+```
+
+#### Helpers
+
+I chose to represent the value of a single card as a number, ordered like the question specifies.
+
+```rust
+fn card_value(c: char) -> usize {
+    "23456789TJQKA".chars().position(|card| card == c).unwrap()
+}
+```
+
+To score a single hand, I used a list of 2 sorted numbers:
+1. The amount of cards that appear the most often
+1. The amount of cards that appears the 2nd most often
+
+Some examples:
+- `[3, 2]` represents a hand with 3 cards of equal value, and 2 cards with a different identical value
+- `[3, 1]` represents a hand with 3 cards of equal value, and 1 card with a different value. (not represented is the last card that also has a different value)
+- `[5, 0]` represents a hand with 5 cards of equal value.
+- `[2, 2]` represents a hand with 2 pairs.
+
+```rust
+fn hand_score(hand: &str) -> [u8; 2] {
+    let mut faces = [0_u8; 13];
+    for c in hand.chars() {
+        faces[card_value(c)] += 1;
+    }
+    faces.sort_unstable();
+    let mut score: [u8; 2] = faces[11..].try_into().unwrap();
+    score.reverse();
+    score
+}
+```
+
+And finally, using those building blocks, a way to compare 2 hands and determine which one is stronger.
+
+```rust
+fn compare_hands(a: &str, b: &str) -> Ordering {
+    hand_score(a).cmp(&hand_score(b)).then_with(|| {
+        let (a, b) = a
+            .chars()
+            .zip(b.chars())
+            .find(|(a, b)| a != b)
+            .expect("hands are completely identical");
+
+        card_value(a).cmp(&card_value(b))
+    })
+}
+```
+
+#### Code
+
+```rust title=day_07.rs
+use itertools::Itertools;
+use std::cmp::Ordering;
+
+pub fn part_1(input: &str) -> usize {
+    input
+        .lines()
+        .map(|line| {
+            let (hand, bid) = line.split_once(" ").unwrap();
+            (hand, bid)
+        })
+        .sorted_by(|(a, _), (b, _)| compare_hands(a, b))
+        .enumerate()
+        .map(|(idx, (_, bid))| (idx + 1) * bid.parse::<usize>().unwrap())
+        .sum()
+}
+
+fn compare_hands(a: &str, b: &str) -> Ordering {
+    hand_score(a).cmp(&hand_score(b)).then_with(|| {
+        let (a, b) = a
+            .chars()
+            .zip(b.chars())
+            .find(|(a, b)| a != b)
+            .expect("hands are completely identical");
+
+        card_value(a).cmp(&card_value(b))
+    })
+}
+
+fn hand_score(hand: &str) -> [u8; 2] {
+    let mut faces = [0_u8; 13];
+    for c in hand.chars() {
+        faces[card_value(c)] += 1;
+    }
+    faces.sort_unstable();
+    let mut score: [u8; 2] = faces[11..].try_into().unwrap();
+    score.reverse();
+    score
+}
+
+fn card_value(c: char) -> usize {
+    "23456789TJQKA".chars().position(|card| card == c).unwrap()
+}
+```
+
+### Option 2: structures
+
+I like to put data in neat structures.
+Rust structs are great.
+
+Because the input is a string, I store references to that string in those structures.
+Those need a lifetime, and that's that `'a` stuff you see all over the place.
+
+I'm not going deep into what that means in this post, but in a nutshell it means "this string is valid while this structure exists".
+
+By Implementing [`Ord`](https://doc.rust-lang.org/std/cmp/trait.Ord.html) we tell Rust those structures can be ordered.
+
+#### Code
+
+```rust title=day_07.rs
+use itertools::Itertools;
+use std::cmp::Ordering;
+
+#[derive(PartialEq, Eq)]
+struct Hand<'a> {
+    cards: &'a str,
+    bid: u32,
+}
+
+impl<'a> Hand<'a> {
+    fn score(&self) -> [u8; 2] {
+        let mut faces = [0; 13];
+        for c in self.cards.chars() {
+            faces[card_value(c)] += 1;
+        }
+        faces.sort_unstable();
+        let mut score: [u8; 2] = faces[11..].try_into().unwrap();
+        score.reverse();
+        score
+    }
+}
+
+impl<'a> PartialOrd for Hand<'a> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<'a> Ord for Hand<'a> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.score().cmp(&other.score()).then_with(|| {
+            let (a, b) = self
+                .cards
+                .chars()
+                .zip(other.cards.chars())
+                .find(|(a, b)| a != b)
+                .expect("hands are completely identical");
+
+            card_value(a).cmp(&card_value(b))
+        })
+    }
+}
+
+pub fn part_1(input: &str) -> u32 {
+    input
+        .lines()
+        .map(|line| {
+            let (cards, bid) = line.split_once(" ").unwrap();
+            Hand {
+                cards,
+                bid: bid.parse().unwrap(),
+            }
+        })
+        .sorted_unstable()
+        .enumerate()
+        .map(|(idx, turn)| (idx as u32 + 1) * turn.bid)
+        .sum()
+}
+```
+
+### Option 3: getting shifty
+
+I didn't implement this but you can also represent a hand as a single number.
+
+4 bits represent each card.
+The starting bits represent the type of hand (from five of a kind to high card).
+
+This would work by determining the value of each card, and shifting bits to represent that value onto a number.
+Then, shift a value representing the type of the hand onto the front of the same number.
+
+Sorting those numbers would apply the sorting logic described where it sorts based on the type of hand first, and on the individual cards next.
+
+## Part 2
+
+There is a second way to play this game.
+
+The `J` cards are now jokers, wildcards that can act like any other card.
+
+You can use these jokers in a hand to make a stronger type of hand.
+
+To balance this, the `J` card is now the weakest card.
+
+This causes a few adjustments to the code from part1.
+
+### Helpers
+
+The function to determine the value of a single card:
+```rust
+fn card_value2(c: char) -> usize {
+    "J23456789TQKA".chars().position(|card| card == c).unwrap()
+}
+```
+
+The function to score a hand:
+```rust
+fn hand_score2(hand: &str) -> [u8; 2] {
+    let mut faces = [0; 13];
+    let mut jokers = 0;
+    for c in hand.chars() {
+        if c == 'J' {
+            jokers += 1;
+        } else {
+            faces[card_value2(c)] += 1;
+        }
+    }
+    faces.sort_unstable();
+    let mut score: [u8; 2] = faces[11..].try_into().unwrap();
+    score.reverse();
+    // add the amount of jokers to the counts of the card that occurs the most already to increase the hand score
+    score[0] += jokers;
+    score
+}
+```
+
+The function to compare 2 hands:
+```rust
+fn compare_hands2(a: &str, b: &str) -> Ordering {
+    hand_score2(a).cmp(&hand_score2(b)).then_with(|| {
+        let (a, b) = a
+            .chars()
+            .zip(b.chars())
+            .find(|(a, b)| a != b)
+            .expect("hands are completely identical");
+
+        card_value2(a).cmp(&card_value2(b))
+    })
+}
+```
+
+The result is nearly identical code to part one.
+It would be trivial to implement a boolean flag and combine these 2 version into one, but I had somewhere to go and copy-pasting was faster.
+
+### Code
+
+```rust title=day_07.rs
+use itertools::Itertools;
+use std::cmp::Ordering;
+
+pub fn part_2(input: &str) -> usize {
+    input
+        .lines()
+        .map(|line| {
+            let (hand, bid) = line.split_once(" ").unwrap();
+            (hand, bid)
+        })
+        .sorted_by(|(a, _), (b, _)| compare_hands2(a, b))
+        .enumerate()
+        .map(|(idx, (_, bid))| (idx + 1) * bid.parse::<usize>().unwrap())
+        .sum()
+}
+
+fn compare_hands2(a: &str, b: &str) -> Ordering {
+    hand_score2(a).cmp(&hand_score2(b)).then_with(|| {
+        let (a, b) = a
+            .chars()
+            .zip(b.chars())
+            .find(|(a, b)| a != b)
+            .expect("hands are completely identical");
+
+        card_value2(a).cmp(&card_value2(b))
+    })
+}
+
+fn hand_score2(hand: &str) -> [u8; 2] {
+    let mut faces = [0; 13];
+    let mut jokers = 0;
+    for c in hand.chars() {
+        if c == 'J' {
+            jokers += 1;
+        } else {
+            faces[card_value2(c)] += 1;
+        }
+    }
+    faces.sort_unstable();
+    let mut score: [u8; 2] = faces[11..].try_into().unwrap();
+    score.reverse();
+    // add the amount of jokers to the counts of the card that occurs the most already to increase the hand score
+    score[0] += jokers;
+    score
+}
+
+fn card_value2(c: char) -> usize {
+    "J23456789TQKA".chars().position(|card| card == c).unwrap()
+}
+```
+
+## Final code
+
+```rust title=day_06.rs numberLines
+use itertools::Itertools;
+use std::cmp::Ordering;
+
+#[derive(PartialEq, Eq)]
+struct Hand<'a> {
+    cards: &'a str,
+    bid: u32,
+}
+
+impl<'a> Hand<'a> {
+    fn score(&self) -> [u8; 2] {
+        let mut faces = [0; 13];
+        for c in self.cards.chars() {
+            faces[card_value(c)] += 1;
+        }
+        faces.sort_unstable();
+        let mut score: [u8; 2] = faces[11..].try_into().unwrap();
+        score.reverse();
+        score
+    }
+}
+
+impl<'a> PartialOrd for Hand<'a> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<'a> Ord for Hand<'a> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.score().cmp(&other.score()).then_with(|| {
+            let (a, b) = self
+                .cards
+                .chars()
+                .zip(other.cards.chars())
+                .find(|(a, b)| a != b)
+                .expect("hands are completely identical");
+
+            card_value(a).cmp(&card_value(b))
+        })
+    }
+}
+
+pub fn part_1(input: &str) -> u32 {
+    input
+        .lines()
+        .map(|line| {
+            let (cards, bid) = line.split_once(" ").unwrap();
+            Hand {
+                cards,
+                bid: bid.parse().unwrap(),
+            }
+        })
+        .sorted_unstable()
+        .enumerate()
+        .map(|(idx, turn)| (idx as u32 + 1) * turn.bid)
+        .sum()
+}
+
+#[derive(PartialEq, Eq)]
+struct Hand2<'a> {
+    cards: &'a str,
+    bid: u32,
+}
+
+impl<'a> Hand2<'a> {
+    fn score(&self) -> [u8; 2] {
+        let mut faces = [0; 13];
+        let mut jokers = 0;
+        for c in self.cards.chars() {
+            if c == 'J' {
+                jokers += 1;
+            } else {
+                faces[card_value2(c)] += 1;
+            }
+        }
+        faces.sort_unstable();
+        let mut score: [u8; 2] = faces[11..].try_into().unwrap();
+        score.reverse();
+        // add the amount of jokers to the counts of the card that occurs the most already to increase the hand score
+        score[0] += jokers;
+        score
+    }
+}
+
+impl<'a> PartialOrd for Hand2<'a> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<'a> Ord for Hand2<'a> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.score().cmp(&other.score()).then_with(|| {
+            let (a, b) = self
+                .cards
+                .chars()
+                .zip(other.cards.chars())
+                .find(|(a, b)| a != b)
+                .expect("hands are completely identical");
+
+            card_value2(a).cmp(&card_value2(b))
+        })
+    }
+}
+
+pub fn part_2(input: &str) -> u32 {
+    input
+        .lines()
+        .map(|line| {
+            let (cards, bid) = line.split_once(" ").unwrap();
+            Hand2 {
+                cards,
+                bid: bid.parse().unwrap(),
+            }
+        })
+        .sorted_unstable()
+        .enumerate()
+        .map(|(idx, turn)| (idx as u32 + 1) * turn.bid)
+        .sum()
+}
+
+fn card_value(c: char) -> usize {
+    "23456789TJQKA".chars().position(|card| card == c).unwrap()
+}
+
+fn card_value2(c: char) -> usize {
+    "J23456789TQKA".chars().position(|card| card == c).unwrap()
+}
+```

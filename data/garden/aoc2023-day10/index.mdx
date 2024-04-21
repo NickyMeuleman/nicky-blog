@@ -1,0 +1,913 @@
+---
+title: "Advent of Code 2023 Day 10"
+date: "2023-12-10"
+authors: ["nicky"]
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+draft: true
+---
+
+## Day 10: Pipe Maze
+
+https://adventofcode.com/2023/day/10
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_10.rs)
+</Aside>
+
+You go up to a metal island with a hang glider.
+
+There, you see an animal run into a maze of pipes.
+
+You scan the maze of pipes, that scan is today's input.
+
+An example input looks like this:
+
+```txt title=input.txt
+..F7.
+.FJ|.
+SJ.L7
+|F--J
+LJ...
+```
+
+The pipes are arranged in a two-dimensional grid of tiles:
+
+- | is a vertical pipe connecting north and south.
+- - is a horizontal pipe connecting east and west.
+- L is a 90-degree bend connecting north and east.
+- J is a 90-degree bend connecting north and west.
+- 7 is a 90-degree bend connecting south and west.
+- F is a 90-degree bend connecting south and east.
+- . is ground; there is no pipe in this tile.
+- S is the starting position of the animal; there is a pipe on this tile, but your sketch doesn't show what shape the pipe has.
+
+The pipe the animal ran into is a large, continuous loop.
+
+There are other pipes in your scan that are not connected to the main loop.
+
+## Parsing
+
+I decided to represent each type of input as a `Tile` enum.
+
+```rust
+enum Tile {
+    // | is a vertical pipe connecting north and south.
+    NorthSouth,
+    // - is a horizontal pipe connecting east and west.
+    EastWest,
+    // L is a 90-degree bend connecting north and east.
+    NorthEast,
+    // J is a 90-degree bend connecting north and west.
+    NorthWest,
+    // 7 is a 90-degree bend connecting south and west.
+    SouthWest,
+    // F is a 90-degree bend connecting south and east.
+    SouthEast,
+    // . is ground; there is no pipe in this tile.
+    Ground,
+    // S is the starting position of the animal; there is a pipe on this tile, but your sketch doesn't show what shape the pipe has.
+    Start,
+}
+```
+
+A helper to turn characters into variants of that enum:
+```rust
+impl Tile {
+    fn from(c: char) -> Self {
+        match c {
+            '|' => NorthSouth,
+            '-' => EastWest,
+            'L' => NorthEast,
+            'J' => NorthWest,
+            '7' => SouthWest,
+            'F' => SouthEast,
+            '.' => Ground,
+            'S' => Start,
+            _ => panic!(),
+        }
+    }
+}
+```
+
+I keep track of a coordinate in the 2D grid with `Coord`:
+```rust
+struct Coord {
+    row_idx: usize,
+    col_idx: usize,
+}
+```
+
+From the input, I parse the coordinate of the start position, and a 2D list of `Tile`s:
+```rust
+fn parse(input: &str) -> (Vec<Vec<Tile>>, Coord) {
+    let mut start = Coord::new(0, 0);
+    let map = input
+        .lines()
+        .enumerate()
+        .map(|(row_idx, line)| {
+            line.chars()
+                .enumerate()
+                .map(|(col_idx, c)| {
+                    let tile = Tile::from(c);
+                    if tile == Start {
+                        start = Coord::new(row_idx, col_idx)
+                    }
+                    tile
+                })
+                .collect()
+        })
+        .collect();
+    (map, start)
+}
+```
+
+## Part 1
+
+You want to look at the animal that ran into the pipes.
+You decide to wait for the animal at the spot that's the most steps along the loop away from the start, regardless of which direction it took.
+
+The question asks how many steps along the loop it takes to get from the starting position to the point farthest from the starting position?
+
+In other words, you wait at the coordinate that marks the middle of the loop.
+
+Some skeleton/pseudo-code I want to work towards:
+```rust
+let (map, start) = parse(input);
+let loop_coords = build_loop(start, &map);
+loop_coords.len() / 2
+```
+
+### Helpers
+
+The function that turns the map into a set of coordinates that belong to the main loop:
+```rust
+fn build_loop(start: Coord, map: &[Vec<Tile>]) -> HashSet<Coord> {
+    let mut loop_coords = HashSet::new();
+    loop_coords.insert(start);
+    let mut to_visit = start.valid_neighbours(map);
+
+    while let Some(curr_pos) = to_visit.pop() {
+        for neighbour in curr_pos.valid_neighbours(map) {
+            if !loop_coords.contains(&neighbour) {
+                to_visit.push(neighbour);
+                loop_coords.insert(neighbour);
+            }
+        }
+    }
+
+    loop_coords
+}
+```
+
+That function used a helper that returns the coordinates of the pipes that are directly connected to the current pipe.
+This is the main logic of this problem, it's a huge decision-tree.
+
+It figures out which type of `Tile` I am currently on.
+Based on that, it figures out which types of `Tile` are allowed to connect to that.
+The coordinates a valid connecting tiles are returned by this function.
+
+example: An `L` pipe (`NorthWest` in our `Tile` enum), can only accept a connecting tile in the north, or the west.
+- It looks in the north location, and if a valid pipe is there, it marks that location as a valid neighbour
+- It looks in the west location, and if a valid pipe is there, it marks that location as a valid neighbour
+
+<Aside variant="info">
+I used a modified version of [tymscar's code](https://github.com/tymscar/Advent-Of-Code/blob/97224c7848d3368526409a7040a99a1d9cb2a4e6/2023/rust/src/day10/part2.rs).
+</Aside>
+
+```rust
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct Coord {
+    row_idx: usize,
+    col_idx: usize,
+}
+
+impl Coord {
+    fn new(row_idx: usize, col_idx: usize) -> Self {
+        Self { row_idx, col_idx }
+    }
+
+    fn valid_neighbours(&self, map: &[Vec<Tile>]) -> Vec<Coord> {
+        let mut neighbours = vec![];
+        let max_height = map.len() - 1;
+        let max_width = map[0].len() - 1;
+
+        match map[self.row_idx][self.col_idx] {
+            Ground => (),
+            Start => {
+                // north
+                if self.row_idx > 0 {
+                    let tile = map[self.row_idx - 1][self.col_idx];
+                    if matches!(tile, NorthSouth | SouthWest | SouthEast) {
+                        neighbours.push(Coord::new(self.row_idx - 1, self.col_idx));
+                    }
+                }
+                // south
+                if self.row_idx < max_height {
+                    let tile = map[self.row_idx + 1][self.col_idx];
+                    if matches!(tile, NorthSouth | NorthWest | NorthEast) {
+                        neighbours.push(Coord::new(self.row_idx + 1, self.col_idx))
+                    }
+                }
+                // west
+                if self.col_idx > 0 {
+                    let tile = map[self.row_idx][self.col_idx - 1];
+                    if matches!(tile, EastWest | SouthEast | NorthEast) {
+                        neighbours.push(Coord::new(self.row_idx, self.col_idx - 1))
+                    }
+                }
+                // east
+                if self.col_idx < max_width {
+                    let tile = map[self.row_idx][self.col_idx + 1];
+                    if matches!(tile, EastWest | NorthWest | SouthWest) {
+                        neighbours.push(Coord::new(self.row_idx, self.col_idx + 1))
+                    }
+                }
+            }
+            NorthSouth => {
+                // north
+                if self.row_idx > 0 {
+                    match map[self.row_idx - 1][self.col_idx] {
+                        NorthSouth => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        SouthWest => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        SouthEast => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        Start => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        _ => (),
+                    }
+                }
+                // south
+                if self.row_idx < max_height && map[self.row_idx + 1][self.col_idx] != Ground {
+                    match map[self.row_idx + 1][self.col_idx] {
+                        NorthSouth => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        NorthWest => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        NorthEast => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        Start => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        _ => (),
+                    }
+                }
+            }
+            EastWest => {
+                // west
+                if self.col_idx > 0 {
+                    match map[self.row_idx][self.col_idx - 1] {
+                        EastWest => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        SouthEast => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        NorthEast => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        Start => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        _ => (),
+                    }
+                }
+                // east
+                if self.col_idx < max_width {
+                    match map[self.row_idx][self.col_idx + 1] {
+                        EastWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        NorthWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        SouthWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        Start => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        _ => (),
+                    }
+                }
+            }
+            NorthEast => {
+                // north
+                if self.row_idx > 0 {
+                    match map[self.row_idx - 1][self.col_idx] {
+                        NorthSouth => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        SouthWest => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        SouthEast => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        Start => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        _ => (),
+                    }
+                }
+                // east
+                if self.col_idx < max_width {
+                    match map[self.row_idx][self.col_idx + 1] {
+                        EastWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        NorthWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        SouthWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        Start => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        _ => (),
+                    }
+                }
+            }
+            NorthWest => {
+                // north
+                if self.row_idx > 0 {
+                    match map[self.row_idx - 1][self.col_idx] {
+                        NorthSouth => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        SouthWest => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        SouthEast => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        Start => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        _ => (),
+                    }
+                }
+                // west
+                if self.col_idx > 0 {
+                    match map[self.row_idx][self.col_idx - 1] {
+                        EastWest => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        SouthEast => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        NorthEast => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        Start => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        _ => (),
+                    }
+                }
+            }
+            SouthWest => {
+                // south
+                if self.row_idx < max_height {
+                    match map[self.row_idx + 1][self.col_idx] {
+                        NorthSouth => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        NorthWest => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        NorthEast => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        Start => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        _ => (),
+                    }
+                }
+                // west
+                if self.col_idx > 0 {
+                    match map[self.row_idx][self.col_idx - 1] {
+                        EastWest => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        SouthEast => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        NorthEast => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        Start => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        _ => (),
+                    }
+                }
+            }
+            SouthEast => {
+                // south
+                if self.row_idx < max_height {
+                    match map[self.row_idx + 1][self.col_idx] {
+                        NorthSouth => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        NorthWest => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        NorthEast => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        Start => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        _ => (),
+                    }
+                }
+                // east
+                if self.col_idx < max_width {
+                    match map[self.row_idx][self.col_idx + 1] {
+                        EastWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        NorthWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        SouthWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        Start => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        _ => (),
+                    }
+                }
+            }
+        }
+
+        neighbours
+    }
+}
+```
+
+### Code
+
+The reused code is not listed here, because otherwise this post would become huge.
+
+```rust title=day_10.rs
+pub fn part_1(input: &str) -> usize {
+    let (map, start) = parse(input);
+    let loop_coords = build_loop(start, &map);
+    loop_coords.len() / 2
+}
+```
+## Part 2
+
+The animal did not emerge.
+Its nest is probably within an area that's enclosed by the loop.
+
+This is an example loop with only pipes that are part of the main loop.
+```txt
+...........
+.S-------7.
+.|F-----7|.
+.||.....||.
+.||.....||.
+.|L-7.F-J|.
+.|..|.|..|.
+.L--J.L--J.
+...........
+```
+
+There are 4 tiles that are completely inside the loop, marked as `I` below.
+The tiles marked as `O` are not inside.
+
+```txt
+...........
+.S-------7.
+.|F-----7|.
+.||OOOOO||.
+.||OOOOO||.
+.|L-7OF-J|.
+.|II|O|II|.
+.L--JOL--J.
+.....O.....
+```
+
+The animal is small, and can squeeze between 2 pipes, even if there isn't a `.` tile in between!
+
+Here `O` tiles are still not inside the loop, and `I` tiles are:
+```txt
+..........
+.S------7.
+.|F----7|.
+.||OOOO||.
+.||OOOO||.
+.|L-7F-J|.
+.|II||II|.
+.L--JL--J.
+..........
+```
+
+The question asks how many tiles are enclosed by the loop.
+
+### Option 1: flood fill
+
+Because of that rule where the animal can fit between 2 pipes, a regular [floodfill](https://en.wikipedia.org/wiki/Flood_fill) approach will not work.
+You would end up also counting tiles that are still accessible from the outside.
+
+However, if you expend every tile into a 3x3 grid of tiles, there are guaranteed to be gaps between tiles, where floodfill can pass.
+
+In ASCII:
+`|` turns into:
+```txt
+.#.
+.#.
+.#.
+```
+
+`-` turns into:
+```txt
+...
+###
+...
+```
+
+`J` turns into:
+```txt
+..#
+..#
+###
+```
+
+and so forth...
+
+Start the floodfill at an empty tile.
+The tiles that are still empty at the end are inside the loop.
+Remember to account for the fact that 1 empty tile turned into a 3x3 grid of empty tiles when you first expanded the grid.
+
+### Option 2: even-odd rule
+
+This is the solution I ended up coding.
+
+1. Get the coordinates of the loop
+2. Clean the map: 
+    1. Replace that starting coordinate with a segment of pipe
+    2. Only keep segments of pipe that are part of the main loop
+3. Apply the even-odd rule to the clean map
+
+in pseudo-code:
+```rust
+let (map, start) = parse(input);
+let loop_coords = build_loop(start, &map);
+let clean_map = clean_map(start, &loop_coords, map);
+let count = count_enclosed_tiles(clean_map);
+count
+```
+
+#### Helpers
+
+The helpers that takes the initial map, and returns a cleaned up map:
+- It only hold pieces of pipe that are part of the main loop, all other coordinates are ground tiles.
+- It replaces that start position with a valid piece of pipe
+
+```rust
+/// replace start with a valid pipe segment, and only keep pipe segments that are part of the loop
+fn clean_map(start: Coord, loop_coords: &HashSet<Coord>, map: Vec<Vec<Tile>>) -> Vec<Vec<Tile>> {
+    let start_pipe = get_start_pipe(&map, start);
+
+    map.into_iter()
+        .enumerate()
+        .map(|(row_idx, line)| {
+            line.into_iter()
+                .enumerate()
+                .map(|(col_idx, tile)| match tile {
+                    Start => start_pipe,
+                    pipe if loop_coords.contains(&Coord::new(row_idx, col_idx)) => pipe,
+                    _ => Ground,
+                })
+                .collect()
+        })
+        .collect()
+}
+```
+
+That function used another helper to figure out which piece of pipe is located at the start coordinates:
+```rust
+fn get_start_pipe(map: &Vec<Vec<Tile>>, start: Coord) -> Tile {
+    let neighbours = start.valid_neighbours(map);
+    let north = neighbours
+        .iter()
+        .find(|coord| coord.row_idx < start.row_idx)
+        .is_some();
+    let south = neighbours
+        .iter()
+        .find(|coord| coord.row_idx > start.row_idx)
+        .is_some();
+    let west = neighbours
+        .iter()
+        .find(|coord| coord.col_idx < start.col_idx)
+        .is_some();
+    let east = neighbours
+        .iter()
+        .find(|coord| coord.col_idx > start.col_idx)
+        .is_some();
+
+    match (north, west, south, east) {
+        (true, true, _, _) => NorthWest,
+        (true, _, true, _) => NorthSouth,
+        (true, _, _, true) => NorthEast,
+        (_, true, true, _) => SouthWest,
+        (_, _, true, true) => SouthEast,
+        (_, true, _, true) => EastWest,
+        _ => panic!("No valid tile to replace Start with was found"),
+    }
+}
+```
+
+With a clean map, I used the [even-odd rule](https://en.wikipedia.org/wiki/Even%E2%80%93odd_rule) to count the amount of tiles that are enclosed by that loop.
+
+> Basically if it's  an S shaped joint (FJ, L7) it's a cross over into the other side, while if it's a U shaped joint (F7, LJ) you end up on the same side 
+> <footer>[Chris Biscardi](https://www.christopherbiscardi.com/)</footer>
+
+#### Code
+
+The reused code is not listed here, because otherwise this post would become huge.
+
+```rust title=day_10.rs
+pub fn part_2(input: &str) -> usize {
+    let (map, start) = parse(input);
+    let loop_coords = build_loop(start, &map);
+    let map = clean_map(start, &loop_coords, map);
+    // scan from top to bottom and left to right, counting how many tiles are inside the loop.
+    // keep track of a boolean that tells me if I'm inside the loop
+    // every time I cross a vertical pipe that does not horizontally block the top (the place where I am in the loop), flip that state
+    let mut inside = false;
+    map.into_iter()
+        .flatten()
+        .filter(|tile| match tile {
+            Ground => inside,
+            NorthSouth | NorthWest | NorthEast => {
+                inside = !inside;
+                false
+            }
+            _ => false,
+        })
+        .count()
+}
+```
+
+## Final code
+
+```rust title=day_10.rs numberLines
+use std::collections::HashSet;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Tile {
+    // | is a vertical pipe connecting north and south.
+    NorthSouth,
+    // - is a horizontal pipe connecting east and west.
+    EastWest,
+    // L is a 90-degree bend connecting north and east.
+    NorthEast,
+    // J is a 90-degree bend connecting north and west.
+    NorthWest,
+    // 7 is a 90-degree bend connecting south and west.
+    SouthWest,
+    // F is a 90-degree bend connecting south and east.
+    SouthEast,
+    // . is ground; there is no pipe in this tile.
+    Ground,
+    // S is the starting position of the animal; there is a pipe on this tile, but your sketch doesn't show what shape the pipe has.
+    Start,
+}
+use Tile::*;
+impl Tile {
+    fn from(c: char) -> Self {
+        match c {
+            '|' => NorthSouth,
+            '-' => EastWest,
+            'L' => NorthEast,
+            'J' => NorthWest,
+            '7' => SouthWest,
+            'F' => SouthEast,
+            '.' => Ground,
+            'S' => Start,
+            _ => panic!(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct Coord {
+    row_idx: usize,
+    col_idx: usize,
+}
+
+impl Coord {
+    fn new(row_idx: usize, col_idx: usize) -> Self {
+        Self { row_idx, col_idx }
+    }
+
+    fn valid_neighbours(&self, map: &[Vec<Tile>]) -> Vec<Coord> {
+        let mut neighbours = vec![];
+        let max_height = map.len() - 1;
+        let max_width = map[0].len() - 1;
+
+        match map[self.row_idx][self.col_idx] {
+            Ground => (),
+            Start => {
+                // north
+                if self.row_idx > 0 {
+                    let tile = map[self.row_idx - 1][self.col_idx];
+                    if matches!(tile, NorthSouth | SouthWest | SouthEast) {
+                        neighbours.push(Coord::new(self.row_idx - 1, self.col_idx));
+                    }
+                }
+                // south
+                if self.row_idx < max_height {
+                    let tile = map[self.row_idx + 1][self.col_idx];
+                    if matches!(tile, NorthSouth | NorthWest | NorthEast) {
+                        neighbours.push(Coord::new(self.row_idx + 1, self.col_idx))
+                    }
+                }
+                // west
+                if self.col_idx > 0 {
+                    let tile = map[self.row_idx][self.col_idx - 1];
+                    if matches!(tile, EastWest | SouthEast | NorthEast) {
+                        neighbours.push(Coord::new(self.row_idx, self.col_idx - 1))
+                    }
+                }
+                // east
+                if self.col_idx < max_width {
+                    let tile = map[self.row_idx][self.col_idx + 1];
+                    if matches!(tile, EastWest | NorthWest | SouthWest) {
+                        neighbours.push(Coord::new(self.row_idx, self.col_idx + 1))
+                    }
+                }
+            }
+            NorthSouth => {
+                // north
+                if self.row_idx > 0 {
+                    match map[self.row_idx - 1][self.col_idx] {
+                        NorthSouth => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        SouthWest => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        SouthEast => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        Start => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        _ => (),
+                    }
+                }
+                // south
+                if self.row_idx < max_height && map[self.row_idx + 1][self.col_idx] != Ground {
+                    match map[self.row_idx + 1][self.col_idx] {
+                        NorthSouth => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        NorthWest => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        NorthEast => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        Start => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        _ => (),
+                    }
+                }
+            }
+            EastWest => {
+                // west
+                if self.col_idx > 0 {
+                    match map[self.row_idx][self.col_idx - 1] {
+                        EastWest => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        SouthEast => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        NorthEast => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        Start => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        _ => (),
+                    }
+                }
+                // east
+                if self.col_idx < max_width {
+                    match map[self.row_idx][self.col_idx + 1] {
+                        EastWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        NorthWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        SouthWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        Start => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        _ => (),
+                    }
+                }
+            }
+            NorthEast => {
+                // north
+                if self.row_idx > 0 {
+                    match map[self.row_idx - 1][self.col_idx] {
+                        NorthSouth => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        SouthWest => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        SouthEast => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        Start => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        _ => (),
+                    }
+                }
+                // east
+                if self.col_idx < max_width {
+                    match map[self.row_idx][self.col_idx + 1] {
+                        EastWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        NorthWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        SouthWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        Start => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        _ => (),
+                    }
+                }
+            }
+            NorthWest => {
+                // north
+                if self.row_idx > 0 {
+                    match map[self.row_idx - 1][self.col_idx] {
+                        NorthSouth => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        SouthWest => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        SouthEast => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        Start => neighbours.push(Coord::new(self.row_idx - 1, self.col_idx)),
+                        _ => (),
+                    }
+                }
+                // west
+                if self.col_idx > 0 {
+                    match map[self.row_idx][self.col_idx - 1] {
+                        EastWest => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        SouthEast => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        NorthEast => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        Start => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        _ => (),
+                    }
+                }
+            }
+            SouthWest => {
+                // south
+                if self.row_idx < max_height {
+                    match map[self.row_idx + 1][self.col_idx] {
+                        NorthSouth => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        NorthWest => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        NorthEast => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        Start => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        _ => (),
+                    }
+                }
+                // west
+                if self.col_idx > 0 {
+                    match map[self.row_idx][self.col_idx - 1] {
+                        EastWest => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        SouthEast => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        NorthEast => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        Start => neighbours.push(Coord::new(self.row_idx, self.col_idx - 1)),
+                        _ => (),
+                    }
+                }
+            }
+            SouthEast => {
+                // south
+                if self.row_idx < max_height {
+                    match map[self.row_idx + 1][self.col_idx] {
+                        NorthSouth => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        NorthWest => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        NorthEast => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        Start => neighbours.push(Coord::new(self.row_idx + 1, self.col_idx)),
+                        _ => (),
+                    }
+                }
+                // east
+                if self.col_idx < max_width {
+                    match map[self.row_idx][self.col_idx + 1] {
+                        EastWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        NorthWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        SouthWest => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        Start => neighbours.push(Coord::new(self.row_idx, self.col_idx + 1)),
+                        _ => (),
+                    }
+                }
+            }
+        }
+
+        neighbours
+    }
+}
+
+fn parse(input: &str) -> (Vec<Vec<Tile>>, Coord) {
+    let mut start = Coord::new(0, 0);
+    let map = input
+        .lines()
+        .enumerate()
+        .map(|(row_idx, line)| {
+            line.chars()
+                .enumerate()
+                .map(|(col_idx, c)| {
+                    let tile = Tile::from(c);
+                    if tile == Start {
+                        start = Coord::new(row_idx, col_idx)
+                    }
+                    tile
+                })
+                .collect()
+        })
+        .collect();
+    (map, start)
+}
+
+fn build_loop(start: Coord, map: &[Vec<Tile>]) -> HashSet<Coord> {
+    let mut loop_coords = HashSet::new();
+    loop_coords.insert(start);
+    let mut to_visit = start.valid_neighbours(map);
+
+    while let Some(curr_pos) = to_visit.pop() {
+        for neighbour in curr_pos.valid_neighbours(map) {
+            if !loop_coords.contains(&neighbour) {
+                to_visit.push(neighbour);
+                loop_coords.insert(neighbour);
+            }
+        }
+    }
+
+    loop_coords
+}
+
+pub fn part_1(input: &str) -> usize {
+    let (map, start) = parse(input);
+    let loop_coords = build_loop(start, &map);
+    loop_coords.len() / 2
+}
+
+fn get_start_pipe(map: &Vec<Vec<Tile>>, start: Coord) -> Tile {
+    let neighbours = start.valid_neighbours(map);
+    let north = neighbours
+        .iter()
+        .find(|coord| coord.row_idx < start.row_idx)
+        .is_some();
+    let south = neighbours
+        .iter()
+        .find(|coord| coord.row_idx > start.row_idx)
+        .is_some();
+    let west = neighbours
+        .iter()
+        .find(|coord| coord.col_idx < start.col_idx)
+        .is_some();
+    let east = neighbours
+        .iter()
+        .find(|coord| coord.col_idx > start.col_idx)
+        .is_some();
+
+    match (north, west, south, east) {
+        (true, true, _, _) => NorthWest,
+        (true, _, true, _) => NorthSouth,
+        (true, _, _, true) => NorthEast,
+        (_, true, true, _) => SouthWest,
+        (_, _, true, true) => SouthEast,
+        (_, true, _, true) => EastWest,
+        _ => panic!("No valid tile to replace Start with was found"),
+    }
+}
+
+/// replace start with a valid pipe segment, and only keep pipe segments that are part of the loop
+fn clean_map(start: Coord, loop_coords: &HashSet<Coord>, map: Vec<Vec<Tile>>) -> Vec<Vec<Tile>> {
+    let start_pipe = get_start_pipe(&map, start);
+
+    map.into_iter()
+        .enumerate()
+        .map(|(row_idx, line)| {
+            line.into_iter()
+                .enumerate()
+                .map(|(col_idx, tile)| match tile {
+                    Start => start_pipe,
+                    pipe if loop_coords.contains(&Coord::new(row_idx, col_idx)) => pipe,
+                    _ => Ground,
+                })
+                .collect()
+        })
+        .collect()
+}
+
+pub fn part_2(input: &str) -> usize {
+    let (map, start) = parse(input);
+    let loop_coords = build_loop(start, &map);
+    let map = clean_map(start, &loop_coords, map);
+    // scan from top to bottom and left to right, counting how many tiles are inside the loop.
+    // keep track of a boolean that tells me if I'm inside the loop
+    // every time I cross a vertical pipe that does not horizontally block the top (the place where I am in the loop), flip that state
+    let mut inside = false;
+    map.into_iter()
+        .flatten()
+        .filter(|tile| match tile {
+            Ground => inside,
+            NorthSouth | NorthWest | NorthEast => {
+                inside = !inside;
+                false
+            }
+            _ => false,
+        })
+        .count()
+}
+```
