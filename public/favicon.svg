@@ -1,0 +1,27 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0)">
+<rect width="512" height="512" fill="#222B40"/>
+<mask id="mask0" mask-type="alpha" maskUnits="userSpaceOnUse" x="-43" y="124" width="599" height="264">
+<rect width="598.089" height="264" transform="matrix(1 0 0 -1 -43 388)" fill="#99A8CF"/>
+</mask>
+<g mask="url(#mask0)">
+<rect x="37.6018" y="124" width="37.3805" height="264" fill="#99A8CF"/>
+<rect x="43.4424" y="144.011" width="37.3805" height="358.685" transform="rotate(-32.3655 43.4424 144.011)" fill="#99A8CF"/>
+<rect x="217.496" y="124" width="37.3805" height="264" fill="#99A8CF"/>
+<rect x="438.274" y="124" width="37.3805" height="264" fill="#99A8CF"/>
+</g>
+<mask id="mask1" mask-type="alpha" maskUnits="userSpaceOnUse" x="229" y="124" width="326" height="229">
+<rect width="326" height="229" transform="matrix(1 0 0 -1 229 353)" fill="#99A8CF"/>
+</mask>
+<g mask="url(#mask1)">
+<rect x="221.365" y="140.613" width="37.3805" height="243.017" transform="rotate(-27.6628 221.365 140.613)" fill="#99A8CF"/>
+<rect width="37.3805" height="242.358" transform="matrix(-0.885695 -0.464267 -0.464267 0.885695 471.296 140.613)" fill="#99A8CF"/>
+<rect x="335" y="343" width="23" height="10" fill="#99A8CF"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0">
+<rect width="512" height="512" fill="white"/>
+</clipPath>
+</defs>
+</svg>
