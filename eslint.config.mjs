@@ -7,6 +7,7 @@ import globals from "globals";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 import eslintPluginAstro from "eslint-plugin-astro";
+import jsxA11y from "eslint-plugin-jsx-a11y";
 
 export default tseslint.config(
   // General setup base with type-aware linting
@@ -51,6 +52,21 @@ export default tseslint.config(
     },
   },
 
+  // jsx a11y
+  {
+    files: ["**/*.{js,mjs,cjs,jsx,mjsx,ts,tsx,mtsx}"],
+    plugins: {
+      "jsx-a11y": jsxA11y,
+    },
+    languageOptions: {
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+    },
+  },
+
   // Astro
   ...eslintPluginAstro.configs.recommended,
   ...eslintPluginAstro.configs["jsx-a11y-recommended"],
@@ -74,6 +90,7 @@ export default tseslint.config(
       "astro/no-unused-css-selector": "error",
       "astro/prefer-object-class-list": "error",
       "astro/jsx-a11y/lang": "error",
+      "jsx-a11y/lang": "error"
     },
   },
 );
