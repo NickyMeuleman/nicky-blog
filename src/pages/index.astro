@@ -1,8 +1,28 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import Layout from "../layouts/Layout.astro";
+import { Counter } from "../components/Counter.tsx";
+import { Icon } from "astro-icon/components";
+
+const matches = import.meta.glob("../posts/*.mdx", { eager: true });
+const posts = Object.values(matches);
 ---
 
 <Layout title="We have liftoff">
-  <p>Hi there, hello</p>
+  <p class="bg-blue-200 py-4 text-xl text-blue-900">Hi there, hello</p>
+  <Counter client:load />
+  {
+    posts.map((post: any) => (
+      <>
+        <p>{post.title}</p>
+        <post.Content />
+      </>
+    ))
+  }
+  <Icon class="h-44 w-44 text-blue-500" name="lucide:github" />
+  <Icon class="h-44 w-44 text-blue-500" name="twitter" />
+  <p class="font-sans font-normal">
+    Lorem ipsum dolor sit, amet consectetur adipisicing elit. Accusamus
+    voluptatem et placeat odit assumenda minima libero non, nisi saepe dolorum
+    dicta. Libero temporibus dolor quod est nam natus laborum architecto!
+  </p>
 </Layout>
-

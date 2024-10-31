@@ -1,0 +1,22 @@
+---
+import { AstroFont } from "astro-font";
+---
+
+<AstroFont
+  config={[
+    {
+      src: [],
+      name: "SourceSans3",
+      // googleFontsURL: 'https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap',
+      // for some reason Chrome computed shows this as:
+      // Family name: Source Sans 3 ExtraLight
+      // PostScript name: SourceSans3ExtraLight_400wght
+      googleFontsURL:
+        "https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700",
+      preload: true,
+      display: "swap",
+      selector: "body",
+      fallback: "sans-serif",
+    },
+  ]}
+/>
