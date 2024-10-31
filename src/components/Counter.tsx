@@ -14,7 +14,7 @@ export const Counter = () => {
     return (
       <React.Fragment>
         <Hello name="Nicky" name="Tony" />
-        <html lang="foo"/>
+        <html lang="foo" />
       </React.Fragment>
     );
   }
