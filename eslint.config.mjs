@@ -19,7 +19,8 @@ export default tseslint.config(
         // prefer projectServer over settint project manually: https://typescript-eslint.io/getting-started/typed-linting#can-i-customize-the-tsconfig-used-for-typed-linting
         // but using projectService causes an error in .astro files of 1. Parsing error: Type expected.
         // https://github.com/ota-meshi/astro-eslint-parser/issues/259
-        projectService: true,
+        // projectService: true,
+        project: ["./tsconfig.json"],
         // @ts-expect-error investigate how to solve and keep tscheck
         tsconfigRootDir: import.meta.dirname,
       },
@@ -63,6 +64,11 @@ export default tseslint.config(
   // https://github.com/ota-meshi/eslint-plugin-astro/issues/240
   {
     files: ["**/*.astro/*.ts"],
+    languageOptions: {
+      parserOptions: {
+        project: null,
+      },
+    },
     ...tseslint.configs.disableTypeChecked,
   },
 

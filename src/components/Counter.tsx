@@ -3,7 +3,6 @@ import { useContext, useState } from "react";
 
 export const Counter = () => {
   if (false) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const theme = useContext("");
   }
   const [count, setCount] = useState(0);
