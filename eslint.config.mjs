@@ -53,13 +53,7 @@ export default tseslint.config(
 
   // Astro
   ...eslintPluginAstro.configs.recommended,
-  // {
-  //   files: ["**/*.astro"],
-  //   rules: {
-  //     ...eslintPluginAstro.rules,
-  //     "astro/no-unused-css-selector": "error",
-  //   },
-  // },
+  ...eslintPluginAstro.configs["jsx-a11y-recommended"],
 
   // Disable typed rules for scripts inside Astro files
   // https://github.com/ota-meshi/eslint-plugin-astro/issues/240
@@ -77,9 +71,9 @@ export default tseslint.config(
   {
     rules: {
       "prefer-const": "warn",
-      // not working yes, maybe because of projectService?
       "astro/no-unused-css-selector": "error",
       "astro/prefer-object-class-list": "error",
+      "astro/jsx-a11y/lang": "error",
     },
   },
 );
