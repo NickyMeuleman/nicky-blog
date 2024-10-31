@@ -44,6 +44,7 @@ export default tseslint.config(
       "react-hooks": reactHooksPlugin,
     },
     rules: {
+      ...reactPlugin.configs.flat.recommended.rules,
       ...reactHooksPlugin.configs.recommended.rules,
       "react/hook-use-state": ["warn", { allowDestructuredState: true }],
       "react/jsx-fragments": ["warn", "element"],

@@ -1,5 +1,6 @@
 import React from "react";
 import { useContext, useState } from "react";
+import { Hello } from "./Hello";
 
 export const Counter = () => {
   if (false) {
@@ -10,7 +11,11 @@ export const Counter = () => {
   const h = "allez";
   console.log(h, t);
   if (h) {
-    return <React.Fragment>stuff</React.Fragment>;
+    return (
+      <React.Fragment>
+        <Hello name="Nicky" name="Tony" />
+      </React.Fragment>
+    );
   }
   return <button onClick={() => setCount((old) => old + 1)}>{count}</button>;
 };
