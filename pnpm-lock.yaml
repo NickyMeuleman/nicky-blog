@@ -57,6 +57,9 @@ importers:
       '@iconify-json/lucide':
         specifier: ^1.2.11
         version: 1.2.11
+      '@types/eslint':
+        specifier: ^9.6.1
+        version: 9.6.1
       '@types/eslint__js':
         specifier: ^8.42.3
         version: 8.42.3
@@ -78,6 +81,9 @@ importers:
       eslint-plugin-react:
         specifier: ^7.37.2
         version: 7.37.2(eslint@9.13.0(jiti@1.21.6))
+      eslint-plugin-react-hooks:
+        specifier: 5.1.0-rc-603e6108-20241029
+        version: 5.1.0-rc-603e6108-20241029(eslint@9.13.0(jiti@1.21.6))
       globals:
         specifier: ^15.11.0
         version: 15.11.0
@@ -1480,6 +1486,12 @@ packages:
     engines: {node: '>=4.0'}
     peerDependencies:
       eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9
+
+  eslint-plugin-react-hooks@5.1.0-rc-603e6108-20241029:
+    resolution: {integrity: sha512-btivWAKpwyymHoOUyoc3evCcmAWSZw+qlDe/nhtFKDs0agXQrqfLBfmfwZb7sY1VWiKVaqEKPhhK19WNOxssNw==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
 
   eslint-plugin-react@7.37.2:
     resolution: {integrity: sha512-EsTAnj9fLVr/GZleBLFbj/sSuXeWmp1eXIN60ceYnZveqEaUCyW4X+Vh4WTdUhCkW4xutXYqTXCUSyqD4rB75w==}
@@ -5198,6 +5210,10 @@ snapshots:
       object.fromentries: 2.0.8
       safe-regex-test: 1.0.3
       string.prototype.includes: 2.0.1
+
+  eslint-plugin-react-hooks@5.1.0-rc-603e6108-20241029(eslint@9.13.0(jiti@1.21.6)):
+    dependencies:
+      eslint: 9.13.0(jiti@1.21.6)
 
   eslint-plugin-react@7.37.2(eslint@9.13.0(jiti@1.21.6)):
     dependencies:
