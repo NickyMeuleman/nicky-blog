@@ -28,6 +28,7 @@
   "devDependencies": {
     "@eslint/js": "^9.13.0",
     "@iconify-json/lucide": "^1.2.11",
+    "@types/eslint": "^9.6.1",
     "@types/eslint__js": "^8.42.3",
     "@typescript-eslint/parser": "^8.12.2",
     "eslint": "^9.13.0",
@@ -35,6 +36,7 @@
     "eslint-plugin-astro": "^1.3.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "5.1.0-rc-603e6108-20241029",
     "globals": "^15.11.0",
     "prettier": "^3.3.3",
     "prettier-plugin-astro": "^0.14.1",
