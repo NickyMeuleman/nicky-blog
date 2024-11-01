@@ -6,6 +6,7 @@ import { Icon } from "astro-icon/components";
 const matches = import.meta.glob("../posts/*.mdx", { eager: true });
 const posts = Object.values(matches);
 const foo = true;
+const obj = { foo: "bar" };
 ---
 
 <Layout title="We have liftoff">

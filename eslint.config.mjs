@@ -8,6 +8,7 @@ import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 import eslintPluginAstro from "eslint-plugin-astro";
 import jsxA11y from "eslint-plugin-jsx-a11y";
+import eslintConfigPrettier from "eslint-config-prettier";
 
 export default tseslint.config(
   {
@@ -103,4 +104,7 @@ export default tseslint.config(
       "jsx-a11y/lang": "error",
     },
   },
+
+  // turn off rules that conflict with the prettier formatter
+  eslintConfigPrettier,
 );
