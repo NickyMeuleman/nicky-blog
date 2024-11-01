@@ -15,6 +15,7 @@ export default tseslint.config(
       "**/dist",
       ".git/",
       ".astro/",
+      ".prettierrc.mjs"
     ],
   },
 
