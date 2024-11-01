@@ -1,27 +1,12 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import { Counter } from "../components/Counter.tsx";
 import { Icon } from "astro-icon/components";
 
 const matches = import.meta.glob("../posts/*.mdx", { eager: true });
 const posts = Object.values(matches);
-const foo = true;
-const obj = { foo: "bar", secret: "boo" };
-const { secret, ...rest } = obj;
-console.log(rest);
-
-// await 'value';
-// const createValue = () => 'value';
-// await createValue();
-await Promise.resolve("value");
-
-const createValue = async () => "value";
-await createValue();
 ---
 
 <Layout title="We have liftoff">
-  <p class="bg-blue-200 py-4 text-xl text-blue-900">Hi there, hello</p>
-  <Counter client:load />
   {
     posts.map((post: any) => (
       <>
@@ -32,27 +17,4 @@ await createValue();
   }
   <Icon class="h-44 w-44 text-blue-500" name="lucide:github" />
   <Icon class="h-44 w-44 text-blue-500" name="twitter" />
-  <p
-    class:list={[
-      "font-sans" + " " + "font-normal" + " ",
-      { "bg-black text-white": foo },
-    ]}
-  >
-    Lorem ipsum dolor sit, amet consectetur adipisicing elit. Accusamus
-    voluptatem et placeat odit assumenda minima libero non, nisi saepe dolorum
-    dicta. Libero temporibus dolor quod est nam natus laborum architecto!
-  </p>
-  <img src="test.jpg" />
-  <html lang="foo"></html>
 </Layout>
-
-<script>
-  const one: string = 1;
-  const two = 2;
-</script>
-
-<style>
-  .unused {
-    color: red;
-  }
-</style>
