@@ -10,6 +10,15 @@ import eslintPluginAstro from "eslint-plugin-astro";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 
 export default tseslint.config(
+  {
+    ignores: [
+      // recursively ignore all dirs named node_modules by prepending **/
+      "**/node_modules",
+      "**/dist",
+      ".git/",
+      ".astro/",
+    ],
+  },
   // General setup base with type-aware linting
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -46,7 +55,7 @@ export default tseslint.config(
     },
     rules: {
       ...reactPlugin.configs.flat.recommended.rules,
-      ...reactPlugin.configs.flat['jsx-runtime'].rules,
+      ...reactPlugin.configs.flat["jsx-runtime"].rules,
       ...reactHooksPlugin.configs.recommended.rules,
       "react/hook-use-state": ["warn", { allowDestructuredState: true }],
       "react/jsx-fragments": ["warn", "element"],
@@ -91,7 +100,7 @@ export default tseslint.config(
       "astro/no-unused-css-selector": "error",
       "astro/prefer-object-class-list": "error",
       "astro/jsx-a11y/lang": "error",
-      "jsx-a11y/lang": "error"
+      "jsx-a11y/lang": "error",
     },
   },
 );
