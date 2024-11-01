@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 import globals from "globals";
@@ -20,6 +17,7 @@ export default tseslint.config(
       ".astro/",
     ],
   },
+
   // General setup base with type-aware linting
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -27,9 +25,9 @@ export default tseslint.config(
   {
     languageOptions: {
       parserOptions: {
-        // prefer projectServer over settint project manually: https://typescript-eslint.io/getting-started/typed-linting#can-i-customize-the-tsconfig-used-for-typed-linting
-        // but using projectService causes an error in .astro files of 1. Parsing error: Type expected.
-        // https://github.com/ota-meshi/astro-eslint-parser/issues/259
+        // prefer projectServer over setting project manually: https://typescript-eslint.io/getting-started/typed-linting#can-i-customize-the-tsconfig-used-for-typed-linting
+        // but using projectService causes an error in .astro files of: 1. Parsing error: Type expected.
+        // https://github.com/ota-meshi/astro-eslint-parser/issues/331
         // projectService: true,
         project: ["./tsconfig.json"],
         // @ts-expect-error investigate how to solve and keep tscheck
@@ -81,7 +79,6 @@ export default tseslint.config(
   // Astro
   ...eslintPluginAstro.configs.recommended,
   ...eslintPluginAstro.configs["jsx-a11y-recommended"],
-
   // Disable typed rules for scripts inside Astro files
   // https://github.com/ota-meshi/eslint-plugin-astro/issues/240
   {
@@ -94,6 +91,21 @@ export default tseslint.config(
     ...tseslint.configs.disableTypeChecked,
   },
 
+  // Remove some safety rules because not all code is perfectly typed
+  {
+    files: [
+      "**/*.astro", // eslint-plugin-astro doesn't type Astro.props correctly in some contexts, so a bunch of things ends up being any
+      "eslint.config.mjs",
+    ],
+    rules: {
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+    },
+  },
+
   // General rules
   {
     rules: {
@@ -102,6 +114,23 @@ export default tseslint.config(
       "astro/prefer-object-class-list": "error",
       "astro/jsx-a11y/lang": "error",
       "jsx-a11y/lang": "error",
+      // Note: you must disable the base rule as it can report incorrect errors
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          args: "all",
+          argsIgnorePattern: "^_",
+          caughtErrors: "all",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+          vars: "all",
+          varsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+      // Escape hatch
+      "@typescript-eslint/no-explicit-any": "off"
     },
   },
 

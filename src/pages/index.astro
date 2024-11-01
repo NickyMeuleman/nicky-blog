@@ -6,7 +6,17 @@ import { Icon } from "astro-icon/components";
 const matches = import.meta.glob("../posts/*.mdx", { eager: true });
 const posts = Object.values(matches);
 const foo = true;
-const obj = { foo: "bar" };
+const obj = { foo: "bar", secret: "boo" };
+const { secret, ...rest } = obj;
+console.log(rest);
+
+// await 'value';
+// const createValue = () => 'value';
+// await createValue();
+await Promise.resolve("value");
+
+const createValue = async () => "value";
+await createValue();
 ---
 
 <Layout title="We have liftoff">
