@@ -1,19 +1,26 @@
 ---
+import { getCollection } from "astro:content";
 import Layout from "../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
+import { Aside } from "../components/Aside.tsx";
+import Tweet from "../components/Tweet.astro";
+import { YouTube } from "astro-embed";
+import CodePen from "../components/CodePen.astro";
 
-const matches = import.meta.glob("../posts/*.mdx", { eager: true });
-const posts = Object.values(matches);
+const posts = await getCollection("blog");
 ---
 
 <Layout title="We have liftoff">
   {
-    posts.map((post: any) => (
-      <>
-        <p>{post.title}</p>
-        <post.Content />
-      </>
-    ))
+    posts.map(async (post) => {
+      const rendered = await post.render();
+      return (
+        <>
+          <p>{post.data.title}</p>
+          <rendered.Content components={{ Aside, Tweet, YouTube, CodePen }} />
+        </>
+      );
+    })
   }
   <Icon class="h-44 w-44 text-blue-500" name="lucide:github" />
   <Icon class="h-44 w-44 text-blue-500" name="twitter" />

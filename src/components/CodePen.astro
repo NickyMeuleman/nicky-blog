@@ -1,0 +1,34 @@
+---
+interface Props {
+  height?: number;
+  tabs?: ("html" | "css" | "js" | "result")[];
+  url: string;
+}
+
+const { height = 300, tabs = ["result"], url } = Astro.props;
+const slugMatches = /\/pen\/([\w|\d]*)$/.exec(url);
+
+if (!slugMatches?.[1]) {
+  throw new Error(`Invalid CodePen URL: ${url}`);
+}
+const slug = slugMatches[1];
+const defaultTab = tabs?.join(",");
+---
+
+<p
+  class="codepen"
+  data-height={height}
+  data-theme-id="dark"
+  data-default-tab={defaultTab}
+  data-slug-hash={slug}
+  data-user="NMeuleman"
+  style=`height: ${height}px; text-align: center`
+>
+  <span
+    ><a href={url}>See the Pen</a> by Nicky (<a
+      href="https://codepen.io/NMeuleman">@NMeuleman</a
+    >) on <a href="https://codepen.io">CodePen</a>.</span
+  >
+</p>
+<script async is:inline src="https://cpwebassets.codepen.io/assets/embed/ei.js"
+></script>
