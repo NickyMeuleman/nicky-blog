@@ -1,0 +1,47 @@
+---
+import { YouTube as AstroEmbedYouTube } from "astro-embed";
+
+interface Props {
+  url: string;
+  params?: string;
+}
+
+const { url, params, ...rest } = Astro.props;
+
+function getIdAndStart(urlstr: string): { id: string; start: string | null } {
+  const url = new URL(urlstr);
+  if (url.hostname === "youtu.be") {
+    return {
+      id: url.pathname.slice(1),
+      start: url.searchParams.get("t") ?? null,
+    };
+  } else if (url.hostname === "www.youtube.com") {
+    return {
+      id: url.searchParams.get("v") ?? "",
+      start: url.searchParams.get("t")?.slice(0, -1) ?? null,
+    };
+  }
+  throw new Error(
+    "Invalid YouTube URL. Only youtu.be and youtube.com are supported.",
+  );
+}
+
+function combineParams(start: string, params?: string): string | undefined {
+  if (start) {
+    return params ? `${params}&start=${start}` : `start=${start}`;
+  }
+  return params;
+}
+
+const { id, start } = getIdAndStart(url);
+const combinedParams = start ? combineParams(start, params) : params;
+---
+
+{
+  // avoid passing undefined as exactOptionalPropertyTypes is enabled
+  combinedParams ? (
+    <AstroEmbedYouTube id={id} {...rest} params={combinedParams} />
+  ) : (
+    <AstroEmbedYouTube id={id} {...rest} />
+  )
+}
