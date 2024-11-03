@@ -2,10 +2,13 @@
 import { Tweet as TweetEmbed } from "astro-embed";
 
 interface Props {
-  id: string;
+  url: string;
+  theme: "light" | "dark" | undefined;
 }
+
+const { url, theme = "dark" } = Astro.props;
 ---
 
-<TweetEmbed id={Astro.props.id} />
+<TweetEmbed id={url} theme={theme} />
 
 <script async src="https://platform.twitter.com/widgets.js"></script>
