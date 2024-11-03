@@ -7,6 +7,9 @@ import eslintPluginAstro from "eslint-plugin-astro";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import eslintConfigPrettier from "eslint-config-prettier";
 
+const typescriptEslint = tseslint.plugin;
+const tsParser = tseslint.parser;
+
 export default tseslint.config(
   {
     ignores: [
@@ -15,7 +18,7 @@ export default tseslint.config(
       "**/dist",
       ".git/",
       ".astro/",
-      ".prettierrc.mjs"
+      ".prettierrc.mjs",
     ],
   },
 
@@ -25,6 +28,7 @@ export default tseslint.config(
   ...tseslint.configs.stylisticTypeChecked,
   {
     languageOptions: {
+      parser: tsParser,
       parserOptions: {
         // prefer projectServer over setting project manually: https://typescript-eslint.io/getting-started/typed-linting#can-i-customize-the-tsconfig-used-for-typed-linting
         // but using projectService causes an error in .astro files of: 1. Parsing error: Type expected.
@@ -34,6 +38,9 @@ export default tseslint.config(
         // @ts-expect-error investigate how to solve and keep tscheck
         tsconfigRootDir: import.meta.dirname,
       },
+    },
+    plugins: {
+      "@typescript-eslint": typescriptEslint,
     },
   },
 
@@ -131,7 +138,7 @@ export default tseslint.config(
         },
       ],
       // Escape hatch
-      "@typescript-eslint/no-explicit-any": "off"
+      "@typescript-eslint/no-explicit-any": "off",
     },
   },
 
