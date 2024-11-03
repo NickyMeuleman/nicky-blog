@@ -2,26 +2,26 @@
 import { getCollection } from "astro:content";
 import Layout from "../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
-import { Aside } from "../components/Aside.tsx";
-import Tweet from "../components/Tweet.astro";
-import CodePen from "../components/CodePen.astro";
-import YouTube from "../components/YouTube.astro";
+// import { Aside } from "../components/Aside.tsx";
+// import Tweet from "../components/Tweet.astro";
+// import CodePen from "../components/CodePen.astro";
+// import YouTube from "../components/YouTube.astro";
 
 const posts = await getCollection("blog");
 ---
 
 <Layout title="We have liftoff">
-  {
-    posts.map(async (post) => {
-      const rendered = await post.render();
-      return (
-        <>
-          <p>{post.data.title}</p>
-          <rendered.Content components={{ Aside, Tweet, YouTube, CodePen }} />
-        </>
-      );
-    })
-  }
+  <ul class="m-5 list-disc">
+    {
+      posts.map((post) => {
+        return (
+          <li class="m-1">
+            <a href={`/blog/${post.slug}`}>{post.data.title}</a>
+          </li>
+        );
+      })
+    }
+  </ul>
   <Icon class="h-44 w-44 text-blue-500" name="lucide:github" />
   <Icon class="h-44 w-44 text-blue-500" name="twitter" />
 </Layout>

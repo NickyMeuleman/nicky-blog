@@ -1,0 +1,32 @@
+---
+import type { GetStaticPaths } from "astro";
+import { type CollectionEntry } from "astro:content";
+import { getCollection } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+import { Aside } from "../../components/Aside";
+import Tweet from "../../components/Tweet.astro";
+import CodePen from "../../components/CodePen.astro";
+import YouTube from "../../components/YouTube.astro";
+
+export const getStaticPaths = (async () => {
+  const posts = await getCollection("blog");
+  return posts
+    .filter((p) => !p.data.draft)
+    .map((p) => ({
+      params: { slug: p.slug },
+      props: { post: p },
+    }));
+}) satisfies GetStaticPaths;
+
+type Props = { post: CollectionEntry<"blog"> };
+const { post } = Astro.props;
+if (!post) return Astro.rewrite("/404");
+const { Content } = await post.render();
+---
+
+<Layout title={post.data.title}>
+  <article class="m-5">
+    <h1 class="my-2 text-4xl">{post.data.title}</h1>
+    <Content components={{ Aside, Tweet, YouTube, CodePen }} />
+  </article>
+</Layout>
