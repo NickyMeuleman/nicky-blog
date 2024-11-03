@@ -13,6 +13,9 @@ const blog = defineCollection({
         .enum([
           "algorithms",
           "JavaScript",
+          "React",
+          "Jamstack",
+          "GraphQL",
           "CSS",
           "Rust",
           "DX",
@@ -21,9 +24,11 @@ const blog = defineCollection({
           "GitHub",
           "WSL2",
           "GatsbyJS",
+          "hardware",
         ])
         .array()
         .default([]),
+      canonicalUrl: z.string().url().optional(),
     }),
 });
 
