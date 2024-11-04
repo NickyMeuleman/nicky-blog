@@ -1,0 +1,104 @@
+---
+title: "Advent of Code 2022 Day 6"
+date: 2022-12-06
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+section: "garden"
+---
+
+## Day 6: Tuning Trouble
+
+https://adventofcode.com/2022/day/6
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_06.rs)
+</Aside>
+
+Today we get a communication device from an elf.
+
+A stream of characters get sent to the device.
+Your input is the stream it receives.
+
+An example input looks like this:
+
+```txt title=input.txt
+mjqjpqmgbljsphdztnvjfqwrcgsmlb
+```
+
+## Part 1
+
+The start of a **packet-marker** is the first sequence of **4** characters that are all different.
+
+The question asks to find how many characters had to be checked when we detect the first marker.
+
+I looped over sliding windows of size 4.
+For each window, I check if all characters in it are unique.
+
+To check if all characters in a window are unique,
+I loop through the window and check if the character at that point exists in the window so far.
+
+```rust
+window
+    .iter()
+    .enumerate()
+    .all(|(idx, c)| !window[..idx].contains(c))
+```
+
+<Aside variant="info">
+I could have also checked for uniqueness differently:
+If [a set](https://en.wikipedia.org/wiki/Set_(abstract_data_type)) of a window has the same length as the window itself, all items in that window are unique.
+
+```rust
+window.iter().collect::<HashSet<char>>().len() == window.len()
+```
+</Aside>
+
+The first window that passes that check is the first marker.
+
+The index of that window is the beginning of that 4 character marker.
+
+Add 4 to that index to find how many characters have been received up to that point.
+
+```rust title=day_06.rs
+pub fn part_1() -> usize {
+    let input = std::fs::read_to_string("src/day06.txt").unwrap();
+
+    input.as_bytes()
+        .windows(4)
+        .position(|window| {
+            window
+                .iter()
+                .enumerate()
+                .all(|(idx, c)| !window[..idx].contains(c))
+        })
+        .unwrap()
+        + 4
+}
+```
+
+## Part 2
+
+The start of a **message** is the first sequence of **14** characters that are all different.
+
+The question asks to find how many characters had to be checked when we detect the first message.
+
+This code is identical to part1, but that constant of 4 is now 14.
+
+```rust title=day_06.rs
+pub fn part_2() -> usize {
+    let input = std::fs::read_to_string("src/day06.txt").unwrap();
+
+    input.as_bytes()
+        .windows(14)
+        .position(|window| {
+            window
+                .iter()
+                .enumerate()
+                .all(|(idx, c)| !window[..idx].contains(c))
+        })
+        .unwrap()
+        + 14
+}
+```
+

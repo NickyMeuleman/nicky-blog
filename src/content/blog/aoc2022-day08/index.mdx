@@ -1,0 +1,358 @@
+---
+title: "Advent of Code 2022 Day 8"
+date: 2022-12-08
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+section: "garden"
+---
+
+## Day 8: Treetop Tree House
+
+https://adventofcode.com/2022/day/8
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_08.rs)
+</Aside>
+
+<Aside variant="info">
+The explained solution is based on (and almost identical to) [Henry's solution](https://github.com/quantum-booty/advent-of-code-2022/blob/main/day08/src/lib.rs).
+
+Thank you Henry!
+</Aside>
+
+The expedition visits a perfectly square grid of trees the elves planted on a previous visit.
+The elves would like to build a treehouse in one of the trees.
+
+They sent up a drone to measure the height of each tree, expressed in a single digit: 0-9.
+
+Your input is the height of every tree in the grid.
+
+An example input looks like this:
+
+```txt title=input.txt
+30373
+25512
+65332
+33549
+35390
+```
+
+## Parsing the input
+
+Turn that input into a 2 dimensional list.
+- Each item is a row.
+- Each row is a list of digits.
+
+```rust title=day_08.rs
+fn parse() -> Vec<Vec<u32>> {
+    let input = std::fs::read_to_string("src/day08.txt").unwrap();
+
+    input
+        .lines()
+        .map(|line| line.chars().map(|c| c.to_digit(10).unwrap()).collect())
+        .collect()
+}
+```
+
+## Part 1
+
+The question asks to count the number of trees that are visible from outside the grid when looking directly along a row or column.
+
+A tree is visible if all of the other trees between it and an edge of the grid are shorter than it.
+
+Only consider trees in the same row or column.
+That means you can only look in 4 directions from each tree: up, down, left, and right.
+
+All of the trees around the edge of the grid are visible.
+
+The goal is to determine the visibilty of every tree in the grid.
+If a tree is visible from multiple directions, only count it once.
+
+Then count the amount of visible trees.
+
+In pseudocode, that would be:
+
+```rust title=pseudocode.rs
+all_trees
+    .map(/* determine visibility of this tree */)
+    .filter(/* keep visible trees */)
+    .count()
+```
+
+The interesting part is the step where we figure out if a tree is visible (from any direction).
+
+Loop through every set of indexes in the grid. (the height of a tree is found by indexing into our parsed input: `grid[row_idx][col_idx]`)
+
+Because all the trees along the edges are visible, skip those.
+At the end of the loop, add the amount of trees along the 4 edges to the amount of visible trees you just calculated.
+
+<Aside variant="info">
+
+    A neat way to loop through all indexes in a grid is [the `cartesian_product` method](https://docs.rs/itertools/latest/itertools/trait.Itertools.html#method.cartesian_product).
+    It's the same thing as doing a manual double for loop.
+
+    ```rust
+    for row_idx in 0..len {
+        for col_idx in 0..len {
+            // your logic
+        }
+    }
+    ```
+
+</Aside>
+
+The skeleton code now looks like this:
+
+```rust title=day_08.rs
+use itertools::Itertools;
+
+let grid = parse();
+let len = grid.len();
+
+// loop through coordinates of all trees that are not at an edge
+(1..len - 1)
+    .cartesian_product(1..len - 1)
+    .map(|(y, x)| {
+        // Is this tree visible from any direction? true/false
+        todo!();
+    })
+    .filter(|visible| *visible)
+    .count()
+    // add number of trees at edges, they are all visible
+    + (len - 1) * 4
+```
+
+The most important sentence for part1: **A tree is visible if all of the other trees between it and an edge of the grid are shorter than it**.
+
+### A helper function
+
+For a given pair of indexes, this function returns a 4 lists.
+
+Each list holds the remaining trees in one direction of the grid (up, down, left, right), 
+from the perspective of the tree at those indexes.
+
+
+#### Implementation
+
+Extract the current `row` and `column` from the grid for a set of indexes.
+
+Split those variables in 2 based on the `col`, and `row` index respectively.
+
+- The split `column` returns the trees to the `top`, and to the `bottom` of the `row` index.
+- The split `row` returns the trees to the `left`, and to the `right` of the `col` index.
+
+<Aside variant="danger">
+Confusing `row` and `col` is a very common thing to do when indexing into a rectangular grid
+</Aside>
+
+Because this function returns the trees visible from the perspective of the tree at that pair of indexes,
+the the `up`, and the `left` lists need to be reversed.
+
+```rust title=day_08.rs
+fn directions(grid: &[Vec<u32>], x: usize, y: usize) -> [Vec<u32>; 4] {
+    let row = grid[y].clone();
+    let column = grid.iter().map(|row| row[x]).collect::<Vec<u32>>();
+
+    let (up, down) = column.split_at(y);
+    let (left, right) = row.split_at(x);
+
+    let up = up.iter().copied().rev().collect();
+    let left = left.iter().copied().rev().collect();
+    let right = right[1..].to_vec();
+    let down = down[1..].to_vec();
+
+    [up, down, left, right]
+}
+```
+
+---
+
+Back to the main solution.
+
+Updated skeleton code:
+
+```rust title=day_08.rs
+use itertools::Itertools;
+
+let grid = parse();
+let len = grid.len();
+
+(1..len - 1)
+    .cartesian_product(1..len - 1)
+    .map(|(y, x)| {
+        directions(&grid, x, y)
+            .iter()
+            // is the tree at x,y visible from this direction: true/false
+            .map(|direction| { todo!(); })
+            // count a tree that is visible from multiple directions only once
+            .any(|visible| visible)
+    })
+    .filter(|visible| *visible)
+    .count()
+    + (len - 1) * 4
+```
+
+And that "most important sentence" is the way we figure out if a tree is visible.
+
+Reminder of that sentence: **A tree is visible if all of the other trees between it and an edge of the grid are shorter than it**.
+
+### Final code
+
+```rust title=day_08.rs
+use itertools::Itertools;
+
+fn parse() -> Vec<Vec<u32>> {
+    let input = std::fs::read_to_string("src/day08.txt").unwrap();
+
+    input
+        .lines()
+        .map(|line| line.chars().map(|c| c.to_digit(10).unwrap()).collect())
+        .collect()
+}
+
+fn directions(grid: &[Vec<u32>], x: usize, y: usize) -> [Vec<u32>; 4] {
+    let row = grid[y].clone();
+    let column = grid.iter().map(|row| row[x]).collect::<Vec<u32>>();
+
+    let (up, down) = column.split_at(y);
+    let (left, right) = row.split_at(x);
+
+    let up = up.iter().copied().rev().collect();
+    let left = left.iter().copied().rev().collect();
+    let right = right[1..].to_vec();
+    let down = down[1..].to_vec();
+
+    [up, down, left, right]
+}
+
+pub fn part_1() -> usize {
+    let trees = parse();
+    let len = trees.len();
+
+    (1..len - 1)
+        .cartesian_product(1..len - 1)
+        .map(|(y, x)| {
+            let height = trees[y][x];
+            directions(&trees, x, y)
+                .iter()
+                .map(|direction| direction.iter().all(|h| *h < height))
+                .any(|visible| visible)
+        })
+        .filter(|visible| *visible)
+        .count()
+        + (len - 1) * 4
+}
+```
+
+## Part 2
+
+The elves would like to be able to see a lot of trees from their treehouse.
+
+The question asks what the highest **scenic score** possible is.
+
+A scenic score is a way to express how good the viewing distance in each direction is.
+
+It's the product of the amount of trees that are visible in the 4 directions.
+
+To measure the viewing distance from a given tree, look up, down, left, and right from that tree;
+stop if you reach an edge or at the first tree that is the same height or taller than the tree under consideration.
+(If a tree is right on the edge, at least one of its viewing distances will be zero.)
+
+The goal is to calculate a scenic score for every tree, and find that maximum of those scores.
+
+In pseudocode that would be:
+
+```rust title=pseudocode.rs
+all_trees
+    .map(/* calculate scenic score */)
+    .max()
+    .unwrap()
+```
+
+The main setup for part2 is the same as part1.
+
+The interesting part is inside that `.map` where we convert a pair of indexes to a scenic score.
+
+For a given pair of indexes, that map first determines how many trees are visible in every direction.
+
+Then it takes the product of those 4 numbers to get the tree's scenic score.
+
+In skeleton code:
+
+```rust title=day_08.rs
+use itertools::Itertools;
+
+let grid = parse();
+let len = grid.len();
+
+(1..len - 1)
+    .cartesian_product(1..len - 1)
+    .map(|(y, x)| {
+        directions(&grid, x, y)
+            .iter()
+            // how many trees are visible in this direction?
+            .map(|direction| { todo!(); })
+            // multiply the results of each direction to calculate the scenic score
+            .product()
+    })
+    .max()
+    .unwrap()
+```
+
+The most important sentence in the question for part2: **To measure the viewing distance from a given tree, look up, down, left, and right from that tree; stop if you reach an edge or at the first tree that is the same height or taller than the tree under consideration.**
+
+And that “most important sentence” is the way we figure out how many trees are visible in a direction.
+
+### Final code
+
+```rust title=day_08.rs
+use itertools::Itertools;
+
+fn parse() -> Vec<Vec<u32>> {
+    let input = std::fs::read_to_string("src/day08.txt").unwrap();
+
+    input
+        .lines()
+        .map(|line| line.chars().map(|c| c.to_digit(10).unwrap()).collect())
+        .collect()
+}
+
+fn directions(grid: &[Vec<u32>], x: usize, y: usize) -> [Vec<u32>; 4] {
+    let row = grid[y].clone();
+    let column = grid.iter().map(|row| row[x]).collect::<Vec<u32>>();
+
+    let (up, down) = column.split_at(y);
+    let (left, right) = row.split_at(x);
+
+    let up = up.iter().copied().rev().collect();
+    let left = left.iter().copied().rev().collect();
+    let right = right[1..].to_vec();
+    let down = down[1..].to_vec();
+
+    [up, down, left, right]
+}
+
+pub fn part_2() -> usize {
+    let trees = parse();
+    let len = trees.len();
+
+    (1..len - 1)
+        .cartesian_product(1..len - 1)
+        .map(|(y, x)| {
+            let height = trees[y][x];
+            directions(&trees, x, y)
+                .iter()
+                .map(|direction| {
+                    direction
+                        .iter()
+                        .position(|h| *h >= height)
+                        .map(|p| p + 1)
+                        .unwrap_or_else(|| direction.len())
+                })
+                .product::<usize>()
+        })
+        .max()
+        .unwrap()
+}
+```

@@ -1,0 +1,569 @@
+---
+title: "Advent of Code 2022 Day 11"
+date: 2022-12-11
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+section: "garden"
+---
+
+## Day 11: Monkey in the Middle
+
+https://adventofcode.com/2022/day/11
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_11.rs)
+</Aside>
+
+Monkeys have your belongings and are throwing them to each other!
+
+Each monkey follows a few rules that determine to which other monkey they throw an item.  
+The monkeys are numbered, and they take turns throwing all their items.  
+When a monkey throws items, it throws them in order, from oldest to newest.
+
+A determining factor in those rules is how worried you are about an item (expressed as a number, the **worry level**).
+
+Today's input is a list of monkeys with the rules that each one follows.
+
+An example input looks like this:
+
+```txt title=input.txt
+Monkey 0:
+  Starting items: 79, 98
+  Operation: new = old * 19
+  Test: divisible by 23
+    If true: throw to monkey 2
+    If false: throw to monkey 3
+
+Monkey 1:
+  Starting items: 54, 65, 75, 74
+  Operation: new = old + 6
+  Test: divisible by 19
+    If true: throw to monkey 2
+    If false: throw to monkey 0
+
+Monkey 2:
+  Starting items: 79, 60, 97
+  Operation: new = old * old
+  Test: divisible by 13
+    If true: throw to monkey 1
+    If false: throw to monkey 3
+
+Monkey 3:
+  Starting items: 74
+  Operation: new = old + 3
+  Test: divisible by 17
+    If true: throw to monkey 0
+    If false: throw to monkey 1
+```
+
+Monkey 0 starts with 2 items.
+1. the first has worry level 79
+2. the second has worry level 98
+
+Whenever a monkey inspects an item, they apply their operation.  
+This operation changes an item's worry level.
+
+Monkey 0 multiplies the worry level of the inspected item by 19.
+
+Before a monkey thows an item, it applies a test to the current worry level.
+
+Monkey 0 checks if the worry level is divisible by 23.
+- if it is, it throws the item to monkey 2
+- if it is not, it throws the item to monkey 3
+
+## Parsing
+
+I decided to parse the input into a list of `Monkey`s.
+
+A `Monkey` directly maps to a monkey in the input.
+
+```rust
+struct Monkey {
+    items: Vec<u64>,
+    operation: Operation,
+    test: Test,
+}
+```
+
+An operation is always either a multiplication or an addition.
+1. The first operand is always the old **worry level**.
+2. The second operand is either the old **worry level** or a literal number.
+
+Since the second one is the only one that ever changes, that's the one I store.
+
+```rust
+enum Operation {
+    Mul(Value),
+    Add(Value),
+}
+
+enum Value {
+    Old,
+    Num(u64),
+}
+```
+
+The test has three parts, the divisibility check, which monkey to throw to if it succeeds, and which to throw to if it fails.
+
+```rust
+struct Test {
+    divisible: u64,
+    true_recipient: usize,
+    false_recipient: usize,
+}
+```
+
+The parsing code is quite boring, I turn the input into blocks for each monkey.
+
+Every block, I parse into a `Monkey` and add it to the `monkeys` list.
+
+To do this I turn each string block into lines, and per line consumed, I extract the wanted info from it.
+
+<Aside variant="info">
+Those questionmarks in my code, I affectionately refer to those as the Annie operator.
+
+[Read the blogpost about what they do, and why I call it the Annie operator](/garden/rust-syntax-questionmark)
+</Aside>
+
+```rust title=day_11.rs
+fn parse() -> Option<Vec<Monkey>> {
+    let input = std::fs::read_to_string("src/day11.txt").ok()?;
+
+    let mut monkeys = Vec::new();
+    for block in input.split("\n\n") {
+        let mut lines = block.lines().skip(1);
+
+        let (_, items) = lines.next()?.split_once(": ")?;
+        let items = items
+            .split_terminator(", ")
+            .filter_map(|s| s.parse().ok())
+            .collect();
+
+        let (_, operation) = lines.next()?.split_once("= old ")?;
+        let (operator, operand) = operation.split_once(" ")?;
+        let operand = match operand {
+            "old" => Value::Old,
+            _ => {
+                let n = operand.parse().ok()?;
+                Value::Num(n)
+            }
+        };
+
+        let (_, divisible) = lines.next()?.rsplit_once(" ")?;
+        let divisible = divisible.parse().ok()?;
+        let (_, true_recipient) = lines.next()?.rsplit_once(" ")?;
+        let true_recipient = true_recipient.parse().ok()?;
+        let (_, false_recipient) = lines.next()?.rsplit_once(" ")?;
+        let false_recipient = false_recipient.parse().ok()?;
+
+        let operation = match operator {
+            "+" => Operation::Add(operand),
+            "*" => Operation::Mul(operand),
+            _ => panic!("Inalid input"),
+        };
+
+        let test = Test {
+            divisible,
+            true_recipient,
+            false_recipient,
+        };
+
+        let monkey = Monkey {
+            items,
+            operation,
+            test,
+        };
+
+        monkeys.push(monkey);
+    }
+
+    Some(monkeys)
+}
+```
+
+## Part 1
+
+After each monkey inspects an item but before it tests your worry level,
+your relief that the monkey's inspection didn't damage the item causes your worry level to be **divided by three** and rounded down to the nearest integer.
+
+You track the amount of times a monkey inspects any item.
+The product of the 2 largest amounts is called the **monkey business**.
+
+The question asks what the level of monkey business is after 20 rounds.
+
+Starting skeleton code for part1:
+
+```rust title=pseudocode.rs
+let mut monkeys = parse().unwrap();
+let mut inspections = vec![0; monkeys.len()];
+
+for _ in 0..20 {
+    for idx in 0..monkeys.len() {
+        let monkey = monkeys[idx];
+        for item in monkey.items {
+            // remove item from inventory
+            // monkey inspects item
+            // monkey does operation
+            // you are relieved
+            // monkey tests worry level
+            // monkey throws item to other monkey
+        }
+    }
+}
+```
+
+<Aside variant="danger">
+If you are also doing this problem in Rust, the code I just wrote will create warnings relating to the borrow checker.
+
+The Primeagen has a [great explainer video on what it does and why](https://www.youtube.com/watch?v=ZNFdkTIzdXM).
+</Aside>
+
+### Helper functions
+
+To make write out those steps a bit clearer, I created a few helpers.
+
+A method on `Value` gets a number for one whenever you give it the old worry level.
+
+```rust
+impl Value {
+    fn number(&self, old: u64) -> u64 {
+        match self {
+            Value::Num(n) => *n,
+            Value::Old => old,
+        }
+    }
+}
+```
+
+A method on `Operation` does a monkey's operation.  
+It calculated the new worry level if you give it the old worry level.
+
+```rust
+impl Operation {
+    fn apply(&self, old: u64) -> u64 {
+        match &self {
+            Operation::Add(val) => old + val.number(old),
+            Operation::Mul(val) => old * val.number(old),
+        }
+    }
+}
+```
+
+Filling in the code from before (and catching the borrow checker issue):
+
+```rust title=day_11.rs
+let mut monkeys = parse().unwrap();
+let mut inspections = vec![0; monkeys.len()];
+
+for _ in 0..20 {
+    for idx in 0..monkeys.len() {
+        // clear the monkey's inventory
+        let items: Vec<u64> = monkeys[idx].items.drain(..).collect();
+        let monkey = monkeys[idx].clone();
+        for old in items {
+            // inspect
+            inspections[idx] += 1;
+            // operation
+            let new = monkey.operation.apply(old);
+            // relieved
+            let new = new / 3;
+            // test
+            let idx = if new % monkey.test.divisible == 0 {
+                monkey.test.true_recipient
+            } else {
+                monkey.test.false_recipient
+            };
+            let receiver = &mut monkeys[idx];
+            // throw
+            receiver.items.push(new);
+        }
+    }
+}
+
+// calculate monkey business
+inspections.sort_unstable();
+inspections.iter().rev().take(2).product()
+```
+
+It works, that's part1 done!
+
+### Final code
+
+```rust title=day_11.rs
+pub fn part_1() -> usize {
+    let mut monkeys = parse().unwrap();
+    let mut inspections = vec![0; monkeys.len()];
+
+    for _ in 0..20 {
+        for idx in 0..monkeys.len() {
+            let items: Vec<u64> = monkeys[idx].items.drain(..).collect();
+            let monkey = monkeys[idx].clone();
+            for old in items {
+                // inspect
+                inspections[idx] += 1;
+                // operation
+                let new = monkey.operation.apply(old);
+                // relieved
+                let new = new / 3;
+                // test
+                let idx = if new % monkey.test.divisible == 0 {
+                    monkey.test.true_recipient
+                } else {
+                    monkey.test.false_recipient
+                };
+                let receiver = &mut monkeys[idx];
+                // throw
+                receiver.items.push(new);
+            }
+        }
+    }
+
+    inspections.sort_unstable();
+    inspections.iter().rev().take(2).product()
+}
+```
+
+## Part 2
+
+You are no longer relieved after a monkey inspects an item.
+
+The question asks what the level of monkey business is after 10000 rounds.
+
+> Ah, this will be easy, change the 20 to 10000 and remove the / 3 part
+> 
+> <footer>
+> me
+> </footer>
+
+Well, I was right, but there's one [very minor, serious](https://www.youtube.com/watch?v=Zuvk7dYAjAA) problem of needing a supercomputer for this to finish in a reasonable timeframe.
+
+The worry levels get huge.  
+Absolutely massive.  
+Gigantic.  
+I'm in awe of the size of these numbers.
+
+I took a common multiple of all divisibility checks, and took the modulus of the `new` worry level with that common multiple before I  throw the item.
+This will not affect any future divisibility checks.
+
+Why doesn't it matter?:
+
+The future checked item was `%`ed with a multiple of its divisibility check, this doesn't affect the result of such a check.
+
+in code:
+
+```rust
+let common_multiple: u64 = monkeys.iter().map(|monkey| monkey.test.divisible).product();
+// bla, bla, bla
+// operation
+let new = monkey.operation.apply(old);
+// not relieved
+let new = new % common_multiple;
+// bla, bla, bla
+receiver.items.push(new);
+```
+And with those changes, part2 is solved!
+
+### Final code
+
+```rust title=day_11.rs
+pub fn part_2() -> usize {
+    let mut monkeys = parse().unwrap();
+    let mut inspections = vec![0; monkeys.len()];
+    let common_multiple: u64 = monkeys.iter().map(|monkey| monkey.test.divisible).product();
+
+    for _ in 0..10_000 {
+        for idx in 0..monkeys.len() {
+            let items: Vec<u64> = monkeys[idx].items.drain(..).collect();
+            let monkey = monkeys[idx].clone();
+            for old in items {
+                // inspect
+                inspections[idx] += 1;
+                // operation
+                let new = monkey.operation.apply(old);
+                // not relieved
+                let new = new % common_multiple;
+                // test
+                let idx = if new % monkey.test.divisible == 0 {
+                    monkey.test.true_recipient
+                } else {
+                    monkey.test.false_recipient
+                };
+                let receiver = &mut monkeys[idx];
+                // throw
+                receiver.items.push(new);
+            }
+        }
+    }
+
+    inspections.sort_unstable();
+    inspections.iter().rev().take(2).product()
+}
+```
+
+## Final code
+
+```rust title=day_11.rs numberLines
+#[derive(Clone)]
+struct Monkey {
+    items: Vec<u64>,
+    operation: Operation,
+    test: Test,
+}
+
+#[derive(Clone)]
+enum Operation {
+    Mul(Value),
+    Add(Value),
+}
+
+impl Operation {
+    fn apply(&self, old: u64) -> u64 {
+        match &self {
+            Operation::Add(val) => old + val.number(old),
+            Operation::Mul(val) => old * val.number(old),
+        }
+    }
+}
+
+#[derive(Clone)]
+enum Value {
+    Old,
+    Num(u64),
+}
+
+impl Value {
+    fn number(&self, old: u64) -> u64 {
+        match self {
+            Value::Num(n) => *n,
+            Value::Old => old,
+        }
+    }
+}
+
+#[derive(Clone)]
+struct Test {
+    divisible: u64,
+    true_recipient: usize,
+    false_recipient: usize,
+}
+
+fn parse() -> Option<Vec<Monkey>> {
+    let input = std::fs::read_to_string("src/day11.txt").ok()?;
+
+    let mut monkeys = Vec::new();
+    for block in input.split("\n\n") {
+        let mut lines = block.lines().skip(1);
+
+        let (_, items) = lines.next()?.split_once(": ")?;
+        let items = items
+            .split_terminator(", ")
+            .filter_map(|s| s.parse().ok())
+            .collect();
+
+        let (_, operation) = lines.next()?.split_once("= old ")?;
+        let (operator, operand) = operation.split_once(" ")?;
+        let operand = match operand {
+            "old" => Value::Old,
+            _ => {
+                let n = operand.parse().ok()?;
+                Value::Num(n)
+            }
+        };
+
+        let (_, divisible) = lines.next()?.rsplit_once(" ")?;
+        let divisible = divisible.parse().ok()?;
+        let (_, true_recipient) = lines.next()?.rsplit_once(" ")?;
+        let true_recipient = true_recipient.parse().ok()?;
+        let (_, false_recipient) = lines.next()?.rsplit_once(" ")?;
+        let false_recipient = false_recipient.parse().ok()?;
+
+        let operation = match operator {
+            "+" => Operation::Add(operand),
+            "*" => Operation::Mul(operand),
+            _ => panic!("Inalid input"),
+        };
+
+        let test = Test {
+            divisible,
+            true_recipient,
+            false_recipient,
+        };
+
+        let monkey = Monkey {
+            items,
+            operation,
+            test,
+        };
+
+        monkeys.push(monkey);
+    }
+
+    Some(monkeys)
+}
+
+pub fn part_1() -> usize {
+    let mut monkeys = parse().unwrap();
+    let mut inspections = vec![0; monkeys.len()];
+
+    for _ in 0..20 {
+        for idx in 0..monkeys.len() {
+            let items: Vec<u64> = monkeys[idx].items.drain(..).collect();
+            let monkey = monkeys[idx].clone();
+            for old in items {
+                // inspect
+                inspections[idx] += 1;
+                // operation
+                let new = monkey.operation.apply(old);
+                // relieved
+                let new = new / 3;
+                // test
+                let idx = if new % monkey.test.divisible == 0 {
+                    monkey.test.true_recipient
+                } else {
+                    monkey.test.false_recipient
+                };
+                let receiver = &mut monkeys[idx];
+                // throw
+                receiver.items.push(new);
+            }
+        }
+    }
+
+    inspections.sort_unstable();
+    inspections.iter().rev().take(2).product()
+}
+
+pub fn part_2() -> usize {
+    let mut monkeys = parse().unwrap();
+    let mut inspections = vec![0; monkeys.len()];
+    let common_multiple: u64 = monkeys.iter().map(|monkey| monkey.test.divisible).product();
+
+    for _ in 0..10_000 {
+        for idx in 0..monkeys.len() {
+            let items: Vec<u64> = monkeys[idx].items.drain(..).collect();
+            let monkey = monkeys[idx].clone();
+            for old in items {
+                // inspect
+                inspections[idx] += 1;
+                // operation
+                let new = monkey.operation.apply(old);
+                // not relieved
+                let new = new % common_multiple;
+                // test
+                let idx = if new % monkey.test.divisible == 0 {
+                    monkey.test.true_recipient
+                } else {
+                    monkey.test.false_recipient
+                };
+                let receiver = &mut monkeys[idx];
+                // throw
+                receiver.items.push(new);
+            }
+        }
+    }
+
+    inspections.sort_unstable();
+    inspections.iter().rev().take(2).product()
+}
+```

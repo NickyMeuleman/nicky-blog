@@ -1,0 +1,565 @@
+---
+title: "Advent of Code 2022 Day 19"
+date: 2022-12-19
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+section: "garden"
+---
+## Day 19: Not Enough Minerals
+
+https://adventofcode.com/2022/day/19
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_19.rs)
+</Aside>
+
+You want to collect the geodes.
+
+No manual labor here, let robots do that!
+
+- A **geode-cracking** robot collects geodes.
+- Those need obsidian to be made, collected by **obsidian-collecting robots**.
+- Those need clay to be made, collected by **clay-collecting robots**.
+- Those need ore to be made, collected by **ore-collecting robots**.
+
+- You have 1 ore-collecting robot in your backpack.  
+- You have a portable robot factory in your backpack.
+
+You can kickstart the robot-~~party~~collection!
+
+- Each robot collects 1 of its resource type per minute.
+- The factory can create 1 robot per minute, consuming the resources it needs to make that type of bot.
+
+The amount of resources the factory needs for each bot depends on the used **blueprint**.
+
+Todays input is a list of blueprints, a list of costs for the factory.
+
+An example input looks like this (but each blueprint is on a single line in the real input):
+
+```txt title=input.txt
+Blueprint 1:
+  Each ore robot costs 4 ore.
+  Each clay robot costs 2 ore.
+  Each obsidian robot costs 3 ore and 14 clay.
+  Each geode robot costs 2 ore and 7 obsidian.
+
+Blueprint 2:
+  Each ore robot costs 2 ore.
+  Each clay robot costs 3 ore.
+  Each obsidian robot costs 3 ore and 8 clay.
+  Each geode robot costs 3 ore and 12 obsidian.
+```
+
+## Parsing
+
+I want to represent one blueprint as a list of lists.
+
+Each item in the outer list is a cost for a robot type. (4 types)
+Each cost is a list of ore amounts. (4 types)
+
+An example for the first blueprint in the example:
+
+- Each ore robot costs 4 ore so the cost list is: `[4, 0, 0, 0]`
+- Each clay robot costs 2 ore so the cost list is: `[2, 0, 0, 0]`
+- Each obsidian robot costs 3 ore and 14 clay so the cost list is: `[3, 14, 0, 0]`
+- Each geode robot costs 2 ore and 7 obsidian so the cost list is: `[2, 0, 7, 0]`
+
+Puttin all those cost lists together: `[[4, 0, 0, 0], [2, 0, 0, 0], [3, 14, 0, 0], [2, 0, 7, 0]]`
+
+Used in parsing function:
+- An ore bot costs only ore
+- A clay bot costs only ore
+- An obsidian bot costs ore and clay
+- A geode bot costs ore and obsidian
+
+```rust title=day_19.rs
+// each cost is [ore_amount, clay_amount, obsidian_amount, geode_amount]
+// [ore_bot_costs, clay_bot_costs, obsidian_bot_costs, geode_bot_costs]
+fn parse() -> Vec<[[u16; 4]; 4]> {
+    let input = std::fs::read_to_string("src/day19.txt").unwrap();
+    let mut blueprints = Vec::new();
+
+    for line in input.lines() {
+        let mut iter = line.split_ascii_whitespace();
+
+        // ore bots cost ore
+        let ore_bot_costs = [iter.nth(6).unwrap().parse().unwrap(), 0, 0, 0];
+        // clay bots cost ore
+        let clay_bot_costs = [iter.nth(5).unwrap().parse().unwrap(), 0, 0, 0];
+        // obsidian bots cost ore and clay
+        let obsidian_bot_costs = [
+            iter.nth(5).unwrap().parse().unwrap(),
+            iter.nth(2).unwrap().parse().unwrap(),
+            0,
+            0,
+        ];
+        // geode bots cost ore and obsidian
+        let geode_bot_costs = [
+            iter.nth(5).unwrap().parse().unwrap(),
+            0,
+            iter.nth(2).unwrap().parse().unwrap(),
+            0,
+        ];
+
+        let blueprint = [
+            ore_bot_costs,
+            clay_bot_costs,
+            obsidian_bot_costs,
+            geode_bot_costs,
+        ];
+        blueprints.push(blueprint);
+    }
+
+    blueprints
+}
+```
+
+## Part 1
+
+The question asks for the sum of all blueprint **quality levels**.
+
+A blueprint's quality level can be calculated by **multiplying** the **ID** with **the maximum amount of geodes you can open in 24 minutes** using that blueprint.
+
+In skeleton code:
+
+```rust title=pseudocode.rs
+let blueprints = parse();
+
+blueprints
+    .iter()
+    .map(|blueprint| max_geodes(blueprint))
+    .enumerate()
+    .map(|(idx, geodes)| (idx + 1) * geodes)
+    .sum()
+```
+
+<Aside variant="danger">
+It's a day where indexes start at 1 again.
+</Aside>
+
+That skeleton code is is alright.
+The complexity is in calculating the maximum amount of geodes a blueprint can produce.
+
+### Helpers
+
+Today's main event, a "search a bunch of states and take the maximum of something" algorithm!
+
+It uses a queue filled with states so far.  
+We start by inserting a state with an empty inventory, 1 ore bot, and 0 elapsed time.
+
+For each state that is popped off the queue:
+- we try to build every type of bot.
+- we gather resources
+- we add the possibly made bot to the bot-pool
+- we subtract the cost of the possibly made bot from the inventory
+
+We keep adding new states to that queue and recording the maximum amount of geodes while we loop.
+If a state would exceed the time limit, we continue with the next item in the loop instead.
+
+Eventually, the queue empties and the number in `max_geodes` at that time is the maximum possible amount of geodes for that blueprint.
+
+
+```rust
+use std::collections::VecDeque;
+
+struct State {
+    // [ore, clay, obsidian, geode]
+    inventory: [u16; 4],
+    // [ore_bots, clay_bots, obsidian_bots, geode_bots]
+    bots: [u16; 4],
+    // elapsed time in minutes
+    elapsed: u16,
+}
+
+fn max_geodes(blueprint: &[[u16; 4]; 4]) -> u16 {
+    let max_time = 24;
+    let mut max_geodes = 0;
+
+    let mut q = VecDeque::new();
+    q.push_back(State {
+        inventory: [0, 0, 0, 0],
+        bots: [1, 0, 0, 0],
+        elapsed: 0,
+    });
+
+    while let Some(State {
+        inventory,
+        bots,
+        elapsed,
+    }) = q.pop_front()
+    {
+        // for every bot cost, run simulation
+        for i in 0..blueprint.len() {
+            let costs = &blueprint[i];
+            // Find the limiting resource type for the costs.
+            let wait_time = (0..3)
+                .map(|idx| {
+                    match costs[idx] {
+                        // state has enough of current resource in inventory to cover that part of the target bot cost. 0 wait time
+                        cost if cost <= inventory[idx] => 0,
+                        // no target bot type made yet
+                        // we can't build it (it takes more than max_time to build it).
+                        _ if bots[idx] == 0 => max_time + 1,
+                        _ => (costs[idx] - inventory[idx] + bots[idx] - 1) / bots[idx],
+                    }
+                })
+                .max()
+                .unwrap();
+
+            // if that choice would cause the time limit be to exceeded, skip
+            // the + 1 is so the built bot has the chance to do something, it merely being built is not enough
+            let new_elapsed = elapsed + wait_time + 1;
+            if new_elapsed >= max_time {
+                continue;
+            }
+
+            // gather ores with previously available bots
+            let mut new_inventory = [0; 4];
+            for idx in 0..bots.len() {
+                new_inventory[idx] = inventory[idx] + bots[idx] * (wait_time + 1) - costs[idx];
+            }
+
+            // increase bot type for the bot we just built
+            let mut new_bots = bots;
+            new_bots[i] += 1;
+
+            q.push_back(State {
+                inventory: new_inventory,
+                bots: new_bots,
+                elapsed: new_elapsed,
+            })
+        }
+
+        let geodes = inventory[3] + bots[3] * (max_time - elapsed);
+        max_geodes = geodes.max(max_geodes);
+    }
+
+    max_geodes
+}
+```
+
+### Final code
+
+```rust title=day_19.rs
+pub fn part_1() -> usize {
+    let blueprints = parse();
+
+    blueprints
+        .iter()
+        .map(|blueprint| max_geodes(blueprint))
+        .enumerate()
+        .map(|(idx, geodes)| (idx + 1) * usize::from(geodes))
+        .sum()
+}
+```
+
+## Part 2
+
+An elephant ate most of the blueprints, only the first 3 are left.
+
+The question asks for the product of all remaining blueprint's maximum number of gathered geodes, in 32 minutes.
+
+```rust title=pseudocode.rs
+let blueprints = parse();
+
+blueprints
+    .iter()
+    .take(3)
+    .map(|blueprint| max_geodes(blueprint))
+    .product()
+```
+
+Combined with changing the `let max_time = 24;` to `let max_time = 32;` aaaaaaaaaaand
+
+That is not enough (unless you have a beefy computer, and lots of patience).
+
+The key is not making bots you don't need.
+
+Bots you don't need are bots that don't help towards unbottlenecking production.
+If you need 5 ore to build a bot, it doesn't matter if we have 5 in our inventory, or 5000, the bot gets built just as fast.
+
+So, if we have the amount of bots that's equal to the maximum cost of that type for any bot, we're gathering enough of that resource every turn to never be bottlenecked.
+Producing more of that type would not be beneficial, they'd just do unnecessary work.
+
+The changes:
+
+```rust hl=7-10,31-33
+fn max_geodes(blueprint: &[[u16; 4]; 4]) -> u16 {
+    // calculate the maximum amount for every type of bot so that the creation of a new bot of any type is never bottlenecked
+    // it doesn't make sense to build more bots than that maximum if the resources a bot type generates are
+    // enough to cover that type (ore, clay, obsidian) cost for any possible bot (per question, you can only build 1 bot per turn)
+    // for geode bots, there is no logical maximum amount
+    // [ore, clay, obsidian, geode]
+    let mut max_robots = [u16::MAX; 4];
+    for i in 0..3 {
+        max_robots[i] = blueprint.iter().map(|cost| cost[i]).max().unwrap();
+    }
+
+    let max_time = 32;
+    let mut max_geodes = 0;
+
+    let mut q = VecDeque::new();
+    q.push_back(State {
+        inventory: [0, 0, 0, 0],
+        bots: [1, 0, 0, 0],
+        elapsed: 0,
+    });
+
+    while let Some(State {
+        inventory,
+        bots,
+        elapsed,
+    }) = q.pop_front()
+    {
+        // for every bot cost, run simulation
+        for i in 0..blueprint.len() {
+            // if we already have enough of this bot type, skip
+            if bots[i] == max_robots[i] {
+                continue;
+            }
+            let costs = &blueprint[i];
+
+            // Find the limiting resource type for the costs.
+            let wait_time = (0..3)
+                .map(|idx| {
+                    match costs[idx] {
+                        // state has enough of current resource in inventory to cover that part of the target bot cost. 0 wait time
+                        cost if cost <= inventory[idx] => 0,
+                        // no target bot type made yet
+                        // we can't build it (it takes more than max_time to build it).
+                        _ if bots[idx] == 0 => max_time + 1,
+                        _ => (costs[idx] - inventory[idx] + bots[idx] - 1) / bots[idx],
+                    }
+                })
+                .max()
+                .unwrap();
+
+            // if that choice would cause the time limit be to exceeded, skip
+            // the + 1 is so the built bot has the chance to do something, it merely being built is not enough
+            let new_elapsed = elapsed + wait_time + 1;
+            if new_elapsed >= max_time {
+                continue;
+            }
+
+            // gather ores with previously available bots
+            let mut new_inventory = [0; 4];
+            for idx in 0..bots.len() {
+                new_inventory[idx] = inventory[idx] + bots[idx] * (wait_time + 1) - costs[idx];
+            }
+
+            // increase bot type for the bot we just built
+            let mut new_bots = bots;
+            new_bots[i] += 1;
+
+            q.push_back(State {
+                inventory: new_inventory,
+                bots: new_bots,
+                elapsed: new_elapsed,
+            })
+        }
+
+        let geodes = inventory[3] + bots[3] * (max_time - elapsed);
+        max_geodes = geodes.max(max_geodes);
+    }
+
+    max_geodes
+}
+```
+
+There's a further optimization you can apply right before pushing to the queue.
+If we theoretically only built geode bots every turn, and we still wouldn't beat the current maximum.
+Don't push that state the the queue, but skip to the next item.
+
+```rust
+let remaining_time = max_time - new_elapsed;
+if ((remaining_time - 1) * remaining_time) / 2
+    + new_inventory[3]
+    + remaining_time * new_bots[3]
+    < max_geodes
+{
+    continue;
+}
+```
+
+### Final code
+
+```rust title=day_19.rs
+pub fn part_2() -> usize {
+    let blueprints = parse();
+
+    blueprints
+        .iter()
+        .take(3)
+        .map(|blueprint| usize::from(max_geodes(blueprint)))
+        .product()
+}
+```
+
+## Final code
+
+I turned the `max_geode` function into one that works for both part1 and part2 by passing in `max_time` as a parameter.
+
+```rust title=day_19.rs numberLines
+use std::collections::VecDeque;
+
+struct State {
+    // [ore, clay, obsidian, geode]
+    inventory: [u16; 4],
+    // [ore_bots, clay_bots, obsidian_bots, geode_bots]
+    bots: [u16; 4],
+    // elapsed time in minutes
+    elapsed: u16,
+}
+
+// each cost is [ore_amount, clay_amount, obsidian_amount, geode_amount]
+// [ore_bot_costs, clay_bot_costs, obsidian_bot_costs, geode_bot_costs]
+fn parse() -> Vec<[[u16; 4]; 4]> {
+    let input = std::fs::read_to_string("src/day19.txt").unwrap();
+    let mut blueprints = Vec::new();
+
+    for line in input.lines() {
+        let mut iter = line.split_ascii_whitespace();
+
+        // ore bots cost ore
+        let ore_bot_costs = [iter.nth(6).unwrap().parse().unwrap(), 0, 0, 0];
+        // clay bots cost ore
+        let clay_bot_costs = [iter.nth(5).unwrap().parse().unwrap(), 0, 0, 0];
+        // obsidian bots cost ore and clay
+        let obsidian_bot_costs = [
+            iter.nth(5).unwrap().parse().unwrap(),
+            iter.nth(2).unwrap().parse().unwrap(),
+            0,
+            0,
+        ];
+        // geode bots cost ore and obsidian
+        let geode_bot_costs = [
+            iter.nth(5).unwrap().parse().unwrap(),
+            0,
+            iter.nth(2).unwrap().parse().unwrap(),
+            0,
+        ];
+
+        let blueprint = [
+            ore_bot_costs,
+            clay_bot_costs,
+            obsidian_bot_costs,
+            geode_bot_costs,
+        ];
+        blueprints.push(blueprint);
+    }
+
+    blueprints
+}
+
+fn max_geodes(blueprint: &[[u16; 4]; 4], max_time: u16) -> u16 {
+    // calculate the maximum amount for every type of bot so that the creation of a new bot of any type is never bottlenecked
+    // it doesn't make sense to build more bots than that maximum if the resources a bot type generates are
+    // enough to cover that type (ore, clay, obsidian) cost for any possible bot (per question, you can only build 1 bot per turn)
+    // for geode bots, there is no logical maximum amount
+    // [ore, clay, obsidian, geode]
+    let mut max_robots = [u16::MAX; 4];
+    for i in 0..3 {
+        max_robots[i] = blueprint.iter().map(|cost| cost[i]).max().unwrap();
+    }
+    let mut max_geodes = 0;
+
+    let mut q = VecDeque::new();
+    q.push_back(State {
+        inventory: [0, 0, 0, 0],
+        bots: [1, 0, 0, 0],
+        elapsed: 0,
+    });
+
+    while let Some(State {
+        inventory,
+        bots,
+        elapsed,
+    }) = q.pop_front()
+    {
+        // for every bot cost, run simulation
+        for i in 0..blueprint.len() {
+            // if we already have enough of this bot type, skip
+            if bots[i] == max_robots[i] {
+                continue;
+            }
+
+            let costs = &blueprint[i];
+
+            // Find the limiting resource type for the costs.
+            let wait_time = (0..3)
+                .map(|idx| {
+                    match costs[idx] {
+                        // state has enough of current resource in inventory to cover that part of the target bot cost. 0 wait time
+                        cost if cost <= inventory[idx] => 0,
+                        // no target bot type made yet
+                        // we can't build it (it takes more than max_time to build it).
+                        _ if bots[idx] == 0 => max_time + 1,
+                        _ => (costs[idx] - inventory[idx] + bots[idx] - 1) / bots[idx],
+                    }
+                })
+                .max()
+                .unwrap();
+
+            // if that choice would cause the time limit be to exceeded, skip
+            // the + 1 is so the built bot has the chance to do something, it merely being built is not enough
+            let new_elapsed = elapsed + wait_time + 1;
+            if new_elapsed >= max_time {
+                continue;
+            }
+
+            // gather ores with previously available bots
+            let mut new_inventory = [0; 4];
+            for idx in 0..bots.len() {
+                new_inventory[idx] = inventory[idx] + bots[idx] * (wait_time + 1) - costs[idx];
+            }
+
+            // increase bot type for the bot we just built
+            let mut new_bots = bots.clone();
+            new_bots[i] += 1;
+
+            // extra optimization:
+            // if we theoretically only built geode bots every turn, and we still don't beat the maximum, skip
+            let remaining_time = max_time - new_elapsed;
+            if ((remaining_time - 1) * remaining_time) / 2
+                + new_inventory[3]
+                + remaining_time * new_bots[3]
+                < max_geodes
+            {
+                continue;
+            }
+
+            q.push_back(State {
+                inventory: new_inventory,
+                bots: new_bots,
+                elapsed: new_elapsed,
+            })
+        }
+
+        let geodes = inventory[3] + bots[3] * (max_time - elapsed);
+        max_geodes = geodes.max(max_geodes);
+    }
+
+    max_geodes
+}
+
+pub fn part_1() -> usize {
+    let blueprints = parse();
+
+    blueprints
+        .iter()
+        .map(|blueprint| max_geodes(blueprint, 24))
+        .enumerate()
+        .map(|(idx, geodes)| (idx + 1) * usize::from(geodes))
+        .sum()
+}
+
+pub fn part_2() -> usize {
+    let blueprints = parse();
+
+    blueprints
+        .iter()
+        .take(3)
+        .map(|blueprint| usize::from(max_geodes(blueprint, 32)))
+        .product()
+}
+```

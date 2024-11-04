@@ -1,0 +1,132 @@
+---
+title: "Advent of Code 2022 Day 4"
+date: 2022-12-04
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+section: "garden"
+---
+
+## Day 4: Camp Cleanup
+
+https://adventofcode.com/2022/day/4
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_04.rs)
+</Aside>
+
+Today, the elves have to clean up their camp.
+
+- Each area of the camp has a unique ID number.
+- Each elf is assigned a range of those IDs to clean.
+
+The elves are split into groups of 2.
+
+Your input is a big list of the section assignments for each pair.
+Each line of the input represents a pair of elves.
+
+The two elves in a line are seperated by a comma `,`.
+
+The start and end (inclusive) of their assigned range is seperated by a dash `-`.
+
+An example input looks like this:
+
+```txt title=input.txt
+2-4,6-8
+2-3,4-5
+5-7,7-9
+2-8,3-7
+6-6,4-6
+2-6,4-8
+```
+
+## Part 1
+
+The question asks to find in how many pairs one range fully contains the other.
+
+I looped through every line of the input, only keps the ones with a full overlap, and counted how many were left.
+
+I started off with this pseudocode that I then filled in:
+
+```rust title=pseudocode.rs
+input
+    .lines()
+    .filter()
+    .count()
+```
+
+A range completely overlaps an other range if:
+
+Its minimum is lower (or equal) than the other minimum and its maximum is higher (or equal) than the other maximum.
+
+I did this check twice, once for each elf.
+
+- Once to check if elf1 completely overlaps with elf2
+- Once to check if elf2 completely overlaps with elf1.
+
+The longest part of this solution is parsing those strings into 4 numbers: `min1`, `max1`, `min2`, and `max2`.
+
+<Aside variant="info">
+The solution includes a commented out alternative way to check for a complete overlap
+</Aside>
+
+```rust title=day_04.rs
+pub fn part_1() -> usize {
+    let input = std::fs::read_to_string("src/day04.txt").unwrap();
+
+    input
+        .lines()
+        .filter(|line| {
+            let (elf1, elf2) = line.split_once(',').unwrap();
+            let (min1, max1) = elf1.split_once('-').unwrap();
+            let (min2, max2) = elf2.split_once('-').unwrap();
+            let min1: u32 = min1.parse().unwrap();
+            let max1: u32 = max1.parse().unwrap();
+            let min2: u32 = min2.parse().unwrap();
+            let max2: u32 = max2.parse().unwrap();
+
+            // (min1 >= min2 && max1 <= max2) || (min2 >= min1 && max2 <= max1)
+            // equivalent:
+            (min1 <= min2 && max1 >= max2) || (min2 <= min1 && max2 >= max1)
+        })
+        .count()
+}
+```
+
+## Part 2
+
+The question asks to find in how many pairs one range overlaps the other (partially, or completely).
+
+The overall setup and the number parsing piece are identical to part1.
+The only change is the line that determines if a line is kept or not.
+
+A range overlaps an other when:
+
+the biggest minimum is smaller (or equal) than the smallest maximum.
+
+<Aside variant="info">
+  The solution includes a commented out alternative way to check for an overlap
+</Aside>
+
+```rust title=day_04.rs
+pub fn part_2() -> usize {
+    let input = std::fs::read_to_string("src/day04.txt").unwrap();
+
+    input
+        .lines()
+        .filter(|line| {
+            let (elf1, elf2) = line.split_once(',').unwrap();
+            let (min1, max1) = elf1.split_once('-').unwrap();
+            let (min2, max2) = elf2.split_once('-').unwrap();
+            let min1: u32 = min1.parse().unwrap();
+            let max1: u32 = max1.parse().unwrap();
+            let min2: u32 = min2.parse().unwrap();
+            let max2: u32 = max2.parse().unwrap();
+
+            min1 <= max2 && max1 >= min2
+            // equivalent:
+            // min1.max(min2) <= max1.min(max2)
+        })
+        .count()
+}
+```

@@ -9,6 +9,8 @@ import icon from "astro-icon";
 // https://astro.build/config
 export default defineConfig({
   site: "https://nickymeuleman.netlify.app",
+  redirects: {
+    "/garden/[slug]": "/blog/[slug]",
+  },
   integrations: [react(), mdx(), sitemap(), tailwind(), icon()],
 });
-

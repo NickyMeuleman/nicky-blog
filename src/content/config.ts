@@ -27,13 +27,20 @@ const blog = defineCollection({
           "hardware",
           "serverless",
           "WebAssembly",
+          "Advent of Code",
         ])
         .array()
         .default([]),
       canonicalUrl: z.string().url().optional(),
       series: z
-        .enum(["Serverless GraphQL", "Fresh environment, 2018"])
+        .enum([
+          "Serverless GraphQL",
+          "Fresh environment, 2018",
+          "Advent of Code 2015",
+          "Advent of Code 2022",
+        ])
         .optional(),
+      section: z.enum(["blog", "garden"]).default("blog"),
     }),
 });
 

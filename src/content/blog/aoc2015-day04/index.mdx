@@ -1,0 +1,328 @@
+---
+title: "Advent of Code 2015 Day 4"
+date: 2023-01-13
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2015"
+section: "garden"
+---
+## Day 4: The Ideal Stocking Stuffer
+
+https://adventofcode.com/2015/day/4
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2015/src/day_04.rs)
+</Aside>
+
+Santa needs help mining AdventCoin to use as stocking stuffers.
+
+To do this, he needs to find [MD5](https://en.wikipedia.org/wiki/MD5) hashes that start with at least 5 zeros in [hexadecimal](https://en.wikipedia.org/wiki/Hexadecimal).
+
+Today's input is a secret key.
+
+An example input looks like this:
+
+```txt title=input.txt
+abcdef
+```
+
+2 parts form the input to the MD5 hash:
+1. The secret key
+2. A number (an integer without leading zeros)
+
+- If your secret key is abcdef, the lowest number that produces a hash that starts with 5 zeros is 609043.
+The MD5 hash of abcdef609043 start with 000001dbbfa...
+- If your secret key is pqrstuv, the lowest number that produces a hash that starts with 5 zeros is 1048970.
+The MD5 hash of pqrstuv1048970 starts with 000006136ef...
+
+## Part 1
+
+The question asks for the lowest number that produces a hexadecimal MD5 hash that starts with 5 zeros.
+
+### Option 1: A for loop
+
+Some skeleton/pseudo-code to start with:
+
+```rust
+for num in 0.. {
+    let input = key + num; // string concatenation
+    let hash = md5(input);
+    if hash starts with 5 zeros {
+        return num;
+    }
+}
+```
+
+A bruteforce algorithm that calculates the hash 1 at a time and checks if it contains 5 zeros.
+
+I'm not going to write the MD5 algorithm myself.
+Time for code someone else wrote, the [`md-5` crate](https://crates.io/crates/md-5)
+
+An MD5 hash is 16 bytes.
+
+A byte is often represented as a pair of hexadecimal characters. 
+Singular hex characters go from `0` to `F`, so those pairs go from `00` to `FF`.
+In decimal that would be from `0` to `255`.
+
+The result of the `MD5` implementation I used returns those 16 bytes in a list.
+
+There are 3 steps to get that list:
+1. Create a `hasher`
+2. Put bytes into it
+3. Tell it to create a hash with that input
+
+```rust
+use md5::{Digest, Md5};
+
+let key = "abcde";
+let num = 0;
+
+let mut hasher = Md5::new();
+hasher.update(key);
+hasher.update(num.to_string().as_bytes());
+let hash = hasher.finalize();
+```
+
+That's the part that creates a hash dealt with.
+Now the part that checks that hash (does it start with 5 zeros?).
+
+The first byte contains information for the first 2 hex characters.
+The second byte contains information for the next 2 hex characters.
+
+If a byte is zero, both hex characters are zero.
+
+We check if first four hex characters are 0 by checking if their entire byte is 0.
+`hash[0] == 0 && hash[1] == 0`
+
+The 5th hex character is the first character of a pair.
+With some bit logic we turn the second character into a 0.
+Then we check if the resulting number is 0:
+`hash[2] & 0xF0 == 0`
+
+That turns the entire check into:
+```rust
+if (hash[0] == 0) && (hash[1] == 0) && ((hash[2] & 0xF0) == 0) {
+    // the first five characters of the hexadecimal MD5 are 0
+}
+```
+
+This can be written a bit differently.
+We [bitwise OR](https://en.wikipedia.org/wiki/Bitwise_operation#OR) every part first
+If the result is 0, they were all 0.
+
+```rust
+if hash[0] | hash[1] | (hash[2] & 0xF0) == 0 {
+    // the first five characters of the hexadecimal MD5 are 0
+}
+```
+
+Putting it all together.
+I pulled the `hasher` outside of the `for` loop to reuse it.
+Creating a new one every iteration works too, reusing it avoids a bit of unnecessary work.
+This means the call to `finalize()` turns into a call to `finalize_reset()`, clearing the `hasher` so it's ready for the next loop.
+
+```rust
+use md5::{Digest, Md5};
+
+pub fn part_1(input: &str) -> u64 {
+    let key = input.as_bytes();
+    let mut hasher = Md5::new();
+
+    for num in 0.. {
+        hasher.update(key);
+        hasher.update(num.to_string().as_bytes());
+        let result = hasher.finalize_reset();
+        // an item in the result array is a byte represented by 2 hex characters: 00 to FF
+        // check if both hex characters at idx 0 are 0
+        // check if both hex characters at idx 1 are 0
+        // check if first hex character at idx 2 is 0
+        if (result[0] == 0) && (result[1] == 0) && ((result[2] & 0xf0) == 0) {
+            return num;
+        }
+    }
+
+    unreachable!()
+}
+```
+
+### Option 2: An iterator chain
+
+This uses an open range again to loop from 0 until the maximum possible number.
+
+The used number is indentical to the index in that sequence.
+When a hash with 5 zeros is found, we break the loop and return that index.
+
+```rust
+pub fn part_1(input: &str) -> usize {
+    let key = input.as_bytes();
+    let mut hasher = Md5::new();
+
+    (0..)
+        .map(|num| {
+            hasher.update(key);
+            hasher.update(num.to_string().as_bytes());
+            hasher.finalize_reset()
+        })
+        .position(|result| result[0] | result[1] | (result[2] & 0xF0) == 0)
+        .unwrap()
+}
+```
+
+### Option 3: Parallellize it
+
+This problem requires a bunch of work that can be split up, a great scenario for [multi threading](/blog/multithreading-rust).
+
+I decided to slightly tweak the solution with the iterator chain.
+The [`rayon` crate](https://docs.rs/rayon/latest/rayon/index.html) provides the tools to convert that code with minimal changes.
+
+The open range explicitly has an end point now.
+This lets us convert the iterator chain to a [parallel iterator](https://docs.rs/rayon/latest/rayon/iter/index.html).
+
+The call to `position` turned into [a call to `rayon`'s `position_first`](https://docs.rs/rayon/latest/rayon/iter/trait.IndexedParallelIterator.html#method.position_first).
+
+Notice the `hasher` is inside the loop again.
+
+```rust
+use md5::{Digest, Md5};
+use rayon::prelude::*;
+
+pub fn part_1(input: &str) -> usize {
+    let key = input.as_bytes();
+
+    (0..usize::MAX)
+        .into_par_iter()
+        .map(|num| {
+            let mut hasher = Md5::new();
+            hasher.update(key);
+            hasher.update(num.to_string().as_bytes());
+            hasher.finalize()
+        })
+        .position_first(|result| result[0] | result[1] | (result[2] & 0xF0) == 0)
+        .unwrap()
+}
+```
+
+Curiously, on my machine (an older intel quadcore without hyperthreading),
+the gains from multithreading do not outweight the added overhead.
+The algorithm was marginally slower multithreaded than the same one ran sequentially.
+
+### Bonus: Avoiding string allocations
+
+In every loop, we turn the number into a `String` only to immediately feed it to the `hasher`.
+
+```rust
+hasher.update(num.to_string());
+```
+
+Avoiding that `String` creation can speed up the solution.
+
+Using [a crate like `numtoa`](https://docs.rs/numtoa/latest/numtoa/) can help with this.
+
+The `for` loop code then turns into:
+```rust hl=7,10
+use md5::{Digest, Md5};
+use numtoa::NumToA;
+
+pub fn part_1(input: &str) -> u64 {
+    let mut hasher = Md5::new();
+    let key = input.as_bytes();
+    let mut buffer = [0u8; 20];
+    for num in 0.. {
+        hasher.update(key);
+        hasher.update(num.numtoa(10, &mut buffer));
+        let result = hasher.finalize_reset();
+        if result[0] | result[1] | (result[2] & 0xf0) == 0 {
+            return num;
+        }
+    }
+
+    unreachable!()
+}
+```
+
+### Main code for part 1
+
+```rust title=day_04.rs
+use md5::{Digest, Md5};
+
+pub fn part_1(input: &str) -> usize {
+    let key = input.as_bytes();
+    let mut hasher = Md5::new();
+    (0..)
+        .map(|num| {
+            hasher.update(key);
+            hasher.update(num.to_string().as_bytes());
+            hasher.finalize_reset()
+        })
+        .position(|result| result[0] | result[1] | (result[2] & 0xF0) == 0)
+        .unwrap()
+}
+```
+
+## Part 2
+
+The question asks for the lowest number that produces a hexadecimal MD5 hash that starts with 6 zeros.
+
+The code is almost identical to part 1.
+
+That special logic to deal with the 5'th hex character can be deleted now.
+
+The part where we check if a hash starts with zeroes changes to:
+```rust
+result[0] | result[1] | result[2] == 0
+```
+
+Ironically, this makes part2 simpler to code than part1.
+
+### Main code for part 2
+
+```rust title=day_04.rs
+use md5::{Digest, Md5};
+
+pub fn part_2(input: &str) -> usize {
+    let key = input.as_bytes();
+    let mut hasher = Md5::new();
+
+    (0..)
+        .map(|num| {
+            hasher.update(key);
+            hasher.update(num.to_string().as_bytes());
+            hasher.finalize_reset()
+        })
+        .position(|result| result[0] | result[1] | result[2] == 0)
+        .unwrap()
+}
+```
+
+## Final code
+
+```rust title=day_04.rs numberLines
+use md5::{Digest, Md5};
+
+pub fn part_1(input: &str) -> usize {
+    let key = input.as_bytes();
+    let mut hasher = Md5::new();
+
+    (0..)
+        .map(|num| {
+            hasher.update(key);
+            hasher.update(num.to_string().as_bytes());
+            hasher.finalize_reset()
+        })
+        .position(|result| result[0] | result[1] | (result[2] & 0xF0) == 0)
+        .unwrap()
+}
+
+pub fn part_2(input: &str) -> usize {
+    let key = input.as_bytes();
+    let mut hasher = Md5::new();
+
+    (0..)
+        .map(|num| {
+            hasher.update(key);
+            hasher.update(num.to_string().as_bytes());
+            hasher.finalize_reset()
+        })
+        .position(|result| result[0] | result[1] | result[2] == 0)
+        .unwrap()
+}
+```

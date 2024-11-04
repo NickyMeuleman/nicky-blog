@@ -1,0 +1,309 @@
+---
+title: "Advent of Code 2022 Day 9"
+date: 2022-12-09
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+section: "garden"
+---
+
+## Day 9: Rope Bridge
+
+https://adventofcode.com/2022/day/9
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_09.rs)
+</Aside>
+
+The expedition has to cross a rickety rope bridge.
+
+You decide to distract yourself by thinking about ~~food~~ rope physics.
+
+Consider a rope with knots at each end.
+
+- A knot at the start, the **head**.
+- A knot at the end, the **tail**.
+
+When the head moves far enough away, the tail has to follow.
+
+The question does some magical handwaving, and now knots can be represented on a 2D grid of integers.
+
+Today's input is a list of motions the head takes.
+
+An example input looks like this:
+
+```txt title=input.txt
+R 4
+U 4
+L 3
+D 1
+R 4
+D 1
+L 5
+R 2
+```
+
+This series of motions moves the head right four steps, then up four steps, then left three steps, then down one step, and so on.
+
+## Part 1
+
+It's a short rope, consisting only of the head and the tail, with no space in between.
+
+The head and the tail must always be touching.
+
+Touching means one of 2 thing is true:
+1. Adjacent in one of the 8 directions (horizontal, vertical, or diagonal)
+2. Completely overlapping.
+
+If the head is ever 2 steps away from the tail (meaning: they are no longer touching), the tail must catch up.
+
+- If the head is ever two steps directly up, down, left, or right from the tail, the tail must also move one step in that direction so it remains close enough.
+- If the head and tail aren't touching and aren't in the same row or column, the tail always moves one step diagonally to keep up
+
+<Aside variant="info">
+[The question](https://adventofcode.com/2022/day/9) includes a number of visual examples of these rules.
+I highly recommend looking at them!
+</Aside>
+
+The head and the tail both start at the same position, at the coordinates (0,0).
+
+The question asks how many positions the **tail of the rope visited at least once**?
+
+The positions the tail visited can be tracked in a set.
+For every line in the input, we simulate the rope, and insert the new position of the tail into that set.
+
+In pseudocode, that would be:
+
+```rust title=pseudocode.rs
+let mut seen = HashSet::new();
+let starting_position = (0, 0);
+let mut head = starting_position;
+let mut tail = starting_position;
+seen.insert(tail);
+
+for step in steps {
+    simulate_rope(step);
+    seen.insert(tail);
+}
+```
+
+I decided to make a `Coord` struct to represent a coordinate.
+
+```rust
+struct Coord {
+    x: isize,
+    y: isize,
+}
+```
+
+To start writing out the solution:
+
+```rust title=day_09.rs
+use std::collections::HashSet;
+
+#[derive(Eq, Hash, PartialEq, Clone, Copy)]
+struct Coord {
+    x: isize,
+    y: isize,
+}
+
+pub fn part_1() -> usize {
+    let input = std::fs::read_to_string("src/day09.txt").unwrap();
+    let start = Coord { x: 0, y: 0 };
+    let mut head = start;
+    let mut tail = start;
+    let mut seen = HashSet::new();
+    seen.insert(tail);
+    
+    for line in input.lines() {
+        let (dir, amount) = line.split_once(' ').unwrap();
+        let amount = amount.parse().unwrap();
+        
+        for _ in 0..amount {
+            // move head
+            // catch up tail if needed
+            // insert the tail into the seen set if it moved
+        }
+    }
+    seen.len()
+}
+```
+
+The part where we move the head is straightforward, it's the moving of the tail that's the tricky part.
+
+```rust
+match dir {
+    "U" => head.y -= 1,
+    "D" => head.y += 1,
+    "L" => head.x -= 1,
+    "R" => head.x += 1,
+    _ => panic!("tried to move in an invalid direction"),
+};
+```
+
+To do that, we first determine if the tail is touching the head.
+We do that by calculating the difference between the head and the tail first.
+
+```rust
+let diff = Coord {
+    x: head.x - tail.x,
+    y: head.y - tail.y,
+};
+// if not touching, move tail and insert it into seen
+```
+
+The knots aren't touching if the distance in any direction is larger than 1.
+
+```rust hl=5
+let diff = Coord {
+    x: head.x - tail.x,
+    y: head.y - tail.y,
+};
+let not_touching = diff.x.abs() > 1 || diff.y.abs() > 1;
+```
+
+The way the tail catches up is described by the rules above.  
+It turns out that catching up is equal to adding the sign of the difference in each direction!
+
+```rust
+tail.x += diff.x.signum();
+tail.y += diff.y.signum();
+```
+
+The updated code is the answer to part1!
+
+### Final code
+
+```rust title=day_09.rs
+use std::collections::HashSet;
+
+#[derive(Eq, Hash, PartialEq, Clone, Copy)]
+struct Coord {
+    x: isize,
+    y: isize,
+}
+
+pub fn part_1() -> usize {
+    let input = std::fs::read_to_string("src/day09.txt").unwrap();
+    let start = Coord { x: 0, y: 0 };
+    let mut head = start;
+    let mut tail = start;
+    let mut seen = HashSet::new();
+    seen.insert(tail);
+    
+    for line in input.lines() {
+        let (dir, amount) = line.split_once(' ').unwrap();
+        let amount = amount.parse().unwrap();
+        
+        for _ in 0..amount {
+            // move head
+            match dir {
+                "U" => head.y -= 1,
+                "D" => head.y += 1,
+                "L" => head.x -= 1,
+                "R" => head.x += 1,
+                _ => panic!("tried to move in invalid direction"),
+            };
+
+            // determine if head and tail are touching
+            let diff = Coord {
+                x: head.x - tail.x,
+                y: head.y - tail.y,
+            };
+            let not_touching = diff.x.abs() > 1 || diff.y.abs() > 1;
+
+            // update tail and insert it into the seen set if needed
+            if not_touching {
+                tail.x += diff.x.signum();
+                tail.y += diff.y.signum();
+                seen.insert(tail);
+            }
+        }
+    }
+    
+    seen.len()
+}
+```
+
+## Part 2
+
+You now have to simulate a rope that has 10 knots instead of 2.
+
+The question asks how many positions the **tail of the rope visited at least once**?
+
+As in previous days, a lot of the part1 code is reused.
+
+Instead of 2 variables for `head` and `tail`, we now track 10 variables.
+One for each knot in the rope.
+
+In the implementation, each knot is stored as a coordinate in a list called `rope`.
+
+The rope follows the same rules as in part1, so that logic remains unchanged.
+
+For each step:
+
+We first move the head of the entire rope.
+
+Then, we iterate over 2 sections of the rope at a time.
+- The first is the **head** of that section and never moves.
+- The second is the **tail** of that section and catches up if necessary.
+
+If the tail of a section is also the tail of the entire rope, we insert it into `seen` if it moved.
+
+### Final code
+
+```rust title=day_09.rs
+use std::collections::HashSet;
+use itertools::Itertools;
+
+#[derive(Eq, Hash, PartialEq, Clone, Copy)]
+struct Coord {
+    x: isize,
+    y: isize,
+}
+
+pub fn part_2() -> usize {
+    let input = std::fs::read_to_string("src/day09.txt").unwrap();
+    let start = Coord { x: 0, y: 0 };
+    let mut rope = vec![start; 10];
+    let mut seen = HashSet::new();
+    seen.insert(start);
+
+    for line in input.lines() {
+        let (dir, amount) = line.split_once(' ').unwrap();
+        let amount: u8 = amount.parse().unwrap();
+
+        for _ in 0..amount {
+            // move head of the whole rope
+            match dir {
+                "U" => rope[0].y -= 1,
+                "D" => rope[0].y += 1,
+                "L" => rope[0].x -= 1,
+                "R" => rope[0].x += 1,
+                _ => panic!("tried to move in an invalid direction"),
+            };
+
+            // move the rest of the rope
+            for (head_idx, tail_idx) in (0..rope.len()).tuple_windows() {
+                // determine if head and tail are touching
+                let diff = Coord {
+                    x: rope[head_idx].x - rope[tail_idx].x,
+                    y: rope[head_idx].y - rope[tail_idx].y,
+                };
+                let not_touching = diff.x.abs() > 1 || diff.y.abs() > 1;
+
+                // update tail and insert it into the seen set if needed
+                if not_touching {
+                    rope[tail_idx].x += diff.x.signum();
+                    rope[tail_idx].y += diff.y.signum();
+                    if tail_idx == rope.len() - 1 {
+                        seen.insert(rope[rope.len() - 1]);
+                    }
+                }
+            }
+        }
+    }
+
+    seen.len()
+}
+```

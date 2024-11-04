@@ -1,0 +1,329 @@
+---
+title: "Advent of Code 2022 Day 5"
+date: 2022-12-05
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+section: "garden"
+---
+
+## Day 5: Supply Stacks
+
+https://adventofcode.com/2022/day/5
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_05.rs)
+</Aside>
+
+Today, the elves have to reoganize the crates in the ship's cargo hold.
+
+Each crate has a letter to identify it.
+
+Your input has the starting positions of the stacks, and a list of move instructions.
+
+An example input looks like this:
+
+```txt
+// input.txt
+    [D]    
+[N] [C]    
+[Z] [M] [P]
+ 1   2   3 
+
+move 1 from 2 to 1
+move 3 from 1 to 3
+move 2 from 2 to 1
+move 1 from 1 to 2
+```
+
+In this example there are 3 platforms.
+
+- The stack on platform 1, from bottom to the top has crates: `Z`, and `N`.
+- The stack on platform 2, from bottom to the top has crates: `M`, `C`, and `D`.
+- The stack on platform 3, from bottom to the top has crates: `P`.
+
+In each move instruction, an amount of crates is moved from one platform to another.
+
+## Implementation
+
+I started by parsing that input into useful data structures.
+
+This is how I want to represent that input in Rust:
+- Each crate is identified by a letter: a `char`.
+- Each platform has a stack of crates: a `Vec<char>`.
+- There are multiple stacks: a `Vec<Vec<char>>`.
+
+Desired result: the starting positions of the stacks in the input is parsed as a `Vec<Vec<char>>`.
+
+Each instruction has 3 parts:
+- an amount of crates to be moved
+- the number of a platform's stack to take the crates **from**
+- the number of a platform's stack to move to crates **to**
+
+So I created a `struct` with those fields.
+
+```rust
+struct Instruction {
+    amount: usize,
+    from: usize,
+    to: usize,
+}
+```
+
+Desired result: the list of instructions in the input is parsed as a `Vec<Instruction>`.
+
+## Parsing the input
+
+<Aside variant="info">
+Those questionmarks in my code, I affectionately refer to those as the Annie operator.
+
+[Read the blogpost about what they do, and why I call it the Annie operator](/garden/rust-syntax-questionmark)
+</Aside>
+
+Split the entire input file on two newlines.
+The first part is the starting positions, and the second part is the move instructions.
+
+I took the last line off the starting positions, that's the line with the platform numbers.
+
+I figure out how many stacks there are by finding the last platform number and create that many empty vectors.
+
+```rust
+let (left, instructions_str) = input.split_once("\n\n").unwrap();
+let (stacks_str, platforms) = left.rsplit_once('\n').unwrap();
+let num_stacks = platforms.split_whitespace().last().unwrap().parse().unwrap();
+let mut stacks = vec![Vec::new(); num_stacks];
+```
+
+### Starting positions
+
+I loop through the lines of the starting positions in reverse.
+Whenever I find a crate (a letter) I push it into the corresponding stack.
+
+Each crate is represented by `[X]`, where `X` is a different letter.
+
+Each stack is seperated by a space.
+
+If there is no crate in a line, the space where one would be has three spaces instead of the `[X]`.
+
+So for every line in that loop, I look at chunks of 4 (3 for the potential crate + 1 in between).
+
+If the second item in that chunk is a letter, it's the letter for a crate.  
+I push it into stack with that chunk's index.
+
+```rust
+use itertools::Itertools;
+
+for line in stacks_str.lines().rev() {
+    for (idx, mut chunk) in line.chars().chunks(4).into_iter().enumerate() {
+        let second = chunk.nth(1)?;
+        if second.is_alphabetic() {
+            stacks[idx].push(second);
+        }
+    }
+}
+```
+
+### Move instructions
+
+Parsing the list of instructions into a `Vec<Instruction>` is more straightforward.
+
+Each instruction has the exact same structure.
+I split on some words that appear in each one, and convert that line to an `Instruction`.
+
+```rust
+let mut instructions = Vec::new();
+for line in instructions_str.lines() {
+    let rest = line.strip_prefix("move ")?;
+    let (amount, rest) = rest.split_once(" from ")?;
+    let (from, to) = rest.split_once(" to ")?;
+    let instruction = Instruction {
+        amount: amount.parse().ok()?,
+        from: from.parse::<usize>().ok()? - 1,
+        to: to.parse::<usize>().ok()? - 1,
+    };
+    instructions.push(instruction);
+}
+```
+
+### Final code
+
+```rust title=day_05.rs
+fn parse_input() -> Option<(Vec<Vec<char>>, Vec<Instruction>)> {
+    let input = std::fs::read_to_string("src/day05.txt").ok()?;
+    let (left, instructions_str) = input.split_once("\n\n")?;
+    let (stacks_str, platforms) = left.rsplit_once('\n')?;
+
+    // parse crates
+    let num_stacks = platforms.split_whitespace().last()?.parse().ok()?;
+    let mut stacks = vec![Vec::new(); num_stacks];
+
+    for line in stacks_str.lines().rev() {
+        for (idx, mut chunk) in line.chars().chunks(4).into_iter().enumerate() {
+            let second = chunk.nth(1)?;
+            if second.is_alphabetic() {
+                stacks[idx].push(second);
+            }
+        }
+    }
+
+    // parse instructions
+    let mut instructions = Vec::new();
+    for line in instructions_str.lines() {
+        let rest = line.strip_prefix("move ")?;
+        let (amount, rest) = rest.split_once(" from ")?;
+        let (from, to) = rest.split_once(" to ")?;
+        let instruction = Instruction {
+            amount: amount.parse().ok()?,
+            from: from.parse::<usize>().ok()? - 1,
+            to: to.parse::<usize>().ok()? - 1,
+        };
+        instructions.push(instruction);
+    }
+
+    Some((stacks, instructions))
+}
+```
+
+## Part 1
+
+The move instructions are performed by a crane that can move **one crate at a time**.
+
+If the instruction says to move 3 crates from stack 1 to stack 3, it does 3 seperate moves of a single crate.
+
+The question asks to find which crates end up on top of each stack after all instructions are done.
+
+To do that, I loop through the instructions to perform them.
+
+For each instruction I loop `amount` times.
+`pop()`ing a crate off the top of the `from` stack, and `push()`ing that crate to the top of the `to` stack.
+
+At the end, I take the top crate in each stack, and add those `char`s together into a `String`.
+
+<Aside variant="info">
+[I wrote a blogpost about the `if let` syntax.](https://nickymeuleman.netlify.app/garden/rust-if-let-while-let)
+</Aside>
+
+```rust title=day_05.rs
+pub fn part_1() -> String {
+    let (mut stacks, instructions) = parse_input().unwrap();
+    for Instruction { amount, from, to } in instructions {
+        for _ in 0..amount {
+            if let Some(removed) = stacks[from].pop() {
+                stacks[to].push(removed);
+            }
+        }
+    }
+
+    stacks
+        .iter()
+        .filter_map(|stack| stack.iter().last())
+        .collect()
+}
+```
+
+## Part 2
+
+The crane turns out to be a newer model that **move multiple crates at once**.
+
+The question asks to find which crates end up on top of each stack after all instructions are done again.
+
+To do that, I loop through the instructions to perform them.
+
+For each instruction I remove `amount` crates from the `from` stack, and add them to the `to` stack.
+Rust has [a handy method to do that called `split_off`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.split_off).
+
+At the end, I take the top crate in each stack, and add those `char`s together into a `String`.
+
+```rust title=day_05.rs
+pub fn part_2() -> String {
+    let (mut stacks, instructions) = parse_input().unwrap();
+    for Instruction { amount, from, to } in instructions {
+        let from_stack_len = stacks[from].len();
+        let removed = stacks[from].split_off(from_stack_len - amount);
+        stacks[to].extend(removed);
+    }
+
+    stacks
+        .iter()
+        .filter_map(|stack| stack.iter().last())
+        .collect()
+}
+```
+
+## Final code
+
+```rust title=day_05.rs numberLines
+use itertools::Itertools;
+
+#[derive(Debug)]
+struct Instruction {
+    amount: usize,
+    from: usize,
+    to: usize,
+}
+
+fn parse_input() -> Option<(Vec<Vec<char>>, Vec<Instruction>)> {
+    let input = std::fs::read_to_string("src/day05.txt").ok()?;
+    let (left, instructions_str) = input.split_once("\n\n")?;
+    let (stacks_str, platforms) = left.rsplit_once('\n')?;
+
+    // parse crates
+    let num_stacks = platforms.split_whitespace().last()?.parse().ok()?;
+    let mut stacks = vec![Vec::new(); num_stacks];
+
+    for line in stacks_str.lines().rev() {
+        for (idx, mut chunk) in line.chars().chunks(4).into_iter().enumerate() {
+            let second = chunk.nth(1)?;
+            if second.is_alphabetic() {
+                stacks[idx].push(second);
+            }
+        }
+    }
+
+    // parse instructions
+    let mut instructions = Vec::new();
+    for line in instructions_str.lines() {
+        let rest = line.strip_prefix("move ")?;
+        let (amount, rest) = rest.split_once(" from ")?;
+        let (from, to) = rest.split_once(" to ")?;
+        let instruction = Instruction {
+            amount: amount.parse().ok()?,
+            from: from.parse::<usize>().ok()? - 1,
+            to: to.parse::<usize>().ok()? - 1,
+        };
+        instructions.push(instruction);
+    }
+
+    Some((stacks, instructions))
+}
+
+pub fn part_1() -> String {
+    let (mut stacks, instructions) = parse_input().unwrap();
+    for Instruction { amount, from, to } in instructions {
+        for _ in 0..amount {
+            if let Some(removed) = stacks[from].pop() {
+                stacks[to].push(removed);
+            }
+        }
+    }
+
+    stacks
+        .iter()
+        .filter_map(|stack| stack.iter().last())
+        .collect()
+}
+
+pub fn part_2() -> String {
+    let (mut stacks, instructions) = parse_input().unwrap();
+    for Instruction { amount, from, to } in instructions {
+        let from_stack_len = stacks[from].len();
+        let removed = stacks[from].split_off(from_stack_len - amount);
+        stacks[to].extend(removed);
+    }
+
+    stacks
+        .iter()
+        .filter_map(|stack| stack.iter().last())
+        .collect()
+}
+```

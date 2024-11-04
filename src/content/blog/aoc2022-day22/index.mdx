@@ -1,0 +1,796 @@
+---
+title: "Advent of Code 2022 Day 22"
+date: 2022-12-22
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+section: "garden"
+---
+## Day 22: Monkey Map
+
+https://adventofcode.com/2022/day/22
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_22.rs)
+</Aside>
+
+The monkeys take you through the jungle on the way to the grove.
+
+You have to enter a password to get it.
+
+That password can be found be following a specific path through a maze.
+
+The first half of today's input is the maze.
+Where "." is an **open** space, and "#" is a **solid** wall.
+The maze is strangely shaped, so there are a bunch of spaces in the input.
+
+The second part of the input is a list of instructions.
+- Numbers mean "move X steps forward".
+- "L" means turn 90 degrees left
+- "R" means turn 90 degrees right
+
+An example input looks like this:
+
+```txt
+// input.txt
+        ...#
+        .#..
+        #...
+        ....
+...#.......#
+........#...
+..#....#....
+..........#.
+        ...#....
+        .....#..
+        .#......
+        ......#.
+
+10R5L5R10L4R5L5
+```
+
+- You start the maze at first open tile on the top row.
+- You start facing to the **right**
+
+So the first instruction tells you to take 10 steps on the map in the right direction.
+
+- If an instructions tells you to walk into a wall, stop instead.
+- If an instruction sends you off an edge, appear at the opposite one.
+
+<Aside variant="danger">
+It's an other day where indexes should start at 1
+</Aside>
+
+The password can be constructed using the final **row**, **column**, and **direction** you are facing.
+
+- Rows start from 1 at the top and count downward
+- Columns start from 1 at the left and count rightward.
+- Facing scores are:
+    - 0 for right
+    - 1 for down
+    - 2 for left
+    - 3 for up
+
+The **password** is 1000 * row + 4 * column + facing.
+
+## Parsing
+
+An instruction is an enum that's either a rotation or a movement.
+
+```rust
+enum Instruction {
+    Rotate(Turn),
+    Forward(u8),
+}
+
+enum Turn {
+    L,
+    R,
+}
+```
+I parsed the maze as a list of lists.
+Where items in the outer list are rows.
+Items in the rows are a tile or an empty space (because of the weird shape of the maze).
+
+The tiles in the map are either open or solid.
+Because the maze has such a weird shape,
+I included the spaces where there isn't anything too.
+You could also do this by associating a coordinate to each tile in the maze.
+
+```rust
+enum Tile {
+    Open,
+    Solid,
+    None,
+}
+```
+
+```rust title=day_22.rs
+fn parse(input: &str) -> (Vec<Vec<Tile>>, Vec<Instruction>) {
+    // do NOT remove starting whitespace, it's significant
+    let (grid, moves) = input.trim_end().split_once("\n\n").unwrap();
+    let mut instructions = Vec::new();
+    let mut digits = Vec::new();
+    for c in moves.chars() {
+        if c.is_numeric() {
+            // accumulate digits
+            let digit = c.to_digit(10).unwrap() as u8;
+            digits.push(digit);
+        } else {
+            // construct number out of digits
+            // uses math to concatenate digits instead of turning them into a string first and parsing the string
+            let num = digits.iter().fold(0, |num, digit| num * 10 + digit);
+            digits.clear();
+            instructions.push(Instruction::Forward(num));
+
+            // parse turn
+            let turn = match c {
+                'L' => Turn::L,
+                'R' => Turn::R,
+                _ => panic!("Invalid input"),
+            };
+            instructions.push(Instruction::Rotate(turn));
+        }
+    }
+    // construct number out of any remaining digits
+    // uses math to concatenate digits instead of turning them into a string first and parsing the string
+    let num = digits.iter().fold(0, |num, digit| num * 10 + digit);
+    instructions.push(Instruction::Forward(num));
+
+    let mut map = Vec::new();
+    for line in grid.lines() {
+        let mut row = Vec::new();
+        for c in line.chars() {
+            let tile = match c {
+                '.' => Tile::Open,
+                '#' => Tile::Solid,
+                ' ' => Tile::None,
+                _ => panic!("invalid input"),
+            };
+            row.push(tile);
+        }
+        map.push(row);
+    }
+
+    (map, instructions)
+}
+```
+
+## Part 1
+
+The question asks what the final password is.
+
+If an instruction sends you off the right side of the map, appear left.
+Same rule for left to right, up to down, and down to up.
+
+It's possible there is a wall just off the edge of the maze.
+And you should stop when you encounter a wall.
+
+The question text has a bunch of visual examples that are useful.
+
+### Helpers
+
+You better believe I pulled out the `Coord` struct again to represent a position.
+
+```rust
+#[derive(Clone)]
+struct Coord {
+    row: i32,
+    col: i32,
+}
+```
+
+The direction you're facing also gets a data type.
+Along with a few methods on it.
+- `score` helps with the scoring logic described above
+- `turn` takes in a direction, and applies a left or right turn
+- `offset` returns what a step in the current direction would do to the current coordinates on the map.
+
+```rust
+enum Direction {
+    L,
+    R,
+    U,
+    D,
+}
+
+impl Direction {
+    fn score(&self) -> usize {
+        use Direction::*;
+        match self {
+            R => 0,
+            D => 1,
+            L => 2,
+            U => 3,
+        }
+    }
+
+    fn turn(self, turn: &Turn) -> Direction {
+        use Direction::*;
+        match (self, turn) {
+            (L, Turn::L) => D,
+            (L, Turn::R) => U,
+            (R, Turn::L) => U,
+            (R, Turn::R) => D,
+            (U, Turn::L) => L,
+            (U, Turn::R) => R,
+            (D, Turn::L) => R,
+            (D, Turn::R) => L,
+        }
+    }
+
+    fn offset(&self) -> Coord {
+        use Direction::*;
+        match &self {
+            L => Coord { row: 0, col: -1 },
+            R => Coord { row: 0, col: 1 },
+            U => Coord { row: -1, col: 0 },
+            D => Coord { row: 1, col: 0 },
+        }
+    }
+}
+```
+
+In a pseudocode/skeletoncode hybrid, this is what I wrote:
+
+```rust title=skeleton.rs
+let mut post = // first open position on the top row
+let mut dir = Direction::R;
+
+for ins in instruction {
+    match ins {
+        // if rotation, turn
+        // if movement
+            for amount in 0..movement_amount {
+                let new_pos = // try to move 1 step
+                let new_tile = // try to get new tile
+                if new_tile was found {
+                    match new_tile {
+                        Tile::Open => // apply move,
+                        Tile::Solid => // don't move and break out of loop
+                    }
+                } else {
+                    // wrap around
+                    let wrapped_pos = // pos after moving 1
+                    let wrapped_tile = // get wrapped tile
+                    match wrapped_tile {
+                        Tile::Open => // apply move,
+                        Tile::Solid => // don't move and break out of loop
+                    }
+                }
+            }
+    }
+}
+```
+
+A helper function that handles the wrapping logic:
+
+```rust
+fn wrap(map: &[Vec<Tile>], pos: &Coord, dir: &Direction) -> Coord {
+    let Coord { row: dr, col: dc } = dir.offset();
+    let mut curr = pos.clone();
+    // while an open or solid tile exists in the map when walking in the opposite direction, update pos
+    while let Some(tile) = map
+        .get((curr.row - dr) as usize)
+        .and_then(|row| row.get((curr.col - dc) as usize))
+    {
+        if *tile == Tile::None {
+            break;
+        }
+        curr = Coord {
+            row: curr.row - dr,
+            col: curr.col - dc,
+        };
+    }
+
+    curr
+}
+```
+
+### Final code
+
+```rust title=day_22.rs
+pub fn part_1(input: &str) -> i32 {
+    let (map, instructions) = parse(input);
+    // go to the first open position on the top row (skip the Nones)
+    let start_col = map[0].iter().position(|tile| *tile == Tile::Open).unwrap() as i32;
+
+    let mut pos = Coord {
+        row: 0,
+        col: start_col,
+    };
+    let mut dir = Direction::R;
+
+    for inst in &instructions {
+        match inst {
+            Instruction::Rotate(turn) => dir = dir.turn(turn),
+            Instruction::Forward(amount) => {
+                // take a step "amount" times
+                for _ in 0..*amount {
+                    let Coord { row: dr, col: dc } = dir.offset();
+                    let new_tile = map
+                        .get((pos.row + dr) as usize)
+                        .and_then(|row| row.get((pos.col + dc) as usize))
+                        .unwrap_or(&Tile::None);
+
+                    match new_tile {
+                        // if new tile is solid, stop moving
+                        Tile::Solid => break,
+                        // if new tile is open, move there
+                        Tile::Open => {
+                            pos = Coord {
+                                row: pos.row + dr,
+                                col: pos.col + dc,
+                            };
+                        }
+                        // if new tile is not found, wrap around
+                        Tile::None => {
+                            let new_pos = wrap(&map, &pos, &dir);
+                            // if the new_pos is solid, stop moving
+                            if map[new_pos.row as usize][new_pos.col as usize] == Tile::Solid {
+                                break;
+                            }
+                            // if the new_pos is open, move there
+                            pos = new_pos;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    1000 * (pos.row + 1) + 4 * (pos.col + 1) + dir.score() as i32
+}
+```
+
+## Part 2
+
+The maze isn't flat, it's a very large **cube**.
+Each side is **50 tiles long**.
+
+So, that's what that weird shape was about.
+The input "folds" into a cube shape.
+
+The wrapping rules are different now.
+You continue along the cube instead.
+
+Again, [the question text](https://adventofcode.com/2022/day/22) has a few useful examples.
+
+```txt
+// example cube
+        ...#
+        .#..
+        #...
+        ....
+...#.......#
+........#..A
+..#....#....
+.D........#.
+        ...#..B.
+        .....#..
+        .#......
+        ..C...#.
+```
+
+2 example movements around the cube:
+1. you are at A and move to the right, you arrive at B facing down
+2. you are at C and move down, you arrive at D facing up:
+
+The question asks what the final password is.
+
+The code for part2 is very similar again.
+The part in the logic where we apply the wrapping logic is now different.
+
+A step to a different cube face also changes the direction you are facing!
+So if we take a step, we not only update the current coordinate,
+but also the facing direction.
+
+### Helpers
+
+The helper that handles the wrapping logic got way more complicated.
+
+```rust
+fn wrap(pos: &Coord, dir: &Direction) -> (Coord, Direction) {
+    // find idxes of entire cube
+    // this huge match statement only covers cases in the real input, but can be expanded to cover everything. It's just tedious
+    let (cube_row, cube_col, new_dir) = match (pos.row / 50, pos.col / 50, dir) {
+        (0, 1, Direction::U) => (3, 0, Direction::R),
+        (0, 1, Direction::L) => (2, 0, Direction::R),
+        (0, 2, Direction::U) => (3, 0, Direction::U),
+        (0, 2, Direction::R) => (2, 1, Direction::L),
+        (0, 2, Direction::D) => (1, 1, Direction::L),
+        (1, 1, Direction::R) => (0, 2, Direction::U),
+        (1, 1, Direction::L) => (2, 0, Direction::D),
+        (2, 0, Direction::U) => (1, 1, Direction::R),
+        (2, 0, Direction::L) => (0, 1, Direction::R),
+        (2, 1, Direction::R) => (0, 2, Direction::L),
+        (2, 1, Direction::D) => (3, 0, Direction::L),
+        (3, 0, Direction::R) => (2, 1, Direction::U),
+        (3, 0, Direction::D) => (0, 2, Direction::D),
+        (3, 0, Direction::L) => (0, 1, Direction::D),
+        _ => unreachable!(),
+    };
+    // find idxes within the cube
+    let (row_idx, col_idx) = (pos.row % 50, pos.col % 50);
+
+    let i = match dir {
+        Direction::L => 49 - row_idx,
+        Direction::R => row_idx,
+        Direction::U => col_idx,
+        Direction::D => 49 - col_idx,
+    };
+
+    // find new idxes within the cube
+    let new_row = match new_dir {
+        Direction::L => 49 - i,
+        Direction::R => i,
+        Direction::U => 49,
+        Direction::D => 0,
+    };
+    let new_col = match new_dir {
+        Direction::L => 49,
+        Direction::R => 0,
+        Direction::U => i,
+        Direction::D => 49 - i,
+    };
+
+    let new_pos = Coord {
+        row: cube_row * 50 + new_row,
+        col: cube_col * 50 + new_col,
+    };
+
+    (new_pos, new_dir)
+}
+```
+
+### Final code
+
+```rust title=day_22.rs
+pub fn part_2(input: &str) -> i32 {
+    let (map, instructions) = parse(input);
+    // go to the first open position on the top row (skip the Nones)
+    let start_col = map[0].iter().position(|tile| *tile == Tile::Open).unwrap() as i32;
+
+    let mut pos = Coord {
+        row: 0,
+        col: start_col,
+    };
+    let mut dir = Direction::R;
+
+    for inst in &instructions {
+        match inst {
+            Instruction::Rotate(turn) => dir = dir.turn(turn),
+            Instruction::Forward(amount) => {
+                // take a step "amount" times
+                for _ in 0..*amount {
+                    let Coord { row: dr, col: dc } = dir.offset();
+                    let new_tile = map
+                        .get((pos.row + dr) as usize)
+                        .and_then(|row| row.get((pos.col + dc) as usize))
+                        .unwrap_or(&Tile::None);
+
+                    match new_tile {
+                        // if new tile is solid, stop moving
+                        Tile::Solid => break,
+                        // if new tile is open, move there
+                        Tile::Open => {
+                            pos = Coord {
+                                row: pos.row + dr,
+                                col: pos.col + dc,
+                            };
+                        }
+                        // if new tile is not found, wrap around
+                        Tile::None => {
+                            let (new_pos, new_dir) = wrap(&pos, &dir);
+                            // if the new_pos is solid, stop moving
+                            if map[new_pos.row as usize][new_pos.col as usize] == Tile::Solid {
+                                break;
+                            }
+                            // if the new_pos is open, move there
+                            pos = new_pos;
+                            dir = new_dir
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    1000 * (pos.row + 1) + 4 * (pos.col + 1) + dir.score() as i32
+}
+```
+
+## Final code
+
+```rust title=day_22.rs numberLines
+#[derive(Clone)]
+struct Coord {
+    row: i32,
+    col: i32,
+}
+
+enum Direction {
+    L,
+    R,
+    U,
+    D,
+}
+
+enum Turn {
+    L,
+    R,
+}
+
+#[derive(PartialEq)]
+enum Tile {
+    Open,
+    Solid,
+    None,
+}
+
+enum Instruction {
+    Rotate(Turn),
+    Forward(u8),
+}
+
+impl Direction {
+    fn score(&self) -> usize {
+        use Direction::*;
+        match self {
+            R => 0,
+            D => 1,
+            L => 2,
+            U => 3,
+        }
+    }
+
+    fn turn(self, turn: &Turn) -> Direction {
+        use Direction::*;
+        match (self, turn) {
+            (L, Turn::L) => D,
+            (L, Turn::R) => U,
+            (R, Turn::L) => U,
+            (R, Turn::R) => D,
+            (U, Turn::L) => L,
+            (U, Turn::R) => R,
+            (D, Turn::L) => R,
+            (D, Turn::R) => L,
+        }
+    }
+
+    fn offset(&self) -> Coord {
+        use Direction::*;
+        match &self {
+            L => Coord { row: 0, col: -1 },
+            R => Coord { row: 0, col: 1 },
+            U => Coord { row: -1, col: 0 },
+            D => Coord { row: 1, col: 0 },
+        }
+    }
+}
+
+fn parse(input: &str) -> (Vec<Vec<Tile>>, Vec<Instruction>) {
+    // do NOT remove starting whitespace, it's significant
+    let (grid, moves) = input.trim_end().split_once("\n\n").unwrap();
+    let mut instructions = Vec::new();
+    let mut digits = Vec::new();
+    for c in moves.chars() {
+        if c.is_numeric() {
+            // accumulate digits
+            let digit = c.to_digit(10).unwrap() as u8;
+            digits.push(digit);
+        } else {
+            // construct number out of digits
+            // uses math to concatenate digits instead of turning them into a string first and parsing the string
+            let num = digits.iter().fold(0, |num, digit| num * 10 + digit);
+            digits.clear();
+            instructions.push(Instruction::Forward(num));
+
+            // parse turn
+            let turn = match c {
+                'L' => Turn::L,
+                'R' => Turn::R,
+                _ => panic!("Invalid input"),
+            };
+            instructions.push(Instruction::Rotate(turn));
+        }
+    }
+    // construct number out of any remaining digits
+    // uses math to concatenate digits instead of turning them into a string first and parsing the string
+    let num = digits.iter().fold(0, |num, digit| num * 10 + digit);
+    instructions.push(Instruction::Forward(num));
+
+    let mut map = Vec::new();
+    for line in grid.lines() {
+        let mut row = Vec::new();
+        for c in line.chars() {
+            let tile = match c {
+                '.' => Tile::Open,
+                '#' => Tile::Solid,
+                ' ' => Tile::None,
+                _ => panic!("invalid input"),
+            };
+            row.push(tile);
+        }
+        map.push(row);
+    }
+
+    (map, instructions)
+}
+
+fn wrap1(map: &[Vec<Tile>], pos: &Coord, dir: &Direction) -> Coord {
+    let Coord { row: dr, col: dc } = dir.offset();
+    let mut curr = pos.clone();
+    // while an open or solid tile exists in the map when walking in the opposite direction, update pos
+    while let Some(tile) = map
+        .get((curr.row - dr) as usize)
+        .and_then(|row| row.get((curr.col - dc) as usize))
+    {
+        if *tile == Tile::None {
+            break;
+        }
+        curr = Coord {
+            row: curr.row - dr,
+            col: curr.col - dc,
+        };
+    }
+
+    curr
+}
+
+pub fn part_1(input: &str) -> i32 {
+    let (map, instructions) = parse(input);
+    // go to the first open position on the top row (skip the Nones)
+    let start_col = map[0].iter().position(|tile| *tile == Tile::Open).unwrap() as i32;
+
+    let mut pos = Coord {
+        row: 0,
+        col: start_col,
+    };
+    let mut dir = Direction::R;
+
+    for inst in &instructions {
+        match inst {
+            Instruction::Rotate(turn) => dir = dir.turn(turn),
+            Instruction::Forward(amount) => {
+                // take a step "amount" times
+                for _ in 0..*amount {
+                    let Coord { row: dr, col: dc } = dir.offset();
+                    let new_tile = map
+                        .get((pos.row + dr) as usize)
+                        .and_then(|row| row.get((pos.col + dc) as usize))
+                        .unwrap_or(&Tile::None);
+
+                    match new_tile {
+                        // if new tile is solid, stop moving
+                        Tile::Solid => break,
+                        // if new tile is open, move there
+                        Tile::Open => {
+                            pos = Coord {
+                                row: pos.row + dr,
+                                col: pos.col + dc,
+                            };
+                        }
+                        // if new tile is not found, wrap around
+                        Tile::None => {
+                            let new_pos = wrap1(&map, &pos, &dir);
+                            // if the new_pos is solid, stop moving
+                            if map[new_pos.row as usize][new_pos.col as usize] == Tile::Solid {
+                                break;
+                            }
+                            // if the new_pos is open, move there
+                            pos = new_pos;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    1000 * (pos.row + 1) + 4 * (pos.col + 1) + dir.score() as i32
+}
+
+fn wrap2(pos: &Coord, dir: &Direction) -> (Coord, Direction) {
+    // find idxes of entire cube
+    // this huge match statement only covers cases in the real input, but can be expanded to cover everything. It's just tedious
+    let (cube_row, cube_col, new_dir) = match (pos.row / 50, pos.col / 50, dir) {
+        (0, 1, Direction::U) => (3, 0, Direction::R),
+        (0, 1, Direction::L) => (2, 0, Direction::R),
+        (0, 2, Direction::U) => (3, 0, Direction::U),
+        (0, 2, Direction::R) => (2, 1, Direction::L),
+        (0, 2, Direction::D) => (1, 1, Direction::L),
+        (1, 1, Direction::R) => (0, 2, Direction::U),
+        (1, 1, Direction::L) => (2, 0, Direction::D),
+        (2, 0, Direction::U) => (1, 1, Direction::R),
+        (2, 0, Direction::L) => (0, 1, Direction::R),
+        (2, 1, Direction::R) => (0, 2, Direction::L),
+        (2, 1, Direction::D) => (3, 0, Direction::L),
+        (3, 0, Direction::R) => (2, 1, Direction::U),
+        (3, 0, Direction::D) => (0, 2, Direction::D),
+        (3, 0, Direction::L) => (0, 1, Direction::D),
+        _ => unreachable!(),
+    };
+    // find idxes within the cube
+    let (row_idx, col_idx) = (pos.row % 50, pos.col % 50);
+
+    let i = match dir {
+        Direction::L => 49 - row_idx,
+        Direction::R => row_idx,
+        Direction::U => col_idx,
+        Direction::D => 49 - col_idx,
+    };
+
+    // find new idxes within the cube
+    let new_row = match new_dir {
+        Direction::L => 49 - i,
+        Direction::R => i,
+        Direction::U => 49,
+        Direction::D => 0,
+    };
+    let new_col = match new_dir {
+        Direction::L => 49,
+        Direction::R => 0,
+        Direction::U => i,
+        Direction::D => 49 - i,
+    };
+
+    let new_pos = Coord {
+        row: cube_row * 50 + new_row,
+        col: cube_col * 50 + new_col,
+    };
+
+    (new_pos, new_dir)
+}
+
+pub fn part_2(input: &str) -> i32 {
+    let (map, instructions) = parse(input);
+    // go to the first open position on the top row (skip the Nones)
+    let start_col = map[0].iter().position(|tile| *tile == Tile::Open).unwrap() as i32;
+
+    let mut pos = Coord {
+        row: 0,
+        col: start_col,
+    };
+    let mut dir = Direction::R;
+
+    for inst in &instructions {
+        match inst {
+            Instruction::Rotate(turn) => dir = dir.turn(turn),
+            Instruction::Forward(amount) => {
+                // take a step "amount" times
+                for _ in 0..*amount {
+                    let Coord { row: dr, col: dc } = dir.offset();
+                    let new_tile = map
+                        .get((pos.row + dr) as usize)
+                        .and_then(|row| row.get((pos.col + dc) as usize))
+                        .unwrap_or(&Tile::None);
+
+                    match new_tile {
+                        // if new tile is solid, stop moving
+                        Tile::Solid => break,
+                        // if new tile is open, move there
+                        Tile::Open => {
+                            pos = Coord {
+                                row: pos.row + dr,
+                                col: pos.col + dc,
+                            };
+                        }
+                        // if new tile is not found, wrap around
+                        Tile::None => {
+                            let (new_pos, new_dir) = wrap2(&pos, &dir);
+                            // if the new_pos is solid, stop moving
+                            if map[new_pos.row as usize][new_pos.col as usize] == Tile::Solid {
+                                break;
+                            }
+                            // if the new_pos is open, move there
+                            pos = new_pos;
+                            dir = new_dir
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    1000 * (pos.row + 1) + 4 * (pos.col + 1) + dir.score() as i32
+}
+```

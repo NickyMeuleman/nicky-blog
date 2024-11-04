@@ -1,0 +1,551 @@
+---
+title: "Advent of Code 2022 Day 12"
+date: 2022-12-12
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+section: "garden"
+---
+## Day 12: Hill Climbing Algorithm
+
+https://adventofcode.com/2022/day/12
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_12.rs)
+</Aside>
+
+You want to get to a higher spot so your communication device gets better reception.
+
+Today's input is a height map of the surrounding area.
+Again, it's a perfect 2D grid of positions.
+
+Each position has an elevation from "a" to "z".
+"a" being the lowest and "z" the highest.
+
+You start at the position marked "S".
+It has an elevation of "a".
+
+You want to go to the position marked "E".
+It has an elevation of "z".
+
+An example input looks like this:
+
+```txt title=input.txt
+Sabqponm
+abcryxxl
+accszExk
+acctuvwj
+abdefghi
+```
+
+During each step, you can move exactly one square up, down, left, or right.
+
+You can only go up one height per step.
+So from "a" to "b" is possible.
+But going from "a" to "c" is not.
+
+You can go down as many heights as you want. (I guess you are wearing [long fall boots](https://www.youtube.com/watch?v=wX9Sc88qreg) from Portal.
+So going from "y" to "a" is a perfectly valid move.
+
+## Parsing
+
+I decided to extract a couple things from the input:
+
+- The height map, with numbers from 0-25 instead of letters.
+- The coordinates for the start (marked "S")
+- The coordinates for the end (marked "E")
+- The width of the map
+- The height of the map
+
+I used a list of lists to store every height.
+- Each item in the outer list is a row.
+- Each item in a row is a height.
+
+I used a `Coord` struct again to store coordinates.
+
+```rust
+struct Coord {
+    x: usize,
+    y: usize,
+}
+```
+
+I use the good 'ol double for loop to loop over each letter in the map.
+
+When I encounter an "S".
+- I set its height to "a".
+- I set the `start` coordinate.
+
+When I encounter an "E".
+- I set its height to "z".
+- I set the `end` coordinate.
+
+I turn the height letter into a height number by using the ASCII values again. (as in multiple previous days)
+That number gets stored in the height map at the corrent row and column index.
+
+```rust title=day_12.rs
+fn parse() -> (Coord, Coord, Vec<Vec<u8>>, usize, usize) {
+    let input = std::fs::read_to_string("src/day12.txt").unwrap();
+    let rows = input.lines().count();
+    let cols = input.lines().next().unwrap().len();
+    let mut map = vec![vec![0; cols]; rows];
+    let mut start = Coord { x: 0, y: 0 };
+    let mut end = Coord { x: 0, y: 0 };
+
+    for (row, line) in input.lines().enumerate() {
+        for (col, c) in line.chars().enumerate() {
+            let letter = match c {
+                'S' => {
+                    start.x = col;
+                    start.y = row;
+                    'a'
+                }
+                'E' => {
+                    end.x = col;
+                    end.y = row;
+                    'z'
+                }
+                'a'..='z' => c,
+                _ => panic!("Invalid input"),
+            };
+
+            let val = letter as u8 - b'a';
+            map[row][col] = val;
+        }
+    }
+
+    (start, end, map, rows, cols)
+}
+```
+
+## Part 1
+
+The question asks for the fewest steps required to "E" if starting from "S".
+
+Aha, a shortest path problem!
+Time to bring out our good friend [Dijkstra](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm).
+
+- The start position is `start`.
+- The goal position is `end`.
+- Per step, the cost increases by 1.
+
+It never makes sense to visit a location twice, you could have stepped in the correct direction the first time.
+That's why I also keep track of coordinates the algoritm visited in a set, and only examine new coordinates.
+
+in pseudocode:
+
+```rust title=pseudocode.rs
+let mut pq = priority_queue;
+let mut visited = set;
+
+while node = pq.pop() {
+    // if goal is reached, return
+
+    // get all next coordinates that fit the rules
+    for candidate in candidates {
+        if seen.includes(candidate) {
+            // do not visit nodes twice
+        } else {
+            // insert new node into priority_queue
+        }
+    }
+}
+```
+
+### Helpers
+
+To make it a bit more readable I'll define a few helpers again.
+To get all neighbours of a current position given the width and the height of the map:
+
+```rust
+impl Coord {
+    fn neighbours(&self, rows: usize, cols: usize) -> Vec<Self> {
+        let mut result = Vec::new();
+
+        // up
+        if self.y > 0 {
+            result.push(Self {
+                x: self.x,
+                y: self.y - 1,
+            });
+        }
+        // down
+        if self.y < rows - 1 {
+            result.push(Self {
+                x: self.x,
+                y: self.y + 1,
+            });
+        }
+        // left
+        if self.x > 0 {
+            result.push(Self {
+                x: self.x - 1,
+                y: self.y,
+            });
+        }
+        // right
+        if self.x < cols - 1 {
+            result.push(Self {
+                x: self.x + 1,
+                y: self.y,
+            });
+        }
+
+        result
+    }
+}
+```
+
+This doesn't care about the height at a coordinate, only that a coordinate exists on our map!
+
+I also created a `Node` struct that will be the thing we insert into our priority queue.
+It has a cost, and a coordinate.
+
+```rust
+struct Node {
+    cost: u32,
+    coord: Coord,
+}
+```
+
+The priority queue has to be ordered so the thing with the lowest cost gets popped first, so [I implement `Ord`](https://doc.rust-lang.org/std/cmp/trait.Ord.html#how-can-i-implement-ord) to get that behaviour.
+
+```rust
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+```
+
+Because this comes with a few other requirements (being able to compare `Node`, and because I plan on inserting a node into a set, I derive some traits on `Coord` and `Node`.
+
+They're both small, so I derive `Copy` while I'm at it.
+
+```rust hl=1,7
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Coord {
+    x: usize,
+    y: usize,
+}
+
+#[derive(PartialEq, Eq, Clone, Copy)]
+struct Node {
+    cost: u32,
+    coord: Coord,
+}
+```
+
+Before looping over candidates in the algorithm, I calculate all neighbours.
+Then, I filter those and only keep the ones that satisfy the rules.
+
+```rust
+let curr_height = map[coord.y][coord.x];
+let neighbours = coord.neighbours(rows, cols);
+let candidates: Vec<_> = neighbours
+    .iter()
+    .filter(|coord| {
+        let height = map[coord.y][coord.x];
+        height <= curr_height || height == curr_height + 1
+    })
+    .collect();
+```
+
+Filling in the skeleton code gives the answer to part1.
+A node at position `end` eventually gets popped off the priority queue.
+At that point, we can be certain this node has the lowest cost to reach that coordinate.
+
+### Final code
+
+```rust title=day_12.rs
+pub fn part_1() -> u32 {
+    let (start, end, map, rows, cols) = parse();
+    let mut pq = BinaryHeap::new();
+    let mut visited = HashSet::new();
+
+    pq.push(Node {
+        cost: 0,
+        coord: start,
+    });
+    visited.insert(start);
+
+    while let Some(Node { coord, cost }) = pq.pop() {
+        if coord == end {
+            return cost;
+        }
+
+        let curr_height = map[coord.y][coord.x];
+        let neighbours = coord.neighbours(rows, cols);
+        let candidates: Vec<_> = neighbours
+            .iter()
+            .filter(|coord| {
+                let height = map[coord.y][coord.x];
+                height <= curr_height || height == curr_height + 1
+            })
+            .collect();
+
+        for candidate in candidates {
+            if visited.insert(*candidate) {
+                pq.push(Node {
+                    cost: cost + 1,
+                    coord: *candidate,
+                })
+            }
+        }
+    }
+
+    panic!("No path found");
+}
+```
+
+## Part 2
+
+The question asks for the fewest steps required to reach "E" if starting from any "a".
+
+To do this, I flipped the logic from part 1, and adjusted the rules.
+
+The parameters for the Dijkstra algorithm are now:
+
+- The start position is `end`.
+- The goal position is any `a`.
+- Per step, the cost increases by 1.
+
+The rules from the initial problem also invert!
+
+- You can only go **down** one height per step.
+- You can go **up** as many heights as you want.
+
+Translated into code, our `return` condition changes, and the spot we `filter` neighbours to apply the rules changes.
+
+Making those changes, and boom, that's part2!
+
+### Final code
+
+```rust title=day_12.rs
+pub fn part_2() -> u32 {
+    let (start, end, map, rows, cols) = parse();
+    let mut pq = BinaryHeap::new();
+    let mut visited = HashSet::new();
+
+    pq.push(Node {
+        cost: 0,
+        coord: end,
+    });
+    visited.insert(start);
+
+    while let Some(Node { coord, cost }) = pq.pop() {
+        let curr_height = map[coord.y][coord.x];
+
+        if curr_height == 0 {
+            return cost;
+        }
+
+        let neighbours = coord.neighbours(rows, cols);
+        let candidates: Vec<_> = neighbours
+            .iter()
+            .filter(|coord| {
+                let height = map[coord.y][coord.x];
+                height >= curr_height || height == curr_height - 1
+            })
+            .collect();
+
+        for candidate in candidates {
+            if visited.insert(*candidate) {
+                pq.push(Node {
+                    cost: cost + 1,
+                    coord: *candidate,
+                })
+            }
+        }
+    }
+
+    panic!("No path found");
+}
+```
+
+## Final code
+
+```rust title=day_12.rs
+use std::{
+    cmp::Ordering,
+    collections::{BinaryHeap, HashSet},
+};
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Coord {
+    x: usize,
+    y: usize,
+}
+
+#[derive(PartialEq, Eq, Clone, Copy)]
+struct Node {
+    cost: u32,
+    coord: Coord,
+}
+
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Coord {
+    fn neighbours(&self, rows: usize, cols: usize) -> Vec<Self> {
+        let mut result = Vec::new();
+
+        // up
+        if self.y > 0 {
+            result.push(Self {
+                x: self.x,
+                y: self.y - 1,
+            });
+        }
+        // down
+        if self.y < rows - 1 {
+            result.push(Self {
+                x: self.x,
+                y: self.y + 1,
+            });
+        }
+        // left
+        if self.x > 0 {
+            result.push(Self {
+                x: self.x - 1,
+                y: self.y,
+            });
+        }
+        // right
+        if self.x < cols - 1 {
+            result.push(Self {
+                x: self.x + 1,
+                y: self.y,
+            });
+        }
+
+        result
+    }
+}
+
+fn parse() -> (Coord, Coord, Vec<Vec<u8>>, usize, usize) {
+    let input = std::fs::read_to_string("src/day12.txt").unwrap();
+    let rows = input.lines().count();
+    let cols = input.lines().next().unwrap().len();
+    let mut map = vec![vec![0; cols]; rows];
+    let mut start = Coord { x: 0, y: 0 };
+    let mut end = Coord { x: 0, y: 0 };
+
+    for (row, line) in input.lines().enumerate() {
+        for (col, c) in line.chars().enumerate() {
+            let letter = match c {
+                'S' => {
+                    start.x = col;
+                    start.y = row;
+                    'a'
+                }
+                'E' => {
+                    end.x = col;
+                    end.y = row;
+                    'z'
+                }
+                'a'..='z' => c,
+                _ => panic!("Invalid input"),
+            };
+
+            let val = letter as u8 - b'a';
+            map[row][col] = val;
+        }
+    }
+
+    (start, end, map, rows, cols)
+}
+
+pub fn part_1() -> u32 {
+    let (start, end, map, rows, cols) = parse();
+    let mut pq = BinaryHeap::new();
+    let mut visited = HashSet::new();
+
+    pq.push(Node {
+        cost: 0,
+        coord: start,
+    });
+    visited.insert(start);
+
+    while let Some(Node { coord, cost }) = pq.pop() {
+        if coord == end {
+            return cost;
+        }
+
+        let curr_height = map[coord.y][coord.x];
+        let neighbours = coord.neighbours(rows, cols);
+        let candidates: Vec<_> = neighbours
+            .iter()
+            .filter(|coord| {
+                let height = map[coord.y][coord.x];
+                height <= curr_height || height == curr_height + 1
+            })
+            .collect();
+
+        for candidate in candidates {
+            if visited.insert(*candidate) {
+                pq.push(Node {
+                    cost: cost + 1,
+                    coord: *candidate,
+                })
+            }
+        }
+    }
+
+    u32::MAX
+}
+
+pub fn part_2() -> u32 {
+    let (start, end, map, rows, cols) = parse();
+    let mut pq = BinaryHeap::new();
+    let mut visited = HashSet::new();
+
+    pq.push(Node {
+        cost: 0,
+        coord: end,
+    });
+    visited.insert(start);
+
+    while let Some(Node { coord, cost }) = pq.pop() {
+        let curr_height = map[coord.y][coord.x];
+
+        if curr_height == 0 {
+            return cost;
+        }
+
+        let neighbours = coord.neighbours(rows, cols);
+        let candidates: Vec<_> = neighbours
+            .iter()
+            .filter(|coord| {
+                let height = map[coord.y][coord.x];
+                height >= curr_height || height == curr_height - 1
+            })
+            .collect();
+
+        for candidate in candidates {
+            if visited.insert(*candidate) {
+                pq.push(Node {
+                    cost: cost + 1,
+                    coord: *candidate,
+                })
+            }
+        }
+    }
+
+    u32::MAX
+}
+```

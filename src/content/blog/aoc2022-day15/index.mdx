@@ -1,0 +1,376 @@
+---
+title: "Advent of Code 2022 Day 15"
+date: 2022-12-15
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+section: "garden"
+---
+## Day 15: Beacon Exclusion Zone
+
+https://adventofcode.com/2022/day/15
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_15.rs)
+</Aside>
+
+The distress signal leads you to a large network of tunnels.
+
+You can't search them all manually.  
+Your backpack has a series of sensors that by the power of wintery magic or something, fly off into the tunnels and come to rest.
+
+Each sensor records the coordinate of the nearest beacon it receives a signal from.
+
+Today's input is a list of sensor positions paired with the position of its closest beacon.
+
+An example input looks like this:
+
+```txt title=input.txt
+Sensor at x=2, y=18: closest beacon is at x=-2, y=15
+Sensor at x=9, y=16: closest beacon is at x=10, y=16
+Sensor at x=13, y=2: closest beacon is at x=15, y=3
+Sensor at x=12, y=14: closest beacon is at x=10, y=16
+Sensor at x=10, y=20: closest beacon is at x=10, y=16
+Sensor at x=14, y=17: closest beacon is at x=10, y=16
+Sensor at x=8, y=7: closest beacon is at x=2, y=10
+Sensor at x=2, y=0: closest beacon is at x=2, y=10
+Sensor at x=0, y=11: closest beacon is at x=2, y=10
+Sensor at x=20, y=14: closest beacon is at x=25, y=17
+Sensor at x=17, y=20: closest beacon is at x=21, y=22
+Sensor at x=16, y=7: closest beacon is at x=15, y=3
+Sensor at x=14, y=3: closest beacon is at x=15, y=3
+Sensor at x=20, y=1: closest beacon is at x=15, y=3
+```
+
+That closest distance is determined by the [Manhattan distance](https://en.wikipedia.org/wiki/Taxicab_geometry).
+
+Yup! We're dealing with sets of coordinates that fit on a perfectly rectangular plane again.
+
+Because each sensor only identifies its closest beacon,
+if a sensor detects a beacon, you know there are no other beacons that close or closer to that sensor
+
+## Parsing
+
+[Guess who's back?](https://youtu.be/YVkUvmDQ3HY?t=31).
+
+```rust
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct Coord {
+    row: i32,
+    col: i32,
+}
+```
+
+Every line turns in to 2 `Coords`.
+
+1. The first is the sensor
+2. The second is the closest beacon
+
+```rust title=day_15.rs
+fn parse() -> Option<Vec<[Coord; 2]>> {
+    let input = std::fs::read_to_string("src/day15.txt").ok()?;
+
+    let mut pairs = Vec::new();
+    for line in input.lines() {
+        let (sensor, beacon) = line.split_once(": ")?;
+        let sensor = sensor.strip_prefix("Sensor at ")?;
+        let beacon = beacon.strip_prefix("closest beacon is at ")?;
+        let (sx, sy) = sensor.split_once(", ")?;
+        let (bx, by) = beacon.split_once(", ")?;
+        let sx = sx.strip_prefix("x=")?;
+        let sy = sy.strip_prefix("y=")?;
+        let bx = bx.strip_prefix("x=")?;
+        let by = by.strip_prefix("y=")?;
+
+        let pair = [
+            Coord {
+                col: sx.parse().ok()?,
+                row: sy.parse().ok()?,
+            },
+            Coord {
+                col: bx.parse().ok()?,
+                row: by.parse().ok()?,
+            },
+        ];
+
+        pairs.push(pair);
+    }
+
+    Some(pairs)
+}
+```
+
+## Part 1
+
+The distress signal isn't coming from any of the detected beacons.  
+It must be coming from a beacon that's not the closest beacon for any sensor.
+
+The question asks how many positions cannot contain a beacon on the row `y=2000000`.
+
+Staring off with a decently filled out bit of skeleton code:
+
+```rust title=pseudocode.rs
+let input = parse().unwrap();
+let row = 2_000_000;
+
+// total amount of coordinates covered by any beacon on `row`
+let covered = row_ranges(row, &input)
+    .iter()
+    // the amount of coordinates covered by a range
+    .map(|range| range.size())
+    .sum();
+
+// total amount of beacons on `row`
+let beacons = input
+    .iter()
+    .map(|pair| pair[1])
+    .filter(|beacon| beacon.row == row)
+    .map(|beacon| beacon.col)
+    // remove duplicates
+    .dedup()
+    .count();
+
+covered - beacons
+```
+
+### Helpers
+
+A function to help determine how many coordinates are covered on a certain row given a combo of sensor and beacon:
+
+```rust
+fn beacon_row_range(sensor: &Coord, beacon: &Coord, row: i32) -> Option<RangeInclusive<i32>> {
+    let radius = sensor.manhattan(beacon);
+    let offset = radius - (sensor.row - row).abs();
+    if offset < 0 {
+        None
+    } else {
+        Some(sensor.col - offset..=sensor.col + offset)
+    }
+}
+```
+
+A method on `Coord` to determine the `manhattan` distance to an other `Coord`:
+
+```rust
+impl Coord {
+    fn manhattan(self, other: Self) -> i32 {
+        (self.row - other.row).abs() + (self.col - other.col).abs()
+    }
+}
+```
+
+The remaining question is how to combine the ranges on a single row for all beacons in the input.
+
+```rust
+fn row_ranges(row: i32, pairs: &[[Coord; 2]]) -> Vec<RangeInclusive<i32>> {
+    let mut ranges: Vec<_> = pairs
+        .iter()
+        .flat_map(|pair| beacon_row_range(&pair[0], &pair[1], row))
+        .collect();
+    ranges.sort_unstable_by_key(|range| *range.start());
+
+    let mut merged_ranges = vec![ranges[0].clone()];
+    for next in &ranges[1..] {
+        let last_idx = merged_ranges.len() - 1;
+        let last = &merged_ranges[last_idx];
+        // check if the two sorted ranges overlap
+        if next.start() <= last.end() || last.end() + 1 == *next.start() {
+            // replace last with a single bigger range if possible
+            if next.end() > last.end() {
+                let old = &merged_ranges[last_idx];
+                let new = *old.start()..=*next.end();
+                merged_ranges[last_idx] = new;
+            }
+        } else {
+            // add to the ranges for this row
+            merged_ranges.push(next.clone());
+        }
+    }
+
+    merged_ranges
+}
+```
+
+Pluggin everything into our skeletoncode, and that's part1!
+
+### Final code
+
+```rust title=day_15.rs
+pub fn part_1() -> usize {
+    let input = parse().unwrap();
+    let row = 2_000_000;
+
+    let covered = row_ranges(row, &input)
+        .iter()
+        .map(|range| range.end() - range.start() + 1)
+        .sum::<i32>() as usize;
+
+    let beacons = input
+        .into_iter()
+        .map(|pair| pair[1])
+        .filter(|beacon| beacon.row == row)
+        .map(|beacon| beacon.col)
+        .dedup()
+        .count();
+
+    covered - beacons
+}
+```
+
+## Part 2
+
+The distress beacon is not detected by any sensor,
+but the distress beacon must have x and y coordinates each no lower than 0 and no larger than 4000000.
+
+The question asks what the **tuning frequency** of the distress beacon is.
+
+A tuning frequency can be found by multiplying a beacon's x coordinate by 4000000 and then adding its y coordinate.
+
+The question is set up so there's a single gap in the coverage of sensors, that's where the distress beacon is.
+
+So the question is asking to find that single coordinate in the given range that isn't covered.
+
+### Final code
+
+```rust title=day_15.rs
+pub fn part_2() -> i64 {
+    let input = parse().unwrap();
+    let size = 4_000_000;
+
+    let (row, col_ranges) = (0..=size)
+        // not needed but faster
+        .rev()
+        .map(|row| (row, row_ranges(row, &input)))
+        // if there is more than one range covering the row, there is a gap!
+        .find(|(_, ranges)| ranges.len() > 1)
+        .unwrap();
+
+    let col = col_ranges.first().unwrap().end() + 1;
+
+    i64::from(col) * 4_000_000 + i64::from(row)
+}
+```
+
+## Final code
+
+```rust title=day_15.rs numberLines
+use std::ops::RangeInclusive;
+
+use itertools::Itertools;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct Coord {
+    row: i32,
+    col: i32,
+}
+
+impl Coord {
+    fn manhattan(&self, other: &Self) -> i32 {
+        (self.row - other.row).abs() + (self.col - other.col).abs()
+    }
+}
+
+fn parse() -> Option<Vec<[Coord; 2]>> {
+    let input = std::fs::read_to_string("src/day15.txt").ok()?;
+
+    let mut pairs = Vec::new();
+    for line in input.lines() {
+        let (sensor, beacon) = line.split_once(": ")?;
+        let sensor = sensor.strip_prefix("Sensor at ")?;
+        let beacon = beacon.strip_prefix("closest beacon is at ")?;
+        let (sx, sy) = sensor.split_once(", ")?;
+        let (bx, by) = beacon.split_once(", ")?;
+        let sx = sx.strip_prefix("x=")?;
+        let sy = sy.strip_prefix("y=")?;
+        let bx = bx.strip_prefix("x=")?;
+        let by = by.strip_prefix("y=")?;
+
+        let pair = [
+            Coord {
+                col: sx.parse().ok()?,
+                row: sy.parse().ok()?,
+            },
+            Coord {
+                col: bx.parse().ok()?,
+                row: by.parse().ok()?,
+            },
+        ];
+
+        pairs.push(pair);
+    }
+
+    Some(pairs)
+}
+
+fn beacon_row_range(sensor: &Coord, beacon: &Coord, row: i32) -> Option<RangeInclusive<i32>> {
+    let radius = sensor.manhattan(beacon);
+    let offset = radius - (sensor.row - row).abs();
+    if offset < 0 {
+        None
+    } else {
+        Some(sensor.col - offset..=sensor.col + offset)
+    }
+}
+
+fn row_ranges(row: i32, pairs: &[[Coord; 2]]) -> Vec<RangeInclusive<i32>> {
+    let mut ranges: Vec<_> = pairs
+        .iter()
+        .flat_map(|pair| beacon_row_range(&pair[0], &pair[1], row))
+        .collect();
+    ranges.sort_unstable_by_key(|range| *range.start());
+
+    let mut merged_ranges = vec![ranges[0].clone()];
+    for next in &ranges[1..] {
+        let last_idx = merged_ranges.len() - 1;
+        let last = &merged_ranges[last_idx];
+        // check if the two sorted ranges overlap
+        // create a single bigger range if possible
+        if next.start() <= last.end() || last.end() + 1 == *next.start() {
+            if next.end() > last.end() {
+                let old = &merged_ranges[last_idx];
+                let new = *old.start()..=*next.end();
+                merged_ranges[last_idx] = new;
+            }
+        } else {
+            merged_ranges.push(next.clone());
+        }
+    }
+
+    merged_ranges
+}
+
+pub fn part_1() -> usize {
+    let input = parse().unwrap();
+    let row = 2_000_000;
+
+    let covered = row_ranges(row, &input)
+        .iter()
+        .map(|range| range.end() - range.start() + 1)
+        .sum::<i32>() as usize;
+
+    let beacons = input
+        .into_iter()
+        .map(|pair| pair[1])
+        .filter(|beacon| beacon.row == row)
+        .map(|beacon| beacon.col)
+        .dedup()
+        .count();
+
+    covered - beacons
+}
+
+pub fn part_2() -> i64 {
+    let input = parse().unwrap();
+    let size = 4_000_000;
+
+    let (row, col_ranges) = (0..=size)
+        // not needed but faster
+        .rev()
+        .map(|row| (row, row_ranges(row, &input)))
+        .find(|(_, ranges)| ranges.len() > 1)
+        .unwrap();
+
+    let col = col_ranges.first().unwrap().end() + 1;
+
+    i64::from(col) * 4_000_000 + i64::from(row)
+}
+```

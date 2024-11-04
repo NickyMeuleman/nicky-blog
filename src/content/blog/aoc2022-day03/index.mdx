@@ -1,0 +1,208 @@
+---
+title: "Advent of Code 2022 Day 3"
+date: 2022-12-03
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+section: "garden"
+---
+
+## Day 3: Rucksack Reorganization
+
+https://adventofcode.com/2022/day/3
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_03.rs)
+</Aside>
+
+The elves are all wearing backpacks, but they haven't been packed correctly.
+
+Each line of the input represents the items inside an elf's backpack.
+Every item type is identified by a single lowercase or uppercase letter (that is, `a` and `A` refer to different types of items).
+
+An example input looks like this:
+
+```txt title=input.txt
+vJrwpWtwJgWrhcsFMMfFFhFp
+jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
+PmmdzqPrVvPwwTWBwg
+wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
+ttgJtRGJQctTZtZT
+CrZsJsPPZsGzwwsLwLmpwMDw
+```
+
+## Part 1
+
+- Each backpack has 2 equally sized compartments.
+- Each elf is carrying an even number of items.
+- The amount of items stored in each compartment is equal.
+- The first half of the characters represent items in the first compartment, while the second half of the characters represent items in the second compartment.
+
+All items of a given type are meant to go into exactly one of the two compartments.
+The Elf that did the packing failed to follow this rule for exactly one item type per rucksack.
+
+Each item _type_ has a numeric priority.
+- Lowercase item types `a` through `z` have priorities 1 through 26.
+- Uppercase item types `A` through `Z` have priorities 27 through 52.
+
+The question asks to find the item that was mispacked for each elf, and to sum the priorities of those items.
+
+### Implementation
+
+I looped through every line of the input, mapped each line to a score, and summed those up.
+
+I started off with this pseudocode that I then filled in:
+
+```rust title=pseudocode.rs
+input
+    .lines()
+    .map(/* map a line to a priority score */)
+    .sum()
+```
+
+<Aside variant="info">
+    I decided to convert every line to bytes, because that made the types a bit easier.
+    This does not change the steps to solve this.
+    They remain the same in every language.
+</Aside>
+
+For each line, split it in half to get the left and right compartment.
+
+```rust
+let (left, right) = line.split_at(line.len() / 2);
+```
+
+Loop through the left compartment and find the first (and only) item that also exists in the right compartment.
+
+```rust
+left.iter()
+    .find(|item| right.contains(item))
+```
+
+With the mispacked item found, all that is left is converting it to a priority.
+As with day2, I'll use the fact that for both `a` to `z` and `A` to `Z` every value in that sequence has an incrementing [ASCII](https://en.wikipedia.org/wiki/ASCII) value.
+
+That means I can map `a` to `z` into 0 to 25.
+
+Adding 1 each time to get to the numbers the question gives us.
+
+Same thing for `A` to `Z`, but instead of adding 1, I add 27.
+
+```rust
+match item {
+    b'a'..=b'z' => (item - b'a') + 1,
+    b'A'..=b'Z' => (item - b'A') + 1 + 26,
+    _ => panic!("Only a-z and A-Z allowed")
+}
+```
+
+### Final code
+
+```rust title=day_03.rs
+pub fn part_1() -> u32 {
+    let input = std::fs::read_to_string("src/day03.txt").unwrap();
+
+    input
+        .lines()
+        // calculate the priority of the single unique item for each line
+        .filter_map(|line| {
+            let line = line.as_bytes();
+            let (left, right) = line.split_at(line.len() / 2);
+
+            left.iter()
+                .find(|item| right.contains(item))
+                .map(|item| match item {
+                    b'a'..=b'z' => (item - b'a') + 1,
+                    _ => (item - b'A') + 1 + 26,
+                } as u32)
+        })
+        .sum()
+}
+```
+
+## Part 2
+
+The elves are grouped per 3.
+For each group, there is a single item type that all 3 elves carry.
+
+Every set of three lines in your input corresponds to a single group.
+
+The question asks to find the common item in each group, and to sum the priorities of those items.
+
+### Implementation
+
+I looped through groups of 3 lines of the input, mapped each group to a score, and summed those up.
+
+I started off with this pseudocode that I then filled in:
+
+```rust title=pseudocode.rs
+input
+    .lines()
+    .group_per_3(/* map a group to a priority score */)
+    .map()
+    .sum()
+```
+
+<Aside variant="info">
+    I decided to convert every line to bytes, because that made the types a bit easier.
+    This does not change the steps to solve this.
+    They remain the same in every language.
+</Aside>
+
+[Itertools](https://docs.rs/itertools/latest/itertools/) has a neat function to group items in an iterator.
+
+[`tuples()`](https://docs.rs/itertools/latest/itertools/trait.Itertools.html#method.tuples) allowed me to look at 3 items in the `lines()` iterator at a time.
+
+The pseudocode turned into:
+
+```rust title=day_03.rs
+use itertools::Itertools;
+
+input
+    .lines()
+    .tuples()
+    .map(|(sack1, sack2, sack3)| { /* map a group to a priority score */ })
+    .sum()
+```
+
+Loop through the first sack and find the first (and only) item that exists in both other sacks.
+
+```rust
+sack1
+    .iter()
+    .find(|item| sack2.contains(item) && sack3.contains(item))
+```
+
+Identical to part1, turn the item you found into a priority score.
+
+```rust
+match item {
+    b'a'..=b'z' => (item - b'a') + 1,
+    b'A'..=b'Z' => (item - b'A') + 1 + 26,
+    _ => panic!("Only a-z and A-Z allowed")
+}
+```
+
+### Final code
+
+```rust title=day_03.rs
+use itertools::Itertools;
+
+pub fn part_2() -> u32 {
+    let input = std::fs::read_to_string("src/day03.txt").unwrap();
+
+    input
+        .lines()
+        .map(|line| line.as_bytes())
+        .tuples()
+        .filter_map(|(sack1, sack2, sack3)| {
+            sack1
+                .iter()
+                .find(|item| sack2.contains(item) && sack3.contains(item))
+                .map(|item| match item {
+                    b'a'..=b'z' => (item - b'a') + 1,
+                    _ => (item - b'A') + 1 + 26,
+                } as u32)
+        })
+        .sum()
+}
+```

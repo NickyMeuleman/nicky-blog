@@ -1,0 +1,454 @@
+---
+title: "Advent of Code 2022 Day 21"
+date: 2022-12-21
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+section: "garden"
+---
+## Day 21: Monkey Math
+
+https://adventofcode.com/2022/day/21
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_21.rs)
+</Aside>
+
+The monkeys are back.
+
+Loud bunch. They do one of two things:
+
+1. Yell a **number**
+2. Yell the result of a **math operation**
+
+The number monkeys know their number from the start
+
+The operation monkeys know their **operator** and names of 2 other monkeys whose number they should operate on.
+Once they can do their operation, they yell the result.
+
+An example input looks like this:
+
+```txt title=input.txt
+root: pppw + sjmn
+dbpl: 5
+cczh: sllz + lgvd
+zczc: 2
+ptdq: humn - dvpt
+dvpt: 3
+lfqf: 4
+humn: 5
+ljgn: 2
+sjmn: drzm * dbpl
+sllz: 4
+pppw: cczh / lfqf
+lgvd: ljgn * ptdq
+drzm: hmdt - zczc
+hmdt: 32
+```
+
+Before the colon is the name of the monkey.
+
+After the colon is either a number, or an operation that depends on the results of 2 other monkeys.
+
+## Parsing
+
+I chose to parse every monkey as a variant of a `Monkey` enum.
+
+1. It's either `Num`, and knows 1 thing:
+    1. A number
+2. Or it's `Calculated`, and knows 3 things:
+    1. The name of the left-hand side monkey
+    2. An operator
+    3. The name of the right-hand side monkey.
+
+```rust
+enum Monkey<'a> {
+    Num(i64),
+    // (operator, lhs, rhs)
+    Calculated(Operator, &'a str, &'a str),
+}
+
+#[derive(Debug)]
+enum Operator {
+    Add,
+    Sub,
+    Mul,
+    Div,
+}
+```
+
+The parsing function takes a parameter this time, a reference to the input string.
+The reasons are unimportant (for this post), and Rust specific (yay, lifetimes).
+
+It turns every line into a `Monkey`, and collects them all into a map that maps names to monkeys.
+
+So for the example if I look up `"root"`, that maps returns `Monkey::Calculated(Operator::Add, "pppw", "sjmn")`.
+
+```rust title=day_21.rs
+fn parse(input: &str) -> HashMap<&str, Monkey> {
+    input
+        .lines()
+        .map(|line| {
+            let (name, right) = line.split_once(": ").unwrap();
+            let monkey = match right.parse() {
+                Ok(n) => Monkey::Num(n),
+                Err(_) => {
+                    let mut iter = right.split_ascii_whitespace();
+                    let lhs = iter.next().unwrap();
+                    let operator = match iter.next().unwrap() {
+                        "+" => Operator::Add,
+                        "-" => Operator::Sub,
+                        "*" => Operator::Mul,
+                        "/" => Operator::Div,
+                        _ => panic!("Invalid math operator"),
+                    };
+                    let rhs = iter.next().unwrap();
+                    Monkey::Calculated(operator, lhs, rhs)
+                }
+            };
+
+            (name, monkey)
+        })
+        .collect()
+}
+```
+
+## Part 1
+
+The question asks what number the monkey named "root" will yell?
+
+Funny name for a monkey, but alright.
+(it's a hint we're dealing with a graph problem here, it's the root node of a tree)
+
+The answer: RECURSION!
+
+Recursion is a bit mindbendy to get your head around at first.
+Computerphile did a gread video on it with an explanation:
+
+<YouTube url="https://www.youtube.com/watch?v=8lhxIOAfDss" />
+
+### Helpers
+
+So a recursive helper function that evaluates a `Monkey`'s number given a name.
+
+If the monkey with `name` is a `Monkey::Num`, return the num it holds.
+
+If the monkey with `name` is a `Monkey::Calculated`:
+- Calculate the `lhs` number using that same helper function, this time passing in `lhs` as `name` parameter.
+- Calculate the `rhs` number using that same helper function, this time passing in `rhs` as `name` parameter.
+- return the result of applying the `Operation` to `lhs_num` and `rhs_num`.
+
+```rust
+fn calc_name(name: &str, monkeys: &HashMap<&str, Monkey>) -> i64 {
+    match &monkeys[name] {
+        Monkey::Num(n) => *n,
+        Monkey::Calculated(operator, lhs, rhs) => {
+            let lhs_num = calc_name(lhs, monkeys);
+            let rhs_num = calc_name(rhs, monkeys);
+            match operator {
+                Operator::Add => lhs_num + rhs_num,
+                Operator::Sub => lhs_num - rhs_num,
+                Operator::Mul => lhs_num * rhs_num,
+                Operator::Div => lhs_num / rhs_num,
+            }
+        }
+    }
+}
+```
+
+With that, part1 boils down to calling `calc_name` with `"root"` as `name`.
+
+### Final code
+
+```rust title=day_21.rs
+pub fn part_1() -> i64 {
+    let input = std::fs::read_to_string("src/day21.txt").unwrap();
+    let monkeys = parse(&input);
+
+    calc_name("root", &monkeys)
+}
+```
+
+## Part 2
+
+Woopsie! The job for the monkey named `"root"` was wrong.
+It's actually checking for equality between the 2 monkeys it has as `lhs` and `rhs`.
+
+Also, the monkey named `humn` isn't a monkey at all, it's you!
+
+The input has `humn` as shouting a number, but it's wrong.
+
+The question asks what number `"humn"` needs to yell to make `"root"`'s equality check pass.
+
+The "root" monkey depends on 2 other monkeys.
+Only one of those 2 can ever depend on "humn".
+The other one can be calculated using the helper from part1.
+
+### Helpers
+
+A function that determines if a monkey needs to know the "humn" number to calculate their number.
+
+Again, recurse if the monkey is a `Calculated` one.
+If either its `lhs` or `rhs` depend on "humn", it depends on "humn" too.
+
+```rust
+fn depends_on_human(name: &str, monkeys: &HashMap<&str, Monkey>) -> bool {
+    if name == "humn" {
+        return true;
+    }
+    match &monkeys[name] {
+        Monkey::Num(_) => false,
+        Monkey::Calculated(_, lhs, rhs) => {
+            depends_on_human(lhs, monkeys) || depends_on_human(rhs, monkeys)
+        }
+    }
+}
+```
+
+The next helper is a function that calculates the value a monkey should say, if the calculated `name` and the passed `value` should be equal.
+
+For example.
+If you pass in `"root"` and `10`.
+It will return the value `"humn"` should say in order for `"root"` to evaluate to `10`.
+
+This is done by first calculating the monkey (`lhs` or `rhs`) that doesn't depends on `"humn"` and evaluating it.
+Then reordering the equation the passed in (`name`) monkey does to solve for the only remaining unknown (the side that depends on `"humn"`).
+
+A different example:
+- Monkey with name `"aaa"` should have a value of `10`.
+- `"aaa"` is a `Calculated` monkey that adds `"bbb"` and `"ccc"`.
+- `"bbb"` evaluates to 4
+- `"ccc"` depends on `"humn"` and remains unknown.
+
+- `"aaa"` = `10`
+- `"aaa"` = `"bbb"` + `"ccc"`
+
+Plugging in the calculated number for `"aaa"`:
+- `10` = `"bbb"` + `"ccc`
+
+Plugging in the calculated number for `"bbb"`:
+- `10` = `4` + `"ccc`
+
+That means we can calculate what `"ccc"` has to be.
+- `"ccc"` = `10` - `4` = `6`
+
+```rust
+fn calc_human(name: &str, value: i64, monkeys: &HashMap<&str, Monkey>) -> i64 {
+    if name == "humn" {
+        return value;
+    }
+
+    match &monkeys[name] {
+        // never gets hit
+        Monkey::Num(n) => *n,
+        // reorder all operations to solve for unknown side
+        Monkey::Calculated(operator, lhs, rhs) => {
+            // lhs + rhs = value
+            // lhs - rhs = value
+            // lhs * rhs = value
+            // lhs / rhs = value
+            let (new_name, new_value) = if depends_on_human(lhs, monkeys) {
+                let rhs_num = calc_name(rhs, monkeys);
+                let new_value = match operator {
+                    // lhs = value - rhs
+                    Operator::Add => value - rhs_num,
+                    // lhs = value + rhs
+                    Operator::Sub => value + rhs_num,
+                    // lhs = value / rhs
+                    Operator::Mul => value / rhs_num,
+                    // lhs = value * rhs
+                    Operator::Div => value * rhs_num,
+                };
+                (lhs, new_value)
+            } else {
+                let lhs_num = calc_name(lhs, monkeys);
+                let new_value = match operator {
+                    // rhs = value - lhs
+                    Operator::Add => value - lhs_num,
+                    // rhs = lhs - value
+                    Operator::Sub => lhs_num - value,
+                    // rhs = value / lhs
+                    Operator::Mul => value / lhs_num,
+                    // rhs = lhs / value
+                    Operator::Div => lhs_num / value,
+                };
+                (rhs, new_value)
+            };
+
+            calc_human(new_name, new_value, monkeys)
+        }
+    }
+}
+```
+
+### Final code
+
+```rust title=day_21.rs
+pub fn part_2() -> i64 {
+    let input = std::fs::read_to_string("src/day21.txt").unwrap();
+    let monkeys = parse(&input);
+    // which side of the "tree" (hehe, a monkey tree) is "humn" in
+    let Monkey::Calculated(_, lhs, rhs) = &monkeys["root"] else {
+        panic!("root has to be a calculated monkey");
+    };
+
+    let (name, value) = if depends_on_human(lhs, &monkeys) {
+        let rhs_num = calc_name(rhs, &monkeys);
+        (lhs, rhs_num)
+    } else {
+        let lhs_num = calc_name(lhs, &monkeys);
+        (rhs, lhs_num)
+    };
+
+    calc_human(name, value, &monkeys)
+}
+```
+
+## Final code
+
+```rust title=day_21.rs numberLines
+use std::collections::HashMap;
+
+#[derive(Debug)]
+enum Monkey<'a> {
+    Num(i64),
+    // (operator, lhs, rhs)
+    Calculated(Operator, &'a str, &'a str),
+}
+
+#[derive(Debug)]
+enum Operator {
+    Add,
+    Sub,
+    Mul,
+    Div,
+}
+
+fn parse(input: &str) -> HashMap<&str, Monkey> {
+    input
+        .lines()
+        .map(|line| {
+            let (name, right) = line.split_once(": ").unwrap();
+            let monkey = match right.parse() {
+                Ok(n) => Monkey::Num(n),
+                Err(_) => {
+                    let mut iter = right.split_ascii_whitespace();
+                    let lhs = iter.next().unwrap();
+                    let operator = match iter.next().unwrap() {
+                        "+" => Operator::Add,
+                        "-" => Operator::Sub,
+                        "*" => Operator::Mul,
+                        "/" => Operator::Div,
+                        _ => panic!("Invalid math operator"),
+                    };
+                    let rhs = iter.next().unwrap();
+                    Monkey::Calculated(operator, lhs, rhs)
+                }
+            };
+
+            (name, monkey)
+        })
+        .collect()
+}
+
+fn calc_name(name: &str, monkeys: &HashMap<&str, Monkey>) -> i64 {
+    match &monkeys[name] {
+        Monkey::Num(n) => *n,
+        Monkey::Calculated(operator, lhs, rhs) => {
+            let lhs_num = calc_name(lhs, monkeys);
+            let rhs_num = calc_name(rhs, monkeys);
+            match operator {
+                Operator::Add => lhs_num + rhs_num,
+                Operator::Sub => lhs_num - rhs_num,
+                Operator::Mul => lhs_num * rhs_num,
+                Operator::Div => lhs_num / rhs_num,
+            }
+        }
+    }
+}
+
+fn depends_on_human(name: &str, monkeys: &HashMap<&str, Monkey>) -> bool {
+    if name == "humn" {
+        return true;
+    }
+    match &monkeys[name] {
+        Monkey::Num(_) => false,
+        Monkey::Calculated(_, lhs, rhs) => {
+            depends_on_human(lhs, monkeys) || depends_on_human(rhs, monkeys)
+        }
+    }
+}
+
+/// calc human assuming the evaluated name and the passed value are equal
+fn calc_human(name: &str, value: i64, monkeys: &HashMap<&str, Monkey>) -> i64 {
+    if name == "humn" {
+        return value;
+    }
+
+    match &monkeys[name] {
+        // never gets hit
+        Monkey::Num(n) => *n,
+        // reorder all operations to solve for unknown side
+        Monkey::Calculated(operator, lhs, rhs) => {
+            // lhs + rhs = value
+            // lhs - rhs = value
+            // lhs * rhs = value
+            // lhs / rhs = value
+            let (new_name, new_value) = if depends_on_human(lhs, monkeys) {
+                let rhs_num = calc_name(rhs, monkeys);
+                let new_value = match operator {
+                    // lhs = value - rhs
+                    Operator::Add => value - rhs_num,
+                    // lhs = value + rhs
+                    Operator::Sub => value + rhs_num,
+                    // lhs = value / rhs
+                    Operator::Mul => value / rhs_num,
+                    // lhs = value * rhs
+                    Operator::Div => value * rhs_num,
+                };
+                (lhs, new_value)
+            } else {
+                let lhs_num = calc_name(lhs, monkeys);
+                let new_value = match operator {
+                    // rhs = value - lhs
+                    Operator::Add => value - lhs_num,
+                    // rhs = lhs - value
+                    Operator::Sub => lhs_num - value,
+                    // rhs = value / lhs
+                    Operator::Mul => value / lhs_num,
+                    // rhs = lhs / value
+                    Operator::Div => lhs_num / value,
+                };
+                (rhs, new_value)
+            };
+
+            calc_human(new_name, new_value, monkeys)
+        }
+    }
+}
+
+pub fn part_1() -> i64 {
+    let input = std::fs::read_to_string("src/day21_sample.txt").unwrap();
+    let monkeys = parse(&input);
+
+    calc_name("root", &monkeys)
+}
+
+pub fn part_2() -> i64 {
+    let input = std::fs::read_to_string("src/day21.txt").unwrap();
+    let monkeys = parse(&input);
+    // which side of the "tree" (hehe, a monkey tree) is "humn" in
+    let Monkey::Calculated(_, lhs, rhs) = &monkeys["root"] else {
+        panic!("root has to be a calculated monkey");
+    };
+
+    let (name, value) = if depends_on_human(lhs, &monkeys) {
+        let rhs_num = calc_name(rhs, &monkeys);
+        (lhs, rhs_num)
+    } else {
+        let lhs_num = calc_name(lhs, &monkeys);
+        (rhs, lhs_num)
+    };
+
+    calc_human(name, value, &monkeys)
+}
+```

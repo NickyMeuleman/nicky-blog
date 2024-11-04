@@ -1,0 +1,180 @@
+---
+title: "Advent of Code 2015 Day 1"
+date: 2023-01-11
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2015"
+section: "garden"
+---
+## Day 1: Not Quite Lisp
+
+https://adventofcode.com/2015/day/1
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2015/src/day_01.rs)
+</Aside>
+
+Santa's weather machine's snow function is powered by stars.
+During Advent of Code, each puzzle solution rewards you with a star.
+Hooray, a convenient way to help.
+
+Santa's in an apartment building and has directions that tell him to go up or down 1 floor.
+
+- `(` go up one floor
+- `)` go down one floor
+
+An example input looks like this:
+
+```txt title=input.txt
+(()(()(
+```
+
+The building is very tall (and deep!), Santa will never reach the top (or bottom) floor.
+
+Santa starts at the ground floor (number `0`).
+
+## Part 1
+
+The question asks what floor Santa ends at after following the instructions.
+
+This asks to turn a sequence of something into a singular answer.
+
+Ideal for your favourite language's method that does that.
+Rust has [`fold`](https://doc.rust-lang.org/stable/std/iter/trait.Iterator.html#method.fold), JavaScript has [`reduce`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce).
+
+### Main code for part 1
+
+```rust title=day_01.rs
+pub fn part_1(input: &str) -> usize {
+    input.chars().fold(0, |floor, c| match c {
+        '(' => floor + 1,
+        ')' => floor - 1,
+        _ => panic!("invalid input"),
+    })
+}
+```
+
+## Part 2
+
+The question asks for the position of the first character that causes Santa to enter the basement.
+
+The basement starts at `-1`.
+
+<Aside variant="danger">
+On many days during Advent of Code puzzles ask for positions that start at 1, not 0!
+
+This is one of those days.
+</Aside>
+
+
+This was fun, I made 3 variants that do the same thing.
+
+### Old reliable
+
+A workhorse.
+A `for` loop.
+
+```rust
+let mut floor = 0;
+for (idx, c) in input.chars().enumerate() {
+    match c {
+        '(' => floor += 1,
+        ')' => floor -= 1,
+        _ => panic!("invalid input"),
+    }
+    if floor < 0 {
+        return idx + 1;
+    }
+}
+panic!("Santa never enters the basement");
+```
+
+### A short-circuiting fold.
+
+In other words, one that stops as soon as a condition is met.
+
+```rust
+input
+    .chars()
+    .enumerate()
+    .try_fold(0, |floor, (idx, c)| match c {
+        '(' => Ok(floor + 1),
+        ')' if floor > 0 => Ok(floor - 1),
+        ')' => Err(idx + 1),
+        _ => panic!("invalid input"),
+    })
+    .unwrap_err()
+```
+
+### My favourite
+
+And finally, my favourite, a solution that creates a sequence of the floor Santa is currently on.
+
+```rust
+input
+    .chars()
+    // create iterator where each item is the current floor Santa is on, starting at floor 0
+    .scan(0, |floor, c| {
+        match c {
+            '(' => *floor += 1,
+            ')' => *floor -= 1,
+            _ => panic!("invalid input"),
+        }
+        Some(*floor)
+    })
+    // find the first index where santa enters the basement
+    .position(|floor| floor < 0)
+    .unwrap()
+    + 1
+```
+
+### Main code for part 2
+
+```rust title=day_01.rs
+pub fn part_2(input: &str) -> usize {
+    input
+        .chars()
+        // create iterator where each item is the current floor Santa is on, starting at floor 0
+        .scan(0, |floor, c| {
+            match c {
+                '(' => *floor += 1,
+                ')' => *floor -= 1,
+                _ => panic!("invalid input"),
+            }
+            Some(*floor)
+        })
+        // find the first index where santa enters the basement
+        .position(|floor| floor < 0)
+        .unwrap()
+        + 1
+}
+```
+
+## Final code
+
+```rust title=day_01.rs numberLines
+pub fn part_1(input: &str) -> usize {
+    input.chars().fold(0, |floor, c| match c {
+        '(' => floor + 1,
+        ')' => floor - 1,
+        _ => panic!("invalid input"),
+    })
+}
+
+pub fn part_2(input: &str) -> usize {
+    input
+        .chars()
+        // create iterator where each item is the current floor Santa is on, starting at floor 0
+        .scan(0, |floor, c| {
+            match c {
+                '(' => *floor += 1,
+                ')' => *floor -= 1,
+                _ => panic!("invalid input"),
+            }
+            Some(*floor)
+        })
+        // find the first index where santa enters the basement
+        .position(|floor| floor < 0)
+        .unwrap()
+        + 1
+}
+```

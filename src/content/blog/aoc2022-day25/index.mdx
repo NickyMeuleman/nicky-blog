@@ -1,0 +1,172 @@
+---
+title: "Advent of Code 2022 Day 25"
+date: 2022-12-25
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+section: "garden"
+---
+## Day 25: Full of Hot Air
+
+https://adventofcode.com/2022/day/25
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_25.rs)
+</Aside>
+
+The expedition reached the last part, a trip to the north pole via hot air balloon!
+
+It is so cold on the mountain that the fuel needs to be pre-heated.
+A machine that does this needs to know the total amount to process before it will work.
+
+Today's input is the fuel requirements for each balloon, written in a weird number format.
+
+An example input looks like this:
+
+```txt title=input.txt
+1=-0-2
+12111
+2=0=
+21
+2=01
+111
+20012
+112
+1=-1=
+1-12
+12
+1=
+122
+```
+
+So the amount the machine (nicknamed "Bob") has to process is the sum of all those numbers.
+
+The numbers are in a format called SNAFU.
+
+It's similar to decimal.
+Where decimal is based on powers of 10, SNAFU is based on powers of 5.
+
+- In decimal, starting from the right, you have a ones place, a tens place, a hundreds place, ...
+- In SNAFU, starting from the right, you have a ones place, a fives place, a twenty-fives place, ... 
+
+The digits are similar too, with two weird ones, `-`, and `=`.
+
+| SNAFU | decimal |
+| --- | --- |
+| 0 | 0 |
+| 1 | 1 |
+| 2 | 2 |
+| - | -1 |
+| = | -2 |
+
+Some examples converting decimal to SNAFU:
+
+- 10 in decimal is two fives and no ones, in SNAFU it is written 20.
+- 8 in decimal iss two fives minus two ones, in SNAFU it is written 2=.
+
+And one in the other direction:
+
+For the SNAFU number 2=-01
+- `2` in the 625s place
+- `=` in the 125s place
+- `-` in the 25s place
+- `0` in the 5s place
+- `1` in the 1s place
+
+(2 * 625) + (-2 * 125) + (-1 * 25) + (0 * 5) + (1 * 1). 
+That's 1250 + -250 + -25 + 0 + 1.
+976
+
+## Part 1
+
+The question asks what the SNAFU number you have to supply to "Bob"'s console is.
+
+### Helpers
+
+A function that converts SNAFU string to a decimal number.
+
+With a running total that starts at 0:
+Look at a single SNAFU digit at a time, converting it to decimal.
+To get the new running total: multiply the current running total by 5 and add the converted digit.
+
+```rust
+fn to_decimal(snafu: &str) -> i64 {
+    snafu.chars().fold(0, |decimal, snafu_digit| {
+        let decimal_digit = ['=', '-', '0', '1', '2']
+            .into_iter()
+            .position(|c| c == snafu_digit)
+            .unwrap() as i64
+            - 2;
+        decimal * 5 + decimal_digit
+    })
+}
+```
+
+A function that converts a decimal number to a SNAFU string.
+
+Recursion!
+
+It calculates the last SNAFU digit and adds it the the end of all the other SNAFU digits.
+It does this by using that base 5/power of 5 property.
+Keeping into account SNAFU digits start at -2.
+
+```rust
+fn to_snafu(decimal: i64) -> String {
+    if decimal == 0 {
+        return String::new();
+    }
+
+    let decimal_remainder = decimal % 5;
+    let snafu_digit = ['0', '1', '2', '=', '-'][decimal_remainder as usize];
+
+    let new_decimal = (decimal + 2) / 5;
+    let mut snafu = to_snafu(new_decimal);
+    snafu.push(snafu_digit);
+
+    snafu
+}
+```
+
+Using those helpers, the final code:
+- Converts all input SNAFU numbers to decimal.
+- Sums all those decimal numbers.
+- Converts that decimal sum back to SNAFU.
+
+### Final code
+
+```rust title=day_25.rs numberLines
+pub fn part_1(input: &str) -> String {
+    let sum = input.lines().map(to_decimal).sum();
+    to_snafu(sum)
+}
+
+fn to_decimal(snafu: &str) -> i64 {
+    snafu.chars().fold(0, |decimal, snafu_digit| {
+        let decimal_digit = ['=', '-', '0', '1', '2']
+            .into_iter()
+            .position(|c| c == snafu_digit)
+            .unwrap() as i64
+            - 2;
+        decimal * 5 + decimal_digit
+    })
+}
+
+fn to_snafu(decimal: i64) -> String {
+    if decimal == 0 {
+        return String::new();
+    }
+
+    let new_decimal = (decimal + 2) / 5;
+    let mut snafu = to_snafu(new_decimal);
+
+    let decimal_remainder = decimal % 5;
+    let snafu_digit = ['0', '1', '2', '=', '-'][decimal_remainder as usize];
+    snafu.push(snafu_digit);
+
+    snafu
+}
+```
+
+## Part 2
+
+An Elf hands you a single star.
+Combined with the 49 you gathered on the expedition you make a smoothie and deliver it to the reindeer!

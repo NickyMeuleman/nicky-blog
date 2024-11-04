@@ -1,0 +1,756 @@
+---
+title: "Advent of Code 2022 Day 17"
+date: 2022-12-17
+updatedAt: 2022-12-31
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+section: "garden"
+---
+## Day 17: Pyroclastic Flow
+
+https://adventofcode.com/2022/day/17
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_17.rs)
+</Aside>
+
+You enter a tall, narrow chamber.
+Rocks start falling.
+
+For some reason, there's a loud [song playing](https://www.youtube.com/watch?v=NmCCQxVBfyM) in this room.
+Very mysterious stuff!
+I don't mind, it's a bop.
+
+The falling rocks have these shapes, where `#` is rock and `.` is air:
+```txt
+####
+
+.#.
+###
+.#.
+
+..#
+..#
+###
+
+#
+#
+#
+#
+
+##
+##
+```
+
+The "pieces" fall in that order, wrapping when the end of that list of 5 pieces is reached.
+
+Jets of steam push around the rocks as they fall.
+
+Today's puzzle input is the sequence of directions the pieces will be pushed in.
+
+An example input looks like this:
+
+```txt title=input.txt
+>>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>
+```
+
+- `<` means a jet of air that blows a piece left
+- `>` means a jet of air that blows a piece right
+
+As with the pieces, if the end of the list is reached, it repeats.
+
+The chamber is exactly seven units wide.
+
+Each piece appears so that its left edge is two units away from the left wall and its bottom edge is three units above the highest rock in the room (or the floor, if there isn't one).
+
+After a piece appears, it alternates between being pushed by a jet of hot gas one unit and falling down one unit.
+If a movement would cause the piece to move into the walls, the floor, or an other piece, that movement doesn't happen.
+When a piece is prevented from falling, a new piece immediately begins falling.
+
+## Parsing
+
+The jets are an instance of a `Jet` enum that's `Left` or `Right`.
+The input is a list of them.
+
+```rust title=day_17.rs
+enum Jet {
+    Left,
+    Right,
+}
+
+fn parse(input: &str) -> Vec<Jet> {
+    input
+        .trim()
+        .chars()
+        .map(|c| match c {
+            '<' => Jet::Left,
+            '>' => Jet::Right,
+            _ => panic!("invalid input, {}", c),
+        })
+        .collect()
+}
+```
+
+I'm also counting getting those pieces into useful data structure as parsing today.
+Oh, and I'm also storing the width of the chamber in a constant.
+
+I chose to represent the pieces as a series of point offsets to a point.
+
+Point? You know what that means, `Coord` is back for an other appearance!
+
+Each `Coord` offset represents a rock in the piece.
+
+```rust
+#[derive(Debug, PartialEq, Default)]
+struct Coord {
+    x: usize,
+    // positive y goes up.
+    // happy mathematicians, sad game programmers
+    y: usize,
+}
+
+const WIDTH: usize = 7;
+const PIECES: [&[Coord]; 5] = [
+    // horizontal line
+    &[
+        Coord { x: 0, y: 0 },
+        Coord { x: 1, y: 0 },
+        Coord { x: 2, y: 0 },
+        Coord { x: 3, y: 0 },
+    ],
+    // plus
+    &[
+        Coord { x: 0, y: 1 },
+        Coord { x: 1, y: 0 },
+        Coord { x: 1, y: 1 },
+        Coord { x: 1, y: 2 },
+        Coord { x: 2, y: 1 },
+    ],
+    // J (or backwards L)
+    &[
+        Coord { x: 0, y: 0 },
+        Coord { x: 1, y: 0 },
+        Coord { x: 2, y: 0 },
+        Coord { x: 2, y: 1 },
+        Coord { x: 2, y: 2 },
+    ],
+    // vertical line
+    &[
+        Coord { x: 0, y: 0 },
+        Coord { x: 0, y: 1 },
+        Coord { x: 0, y: 2 },
+        Coord { x: 0, y: 3 },
+    ],
+    // square
+    &[
+        Coord { x: 0, y: 0 },
+        Coord { x: 1, y: 0 },
+        Coord { x: 0, y: 1 },
+        Coord { x: 1, y: 1 },
+    ],
+];
+```
+
+## Part 1
+
+The question asks how tall the tower of rocks will be when 2022 pieces stopped falling.
+
+The instructions in pseudocode:
+```rust title=pseudocode.rs
+let jets = parse(input);
+
+let mut pieces_count = 0;
+let mut top = 0;
+
+while pieces_count != 2022 {
+    // choose new piece to start dropping
+    // set current coordinate all offsets in a piece are related to as x: 2, y: top + 3
+    loop {
+        // get new jet direction
+        // apply jet (update current coordinate if successful)
+        // try to fall (update current coordinate if successful)
+        // if not successful: break out of loop
+    }
+    // settle the current piece, add all offsets to the map of settled pieces
+    // update the highest rock coordinate and store it in "top"
+    pieces_count += 1;
+}
+top
+```
+
+I grouped a couple of variables to keep track of the state of the chamber in a struct:
+```rust
+#[derive(Default)]
+struct State {
+    jet_count: usize,
+    piece_count: usize,
+    top: usize,
+    map: Vec<[bool; WIDTH]>,
+    curr: Coord,
+}
+```
+
+At the start of the simulation, every number starts at 0, and the map is empty.
+
+- `jet_count` is a number to keep track of how many jets in total have blown.
+- `piece_count` is a number to keep track of how many pieces in total have started falling.
+- `top` is a number to keep track of how tall the tower currently is
+- `map` is a list of 7 wide boolean arrays, each keeping track of where settled rocks are at that height.
+- `curr` is the coordinate pair where the offsets of a piece will apply to in order to figure out where the rocks of a piece are.
+
+When a piece stops falling, it is added to the `map` list.
+
+### Helpers
+
+A helper to determine given a new `curr` coordinate, if the state using that as `curr` would be valid.
+
+```rust
+impl State {
+    fn is_valid(&mut self, new_curr: &Coord, piece: &[Coord]) -> bool {
+        piece.iter().all(|offset| {
+            let x = new_curr.x + offset.x;
+            let y = new_curr.y + offset.y;
+            while self.map.len() <= y {
+                self.map.push([false; WIDTH]);
+            }
+            x < WIDTH && !self.map[y][x]
+        })
+    }
+}
+```
+
+The only wall collision that is checked is the one with the right wall.
+This is because a `Coord` has fields that can only ever be 0 or greater
+
+Collisions with other pieces are checked by indexing into `map` and seeing if a rock is there.
+
+<Aside variant="info">
+`piece` is passed into this method as a convenience.
+It could have been derived from the current `State` like so:
+`let piece = PIECES[self.piece_count % PIECES.len()];`
+
+That `while` loop exists to make sure we never index the `map` at an index that doesn't exist yet.
+If it doesn't exist, that means there are no rocks at that location.
+</Aside>
+
+Because this was a finnicky problem to get right, I implemented `Display` so I could print out the state of the chamber.
+
+This takes the list of booleans in `map` and turns them into:
+- `#` for `true`
+- `.` for `false`
+
+It then creates empty rows to fit the current piece if necessary.
+For every offset in the current piece, it adds a `@` to that map.
+
+That map is then printed to the screen with `|` on the sides or each row.
+And at the bottom, a `+-----+`, just like the examples in the question!
+
+That way, in the solution code I can pop in a `println!("{}", state);` and see the same output as in the question text.
+
+This was an awesome tool for finding off by one errors (and there were a lot of those)
+
+```rust
+impl Display for State {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let piece = PIECES[self.piece_count % PIECES.len()];
+        let mut print: Vec<Vec<_>> = self
+            .map
+            .iter()
+            .map(|row| {
+                row.iter()
+                    .map(|rock| if *rock { '#' } else { '.' })
+                    .collect()
+            })
+            .collect();
+        let mut local_top = self.top;
+        for offset in piece {
+            let x = self.curr.x + offset.x;
+            let y = self.curr.y + offset.y;
+            while print.len() <= y {
+                print.push(vec!['.'; WIDTH]);
+            }
+            print[y][x] = '@';
+            local_top = local_top.max(y + 1);
+        }
+        for row in (0..local_top).rev() {
+            let mut row_str = String::from('|');
+            for col in 0..7 {
+                row_str.push(print[row][col]);
+            }
+            row_str.push('|');
+            row_str.push('\n');
+            write!(f, "{}", row_str)?;
+        }
+        writeln!(f, "+{}+", "-".repeat(WIDTH))
+    }
+}
+```
+
+The code for part1 has the locations where that printing of the state is used commented out.
+
+### Final code
+
+```rust title=day_17.rs
+pub fn part_1(input: &str) -> usize {
+    let target = 2022;
+    let jets = parse(input);
+    let mut state = State::default();
+
+    while state.piece_count != target {
+        // new piece starts falling
+        let piece = PIECES[state.piece_count % PIECES.len()];
+        state.curr.x = 2;
+        state.curr.y = state.top + 3;
+
+        // println!("== Piece {} begins falling ==", state.piece_count + 1);
+        // println!("{}", state);
+
+        loop {
+            // jet
+            let jet = &jets[state.jet_count % jets.len()];
+            let new_curr = match jet {
+                Jet::Left => Coord {
+                    x: state.curr.x.saturating_sub(1),
+                    y: state.curr.y,
+                },
+                Jet::Right => Coord {
+                    x: state.curr.x + 1,
+                    y: state.curr.y,
+                },
+            };
+            if state.is_valid(&new_curr, piece) {
+                state.curr = new_curr;
+            }
+            state.jet_count += 1;
+
+            // println!(
+            //     "Jet of gas pushes piece {}:",
+            //     match jet {
+            //         Jet::Left => "left",
+            //         Jet::Right => "right",
+            //     }
+            // );
+            // println!("{}", state);
+
+            // fall
+            let new_curr = Coord {
+                x: state.curr.x,
+                y: state.curr.y.saturating_sub(1),
+            };
+            if state.curr.y == 0 || !state.is_valid(&new_curr, piece) {
+                break;
+            }
+            state.curr = new_curr;
+
+            // println!("Piece falls 1 unit:");
+            // println!("{}", state);
+        }
+
+        // settle
+        for offset in piece {
+            let x = state.curr.x + offset.x;
+            let y = state.curr.y + offset.y;
+            while state.map.len() <= y {
+                state.map.push([false; WIDTH]);
+            }
+            state.map[y][x] = true;
+            // y is 0 indexed.
+            state.top = state.top.max(y + 1);
+        }
+
+        // prepare for next iteration of while loop
+        state.piece_count += 1;
+    }
+
+    state.top
+}
+```
+
+## Part 2
+
+The elephants with you are not impressed.
+They would like to know how tall the tower will be after `1000000000000` pieces have stopped.
+
+That's a lot of zeros.
+A trillion rocks! Must be quite a high chamber, eh?
+
+The question asks how tall the tower of rocks will be when `1000000000000` pieces stopped falling.
+
+Changing the `2022` to a trillion in the code above would provide a correct answer.
+The only question is, am I willing to wait the time it takes to complete?
+
+The answer is no.
+Luckily, there is a pattern in the dropped rocks that repeats.
+
+Part 2 is about finding that repetition and fast forwarding as close to that trillion as possible.
+
+To help with that, a few extra fields for the `State` struct:
+
+```rust hl=8,9
+#[derive(Default)]
+struct State {
+    jet_count: usize,
+    piece_count: usize,
+    top: usize,
+    map: Vec<[bool; WIDTH]>,
+    curr: Coord,
+    seen: HashMap<(usize, usize), (usize, usize, usize)>,
+    added_by_repeats: usize,
+}
+```
+
+A `seen` key is a combination of the index into `PIECES` and the index into `jets`.
+
+A cycle can only be detected the third time we encounter such a pair though.
+
+This is because some of the first pieces will have hit the floor.
+By the time a combination of `pieces_idx, jets_idx` comes around again, the fallen blocks only interact with other blocks when falling.
+That is the first repeatable cycle.
+
+The `seen` values are:
+1. A counter of how many times a key was seen
+2. The `pieces_count` at that time
+3. The `top` at that time
+
+Using those 2 last pieces of information, the difference in `top` between now and the previous time we encountered a `(pieces_idx, jet_idx)` pair can be calculated.
+We fast forward as much times as we can without hitting the trillion.
+The increase in `top` that would have caused is stored in `amount_added`.
+
+The remaining amount to the trillion is simulated as before.
+
+
+### Final code
+
+```rust title=day_17.rs
+pub fn part_2(input: &str) -> usize {
+    let target = 1_000_000_000_000;
+    let jets = parse(input);
+    let mut state = State::default();
+
+    while state.piece_count != target {
+        // new piece starts falling
+        let piece = PIECES[state.piece_count % PIECES.len()];
+        state.curr.x = 2;
+        state.curr.y = state.top + 3;
+
+        loop {
+            // jet
+            let jet = &jets[state.jet_count % jets.len()];
+            let new_curr = match jet {
+                Jet::Left => Coord {
+                    x: state.curr.x.saturating_sub(1),
+                    y: state.curr.y,
+                },
+                Jet::Right => Coord {
+                    x: state.curr.x + 1,
+                    y: state.curr.y,
+                },
+            };
+            if state.is_valid(&new_curr, piece) {
+                state.curr = new_curr;
+            }
+            state.jet_count += 1;
+
+            // fall
+            let new_curr = Coord {
+                x: state.curr.x,
+                y: state.curr.y.saturating_sub(1),
+            };
+            if state.curr.y == 0 || !state.is_valid(&new_curr, piece) {
+                break;
+            }
+            state.curr = new_curr;
+        }
+
+        // settle
+        for offset in piece {
+            let x = state.curr.x + offset.x;
+            let y = state.curr.y + offset.y;
+            while state.map.len() <= y {
+                state.map.push([false; WIDTH]);
+            }
+            state.map[y][x] = true;
+            // y is 0 indexed
+            state.top = state.top.max(y + 1);
+        }
+
+        // look for cycle
+        if state.added_by_repeats == 0 {
+            let key = (
+                state.piece_count % PIECES.len(),
+                state.jet_count % jets.len(),
+            );
+            // at third occurrence of key, the values in the seen map repeat
+            // add as many of them as possible without hitting the goal piece_count
+            if let Some((2, old_piece_count, old_top)) = state.seen.get(&key) {
+                let delta_top = state.top - old_top;
+                let delta_piece_count = state.piece_count - old_piece_count;
+                let repeats = (target - state.piece_count) / delta_piece_count;
+                state.added_by_repeats += repeats * delta_top;
+                state.piece_count += repeats * delta_piece_count;
+            }
+            // update seen map
+            // key: (piece_count % PIECES.len(), jet_count % jets.len())
+            // value: (amount_of_times_key_was_seen, piece_count, top)
+            state
+                .seen
+                .entry(key)
+                .and_modify(|(amnt, old_piece_count, old_top)| {
+                    *amnt += 1;
+                    *old_piece_count = state.piece_count;
+                    *old_top = state.top;
+                })
+                .or_insert((1, state.piece_count, state.top));
+        }
+
+        // prepare for next iteration of while loop
+        state.piece_count += 1;
+    }
+
+    state.top + state.added_by_repeats
+}
+```
+
+I then made a method with that logic to reuse it between part 1 and part 2.
+
+## Final code
+
+```rust title=day_17.rs numberLines
+use std::{collections::HashMap, fmt::Display};
+
+const WIDTH: usize = 7;
+const PIECES: [&[Coord]; 5] = [
+    // horizontal line
+    &[
+        Coord { x: 0, y: 0 },
+        Coord { x: 1, y: 0 },
+        Coord { x: 2, y: 0 },
+        Coord { x: 3, y: 0 },
+    ],
+    // plus
+    &[
+        Coord { x: 0, y: 1 },
+        Coord { x: 1, y: 0 },
+        Coord { x: 1, y: 1 },
+        Coord { x: 1, y: 2 },
+        Coord { x: 2, y: 1 },
+    ],
+    // J (or backwards L)
+    &[
+        Coord { x: 0, y: 0 },
+        Coord { x: 1, y: 0 },
+        Coord { x: 2, y: 0 },
+        Coord { x: 2, y: 1 },
+        Coord { x: 2, y: 2 },
+    ],
+    // vertical line
+    &[
+        Coord { x: 0, y: 0 },
+        Coord { x: 0, y: 1 },
+        Coord { x: 0, y: 2 },
+        Coord { x: 0, y: 3 },
+    ],
+    // square
+    &[
+        Coord { x: 0, y: 0 },
+        Coord { x: 1, y: 0 },
+        Coord { x: 0, y: 1 },
+        Coord { x: 1, y: 1 },
+    ],
+];
+
+enum Jet {
+    Left,
+    Right,
+}
+
+#[derive(Debug, PartialEq, Default)]
+struct Coord {
+    x: usize,
+    // positive y goes up.
+    // happy mathematicians, sad game programmers
+    y: usize,
+}
+
+#[derive(Default)]
+struct State {
+    jet_count: usize,
+    piece_count: usize,
+    top: usize,
+    map: Vec<[bool; WIDTH]>,
+    curr: Coord,
+    added_by_repeats: usize,
+    seen: HashMap<(usize, usize), (usize, usize, usize)>,
+}
+
+impl State {
+    fn is_valid(&mut self, new_curr: &Coord, piece: &[Coord]) -> bool {
+        piece.iter().all(|offset| {
+            let x = new_curr.x + offset.x;
+            let y = new_curr.y + offset.y;
+            while self.map.len() <= y {
+                self.map.push([false; WIDTH]);
+            }
+            x < WIDTH && !self.map[y][x]
+        })
+    }
+
+    fn simulate(&mut self, target: usize, jets: Vec<Jet>) {
+        while self.piece_count != target {
+            // new piece starts falling
+            let piece = PIECES[self.piece_count % PIECES.len()];
+            self.curr.x = 2;
+            self.curr.y = self.top + 3;
+
+            // println!("== Piece {} begins falling ==", state.piece_count + 1);
+            // println!("{}", state);
+
+            loop {
+                // jet
+                let jet = &jets[self.jet_count % jets.len()];
+                let new_curr = match jet {
+                    Jet::Left => Coord {
+                        x: self.curr.x.saturating_sub(1),
+                        y: self.curr.y,
+                    },
+                    Jet::Right => Coord {
+                        x: self.curr.x + 1,
+                        y: self.curr.y,
+                    },
+                };
+                if self.is_valid(&new_curr, piece) {
+                    self.curr = new_curr;
+                }
+                self.jet_count += 1;
+
+                // println!(
+                //     "Jet of gas pushes piece {}:",
+                //     match jet {
+                //         Jet::Left => "left",
+                //         Jet::Right => "right",
+                //     }
+                // );
+                // println!("{}", state);
+
+                // fall
+                let new_curr = Coord {
+                    x: self.curr.x,
+                    y: self.curr.y.saturating_sub(1),
+                };
+                if self.curr.y == 0 || !self.is_valid(&new_curr, piece) {
+                    break;
+                }
+                self.curr = new_curr;
+
+                // println!("Piece falls 1 unit:");
+                // println!("{}", state);
+            }
+
+            // settle
+            for offset in piece {
+                let x = self.curr.x + offset.x;
+                let y = self.curr.y + offset.y;
+                while self.map.len() <= y {
+                    self.map.push([false; WIDTH]);
+                }
+                self.map[y][x] = true;
+                // y is 0 indexed
+                self.top = self.top.max(y + 1);
+            }
+
+            // look for cycle
+            if self.added_by_repeats == 0 {
+                let key = (self.piece_count % PIECES.len(), self.jet_count % jets.len());
+                // at third occurrence of key, the values in the seen map repeat
+                // add as many of them as possible without hitting the goal piece_count
+                if let Some((2, old_piece_count, old_top)) = self.seen.get(&key) {
+                    let delta_top = self.top - old_top;
+                    let delta_piece_count = self.piece_count - old_piece_count;
+                    let repeats = (target - self.piece_count) / delta_piece_count;
+                    self.added_by_repeats += repeats * delta_top;
+                    self.piece_count += repeats * delta_piece_count;
+                }
+                // update seen map
+                // key: (piece_count % PIECES.len(), jet_count % jets.len())
+                // value: (amount_of_times_key_was_seen, piece_count, top)
+                self.seen
+                    .entry(key)
+                    .and_modify(|(amnt, old_piece_count, old_top)| {
+                        *amnt += 1;
+                        *old_piece_count = self.piece_count;
+                        *old_top = self.top;
+                    })
+                    .or_insert((1, self.piece_count, self.top));
+            }
+
+            // prepare for next iteration of while loop
+            self.piece_count += 1;
+        }
+    }
+}
+
+impl Display for State {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let piece = PIECES[self.piece_count % PIECES.len()];
+        let mut print: Vec<Vec<_>> = self
+            .map
+            .iter()
+            .map(|row| {
+                row.iter()
+                    .map(|rock| if *rock { '#' } else { '.' })
+                    .collect()
+            })
+            .collect();
+        let mut local_top = self.top;
+        for offset in piece {
+            let x = self.curr.x + offset.x;
+            let y = self.curr.y + offset.y;
+            while print.len() <= y {
+                print.push(vec!['.'; WIDTH]);
+            }
+            print[y][x] = '@';
+            local_top = local_top.max(y + 1);
+        }
+        for row in (0..local_top).rev() {
+            let mut row_str = String::from('|');
+            for col in 0..7 {
+                row_str.push(print[row][col]);
+            }
+            row_str.push('|');
+            row_str.push('\n');
+            write!(f, "{}", row_str)?;
+        }
+        writeln!(f, "+{}+", "-".repeat(WIDTH))
+    }
+}
+
+fn parse(input: &str) -> Vec<Jet> {
+    input
+        .trim()
+        .chars()
+        .map(|c| match c {
+            '<' => Jet::Left,
+            '>' => Jet::Right,
+            _ => panic!("invalid input, {}", c),
+        })
+        .collect()
+}
+
+pub fn part_1(input: &str) -> usize {
+    let target = 2022;
+    let jets = parse(input);
+    let mut state = State::default();
+    state.simulate(target, jets);
+
+    state.top + state.added_by_repeats
+}
+
+pub fn part_2(input: &str) -> usize {
+    let target = 1_000_000_000_000;
+    let jets = parse(input);
+    let mut state = State::default();
+    state.simulate(target, jets);
+
+    state.top + state.added_by_repeats
+}
+```

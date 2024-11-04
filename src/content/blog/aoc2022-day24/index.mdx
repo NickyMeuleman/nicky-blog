@@ -1,0 +1,1058 @@
+---
+title: "Advent of Code 2022 Day 24"
+date: 2022-12-24
+updatedAt: 2022-12-26
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+section: "garden"
+---
+## Day 24: Blizzard Basin
+
+https://adventofcode.com/2022/day/24
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_24.rs)
+</Aside>
+
+The expeditions needs to cross a valley that's full of strong blizzards.
+
+Today's input is the starting state of the valley.
+
+An example input looks like this:
+
+```txt title=input.txt
+#.######
+#>>.<^<#
+#.<..<<#
+#>v.><>#
+#<^v^^>#
+######.#
+```
+
+The valley is surrounded by walls (marked as `#`).
+On the perimeter, only the entrance at the top, and the exit at the bottom are not walls.
+
+A flat ground spot without a blizzard is marked with a `.`.
+A flat ground spot with a blizzard is marked with an arrow:
+- `<` for a blizzard that moves left
+- `>` for a blizzard that moves right
+- `^` for a blizzard that moves up
+- `>` for a blizzard that moves down
+
+In one minute, each blizzard moves one position.
+When a blizzard would move into a wall, it appears on the other side of the map (they're Pacman blizzards or something, I don't know).
+
+Blizzards can move through each other.
+
+Consider this line of blizzards, moving 1 step each minute:
+1. `>.<`
+2. `.2.`
+3. `<.>`
+The two blizzards occupied the same spot for a minute!.
+
+You start at the entrance and want to reach the exit of the valley.
+
+Each minute:
+1. You can move one position in the 4 directions (up, right, down, left).
+2. You can choose not to move.
+
+You can never share a position with a blizzard.
+
+You and the blizzards move at the same time.
+
+That means that in a turn you can go to the right while a blizzard that was there can go to the left.
+You and the blizzard effectively swap positions.
+
+Consider this state, where you are represented as `E` (for Elf, because they're coming too!):
+1. `E<`
+2. `<E`
+
+That's a valid move.
+You go right, and the left-moving blizzard moved left.
+
+## Parsing
+
+A 2D grid?
+If you have been following along, you know what that means, `Coord`!
+
+I stored the original state of the input by keeping track of 3 things:
+1. The coordinates of walls
+2. The coordinates and directions of blizzards
+3. The size bounds of the rectangular grid
+
+```rust title=day_24.rs
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+struct Coord {
+    row: usize,
+    col: usize,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum Tile {
+    Wall,
+    Blizzard(Direction),
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+enum Direction {
+    Up,
+    Right,
+    Down,
+    Left,
+}
+
+fn parse(input: &str) -> (HashMap<Coord, Tile>, usize, usize) {
+    let mut map = HashMap::new();
+
+    let rows = input.lines().count();
+    let cols = input.lines().next().unwrap().chars().count();
+
+    for (row, line) in input.lines().enumerate() {
+        for (col, c) in line.chars().enumerate() {
+            if c == '.' {
+                continue;
+            }
+            let coord = Coord { row, col };
+            let tile = match c {
+                '#' => Tile::Wall,
+                '^' => Tile::Blizzard(Direction::Up),
+                'v' => Tile::Blizzard(Direction::Down),
+                '<' => Tile::Blizzard(Direction::Left),
+                '>' => Tile::Blizzard(Direction::Right),
+                _ => panic!("invalid input"),
+            };
+            map.insert(coord, tile);
+        }
+    }
+    (map, rows, cols)
+}
+```
+
+## Part 1
+
+The question asks what the shortest time you can reach the goal while avoiding the blizzards is.
+
+This is a shortest path graph question, so I'm going with [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) again.
+
+Before I fill it in, some skeleton code:
+
+```rust title=pseudocode.rs
+let (map, rows, cols) = parse(input);
+
+// start in the top row, in the top column
+let start = Coord { row: 0, col: 1 };
+// end in the bottom row, one from the last column (-1 because rows and cols are the lengths, not indexes)
+let end = Coord {
+    row: rows - 1,
+    col: cols - 2,
+};
+
+let mut pq = BinaryHeap::new();
+// backtracking is allowed, keep track of visited coords at a certain time
+let mut seen = HashSet::new();
+
+// insert starting node into priority queue
+// insert (starting_coord, 0) into seen set
+
+// keep stepping through time until the priority queue is empty
+while let Some(Node { cost, pos }) = pq.pop() {
+    // did we pop a node that's at the target position? It's guaranteed to be the shortest path
+    if pos == end {
+        return cost;
+    }
+
+    // each step is one minute
+    let new_cost = cost + 1;
+
+    let candidates = pos
+        // moving to a neighbour is an option
+        .neighbours()
+        // not moving is an option
+        .chain(pos)
+        // can not share a coordinate with a wall
+        .filter(|coord| !walls.contains(coord))
+        // can not share a coordinate with a blizzard
+        .filter(|coord| !blizzards.contains(coord));
+
+    for new_pos in candidates {
+        // only push to pq if we didn't already see that coord at the same time
+        if seen.insert((new_pos, new_cost)) {
+            pq.push(Node {
+                cost: new_cost,
+                pos: new_pos,
+            });
+        }
+    }
+}
+
+// if this part is reached, there is no path through the blizzard
+usize::MAX
+```
+
+### Helpers
+
+The `Node` that goes into the priority queue.
+Sorted so `Node`s with the lowest cost get popped off the queue first.
+
+```rust
+#[derive(PartialEq, Eq)]
+struct Node {
+    cost: usize,
+    pos: Coord,
+}
+
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+```
+
+The `neighbours` method on `Coord` takes into account the bounds of the map.
+
+```rust
+impl Coord {
+    fn neighbours(&self, rows: usize, cols: usize) -> Vec<Self> {
+        use Direction::*;
+        let mut neighbours = Vec::new();
+        if self.row > 0 {
+            neighbours.push(self.add_dir(&Up));
+        }
+        if self.col < cols - 1 {
+            neighbours.push(self.add_dir(&Right));
+        }
+        if self.row < rows - 1 {
+            neighbours.push(self.add_dir(&Down));
+        }
+        if self.col > 0 {
+            neighbours.push(self.add_dir(&Left));
+        }
+        neighbours
+    }
+
+    fn add_dir(&self, dir: &Direction) -> Self {
+        use Direction::*;
+        match dir {
+            Up => Coord {
+                row: self.row - 1,
+                col: self.col,
+            },
+            Right => Coord {
+                row: self.row,
+                col: self.col + 1,
+            },
+            Down => Coord {
+                row: self.row + 1,
+                col: self.col,
+            },
+            Left => Coord {
+                row: self.row,
+                col: self.col - 1,
+            },
+        }
+    }
+}
+```
+
+The `add_dir` method is useful too when moving a blizzard in a `Direction`.
+
+Getting the set of walls so the pseudocode where we check if there's a wall at a coordinate is fairly straightforward.
+
+```rust
+let walls: HashSet<Coord> = map
+        .iter()
+        .filter(|(_, tile)| **tile == Tile::Wall)
+        .map(|(pos, _)| *pos)
+        .collect();
+
+// later
+walls.contains(coord);
+```
+
+Getting the set of blizzard coordinates is trickier.
+They're dependant on the time.
+We get their coordinates at time `0`, and their directions.
+Combined with the wrapping rules they can be simulated for every time.
+
+Luckily, the blizzard positions repeat:
+- The horizontal ones repeat every `cols - 2` turns.
+- The vertical ones repeat every `rows - 2` turns.
+
+(the -2 because we are considering the inner field, without the walls)
+
+So the entire map of blizzard coordinates repeats every least common multiple of those 2 numbers.
+
+This means we can compute all possible blizzard positions ahead of time.
+We run a simulation for "least common multiple" amount of minutes, and record the blizzard coordinates at every minute.
+
+Some mathy helper functions to first find the greatest common divisor, and then the least common multiple.
+
+```rust
+fn lcm(first: usize, second: usize) -> usize {
+    first * second / gcd(first, second)
+}
+
+fn gcd(first: usize, second: usize) -> usize {
+    let mut max = first;
+    let mut min = second;
+    if min > max {
+        std::mem::swap(&mut max, &mut min);
+    }
+
+    loop {
+        let res = max % min;
+        if res == 0 {
+            return min;
+        }
+
+        max = min;
+        min = res;
+    }
+}
+```
+
+A helper that given the original state, records the blizzard coordinates of every minute increment.
+It does this for `max_time` minutes.
+The blizzard position maps repeat after `lcm` minutes, so in the solution we pass in `lcm` as an argument to this function:
+
+```rust
+fn bliz_maps(
+    map: &HashMap<Coord, Tile>,
+    rows: usize,
+    cols: usize,
+    max_time: usize,
+) -> HashMap<usize, HashSet<Coord>> {
+    // key: turn, val: set of a bliz locations
+    let mut cache = HashMap::new();
+
+    let mut blizzards: Vec<(Coord, Direction)> = map
+        .iter()
+        .filter_map(|(pos, tile)| match tile {
+            Tile::Wall => None,
+            Tile::Blizzard(dir) => Some((*pos, *dir)),
+        })
+        .collect();
+
+    let coords = blizzards.iter().map(|(coord, _)| *coord).collect();
+    cache.insert(0, coords);
+
+    // precompute every blizzard coord at every time before the coords repeat
+    for time in 1..max_time {
+        for (coord, dir) in blizzards.iter_mut() {
+            *coord = coord.add_dir(dir);
+            // if next coord went to an edge, wrap
+            match dir {
+                Direction::Left => {
+                    if coord.col == 0 {
+                        coord.col = cols - 2;
+                    }
+                }
+                Direction::Right => {
+                    if coord.col == cols - 1 {
+                        coord.col = 1;
+                    }
+                }
+                Direction::Up => {
+                    if coord.row == 0 {
+                        coord.row = rows - 2;
+                    }
+                }
+                Direction::Down => {
+                    if coord.row == rows - 1 {
+                        coord.row = 1;
+                    }
+                }
+            }
+        }
+        let coords = blizzards.iter().map(|(coord, _)| *coord).collect();
+        cache.insert(time, coords);
+    }
+
+    cache
+}
+```
+
+Later, we can access the blizzards at any specific time.
+By looking up the remainder of a division with `lcm` in the map.
+
+```rust
+// lcm of inner area without the walls. patterns repeat every lcm steps
+let lcm = lcm(rows - 2, cols - 2);
+let blizzard_maps = bliz_maps(&map, rows, cols, lcm);
+
+// later, in the while loop
+let blizzards = &blizzard_maps[&(new_cost % lcm)];
+```
+
+Then the check in that pseudocode works, as `blizzards` is a `HashSet<Coord>`:
+`blizzards.contains(coord)`
+
+### Final code
+
+```rust title=day_24.rs
+pub fn part_1(input: &str) -> usize {
+    let (map, rows, cols) = parse(input);
+
+    let walls: HashSet<Coord> = map
+        .iter()
+        .filter(|(_, tile)| **tile == Tile::Wall)
+        .map(|(pos, _)| *pos)
+        .collect();
+    // lcm of inner area without the walls. patterns repeat every lcm steps
+    let lcm = lcm(rows - 2, cols - 2);
+    let blizzard_maps = bliz_maps(&map, rows, cols, lcm);
+    let start = Coord { row: 0, col: 1 };
+    let end = Coord {
+        row: rows - 1,
+        col: cols - 2,
+    };
+
+    let mut pq = BinaryHeap::new();
+    // backtracking is allowed, keep track of visited coords at a certain time
+    let mut seen = HashSet::new();
+
+    pq.push(Node {
+        cost: 0,
+        pos: start,
+    });
+    seen.insert((start, 0));
+
+    // keep stepping through time until the priority queue is empty
+    while let Some(Node { cost, pos }) = pq.pop() {
+        // did we pop a node that's at the target position? It's guaranteed to be the shortest path
+        if pos == end {
+            return cost;
+        }
+
+        let new_cost = cost + 1;
+        let blizzards = &blizzard_maps[&(new_cost % lcm)];
+
+        let candidates = pos
+            // moving to a neighbour is an option
+            .neighbours(rows, cols)
+            .into_iter()
+            // not moving is an option
+            .chain(iter::once(pos))
+            // can not share a coordinate with a wall
+            .filter(|coord| !walls.contains(coord))
+            // can not share a coordinate with a blizzard
+            .filter(|coord| !blizzards.contains(coord));
+
+        for new_pos in candidates {
+            // only push to pq if we didn't already see that coord at the same time
+            if seen.insert((new_pos, new_cost)) {
+                pq.push(Node {
+                    cost: new_cost,
+                    pos: new_pos,
+                });
+            }
+        }
+    }
+
+    usize::MAX
+}
+```
+
+## Part 2
+
+The minute you reach the goal, an Elf tells you they forgot their snacks at the starting point.
+You go through the blizzard again, then back to the end.
+
+This reminds me of that Lord of the Rings book, but with one extra journey.
+[There and back again. (then there again)](https://www.reddit.com/r/adventofcode/comments/zv8m1k/2022_day_24_part_2_lord_of_the_elves/)
+
+The question asks what the smallest numberof minutes is to travel from start to goal, back to start, back to goal.
+
+Because of the moving blizzards, the return journey will **not** be the same as the initial journey.
+
+I made the part with the Dijkstra algorithm a seperate function.
+It also takes an argument for the starting time of the search.
+
+For part1, the starting time was 0.
+
+1. For the first start-end trip: starting time is still 0
+2. For the end-start trip: starting time is the endtime for the first start-end trip.
+3. For the second start-end trip: starting time is the endtime for the end-start trip.
+
+Because that function would take a bunch of arguments, I created a struct to group a few of them: `MapInfo`.
+
+```rust
+struct MapInfo {
+    rows: usize,
+    cols: usize,
+    walls: HashSet<Coord>,
+    blizzard_maps: HashMap<usize, HashSet<Coord>>,
+    repeats_at: usize,
+}
+```
+
+The function that does the shortest path calculation:
+
+```rust
+fn shortest(from: Coord, to: Coord, start_time: usize, map_info: &MapInfo) -> usize {
+    let MapInfo {
+        rows,
+        cols,
+        walls,
+        blizzard_maps,
+        repeats_at,
+    } = map_info;
+    let mut pq = BinaryHeap::new();
+    // backtracking is allowed, keep track of visited coords at a certain time
+    let mut seen = HashSet::new();
+
+    pq.push(Node {
+        cost: start_time,
+        pos: from,
+    });
+    seen.insert((from, start_time));
+
+    // keep stepping through time until the priority queue is empty
+    while let Some(Node { cost, pos }) = pq.pop() {
+        // did we pop a node that's at the target position? It's guaranteed to be the shortest path
+        if pos == to {
+            return cost;
+        }
+
+        let new_cost = cost + 1;
+        let blizzards = &blizzard_maps[&(new_cost % repeats_at)];
+
+        let candidates = pos
+            // moving to a neighbour is an option
+            .neighbours(*rows, *cols)
+            .into_iter()
+            // not moving is an option
+            .chain(iter::once(pos))
+            // can not share a coordinate with a wall
+            .filter(|coord| !walls.contains(coord))
+            // can not share a coordinate with a blizzard
+            .filter(|coord| !blizzards.contains(coord));
+
+        for new_pos in candidates {
+            // only push to pq if we didn't already see that coord at the same time
+            if seen.insert((new_pos, new_cost)) {
+                pq.push(Node {
+                    cost: new_cost,
+                    pos: new_pos,
+                });
+            }
+        }
+    }
+    usize::MAX
+}
+```
+
+The solution to part2 then consists of gathering the info in `MapInfo` and running the `shortest` function three times.
+Each time:
+- swapping the starting and ending points of the search
+- feeding in the endtime of the previous search as starttime for the new one.
+
+### Final code
+
+```rust title=day_24.rs
+pub fn part_2(input: &str) -> usize {
+    let (map, rows, cols) = parse(input);
+
+    let walls: HashSet<Coord> = map
+        .iter()
+        .filter(|(_, tile)| **tile == Tile::Wall)
+        .map(|(pos, _)| *pos)
+        .collect();
+    // lcm of inner area without the walls. patterns repeat every lcm steps
+    let lcm = lcm(rows - 2, cols - 2);
+    let blizzard_maps = bliz_maps(&map, rows, cols, lcm);
+    let start = Coord { row: 0, col: 1 };
+    let end = Coord {
+        row: rows - 1,
+        col: cols - 2,
+    };
+
+    let map_info = MapInfo {
+        rows,
+        cols,
+        repeats_at: lcm,
+        walls,
+        blizzard_maps,
+    };
+
+    let there = shortest(start, end, 0, &map_info);
+    let back = shortest(end, start, there, &map_info);
+    shortest(start, end, back, &map_info)
+}
+```
+
+## Make it go faster
+
+For my next trick, I'll make this solution about 30% faster with 5 lines of code (ish)!
+
+<Aside>
+What?
+
+Dijkstra is [evolving](https://www.youtube.com/watch?v=bBMg3NCtXOQ)!
+
+Dijkstra evolved into A-Star!
+</Aside>
+
+A* is Dijkstra in a tophat.
+They're nearly identical.
+
+A* uses something called a heuristic.
+Which is a fancy way of saying: something that affects how nodes are sorted in the priority queue.
+
+In Dijkstra, nodes in the priority queue are sorted based on cost.
+It doesn't care about how close a node is to the goal, only about how much it costs.
+
+In A*, nodes in the priority queue are sorted based on the cost and the heuristic **combined**.
+It cares about how close a node is to the goal.
+
+In summary, A* is Dijkstra that includes a heuristic that says _"We're this far away from the goal"_
+
+This means that a node that costs more can get popped from the priority queue before a cheaper node, because it is closer to the goal.
+
+Computerphile did a great video on it:
+<YouTube url="https://www.youtube.com/watch?v=ySN5Wnu88nE" />
+
+In this case, the nodes in the queue are sorted based on cost so far plus distance to go.
+Written differently: `cost + heuristic`.
+
+A reasonable measure of how far a node is from the goal is the amount of steps it would take if there were no blizzards.
+It's the shortest distance possible between the current node position and the goal.
+That's the [Manhattan distance](https://en.wikipedia.org/wiki/Taxicab_geometry)
+
+So, a method on `Coord` calculating that distance between 2 `Coord`s:
+
+```rust hl=3-5
+impl Coord {
+    // -- snip --
+    fn manhattan(&self, other: Coord) -> usize {
+        other.col.abs_diff(self.col) + other.row.abs_diff(self.row)
+    }
+}
+```
+
+Each `Node` now stores an extra field with the `heuristic`:
+
+```rust hl=4
+#[derive(PartialEq, Eq)]
+struct Node {
+    cost: usize,
+    heuristic: usize,
+    pos: Coord,
+}
+```
+
+That `heuristic` field contains the `manhattan()` from the current position to the goal.
+
+The sorting of the `Node`s is now not only based on the cost, but on the combined cost and heuristic:
+
+```rust hl=3-5
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let self_total = self.cost + self.heuristic;
+        let other_total = other.cost + other.heuristic;
+        other_total.cmp(&self_total)
+    }
+}
+```
+
+Every time we push a `Node` onto the priority queue, we include the `heuristic`.
+We don't use it in the function in any other way, its only purpose is affecting how nodes are sorted inside the priority queue.
+
+```rust numberLines hl=16,22,47
+fn shortest(from: Coord, to: Coord, start_time: usize, map_info: &MapInfo) -> usize {
+    let MapInfo {
+        rows,
+        cols,
+        walls,
+        blizzard_maps,
+        repeats_at,
+    } = map_info;
+
+    let mut pq = BinaryHeap::new();
+    // backtracking is allowed, keep track of visited coords at a certain time
+    let mut seen = HashSet::new();
+
+    pq.push(Node {
+        cost: start_time,
+        heuristic: from.manhattan(to),
+        pos: from,
+    });
+    seen.insert((from, start_time));
+
+    // keep stepping through time until the priority queue is empty
+    while let Some(Node { cost, pos, .. }) = pq.pop() {
+        // did we pop a node that's at the target position? It's guaranteed to be the shortest path
+        if pos == to {
+            return cost;
+        }
+
+        let new_cost = cost + 1;
+        let blizzards = &blizzard_maps[&(new_cost % repeats_at)];
+
+        let candidates = pos
+            // moving to a neighbour is an option
+            .neighbours(*rows, *cols)
+            .into_iter()
+            // not moving is an option
+            .chain(iter::once(pos))
+            // can not share a coordinate with a wall
+            .filter(|coord| !walls.contains(coord))
+            // can not share a coordinate with a blizzard
+            .filter(|coord| !blizzards.contains(coord));
+
+        for new_pos in candidates {
+            // only push to pq if we didn't already see that coord at the same time
+            if seen.insert((new_pos, new_cost)) {
+                pq.push(Node {
+                    cost: new_cost,
+                    heuristic: new_pos.manhattan(to),
+                    pos: new_pos,
+                });
+            }
+        }
+    }
+    usize::MAX
+}
+```
+
+I made part1 also use the `shortest` function.
+
+<Aside variant="success">
+I did a few runs measuring the runtime on my input, and each time the A-Star version of part2 was about a third faster!
+</Aside>
+
+```
+Part 1 Dijkstra: 230                 (took: 168.1414ms)
+Part 1 A-Star:   230                 (took: 131.2488ms)
+Part 2 Dijkstra: 713                 (took: 309.7545ms)
+Part 2 A-Star:   713                 (took: 204.8432ms)
+```
+
+This was done on my local computer, a single run at a time, so take those numbers with a grain of salt.
+The point is: A-Star is significantly faster for a marginal code-change.
+
+## Final code
+
+```rust title=day_24.rs numberLines
+use std::{
+    cmp::Ordering,
+    collections::{BinaryHeap, HashMap, HashSet},
+    iter,
+};
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+struct Coord {
+    row: usize,
+    col: usize,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum Tile {
+    Wall,
+    Blizzard(Direction),
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+enum Direction {
+    Up,
+    Right,
+    Down,
+    Left,
+}
+
+impl Coord {
+    fn neighbours(&self, rows: usize, cols: usize) -> Vec<Self> {
+        use Direction::*;
+        let mut neighbours = Vec::new();
+        if self.row > 0 {
+            neighbours.push(self.add_dir(&Up));
+        }
+        if self.col < cols - 1 {
+            neighbours.push(self.add_dir(&Right));
+        }
+        if self.row < rows - 1 {
+            neighbours.push(self.add_dir(&Down));
+        }
+        if self.col > 0 {
+            neighbours.push(self.add_dir(&Left));
+        }
+        neighbours
+    }
+
+    fn add_dir(&self, dir: &Direction) -> Self {
+        use Direction::*;
+        match dir {
+            Up => Coord {
+                row: self.row - 1,
+                col: self.col,
+            },
+            Right => Coord {
+                row: self.row,
+                col: self.col + 1,
+            },
+            Down => Coord {
+                row: self.row + 1,
+                col: self.col,
+            },
+            Left => Coord {
+                row: self.row,
+                col: self.col - 1,
+            },
+        }
+    }
+
+    fn manhattan(&self, other: Coord) -> usize {
+        other.col.abs_diff(self.col) + other.row.abs_diff(self.row)
+    }
+}
+
+#[derive(PartialEq, Eq)]
+struct Node {
+    cost: usize,
+    heuristic: usize,
+    pos: Coord,
+}
+
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let self_total = self.cost + self.heuristic;
+        let other_total = other.cost + other.heuristic;
+        other_total.cmp(&self_total)
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+struct MapInfo {
+    rows: usize,
+    cols: usize,
+    walls: HashSet<Coord>,
+    blizzard_maps: HashMap<usize, HashSet<Coord>>,
+    repeats_at: usize,
+}
+
+fn lcm(first: usize, second: usize) -> usize {
+    first * second / gcd(first, second)
+}
+
+fn gcd(first: usize, second: usize) -> usize {
+    let mut max = first;
+    let mut min = second;
+    if min > max {
+        std::mem::swap(&mut max, &mut min);
+    }
+
+    loop {
+        let res = max % min;
+        if res == 0 {
+            return min;
+        }
+
+        max = min;
+        min = res;
+    }
+}
+
+fn bliz_maps(
+    map: &HashMap<Coord, Tile>,
+    rows: usize,
+    cols: usize,
+    max_time: usize,
+) -> HashMap<usize, HashSet<Coord>> {
+    // key: turn, val: set of a bliz locations
+    let mut cache = HashMap::new();
+
+    let mut blizzards: Vec<(Coord, Direction)> = map
+        .iter()
+        .filter_map(|(pos, tile)| match tile {
+            Tile::Wall => None,
+            Tile::Blizzard(dir) => Some((*pos, *dir)),
+        })
+        .collect();
+
+    let coords = blizzards.iter().map(|(coord, _)| *coord).collect();
+    cache.insert(0, coords);
+
+    // precompute every blizzard coord at every time before the coords repeat
+    for time in 1..max_time {
+        for (coord, dir) in blizzards.iter_mut() {
+            *coord = coord.add_dir(dir);
+            // if next coord went to an edge, wrap
+            match dir {
+                Direction::Left => {
+                    if coord.col == 0 {
+                        coord.col = cols - 2;
+                    }
+                }
+                Direction::Right => {
+                    if coord.col == cols - 1 {
+                        coord.col = 1;
+                    }
+                }
+                Direction::Up => {
+                    if coord.row == 0 {
+                        coord.row = rows - 2;
+                    }
+                }
+                Direction::Down => {
+                    if coord.row == rows - 1 {
+                        coord.row = 1;
+                    }
+                }
+            }
+        }
+        let coords = blizzards.iter().map(|(coord, _)| *coord).collect();
+        cache.insert(time, coords);
+    }
+
+    cache
+}
+
+fn shortest(from: Coord, to: Coord, start_time: usize, map_info: &MapInfo) -> usize {
+    let MapInfo {
+        rows,
+        cols,
+        walls,
+        blizzard_maps,
+        repeats_at,
+    } = map_info;
+
+    let mut pq = BinaryHeap::new();
+    // backtracking is allowed, keep track of visited coords at a certain time
+    let mut seen = HashSet::new();
+
+    pq.push(Node {
+        cost: start_time,
+        heuristic: from.manhattan(to),
+        pos: from,
+    });
+    seen.insert((from, start_time));
+
+    // keep stepping through time until the priority queue is empty
+    while let Some(Node { cost, pos, .. }) = pq.pop() {
+        // did we pop a node that's at the target position? It's guaranteed to be the shortest path
+        if pos == to {
+            return cost;
+        }
+
+        let new_cost = cost + 1;
+        let blizzards = &blizzard_maps[&(new_cost % repeats_at)];
+
+        let candidates = pos
+            // moving to a neighbour is an option
+            .neighbours(*rows, *cols)
+            .into_iter()
+            // not moving is an option
+            .chain(iter::once(pos))
+            // can not share a coordinate with a wall
+            .filter(|coord| !walls.contains(coord))
+            // can not share a coordinate with a blizzard
+            .filter(|coord| !blizzards.contains(coord));
+
+        for new_pos in candidates {
+            // only push to pq if we didn't already see that coord at the same time
+            if seen.insert((new_pos, new_cost)) {
+                pq.push(Node {
+                    cost: new_cost,
+                    heuristic: new_pos.manhattan(to),
+                    pos: new_pos,
+                });
+            }
+        }
+    }
+    usize::MAX
+}
+
+fn parse(input: &str) -> (HashMap<Coord, Tile>, usize, usize) {
+    let mut map = HashMap::new();
+
+    let rows = input.lines().count();
+    let cols = input.lines().next().unwrap().chars().count();
+
+    for (row, line) in input.lines().enumerate() {
+        for (col, c) in line.chars().enumerate() {
+            if c == '.' {
+                continue;
+            }
+            let coord = Coord { row, col };
+            let tile = match c {
+                '#' => Tile::Wall,
+                '^' => Tile::Blizzard(Direction::Up),
+                'v' => Tile::Blizzard(Direction::Down),
+                '<' => Tile::Blizzard(Direction::Left),
+                '>' => Tile::Blizzard(Direction::Right),
+                _ => panic!("invalid input"),
+            };
+            map.insert(coord, tile);
+        }
+    }
+    (map, rows, cols)
+}
+
+pub fn part_1(input: &str) -> usize {
+    let (map, rows, cols) = parse(input);
+
+    let walls: HashSet<Coord> = map
+        .iter()
+        .filter(|(_, tile)| **tile == Tile::Wall)
+        .map(|(pos, _)| *pos)
+        .collect();
+    // lcm of inner area without the walls. patterns repeat every lcm steps
+    let lcm = lcm(rows - 2, cols - 2);
+    let blizzard_maps = bliz_maps(&map, rows, cols, lcm);
+    let start = Coord { row: 0, col: 1 };
+    let end = Coord {
+        row: rows - 1,
+        col: cols - 2,
+    };
+
+    let map_info = MapInfo {
+        rows,
+        cols,
+        repeats_at: lcm,
+        walls,
+        blizzard_maps,
+    };
+
+    shortest(start, end, 0, &map_info)
+}
+
+pub fn part_2(input: &str) -> usize {
+    let (map, rows, cols) = parse(input);
+
+    let walls: HashSet<Coord> = map
+        .iter()
+        .filter(|(_, tile)| **tile == Tile::Wall)
+        .map(|(pos, _)| *pos)
+        .collect();
+    // lcm of inner area without the walls. patterns repeat every lcm steps
+    let lcm = lcm(rows - 2, cols - 2);
+    let blizzard_maps = bliz_maps(&map, rows, cols, lcm);
+    let start = Coord { row: 0, col: 1 };
+    let end = Coord {
+        row: rows - 1,
+        col: cols - 2,
+    };
+    let map_info = MapInfo {
+        rows,
+        cols,
+        repeats_at: lcm,
+        walls,
+        blizzard_maps,
+    };
+
+    let there = shortest(start, end, 0, &map_info);
+    let back = shortest(end, start, there, &map_info);
+    shortest(start, end, back, &map_info)
+}
+```

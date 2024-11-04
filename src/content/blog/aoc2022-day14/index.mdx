@@ -1,0 +1,548 @@
+---
+title: "Advent of Code 2022 Day 14"
+date: 2022-12-14
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2022"
+section: "garden"
+---
+## Day 14: Regolith Reservoir
+
+https://adventofcode.com/2022/day/14
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2022/src/day_14.rs)
+</Aside>
+
+The distress signal you received yesterday came from a cave behind a waterfall.
+
+The cave is slowly filling with sand!
+
+Your device scans the cave.
+Today's input file is the list of rock edges.
+
+An example input looks like this:
+
+```txt title=input.txt
+498,4 -> 498,6 -> 496,6
+503,4 -> 502,4 -> 502,9 -> 494,9
+```
+
+Every rock formation has perfectly square edges.
+
+Between every edge it returned, you can draw a straight line, every point on the line is also a rock.
+
+This scan means that there are two paths of rock.
+1. The first path consists of two straight lines
+2. The second path consists of three straight lines.
+
+- A unit of sand is big enough to fill one coordinate.
+- A unit of sand has to come to a rest before an other one starts falling.
+- The source of sand is at coordinates `x=500`, and `y=0`.
+
+For every position sand is in, a sequence of checks are done to determine where it goes next, or if it stays put:
+
+1. Sand goes straight down one step.
+2. If that position is blocked, it goes down and to the left instead.
+3. If that position is blocked, it goes down and to the right instead.
+4. If that position is blocked, the sand comes to a rest.
+
+Every unit of sand continues falling until it comes to a rest.  
+At that point, the next unit of sand starts falling.
+
+## Parsing
+
+[Good news everyone](https://www.youtube.com/watch?v=g8IVI0sZ6F8), the `Coord` struct is back to represent a coordinate in our square grid.
+
+```rust
+struct Coord {
+    x: i32,
+    y: i32,
+}
+```
+
+I parsed the input into a list of lists.
+Each item is a list containing rock edge coordinates.
+
+```rust title=day_14.rs
+fn parse() -> Vec<Vec<Coord>> {
+    let input = std::fs::read_to_string("src/day14.txt").unwrap();
+
+    input
+        .lines()
+        .map(|line| {
+            line.split(" -> ")
+                .map(|coords| {
+                    let (x, y) = coords.split_once(',').unwrap();
+                    let x = x.parse().unwrap();
+                    let y = y.parse().unwrap();
+                    Coord { x, y }
+                })
+                .collect()
+        })
+        .collect()
+}
+```
+
+## Part 1
+
+You don't know what's underneath the lowest point of your scan, you assume it's an endless abyss.
+
+The question asks how many units of sand came to a rest before sand starts falling into the abyss.
+
+in pseudocode:
+
+```rust title=pseudocode.rs
+let rock_lines = parse();
+let mut cave = // build a cave out of rock lines
+let max_y = // y coordinate of the lowest rock in the cave;
+let start = Coord { x: 500, y: 0 };
+
+loop {
+    let mut sand = start;
+    // the sand falls until it can't anymore
+    sand = sand.fall();
+    if sand.is_falling() {
+        if sand.y > max_y {
+            // sand is falling into the abyss
+        }
+    } else {
+        // insert final coord of this piece of sand into the cave
+    }
+}
+```
+
+### Helpers
+
+Every tile in the cave grid can be in 3 possible states:
+
+1. It's air
+2. It's a rock
+3. It's sand
+
+```rust
+enum Tile {
+    Rock,
+    Sand,
+    Air,
+}
+```
+
+I'll construct the `cave` in two steps.
+
+1. create a collection of every rock coordinate in the cave.
+2. create the cave as 2D list. Where every item in the outer list is a row, and every row is a list of `Tile`.
+
+```rust
+fn rocks_in_cave(rock_lines: Vec<Vec<Coord>>) -> HashSet<Coord> {
+    rock_lines
+        .iter()
+        .flat_map(|path| {
+            path.iter().tuple_windows().flat_map(|(start, end)| {
+                let diff_x = end.x - start.x;
+                let diff_y = end.y - start.y;
+                let direction = Coord {
+                    x: diff_x.signum(),
+                    y: diff_y.signum(),
+                };
+                // one of two differences is always 0 because rock lines are vertical or horizontal
+                let amount = diff_x.abs().max(diff_y.abs()) as usize;
+
+                // generate Coord for every tile in a window
+                (0..=amount).map(move |amount| {
+                    let diff_x = amount as i32 * direction.x;
+                    let diff_y = amount as i32 * direction.y;
+
+                    Coord {
+                        x: start.x + diff_x,
+                        y: start.y + diff_y,
+                    }
+                })
+            })
+        })
+        .collect()
+}
+```
+
+<Aside variant="info">
+Rusty aside: a `HashSet` requires that the elements implement the `Eq` and `Hash` traits.
+
+I derive those, it works.
+While I'm at it, I make sure I can copy a coordinate too.
+
+```rust hl=1
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+struct Coord {
+    x: i32,
+    y: i32,
+}
+```
+</Aside>
+
+To create the cave from that
+
+```rust
+let rock_lines = parse();
+let rocks = rocks_in_cave(rock_lines);
+
+let max_y = rocks.iter().map(|p| p.y).max().unwrap();
+// the width in the puzzle is infinite
+// the needed width at maximum is the base of an Isosceles triangle with max_y height and a top edge at x=500
+let width = 500 + max_y + 2;
+// start cave filled with air
+let mut cave = vec![vec![Tile::Air; width as usize]; (max_y + 2) as usize];
+// add rocks to cave
+for pos in rocks {
+    cave[pos.y as usize][pos.x as usize] = Tile::Rock;
+}
+```
+
+A piece of sand has a `Coord`.
+
+If it falls, it falls in one of three spots.
+I call those possible spots the `neighbours` of a `Coord`.
+
+```rust
+impl Coord {
+    fn neighbours(&self) -> [Coord; 3] {
+        let down = Coord {
+            x: self.x,
+            y: self.y + 1,
+        };
+        let down_left = Coord {
+            x: self.x - 1,
+            y: self.y + 1,
+        };
+        let down_right = Coord {
+            x: self.x + 1,
+            y: self.y + 1,
+        };
+
+        [down, down_left, down_right]
+    }
+}
+```
+
+When a piece of sand falls, it follows the rules mentioned at the top.
+Falling into the place of the first neighbour it can.
+
+```rust
+impl Coord {
+    fn neighbours(&self) -> [Coord; 3] {
+        // --- snip ---
+    }
+
+    /// returns Some(Coord) of this coords first neighbour it can move to, none if the sand is static
+    fn next(&self, cave: &[Vec<Tile>]) -> Option<Coord> {
+        // first available position in neighbours (down, left-down, right-down)
+        self.neighbours()
+            .into_iter()
+            .find(|coord| cave[coord.y as usize][coord.x as usize] == Tile::Air)
+    }
+}
+```
+
+This way of checking for a possible next position of falling sand is perfect to adjust our pseudocode to use [a `while let` loop](https://nickymeuleman.netlify.app/garden/rust-if-let-while-let).
+
+### Final code
+
+```rust title=day_14.rs
+pub fn part_1() -> usize {
+    let rock_lines = parse();
+    let rocks = rocks_in_cave(rock_lines);
+
+    let start = Coord { x: 500, y: 0 };
+    let max_y = rocks.iter().map(|p| p.y).max().unwrap();
+    // the width is a guessing game, in the puzzle it's infinite
+    let width = 500 + max_y + 2;
+
+    // start cave filled with air
+    let mut cave = vec![vec![Tile::Air; width as usize]; (max_y + 2) as usize];
+    // add rocks to cave
+    for pos in rocks {
+        cave[pos.y as usize][pos.x as usize] = Tile::Rock;
+    }
+
+    for i in 0.. {
+        let mut sand = start;
+        // the sand falls until it can't anymore and next returns None
+        while let Some(next_air_coord) = sand.next(&cave) {
+            sand = next_air_coord;
+            if sand.y > max_y {
+                return i;
+            }
+        }
+
+        // insert final coord into the cave as sand tile
+        cave[sand.y as usize][sand.x as usize] = Tile::Sand;
+    }
+
+    unreachable!()
+}
+```
+
+## Part 2
+
+There was no abyss!
+
+The floor is 2 tiles underneath the lowest rock in your scan.
+It appears to be infinite.
+
+The question asks how many units of sand came to a rest when the entry at x=500, y=0 is blocked.
+
+A few additions to the code!
+
+The `next` method on `Coord` needs to check if a unit of sand hits the floor.
+It can't move down further once it does, so it comes to rest.
+
+```rust hl=2-6
+/// returns Some(Coord) of this coords first Coord it can move to, none if it is static
+fn next(&self, cave: &[Vec<Tile>], floor_y: i32) -> Option<Coord> {
+    if (self.y + 1) == floor_y {
+        // hit floor
+        return None;
+    }
+    // first available position in neighbours (down, left-down, right-down)
+    self.neighbours()
+        .into_iter()
+        .find(|p| cave[p.y as usize][p.x as usize] == Tile::Air)
+}
+```
+
+The condition where the code stops looping changed too.
+
+The one from part1 is removed, and a return is added at the end of the infinite loop.
+It checks if the sand is at the beginning after it came to rest.
+
+```rust hl=12-14
+// --- snip ---
+for i in 0.. {
+    let mut sand = start;
+    // the sand falls until it can't anymore and next returns None
+    while let Some(next_air_coord) = sand.next_p2(&cave, floor_y) {
+        sand = next_air_coord;
+    }
+
+    // insert final coord into the cave as sand tile
+    cave[sand.y as usize][sand.x as usize] = Tile::Sand;
+
+    if sand == start {
+        return i + 1;
+    }
+}
+```
+
+### Final code
+
+```rust title=day_14.rs
+use itertools::Itertools;
+
+pub fn part_2() -> usize {
+    let rock_lines = parse();
+    let rocks = rocks_in_cave(rock_lines);
+
+    let start = Coord { x: 500, y: 0 };
+    let max_y = rocks.iter().map(|p| p.y).max().unwrap();
+    // the width is a guessing game, in the puzzle it's infinite
+    let width = 500 + max_y + 2;
+    let floor_y = max_y + 2;
+
+    // start cave filled with air
+    let mut cave = vec![vec![Tile::Air; width as usize]; (max_y + 2) as usize];
+    // add rocks to cave
+    for pos in rocks {
+        cave[pos.y as usize][pos.x as usize] = Tile::Rock;
+    }
+
+    for i in 0.. {
+        let mut sand = start;
+        // the sand falls until it can't anymore and next returns None
+        while let Some(next_air_coord) = sand.next(&cave, floor_y) {
+            sand = next_air_coord;
+        }
+
+        // insert final coord into the cave as sand tile
+        cave[sand.y as usize][sand.x as usize] = Tile::Sand;
+
+        if sand == start {
+            return i + 1;
+        }
+    }
+
+    unreachable!()
+}
+```
+
+## Optimization
+
+A possible optimization is to keep track of empty positions while a unit of sand is falling.
+
+Every subsequent unit of sand will follow the same path as the previous one until it is blocked.
+
+I added it to the `simulate` function below and commented what's happening.
+
+## Final code
+
+```rust title=day_14.rs numberLines
+use std::collections::HashSet;
+
+use itertools::Itertools;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+struct Coord {
+    x: i32,
+    y: i32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum Tile {
+    Rock,
+    Sand,
+    Air,
+}
+
+impl Coord {
+    fn neighbours(&self) -> [Coord; 3] {
+        let down = Coord {
+            x: self.x,
+            y: self.y + 1,
+        };
+        let down_left = Coord {
+            x: self.x - 1,
+            y: self.y + 1,
+        };
+        let down_right = Coord {
+            x: self.x + 1,
+            y: self.y + 1,
+        };
+
+        [down, down_left, down_right]
+    }
+
+    /// returns Some(Coord) of this coords first Coord it can move to, none if it is static
+    fn next(&self, cave: &[Vec<Tile>], floor_y: Option<i32>) -> Option<Coord> {
+        if let Some(y) = floor_y {
+            if (self.y + 1) == y {
+                // hit floor
+                return None;
+            }
+        }
+        // first available position in neighbours (down, left-down, right-down)
+        self.neighbours()
+            .into_iter()
+            .find(|p| cave[p.y as usize][p.x as usize] == Tile::Air)
+    }
+}
+
+fn parse() -> Vec<Vec<Coord>> {
+    let input = std::fs::read_to_string("src/day14.txt").unwrap();
+
+    input
+        .lines()
+        .map(|line| {
+            line.split(" -> ")
+                .map(|coords| {
+                    let (x, y) = coords.split_once(',').unwrap();
+                    let x = x.parse().unwrap();
+                    let y = y.parse().unwrap();
+                    Coord { x, y }
+                })
+                .collect()
+        })
+        .collect()
+}
+
+fn simulate(rocks: &HashSet<Coord>, floor_y: Option<i32>) -> usize {
+    let start = Coord { x: 500, y: 0 };
+    let max_y = rocks.iter().map(|p| p.y).max().unwrap();
+    // the width is a guessing game, in the puzzle it's infinite
+    let width = 500 + max_y + 2;
+
+    // start cave filled with air
+    let mut cave: Vec<Vec<Tile>> = vec![vec![Tile::Air; width as usize]; (max_y + 2) as usize];
+    // add rocks to cave
+    for pos in rocks {
+        cave[pos.y as usize][pos.x as usize] = Tile::Rock;
+    }
+
+    // subsequent pieces of sand flow in exactly the same path as the previous one if it's not blocked,
+    let mut last_path_cache = vec![start];
+
+    for i in 0.. {
+        let mut sand = start;
+        // try to reuse the path of the previous block of sand
+        while let Some(pos) = last_path_cache.pop() {
+            if cave[pos.y as usize][pos.x as usize] == Tile::Air {
+                sand = pos;
+                break;
+            }
+        }
+
+        // add current position of sand to cache
+        // sand coordinate is guaranteed to be unblocked at this point
+        last_path_cache.push(sand);
+
+        // the sand falls until it can't anymore and next returns None
+        while let Some(next_air_coord) = sand.next(&cave, floor_y) {
+            sand = next_air_coord;
+            // record empty positions as sand falls so they can be filled in the future
+            last_path_cache.push(sand);
+            if floor_y.is_none() && sand.y > max_y {
+                return i;
+            }
+        }
+
+        // insert final coord into the cave as sand tile
+        cave[sand.y as usize][sand.x as usize] = Tile::Sand;
+
+        if floor_y.is_some() && sand == start {
+            return i + 1;
+        }
+    }
+
+    unreachable!()
+}
+
+fn rocks_in_cave(rock_lines: Vec<Vec<Coord>>) -> HashSet<Coord> {
+    rock_lines
+        .iter()
+        .flat_map(|path| {
+            path.iter().tuple_windows().flat_map(|(start, end)| {
+                let diff_x = end.x - start.x;
+                let diff_y = end.y - start.y;
+                let direction = Coord {
+                    x: diff_x.signum(),
+                    y: diff_y.signum(),
+                };
+                // one of two differences is always 0 because rock lines are vertical or horizontal
+                let amount = diff_x.abs().max(diff_y.abs()) as usize;
+
+                // generate Coord for every tile in a window
+                (0..=amount).map(move |amount| {
+                    let diff_x = amount as i32 * direction.x;
+                    let diff_y = amount as i32 * direction.y;
+
+                    Coord {
+                        x: start.x + diff_x,
+                        y: start.y + diff_y,
+                    }
+                })
+            })
+        })
+        .collect()
+}
+
+pub fn part_1() -> usize {
+    let rock_lines = parse();
+    let rocks = rocks_in_cave(rock_lines);
+
+    simulate(&rocks, None)
+}
+
+pub fn part_2() -> usize {
+    let rock_lines = parse();
+    let rocks = rocks_in_cave(rock_lines);
+
+    let max_y = rocks.iter().map(|coord| coord.y).max().unwrap();
+    simulate(&rocks, Some(max_y + 2))
+}
+```
