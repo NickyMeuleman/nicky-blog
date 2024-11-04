@@ -25,10 +25,15 @@ const blog = defineCollection({
           "WSL2",
           "GatsbyJS",
           "hardware",
+          "serverless",
+          "WebAssembly",
         ])
         .array()
         .default([]),
       canonicalUrl: z.string().url().optional(),
+      series: z
+        .enum(["Serverless GraphQL", "Fresh environment, 2018"])
+        .optional(),
     }),
 });
 

@@ -9,13 +9,15 @@ const posts = await getCollection("blog");
 <Layout title="We have liftoff">
   <ul class="m-5 list-disc">
     {
-      posts.map((post) => {
-        return (
-          <li class="m-1">
-            <a href={`/blog/${post.slug}`}>{post.data.title}</a>
-          </li>
-        );
-      })
+      posts
+        .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+        .map((post) => {
+          return (
+            <li class="m-1">
+              <a href={`/blog/${post.slug}`}>{post.data.title}</a>
+            </li>
+          );
+        })
     }
   </ul>
   <Icon class="h-44 w-44 text-blue-500" name="lucide:github" />
