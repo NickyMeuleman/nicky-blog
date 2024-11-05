@@ -1,0 +1,158 @@
+---
+title: "Rust: smart pointers"
+date: 2021-02-01
+tags: ["Rust"]
+series: "Smart pointers in Rust"
+section: "garden"
+---
+
+## Pointers
+
+A pointer is a variable that contains an address in memory.
+It points to, or _refers_ to some other data.
+You can think of it like an arrow to that value.
+
+Rust has two regular types of pointers called references.
+They're recognized by the ampersand in front of a variable name.
+
+- `&` for an immutable reference (eg. `&my_variable`).
+- `&mut` for a mutable reference. (eg. `&mut my_variable`)
+
+References to a value don't own that value, they _borrow_ that value.
+In other words, the reference can disappear and the value it pointed at will still exist.
+
+<Aside variant="info">
+
+The Rust programming language book has [a great chapter on ownership in Rust](https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html).
+
+</Aside>
+
+<Aside variant="info">
+
+Rust's [data race](https://en.wikipedia.org/wiki/Race_condition) prevention rules dictate that for a given piece of data in any particular scope:
+
+You can have only **one mutable** reference to that data **OR** you can have **multiple immutable** references to that data.
+Never both at the same time.
+
+</Aside>
+
+You might recognize the term "shared reference" from compiler errors.
+A while back, I got a compiler error that said something like `blablabla, because it is behind a shared reference`.
+This confused me, I got that error while the message indicated a reference that was the only one in the entire program.
+How could it be "shared" then?
+Turns out that in many cases, "shared reference" is an other way to say "immutable reference".
+
+- An other name for an immutable reference is a shared reference.
+- An other name for a mutable reference is an exclusive reference.
+
+## Smart pointers
+
+Those references are regular pointers that only point to some data, they don't have any other capabilities.
+Smart pointers can have extra capabilities.
+They are data structures that not only act like a pointer, but have additional metadata.
+They use that extra data to enable behavior regular pointers could not have.
+
+You could say that those pointers are ... smart
+
+![Rick Dalton pointing in recognition](https://i.imgur.com/7RUWtXX.jpg)
+
+Smart pointers are usually implemented using a struct.
+
+An other difference with regular references, smart pointers usually own the data they point to.
+In other words: when the smart pointer gets dropped, the data they point to gets dropped.
+
+Most smart pointers implement the [`Deref`](https://doc.rust-lang.org/std/ops/trait.Deref.html), and [`Drop`](https://doc.rust-lang.org/std/ops/trait.Drop.html) traits.
+
+### String
+
+If you've programmed in Rust before, chances are great you already used smart pointer, even if you didn't know you were.
+
+The [`String`](https://doc.rust-lang.org/std/string/struct.String.html) is a smart pointer.
+
+```rust
+let s1 = String::from("hello");
+```
+
+On the left of the following image is the data that is stored on the stack.
+On the right, the data that is stored on the heap.
+
+<Aside variant="info">
+
+Psst, I wrote about [the stack and the heap in Rust](/garden/rust-stack-heap)
+
+</Aside>
+
+On the stack is our [`String`](https://doc.rust-lang.org/std/string/struct.String.html), named `s1`.
+It's a struct that not only has a pointer to a specific location on the heap (in `ptr`).
+It has additional metadata, like the length of the string (in `len`), and the amount of bytes that string occupies (in `capacity`).
+The distinction between those last 2 fields is not important right now, what is important is that the string has additional metadata associated with it.
+
+The heap stores the contents of that string in consecutive memory addresses.
+In this case the letters `h`, `e`, `l`, `l`, `o`.
+
+![a String](trpl04-01.svg)
+
+### Deref
+
+The [`Deref`](https://doc.rust-lang.org/std/ops/trait.Deref.html) trait allows a struct that implements it to behave like a pointer, instead of as a regular struct that holds a pointer in a field.
+That way you can write code that works for references, and smart pointers will work with it.
+
+The dereference operator, `*`, follows a pointer to the value it is pointing to.
+Calling it on a regular struct wouldn't work, but a struct that implements [`Deref`](https://doc.rust-lang.org/std/ops/trait.Deref.html) knows what to do when that happens.
+
+To implement the [`Deref`](https://doc.rust-lang.org/std/ops/trait.Deref.html) trait, you have to implement a method named `deref`.
+It takes an immutable reference to `self`, and returns an immutable reference to an other type.
+
+<Aside variant="danger">
+
+In my opinion, the `deref` method is incredibly confusing naming.
+`deref` doesn't dereference at all, it returns a reference.
+The compiler knows how to dereference _that_ reference.
+
+</Aside>
+
+The [`Box<T>`](https://doc.rust-lang.org/std/boxed/struct.Box.html) type is a smart pointer that implements [`Deref`](https://doc.rust-lang.org/std/ops/trait.Deref.html).
+
+When you use the dereference operator a [`Box<T>`](https://doc.rust-lang.org/std/boxed/struct.Box.html), under the hood, a call to the `deref` method happens first.
+`deref` returns another reference.
+For [`Box<T>`](https://doc.rust-lang.org/std/boxed/struct.Box.html), that's a reference to the inner type, the `T` in [`Box<T>`](https://doc.rust-lang.org/std/boxed/struct.Box.html).
+The compiler then dereferences it by following _that_ reference.
+
+```rust
+let num = 5;
+let boxed_num = Box::new(num);
+
+assert_eq!(5, num);
+assert_eq!(5, *boxed_num);
+```
+
+In the first `assert_eq`, we directly compare `5` with `num`.  
+In the second `assert_eq`, we compare `5` with the result of using the dereference operator on a boxed value.
+
+`*boxed_num` is equivalent to writing `*(boxed_num.deref())`.
+
+### Drop
+
+The [`Drop`](https://doc.rust-lang.org/std/ops/trait.Drop.html) trait allows you to customize the code that runs when an instance of that struct goes out of scope.
+It is used to release resources like network connections, files, and used memory.
+
+An example usage: when the owner of a [`Box<T>`](https://doc.rust-lang.org/std/boxed/struct.Box.html) goes out of scope,
+not only is the `Box` popped off the stack, the `T` that uses memory on the heap is deallocated.
+
+To implement the [`Drop`](https://doc.rust-lang.org/std/ops/trait.Drop.html) trait, you have to implement a method named `drop`.
+It takes a mutable reference to `self`, and doesn't return anything. (well, it returns the unit type, the empty tuple, `()`)
+
+That `drop` is called automatically when the owner of a value goes out of scope.
+In other words: if a variable leaves the curly bois `{}` that denote a scope, `drop` is called on that variable.
+
+<Aside variant="danger">
+
+It's not allowed to call the `drop` method in the [`Drop`](https://doc.rust-lang.org/std/ops/trait.Drop.html) trait manually.
+At least not directly.
+Doing so during a scope would cause the method to be called again, automatically, at the end of that scope.
+
+That would cause unwanted situations, or the infamous _double free_ error where you try to deallocate a piece of memory twice.
+If you want to call `drop` before the end of the scope, call it via [`std::mem::drop`](https://doc.rust-lang.org/std/mem/fn.drop.html).
+That will make sure `drop` is only called once.
+
+</Aside>

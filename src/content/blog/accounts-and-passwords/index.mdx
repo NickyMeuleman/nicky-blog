@@ -1,0 +1,283 @@
+---
+title: On accounts and passwords
+date: 2020-08-10
+updatedAt: 2020-08-19
+section: "garden"
+---
+
+Accounts. We all have them, the amount of accounts a single person controls varies wildly.
+
+A quick internet search revealed that the average user had over [90 accounts. In 2015!](https://trello.com/c/2qHMdPWM/38-http-blogdashlanecom-infographic-online-overload-its-worse-than-you-thought)
+How accurate that number is, no idea. The point is, it's _a lot_.
+
+By far the most popular method to secure an account is with a password.
+
+## Passwords
+
+Because passwords are so popular to secure accounts, nefarious individuals have made it their mission to find out your secret passwords.
+And so begins an eternal armsrace.
+
+Many methods of discovering/cracking passwords exist.
+
+If a password is too short, that means it's vulnerable to a [brute force attack](https://en.wikipedia.org/wiki/Brute-force_attack).  
+If it's a common word or sentence, that means it's vulnerable to a [dictionary attack](https://en.wikipedia.org/wiki/Dictionary_attack).
+
+To oversimplify, making a password more secure means making attacks against them take an unreasonably long time. <sup>Note: That statement has about a million caveats.</sup>
+
+<Aside variant="info">
+
+The brute force method is not very popular.
+In an early scene of [Portal 2](https://en.wikipedia.org/wiki/Portal_2), a small robot named Wheatley uses this method with... limited... success.
+
+<YouTube url="https://www.youtube.com/watch?v=Dpb7k1umheQ" />
+
+</Aside>
+
+### Picking a better password
+
+Passwords in general are not a rigidly secure way to authenticate.
+
+As a broad statement, if your password is around 7-8 characters, it is not long enough.
+
+A long and complicated one is hard to remember. Making it easier to remember will often reduce the security of the password.
+As a result, a lot of passwords are hard for a human to remember, and easy for a computer to crack.
+
+An [XKCD comic](https://xkcd.com/936/) mentions this problem and proposes a method that keeps the security of longer, complicated passwords while making them easier to remember.
+
+![XKCD on choosing passwords. https://xkcd.com/license.html](https://imgs.xkcd.com/comics/password_strength.png)
+
+The example proposed using `correcthorsebatterystaple` as password.
+
+- This is long enough not to be vulnerable to a brute force attack. ([for now](https://youtu.be/cphNpqKpKc4))
+- It's not going to be extremely vulnerable to a dictionary attack, because the words are random and seemingly have no relation.
+
+<Aside variant="danger">
+
+Don't use `correcthorsebatterystaple` as your password.  
+The comic got so popular, it's certainly very vulnerable to any password cracking attempt now.
+
+</Aside>
+
+### A manager
+
+We previously discussed making a single password more secure.
+
+That's fine, but you should **never reuse passwords**.
+That means the amount of passwords you have to remember increases with the amount of accounts you have.
+Unsustainable. Even if you manage to remember them all, they're probably less complicated and secure than if you remembered a single one.
+
+The solution? Not remembering a lot of passwords, but one really good one.
+
+In other words: **use a password manager.**
+
+A password manager acts like a vault that holds the info to a bunch of login names and the associated passwords.
+Basically, it's a fancy, secure database. If it's programmed correctly that is.
+
+One of the popular methods to gain access to a vault is with a "master password".
+
+That master password should be really good. _Oversimplified reason: the encryption that's used to protect your vault is derived from that master password._
+
+Nearly all password managers come with a way to randomly generate a password that will be way more complex than one you could reasonably remember.
+All my passwords are 25 (or 30, 🤷‍♂️) characters long. They're random and I have no clue what they are.
+
+When a website requires registration, I don't reuse passwords to sign up.
+I add an entry in my password manager and use that instead.
+
+- If I never use that website again, it doesn't matter.
+
+  It means your password manager vault is now a single entry bigger, which is not a big deal.
+
+- If that website is shady or gets compromised and your password leaks onto the internet.
+
+  It doesn't also compromise your other accounts because the password is random and will be unique to that website.
+
+Here's a video where [Mike Pound](https://twitter.com/_mikepound) from [Nottingham University](https://en.wikipedia.org/wiki/University_of_Nottingham) explains more about how password managers work.
+
+<YouTube url="https://www.youtube.com/watch?v=w68BBPDAWr8" />
+
+## Have i been pwned?
+
+- Did my password get leaked?
+- Did a company have a data breach and is my password now compromised?
+
+Or, a way to say it that's at least twice as entertaining: _Have I been pwned?_
+
+The website [haveibeenpwned.com](https://haveibeenpwned.com/) tries to answer that question.
+
+Whenever there's a big breach or leak of account details, this website will try to keep track of it.
+
+<Aside variant="info">
+
+There have been an enormous amount of breaches.  
+As a result, [credential stuffing](https://en.wikipedia.org/wiki/Credential_stuffing) attacks are very popular.
+
+</Aside>
+
+The person who runs this website, [Troy Hunt](https://twitter.com/troyhunt) has built numerous useful tools that use that data.
+
+You can enter the email address you often use for accounts to check if it's been _pwned_.
+If that address appears in a security breach, the site will tell you in which ones. Each result will include some information about the breach like the approximate date it happened, and which data was compromised.
+
+[Another tool](https://haveibeenpwned.com/Passwords) he built will tell you if a password has been cracked.
+
+The end result is: the site tells you if the password you typed in was found in a list of compromised passwords.
+
+It will do that check without ever receiving the password. Whaaaaat 🤯.
+
+<Aside variant="info">
+
+You don't have to type in your password on their website.
+They have a [REST API](https://haveibeenpwned.com/API/v3) which can provide the same information.
+
+</Aside>
+
+It uses a [k-anonymity](https://en.wikipedia.org/wiki/K-anonymity) model to allow a password to be searched by a partial [hash](https://en.wikipedia.org/wiki/Key_derivation_function).
+
+- You first hash your password and send the <abbr title="Application programming interface">API</abbr> a part of that hash.
+- It then sends back a bunch of potential matches (the hashes that start with the same characters you provided), each with the amount of times that hash was found in a database full of cracked passwords.
+- You look at the list of hashes that came back and see if there is an exact match to the hash of your password.
+
+## Multi Factor Authentication
+
+The gold standard for checking your identity is multi factor authentication.
+
+It require the presentation of 2 or more _different_ factors of identification.
+
+1. Something you know (eg. a password)
+1. Something you are (eg. a fingerprint)
+1. Something you have (eg. a physical key)
+
+2 different factors are way more secure than a single one, or multiple instances of a single one (like having 2 passwords is not multi factor.)
+
+Combining at least 2 of those factors make it much harder for an attacker to succesfully gain access to what you're protecting.
+
+A common example of this is withdrawing money at a bank. Your banking card is the thing you have and the <abbr title="Personal identification number">PIN</abbr> is the thing you know.
+
+Let's assume I had an account at SuperSecret™️, and it was protected by 2 factors.
+A password as the something I know, and a device generating codes as the something I have.
+
+If someone guessed my password and tried to log in to my SuperSecret™️ account.
+They (hopefully) don't have access to the device I use to provide the second factor, and would be left unable to login to my SuperSecret™️ account.
+
+At the same time, I would probably be notified of an unsuccessful login attempt, which would cause me to change that password.
+
+### Not everything
+
+Increased security usually comes at the cost of decreased convenience (like making a passord more complicated, but harder to remember).
+That's also the case with multi factor authentication and causes a lot of people to shy away from it.
+
+The ideal is having the benefits of the increased security it offers, while minimizing the extra hassle.
+
+That's why that little "remember this device" checkbox appears on many sites asking for a second factor (often the "something you have" in the form of a [one-time-password](https://en.wikipedia.org/wiki/One-time_password))
+Or why many sites don't ask you to verify your identity constantly, but when you want to change sensitive information (eg. payment details) the site asks for that second factor again.
+
+Losing the "something you have" factor can be quite the issue.
+Not being able to provide that can cause you to be locked out of your accounts.
+
+Another reason not to use it, is because some services flat out don't support it.
+Luckily the list of services that don't is getting smaller and smaller as time goes on.
+In 2020, the vast majority of large services support <abbr title="two factor authentication">2FA</abbr>.
+
+### One time passwords
+
+The most popular method to provide the "something you have" factor is through smartphone apps that generate a one time password.
+
+While the exact method of how this works is fascinating, the enduser shouldn't care about how the cookie is made, only that it's delicious.
+They _have_ a smartphone that generates codes, those codes (that change) are the thing they need to provide when asked for their second factor.
+
+Ok, what happens is too interesting not to share.
+Here's a brief, oversimplified explanation of what happens for a time based one time password in [Google Authenticator](https://en.wikipedia.org/wiki/Google_Authenticator) (and many other apps).
+
+The phone knows a long secret code that was shared with them when the account was set up in the app.
+This is commonly done by letting you scan a <abbr title="Quick Response code">QR code</abbr>.
+That secret code is combined with the current time, math happens, and a resulting code (<abbr title="time based one time password">TOTP</abbr>) is displayed.
+
+The server asking for verification also knows that initial secret code and does the same thing. If the resulting codes match, voila, sesame opens.
+
+When that physical device is the only object that holds the _secret sauce to your <abbr title="one time passwords">OTPs</abbr>_, and happens to be your phone, even upgrading to a new phone will leave you scratching your head.
+Phones also get lost, they get broken, spontaneously stop working, ...
+
+The [Google Authenticator](https://en.wikipedia.org/wiki/Google_Authenticator) app now supports import/export of accounts.
+Making switching to a new phone way more convenient than it used to be.
+(You used to have to delete all accounts on one phone and add them again on another phone.)
+
+Another application that generates <abbr title="time based one time passwords">TOTPs</abbr>, [Authy](https://authy.com/), also stores that long secret code in the cloud, so you can access it when you need to.
+
+## Sign in with ...
+
+A lot of accounts provide the option to sign in through another online service. (eg Google, Facebook, Twitter, GitHub).
+Soon, Apple is joining the party.
+
+They reduce the hassle of having to sign up for yet another account by using the authorization for an account you already have, theirs.
+
+Many of them use a the [OAuth](https://oauth.net/2/) process under the hood.
+
+The site offering this ask the provider (eg. Google) for some information about you (eg. email and name).
+If the user allows this and logs into the provider, OAuth sends the site a token confirming you've signed in.
+
+<Aside variant="info">
+
+The amount of info the site asks for varies and is often adjustable by the user right before confirming the log in.
+It's a good habit to check if that site is requesting data you're not comfortable sharing before confirming.
+
+</Aside>
+
+### Apple
+
+A new addition is "sign in with Apple".
+It uses Apple's method of identity confirmation, that also means it works with their face detection (Face ID) and fingerprint detection (Touch ID).
+
+One of the big plusses users will have is the ability to hide their email address when signing up to a service.
+Apple will then provide the site asking for your email with an anonimised one, and forward mails sent to it to your real email.
+
+This makes it harder for shady sites to sell your email address and spam you.
+
+> Sign in with Apple won’t track or profile you as you use your favorite apps and websites, and Apple retains only the information that’s needed to make sure you can sign in and manage your account.
+>
+> <footer>
+>
+> the [Sign in with Apple documentation](https://support.apple.com/en-us/HT210318)
+>
+> </footer>
+
+<YouTube url="https://www.youtube.com/watch?v=pmfjt2PPuVA" />
+
+## Opinions and what I use
+
+As password manager I use [KeePassXC](https://keepassxc.org/).
+
+I use <abbr title="two factor authentication">2FA</abbr> on many sites and store the <abbr title="time base one time passwords">TOTPs</abbr> in [Google Authenticator](https://en.wikipedia.org/wiki/Google_Authenticator).
+
+If you are not a fan of using <abbr title="two factor authentication">2FA</abbr> (eg. because of the extra hassle).
+_Please_ use it for your email.
+
+Your email often serves as a sort of master account with the ability to reset passwords for a bunch of other accounts.
+
+On the topic of <abbr title="two factor authentication">2FA</abbr>, I avoid the <abbr title="short message service">SMS</abbr> kind. <abbr title="short message service">SMS</abbr> is not as secure and has resulted in a bunch of high profile accounts getting [hacked](https://www.theverge.com/2019/8/30/20841288/jack-dorsey-ceo-twitter-account-hacked-chuckle-gang-shane-dawson-james-charles).
+Often through some form of [social engineering](<https://en.wikipedia.org/wiki/Social_engineering_(security)>).
+
+Social logins, I'm not really a fan of them.
+While the security mechanism of these big companies is almost certainly far superior to that of a random website I'm signing up for.
+I don't like these big companies knowing when I sign into anything.
+Especially if said company's business model depends on selling advertisements and they have a vested interest in targeting advertisements as well as they can.
+
+I also prefer not using them because I never seem to remember which one I used where.
+Having every account live as an entry in my password manager simplifies this.
+
+As for "log in with Google". I avoid that because my trust in the longevity of anything coming out of that company is not high.
+They famously [retire many of their services](https://killedbygoogle.com/), even if said service is universally beloved and has been around for years.
+Notable examples of their services that went the way of the dodo are:
+
+- Google Reader
+- Google Inbox
+- Picasa
+
+Soon Google Hangouts will join that list.
+Picasa was 13 years old when they pulled the plug. _13!_
+That one still stings.
+
+Facebook, I avoid because... They have a [less than sterling](https://www.vice.com/en_us/article/akz7qa/facebook-finally-agreed-to-a-civil-rights-audit-and-surprise-surprise-it-failed) [trackrecord](https://www.businessinsider.com/oculus-vr-users-log-into-facebook-2020-8) [when](https://techcrunch.com/2018/04/05/zuckerberg-deleted-messages) [it](https://eand.co/why-zuck-is-betting-on-social-collapse-b9091b5aca74) [comes](https://www.washingtonpost.com/news/the-switch/wp/2018/04/04/facebook-said-the-personal-data-of-most-its-2-billion-users-has-been-collected-and-shared-with-outsiders/) [to](https://www.nytimes.com/interactive/2018/06/03/technology/facebook-device-partners-users-friends-data.html) [privacy](https://www.nytimes.com/2018/04/04/us/politics/cambridge-analytica-scandal-fallout.html).
+
+The "login with Apple" thing would be cool, I hope it becomes widespread and isn't only available on their appstore and their own products.  
+Apple is going to [force](https://www.theverge.com/2019/6/3/18651344/wwdc-2019-apple-force-ios-developers-sign-in-third-party) developers on iOS providing other single sign on services to also implement theirs.  
+Oh, Apple.

@@ -1,0 +1,247 @@
+---
+title: "Rust syntax: if let and while let"
+date: 2020-10-22
+tags: ["Rust"]
+section: "garden"
+---
+
+<Aside>
+
+
+TL;DR:
+
+- `if let` is a fancy `if` condition.
+- `while let` is a fancy `while` loop.
+
+They enter a codeblock if a destructuring assignment works.
+
+</Aside>
+
+
+With the `if let` syntax you combine an `if` condition with a destructuring `let` assignment.
+
+Let's unpack (pun intended) that sentence.
+
+## The `if` condition
+
+```rust
+let my_pick: Option<u8> = Some(3);
+if Some(3) == my_pick {
+    println!("Honeybadger don't care.");
+}
+```
+
+This line prints, alerting everyone that `Some(3)` is equal to `my_pick`, and more importantly that [honeybadgers don't care](https://youtu.be/4r7wHMg5Yjg).
+
+## Destructuring assignments
+
+If array destructuring works with square brackets, and tuple destructuring works via parentheses, it makes sense an `Option` could be destructured via `Some`.
+
+<Aside variant="info">
+
+
+A quick recap for array and tuple destructuring:
+
+```rust
+let arr = [1, 2, 3];
+let [one, two, three] = arr;
+println!("Counting: {}, {}, {}", one, two, three);
+// Counting: 1, 2, 3
+
+let tup = ("Daniel", "Ricciardo", 3);
+let (first_name, last_name, racing_number) = tup;
+println!("{} {} races with the number: {}", first_name, last_name, racing_number);
+// Daniel Ricciardo races with the number: 3
+```
+
+</Aside>
+
+
+If you try to destructure what's inside `my_pick` to the `number` variable with `Some(number)`, Rust will not compile and show a warning:
+
+```rust
+let my_pick: Option<u8> = Some(3);
+let Some(number) = my_pick;
+println!("Daniel Ricciardo, nicknamed 'the honeybadger' races with the number: {}", number);
+// error
+```
+
+```error
+error[E0005]: refutable pattern in local binding: `None` not covered
+```
+
+Because `my_pick` has the type of `Option<u8>`, it will either be a `Some(<u8>)` or a `None`.
+The piece of code above assumes there will always be some integer inside and neglects the possibility `my_pick` is `None`.
+
+The Rust compiler won't let you do that, it requires every possibile value for the `Option` to be covered!
+
+In this contrived example, humans can see `my_pick` will always be `Some(3)`, but the compiler can't.
+
+We can use a `match` to cover every possibility.
+
+```rust
+let my_pick: Option<u8> = Some(3);
+let number = match my_pick {
+    Some(num) => num,
+    None => panic!("Oh no, no number!")
+};
+println!("Daniel Ricciardo, nicknamed 'the honeybadger' races with the number: {}", number);
+```
+
+<Aside variant="info">
+
+
+We could have also been even more specific and only execute the `println!` if the number inside the `Option` was 3, while ignoring any other possibility.
+
+```rust
+let my_pick: Option<u8> = Some(3);
+let number = match my_pick {
+    Some(3) => 3,
+    _ => panic!("Oh no, no number!")
+};
+println!("Daniel Ricciardo, nicknamed 'the honeybadger' races with the number: {}", number);
+```
+
+</Aside>
+
+
+That's a bit verbose, we don't care about the `None` case and only want to do something if `my_pick` holds a `Some`.
+
+Even worse, the way this code is written, it depends on a `Some` being there, else it will `panic`.
+What we really want is to conditionally print that line.
+If `my_pick` is a `Some`: print it, if it is `None`: ignore that `println` and continue with the program.
+
+## Combining an if condition with a destructuring attempt
+
+Combining that destructuring attempt with an `if` condition gives us the `if let` syntax.
+
+It tries to destructure, if that destructure works, the attached codeblock is entered.
+If it doesn't work, the codeblock isn't entered and the code continues.
+
+```rust
+let my_pick: Option<u8> = Some(3);
+if let Some(number) = my_pick {
+    println!("Daniel Ricciardo, nicknamed 'the honeybadger' races with the number: {}", number);
+}
+```
+
+> Using `if let` means less typing, less indentation, and less boilerplate code. However, you lose the exhaustive checking that `match` enforces
+>
+> <footer>
+>
+>
+> [The Rust Programming Language](https://doc.rust-lang.org/book) book
+>
+> </footer>
+>
+
+<Aside variant="info">
+
+
+In the case we only care about `my_pick` holding a `Some(3)`:
+
+```rust
+let my_pick: Option<u8> = Some(3);
+if let Some(3) = my_pick {
+    println!("Daniel Ricciardo, nicknamed 'the honeybadger' races with the number: 3");
+}
+```
+
+</Aside>
+
+
+### The `else` case
+
+As you would expect from an `if` condition, it can be combined with `else if` and `else`.
+The `else if` condition can also be a conditional destructuring attempt with `else if let`.
+
+```rust
+let my_pick: Option<u8> = Some(33);
+if let Some(3) = my_pick {
+    println!("Daniel Ricciardo, nicknamed 'the honeybadger' races with the number: 3");
+} else if let Some(33) = my_pick {
+  println!("Max, Max, Max, super Max, Max");
+} else {
+  println!("Unknown driver");
+}
+```
+
+Here, `my_pick` is `Some(33)`.
+The `if` doesn't succeed anymore, the `else if` condition succeeds, printing a lyric from a [Max Verstappen fansong](https://www.youtube.com/watch?v=43HCYSXZ9GI).
+
+If `my_pick` held yet another `Some` or if it held `None`, the `else` block would execute.
+
+## Do it again, and again
+
+The `while let` syntax does almost the same thing.
+Instead of continuing on when the end of the conditional codeblock is reached, it checks the condition again.
+If the destructuring that is attempted there works again, enter the codeblock again! Rinse, repeat.
+
+The `pop` method on a vector returns an `Option`.
+The code below uses `while let` to print out the number if `pop` returns a `Some` with that number.
+In the case where `pop` returns `None`, the codeblock will not be entered again and the loop stops.
+
+```rust
+let mut my_picks: Vec<u8> = vec![3, 33, 44];
+while let Some(num) = my_picks.pop() {
+    println!("{}", num);
+}
+```
+
+<Aside variant="danger">
+
+
+Like the regular `while` loop,
+`while let` does not have an `else if` or an `else` case.
+
+</Aside>
+
+
+## Not limited to the `Option` type
+
+The `if let` and `while let` doesn't always need to try and destructure an `Option`.
+
+The following piece of code tries to destructure an `Ok(3)` from a `Result`.
+
+```rust
+let my_pick: Result<u8, ()> = Ok(3);
+if let Ok(3) = my_pick {
+    println!("Daniel Ricciardo, nicknamed 'the honeybadger' races with the number: 3");
+}
+```
+
+The thing we try to destructure doesn't have to be the kind of enum variant that holds something, simple enums variants work too!
+
+```rust
+enum SesameStreetChar {
+    Count,
+    // others
+}
+let best_vampire = SesameStreetChar::Count;
+if let SesameStreetChar::Count = best_vampire {
+  println!("Ah, ah, ah!");
+};
+```
+
+<Aside variant="info">
+
+
+In the previous example, a straight comparison would fail because the enum doesn't implement the [`PartialEq` trait](https://doc.rust-lang.org/std/cmp/trait.PartialEq.html).
+
+```rust
+if SesameStreetChar::Count == best_vampire {
+  println!("this does not compile");
+}
+// error
+```
+
+`if let` still works.
+
+```rust
+if let SesameStreetChar::Count = best_vampire {
+  println!("boo!");
+}
+```
+
+</Aside>
+

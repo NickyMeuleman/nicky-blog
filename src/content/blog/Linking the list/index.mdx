@@ -1,0 +1,166 @@
+---
+title: "Linking the list"
+date: 2021-02-02
+tags: ["Rust"]
+series: "Smart pointers in Rust"
+section: "garden"
+---
+
+The linked list is everyone's favourite data structure, [right?](https://www.youtube.com/watch?v=31g0YE61PLQ)
+
+<YouTube url="https://www.youtube.com/watch?v=31g0YE61PLQ" />
+
+Ali Spittel has [a great writeup that answers the questions: "What are linked lists, and how to they work?"](https://dev.to/aspittel/thank-u-next-an-introduction-to-linked-lists-4pph).  
+That article implements them in JavaScript, and in Python.
+
+How would that look in Rust?
+
+```rust
+struct Node {
+    data: i32,
+    next: Node,
+}
+```
+
+## Expressing "nothing"
+
+The `next` value can either be a node, or nothing.
+In other languages, that would be expressed by not giving `next` a value, by having it be `null`.
+Rust doesn't have a `null` value like many other languages do.
+
+> The problem with null values is that if you try to use a null value as a not-null value, you’ll get an error of some kind. Because this null or not-null property is pervasive, it’s extremely easy to make this kind of error.
+>
+> However, the concept that null is trying to express is still a useful one: a null is a value that is currently invalid or absent for some reason.
+>
+> <footer>
+>
+> [The Rust programming language book](https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html?highlight=null#the-option-enum-and-its-advantages-over-null-values)
+>
+> </footer>
+
+If we want to express the absence of something, we should do it explicitly.
+An [`Option<T>`](https://doc.rust-lang.org/std/option/enum.Option.html) does this.
+It's an enum with 2 variants:
+
+1. `Some(T)` if there is something
+2. `None` if there is nothing
+
+Our updated `Node` struct:
+
+```rust hl=3
+struct Node {
+    data: i32,
+    next: Option<Node>,
+}
+```
+
+The value for `next` can be either `None`, or `Some(Node)`.
+
+## Infinite recursion
+
+This doesn't compile,
+Rust has trouble with this.
+The size of a type needs to be known at compile time.
+
+While compiling, Rust tries to figure out the maximum amount of space an instance of that type can take up in memory.
+That maximum amount of space needs to be finite.
+
+For our `Node` type, the process would go like this:
+
+1. A `Node` takes up the space required to store an `i32`, and an other `Node`.
+2. That other `Node` takes up the spaces required to store an `i32`, and yet an other `Node`.
+3. That next `Node` takes up the spaces required to store an `i32`, and yet an other `Node`.
+4. [Repeat ad infinitum](https://www.youtube.com/watch?v=2VSYmGSJtCA)
+
+There's no stop to it, this goes on forever and a variable of type `Node` would take up an infinite amount of space in memory.
+
+It's like that song by Journey, it goes on, and on, and on, and on...
+
+<YouTube url="https://www.youtube.com/watch?v=1k8craCGpgs&t=150s" />
+
+The Rust compiler error when trying to execute this code is very helpful.
+
+```
+error[E0072]: recursive type `Node` has infinite size
+  */} src/main.rs:03:1
+   |
+83 | struct Node {
+   | ^^^^^^^^^^^ recursive type has infinite size
+84 |     data: i32,
+85 |     next: Option<Node>,
+   |           ------------ recursive without indirection
+   |
+help: insert some indirection (e.g., a `Box`, `Rc`, or `&`) to make `Node` representable
+   |
+85 |     next: Box<Option<Node>>,
+   |           ^^^^            ^
+```
+
+We've defined our `Node` type, which holds an instance of itself (in `next`).
+It's a recursive type, and has a possibly infinite size.
+
+The compiler then suggests to add some indirection.
+_indi-what?_
+
+They mean instead of storing the `Node` value (of unknown size) directly,
+store a pointer to that value.
+
+A [`Box<T>`](https://doc.rust-lang.org/std/boxed/struct.Box.html) is great for this.
+It's a [smart pointer](/garden/rust-smart-pointers) that stores data on the stack _and_ the heap.
+Nearly all that data is stored on the heap.
+The only thing that is stored on the stack is a pointer to that location on the heap.
+Because [`Box`](https://doc.rust-lang.org/std/boxed/struct.Box.html) is a smart pointer that implements the [`Deref`](https://doc.rust-lang.org/std/ops/trait.Deref.html) trait,
+we can treat it as a regular immutable reference to that data.
+
+That pointer has a fixed, known size, so we no longer have that "infinite size" problem.
+The data that is possibly infinite in size is stored on the heap now, that's okay.
+
+Wrapping the `Node` in a [`Box`](https://doc.rust-lang.org/std/boxed/struct.Box.html):
+
+```rust hl=3
+struct Node {
+    data: i32,
+    next: Option<Box<Node>>,
+}
+```
+
+<Aside variant="success">
+
+That's it!
+We linked a list.
+
+</Aside>
+
+## Final code
+
+```rust title=main.rs
+struct Node {
+    data: i32,
+    next: Option<Box<Node>>,
+}
+
+impl Node {
+    fn new(num: i32) -> Node {
+        Node {
+            data: num,
+            next: None,
+        }
+    }
+
+    fn set_next(&mut self, next: Node) {
+        self.next = Some(Box::new(next));
+    }
+}
+
+let mut one = Node::new(1);
+let two = Node::new(2);
+
+one.set_next(two);
+
+println!("{}", one.data);
+// 1
+println!("{}", one.next);
+// Some(Node { data: 2, next: None })
+println!("{:?}", one);
+// Node { data: 1, next: Some(Node { data: 2, next: None }) }
+```

@@ -1,0 +1,174 @@
+---
+title: "Rust syntax: what the questionmark?"
+date: 2020-10-16
+tags: ["Rust"]
+section: "garden"
+---
+
+<Aside>
+
+TL;DR:
+The `?` operator returns early from a function if the operation it was called on was not successful.
+It returns the error.
+
+</Aside>
+
+Ever seen a line of Rust code with a rising inflection, with an inquisitive tone?  
+~~That line is questioning its existence~~
+
+```rust
+let f = File::open("username.txt")?;
+```
+
+The `?` in Rust is the questionmark operator.
+
+It's a piece of syntax that replaces a very common case of error handling.
+
+The [following piece of code](https://doc.rust-lang.org/edition-guide/rust-2018/error-handling-and-panics/the-question-mark-operator-for-easier-error-handling.html) deals with 2 operations that can fail.
+It tries to open a file and read the username inside.
+
+If any of the operations fail, it will stop execution of the function and return information about that failure.
+This usecase is called _error propagation_.
+
+```rust
+fn read_username_from_file() -> Result<String, io::Error> {
+    let f = File::open("username.txt");
+
+    let mut f = match f {
+        Ok(file) => file,
+        Err(e) => return Err(e),
+    };
+
+    let mut s = String::new();
+
+    match f.read_to_string(&mut s) {
+        Ok(_) => Ok(s),
+        Err(e) => Err(e),
+    }
+}
+```
+
+<Aside variant="info">
+
+The `Result<T, E>` type, is an `enum` with 2 variants.
+Both `T` and `E` are placeholders for types.
+
+```rust
+enum Result<T, E> {
+    Ok(T),
+    Err(E),
+}
+```
+
+</Aside>
+
+The `read_username_from_file` function returns a `Result<String, io::Error>`.
+That means the returned value from that function will either be an `Ok` that holds a `String`,
+or an `Err` that holds an instance of `io::Error`.
+
+Inside `read_username_from_file` there is a call to `File::open`, which returns a `Result` type.
+
+- It can return an `Ok` with a file handle inside.
+- It can return an `Err` with an error inside (an `io::Error`).
+
+To deal with that possibility, the code calls a `match` on the result of the `File::open` function.
+
+- On `Ok`, it returns what was inside the `Ok` from the `match`
+- On `Err`, it early returns from the entire function with that `Err` as returned value.
+
+To put it differently: it either unwraps the `Ok`, or it quits the function and returns the `Err`.
+
+Later in the `read_username_from_file` function another operation that returns a `Result` is called.
+Very similar logic is applied there.
+
+- If the returned value is an `Ok`, this signals a successful completion of the function. `s` is wrapped in an `Ok` and returned from the `match`.
+- If the returned value is an `Err`, it is returned from the `match`. (the `Err` contains an `io::Error`)
+
+Since this is the last expression of the function,
+the `return` keyword is no longer needed as the returned value from the `match` is also the returned value from the function.
+
+Using `?`, the function now looks like this:
+
+```rust
+fn read_username_from_file() -> Result<String, io::Error> {
+    let mut f = File::open("username.txt")?;
+    let mut s = String::new();
+    f.read_to_string(&mut s)?;
+    Ok(s)
+}
+```
+
+The `?` operator can be used on a `Result` type if the function it's in returns a `Result` as well.
+
+Every time you see a `?`, that's a possible early return from the function the `?` is used in.
+
+The `?` is a shorthand for the behaviour in that first match statement.
+
+- on `Ok`, it unwraps the `Ok` and evaluates to the value inside
+- on `Err`, it returns from the function with that `Err` (that holds an `io::Error` in this case)
+
+The possible `Err` from `File::open` is returned from the function.  
+If there is no error, `f` will hold the file handle the `Ok` contained and execution of the function continues.
+
+The possible `Err` from `read_to_string` is returned from the function.  
+If there is no error, the method finished successfully and execution of the function continues.  
+The value the `Ok` held is ignored by turning the `f.read_to_string(&mut s)?` [expression into a statement](/garden/rust-expression-statement).  
+If the code reaches a point after that line, it means the result was `Ok`.
+
+The last expression in this rewritten function is an `Ok` with a `String` inside: `Ok(s)`.
+
+When using the `?` on a `Result`, I call it the [Annie operator](https://youtu.be/h_D3VFfhvs4?t=103)
+
+<Aside variant="info">
+
+There is a slight difference between the 2 pieces of code.
+It will send the `error` contained in `Err(error)` through the [`From::from` method](https://doc.rust-lang.org/std/convert/trait.From.html#tymethod.from).
+So if the `Result` variant the `?` is called on is `Err(error)`, the function will `return Err(From::from(error))`.
+
+This example with the `?` operator:
+
+```rust
+let mut f = File::open("username.txt")?;
+```
+
+is equivalent to:
+
+```rust
+let mut f = match File::open("username.txt") {
+    Ok(result) => result,
+    Err(err) => return Err(From::from(err)),
+}
+```
+
+</Aside>
+
+<Aside variant="info">
+
+`?` can also be used on the `Option` type. It will then unwrap `Some`, or propagate `None`.
+
+```rust
+fn get_number(name: String) -> Option<String> {
+ if name == "Carly" {
+     Some(String::from("1-800-JEPSEN"))
+ } else {
+     None
+ }
+}
+
+fn call_me_maybe(name: String) -> Option<u8> {
+    let number = get_number(name)?;
+    // calling the number
+    Some(0)
+}
+```
+
+</Aside>
+
+<Aside variant="danger">
+
+The returned type of a function must be compatible with the returned type from the `?` operator.
+
+In practice, that often means the function `?` is called in returns a `Result<T, E>`.  
+Because `?` possibly exits the function with an `Err(error)`, that `error` must be compatible with the `E` in the `Result` the function returns.
+
+</Aside>

@@ -1,0 +1,164 @@
+---
+title: "Rust: expression vs statement"
+date: 2020-09-23
+tags: ["Rust"]
+section: "garden"
+---
+
+<Aside>
+
+TL;DR: Expressions evaluate to a value, they return that value.
+Statements do not.
+
+</Aside>
+
+Statements are instructions that _do_ something, they don't return a value.
+Expressions _evaluate to a value_, they return that value.
+
+> Rust is an expression-oriented language.
+> This means that most things are expressions, and evaluate to some kind of value.
+> However, there are also statements.
+>
+> <footer>
+>
+> [Steve Klabnik](https://twitter.com/steveklabnik) (member of the Rust core
+> team)
+>
+> </footer>
+
+Assigning a value to a variable is a statement, it doesn't return anything.
+
+```rust
+let num = 5;
+```
+
+Expressions can be part of a statement.
+
+While the line above is a statement, it contains an expression (something that evaluates to a value).
+In this case, the value itself, the integer `5`.
+
+<Aside variant="danger">
+
+Variable assignment being a statement is the reason you can't assign a value to the result of another assignment.
+You can in many other languages, not in Rust.
+
+The following snippet would try to assign "nothing" to the `also_num` variable, that's an error!
+
+```rust
+let also_num = (let num = 5); // error!
+```
+
+</Aside>
+
+<Aside variant="info">
+
+Statements technically return something. Rust's way to express "nothing here", the empty tuple `()`.
+
+</Aside>
+
+Function bodies are made up of a series of statements, optionally ending in an expression.
+
+Expressions do not include ending semicolons.
+If you add a semicolon to the end of an expression, you turn it into a statement, which will then not return a value.
+
+If a function ends in an expression, it returns the value of that expression.
+
+A function definition is a statement, it does not result in a value.
+Calling a function is an expression, that expression evaluates to whatever that function call returns.
+
+```rust
+let num = add(4, 1);
+
+fn add(x: i32, y:i32) -> i32 {
+    x + y
+}
+```
+
+The lines where the `add` function is defined, are a statement, those lines don't evaluate to anything.  
+Calling `add(4, 1)` is an expression, it evaluates to a value (the integer `5`).  
+Inside the function, the last line of the function body is an expression `x + y`.  
+That ending expression evaluates to a value and the function returns it.
+
+<Aside variant="danger">
+
+If that line ended in a semicolon instead (ie. `x + y;`), it would turn the expression into a statement.
+That would not return a value, causing the function to not return a value.
+
+That would mean we lied when we defined the function, as we stated it would return an integer of type `i32` (with the syntax `-> i32`).
+The function doesn't do that anymore.
+It returns nothing now.
+
+This is a bug and the Rust compiler won't let you do this.
+
+</Aside>
+
+The value `add(4, 1)` evaluated to is then assigned to the variable named `num`.
+That entire line (ie. `let num = add(4, 1);`) is a statement.
+
+A codeblock that creates a new scope (ie. `{}`) is an expression (it evaluates to a value).
+
+```rust
+let num = {
+    let x = 4;
+    x + 1
+};
+```
+
+Inside that codeblock, a variable declaration statement happens, followed by an expression (`x + 1`).
+The value that last expression evaluates to will be the value the entire codeblock evaluates to.
+That value is then assigned to the `num` variable in this example.
+
+---
+
+You may explicitly return a value from a function by using the `return` keyword followed by an expression.  
+By convention, that line is terminated with a semicolon.
+As you might expect, that isn't mandatory and the compiler won't complain if you leave it off.
+
+This is an `add` function that explicitly ends execution and returns a value is equivalent to the `add` above that ended with an expression.
+
+```rust
+fn add(x: i32, y:i32) -> i32 {
+    return x + y;
+}
+```
+
+---
+
+We can use this mechanism to make code that has a variable declaration that is only used to later be populated a bit shorter.
+
+```rust title=example.rs
+fn main() {
+    let num = 5;
+    let mut name = "";
+    if num > 3 {
+        name = "Tom";
+    } else {
+        name = "Jerry";
+    }
+    println!("{}", name);
+}
+```
+
+`if` is an expression, it returns a value.
+
+The value an `if` evaluates to is the value of the codeblock it executed.
+That means we can rewrite our example above.
+
+Now, `name` is never an empty string, it's either `"Tom"` or `"Jerry"`.
+
+```rust title=example.rs
+fn main() {
+    let num = 5;
+    let name = if num > 3 {
+        "Tom"
+    } else {
+        "Jerry"
+    };
+    println!("{}", name);
+}
+```
+
+This means that every arm of the `if` statement must return the same type.
+If we return different types from the branches, the compiler won't be able to figure out what the resulting type of the entire `if` is and will show a compilation error.
+
+A similar approach can be taken with more programming constructs in Rust that are expressions: like `match`.
