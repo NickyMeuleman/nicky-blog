@@ -38,6 +38,7 @@ const blog = defineCollection({
           "Fresh environment, 2018",
           "Advent of Code 2015",
           "Advent of Code 2022",
+          "Advent of Code 2023",
         ])
         .optional(),
       section: z.enum(["blog", "garden"]).default("blog"),

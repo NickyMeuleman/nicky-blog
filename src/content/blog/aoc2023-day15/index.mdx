@@ -1,0 +1,306 @@
+---
+title: "Advent of Code 2023 Day 15"
+date: 2023-12-15
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+section: "garden"
+---
+
+## Day 15: Lens Library
+
+https://adventofcode.com/2023/day/15
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_15.rs)
+</Aside>
+
+You arrive at the facility the mirrors are pointing at.
+
+Inside, some more calibration work is needed.
+
+Today's input is a bunch of instructions.
+
+An example input looks like this:
+```txt title=input.txt
+rn=1,cm-,qp=3,cm=2,qp-,pc=4,ot=9,ab=5,pc-,pc=6,ot=7
+```
+
+The line with instructions is separated by commas.
+
+## Part 1
+
+A hashing algorithm turns every instruction into a number.
+
+1. Determine the ASCII code for the current character of the string.
+1. Increase the current value by the ASCII code you just determined.
+1. Set the current value to itself multiplied by 17.
+1. Set the current value to the remainder of dividing itself by 256.
+
+The question asks for the sum of all instruction hashes.
+
+### Helpers
+
+The hash function!
+```rust
+fn hash(s: &str) -> u32 {
+    s.bytes().fold(0, |mut acc, byte| {
+        acc += byte as u32;
+        acc *= 17;
+        acc % 256
+    })
+}
+```
+
+By using some properties of modular arithmetic, and the fact that a 8 bytes can store 256 decimal numbers (0 to 255).
+```rust
+// https://www.khanacademy.org/computing/computer-science/cryptography/modarithmetic/a/modular-addition-and-subtraction
+// (A + B) mod C = (A mod C + B mod C) mod C
+// https://www.khanacademy.org/computing/computer-science/cryptography/modarithmetic/a/modular-multiplication
+// (A * B) mod C = (A mod C * B mod C) mod C
+// combining those two rules:
+// ((A + B) * C) mod D = (((A + B) mod D) * C) mod D
+fn hash(s: &str) -> u8 {
+    s.bytes()
+        .fold(0, |acc, byte| acc.wrapping_add(byte).wrapping_mul(17))
+}
+```
+
+### Code
+
+```rust title=day_15.rs
+fn hash(s: &str) -> u8 {
+    s.bytes()
+        .fold(0, |acc, byte| acc.wrapping_add(byte).wrapping_mul(17))
+}
+
+pub fn part_1(input: &str) -> u32 {
+    input.trim().split(',').map(|s| hash(s) as u32).sum()
+}
+```
+
+## Part 2
+
+Now the question tells us what each instruction means.
+
+Each instruction starts with a label (the letters).
+
+The labels are for lenses.
+
+There are 2 types of instruction:
+1. An instruction ending in a minus `-` means "remove the lens with this label from its box".
+1. An instructing with an equals sign `=` means "update the box with this lens"
+
+To find the box for a label, apply the hashing function from part1 to it.
+eg. The `rn=1` instruction has a label of `rn`, hashing that gives `0`.
+So this instruction tells us to update box 0.
+
+There are 256 boxes in total, this maps perfectly to what the hash function from part1 can return!
+
+Now, the specifics of both instructions.
+
+1. The remove instruction:
+    - If the label you are searching for is not inside its box, do nothing.
+    - If the label you are searching for is present, remove it and shift all other lenses forward.
+1. The add instruction:
+    - If a lens with the label you are searching for is present, update its focal length (the number right of the `=` in the instruction).
+    - If a lens with the label you are searching for is not present, add the lens to the end of the box.
+
+The question asks for the total focusing power after all instructions are applied.
+
+The focusing power of a single lens is the result of multiplying together:
+- One plus the box number of the lens in question. (boxes start at 0!)
+- The slot number of the lens within the box: 1 for the first lens, 2 for the second lens, and so on. (slots start 1!)
+- The focal length of the lens.
+
+### Helpers
+
+I represented each instruction as an enum.
+```rust
+enum Instruction<'a> {
+    Remove(&'a str),
+    Add(Lens<'a>),
+}
+```
+
+A `Lens` here:
+```rust
+struct Lens<'a> {
+    label: &'a str,
+    focal: u8,
+}
+```
+
+Again, don't mind the `'a` stuff, those are Rust lifetimes that let me use the labels from the input.
+
+Then I created a way to turn a piece of the input into a real `Instruction`.
+```rust
+impl<'a> Instruction<'a> {
+    fn new(s: &'a str) -> Self {
+        if let Some(label) = s.strip_suffix('-') {
+            Self::Remove(label)
+        } else {
+            let (label, focal) = s.split_once('=').unwrap();
+            let focal = focal.parse().unwrap();
+            let lens = Lens { label, focal };
+            Self::Add(lens)
+        }
+    }
+}
+```
+
+---
+
+I loop over the input, turn each instruction into an `Instruction` and apply it.
+
+I represented the 256 boxes as an array.
+Each box can hold several lenses, so each box is represented as a list itself.
+
+For every instruction, I calculate the hash of its label.
+
+Then I apply the instruction according to the rules described in the problem statement.
+
+At the end, I loop through all boxes and calculate the sum of the focusing power.
+The sum of all those sums is what the question is asking for.
+
+### Code
+
+```rust title=day_15.rs
+enum Instruction<'a> {
+    Remove(&'a str),
+    Add(Lens<'a>),
+}
+
+impl<'a> Instruction<'a> {
+    fn new(s: &'a str) -> Self {
+        if let Some(label) = s.strip_suffix('-') {
+            Self::Remove(label)
+        } else {
+            let (label, focal) = s.split_once('=').unwrap();
+            let focal = focal.parse().unwrap();
+            let lens = Lens { label, focal };
+            Self::Add(lens)
+        }
+    }
+}
+
+struct Lens<'a> {
+    label: &'a str,
+    focal: u8,
+}
+
+fn hash(s: &str) -> u8 {
+    s.bytes()
+        .fold(0, |acc, byte| acc.wrapping_add(byte).wrapping_mul(17))
+}
+
+pub fn part_2(input: &str) -> usize {
+    const BOX: Vec<Lens> = Vec::new();
+    let mut boxes = [BOX; 256];
+
+    for instr in input.trim_end().split(',').map(Instruction::new) {
+        match instr {
+            Instruction::Remove(label) => {
+                let hash = hash(label);
+                boxes[hash as usize].retain(|item| item.label != label);
+            }
+            Instruction::Add(lens) => {
+                let hash = hash(lens.label);
+                let lenses = &mut boxes[hash as usize];
+                if let Some(old) = lenses.iter_mut().find(|item| lens.label == item.label) {
+                    // update focal length of lens with this label
+                    old.focal = lens.focal;
+                } else {
+                    // add lens to end of box
+                    lenses.push(lens);
+                }
+            }
+        }
+    }
+
+    boxes
+        .into_iter()
+        .enumerate()
+        .map(|(box_idx, lenses)| {
+            let box_focusing_power: usize = lenses
+                .into_iter()
+                .enumerate()
+                .map(|(lens_idx, lens)| (box_idx + 1) * (lens_idx + 1) * lens.focal as usize)
+                .sum();
+            box_focusing_power
+        })
+        .sum()
+}
+```
+
+## Final code
+
+```rust title=day_15.rs numberLines
+enum Instruction<'a> {
+    Remove(&'a str),
+    Add(Lens<'a>),
+}
+
+impl<'a> Instruction<'a> {
+    fn new(s: &'a str) -> Self {
+        if let Some(label) = s.strip_suffix('-') {
+            Self::Remove(label)
+        } else {
+            let (label, focal) = s.split_once('=').unwrap();
+            let focal = focal.parse().unwrap();
+            let lens = Lens { label, focal };
+            Self::Add(lens)
+        }
+    }
+}
+struct Lens<'a> {
+    label: &'a str,
+    focal: u8,
+}
+
+fn hash(s: &str) -> u8 {
+    s.bytes()
+        .fold(0, |acc, byte| acc.wrapping_add(byte).wrapping_mul(17))
+}
+
+pub fn part_1(input: &str) -> u32 {
+    input.trim().split(',').map(|s| hash(s) as u32).sum()
+}
+
+pub fn part_2(input: &str) -> usize {
+    const BOX: Vec<Lens> = Vec::new();
+    let mut boxes = [BOX; 256];
+
+    for instr in input.trim_end().split(',').map(Instruction::new) {
+        match instr {
+            Instruction::Remove(label) => {
+                let hash = hash(label);
+                boxes[hash as usize].retain(|item| item.label != label);
+            }
+            Instruction::Add(lens) => {
+                let hash = hash(lens.label);
+                let lenses = &mut boxes[hash as usize];
+                if let Some(old) = lenses.iter_mut().find(|item| lens.label == item.label) {
+                    // update focal length of lens with this label
+                    old.focal = lens.focal;
+                } else {
+                    // add lens to end of box
+                    lenses.push(lens);
+                }
+            }
+        }
+    }
+
+    boxes
+        .into_iter()
+        .enumerate()
+        .map(|(box_idx, lenses)| {
+            let box_focusing_power: usize = lenses
+                .into_iter()
+                .enumerate()
+                .map(|(lens_idx, lens)| (box_idx + 1) * (lens_idx + 1) * lens.focal as usize)
+                .sum();
+            box_focusing_power
+        })
+        .sum()
+}
+```

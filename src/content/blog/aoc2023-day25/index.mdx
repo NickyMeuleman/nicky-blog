@@ -1,0 +1,479 @@
+---
+title: "Advent of Code 2023 Day 25"
+date: 2023-12-25
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+section: "garden"
+---
+
+## Day 25: Snowverload
+
+https://adventofcode.com/2023/day/25
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_25.rs)
+</Aside>
+
+There is no snow, you decide to investigate the spot directly beneath the waterfall.
+
+You find a buch of ~~lean, mean,~~ snow making machines connected with wires.
+
+They don't seem to be working, only displaying an error code on a screen.
+You call the technical snow-machine support and they tell you it's a power overload error.
+That means there are too many machines connected and you should disconnect some.
+
+You need to disconnect at least half of the equipment.
+There is not a lot of time left as it is almost Christmas, and you can only disconnect 3 wires.
+
+Today's input is a wiring diagram that shows how the machines are connected.
+An example input looks like this:
+
+```txt title=input.txt
+jqt: rhn xhk nvd
+rsh: frs pzl lsr
+xhk: hfx
+cmg: qnr nvd lhk bvb
+rhn: xhk bvb hfx
+bvb: xhk hfx
+pzl: lsr hfx nvd
+qnr: nvd
+ntq: jqt hfx bvb xhk
+nvd: lhk
+lsr: lhk
+rzs: qnr cmg lsr rsh
+frs: qnr lhk lsr
+```
+
+Each line shows the name of a machine, a colon `:`, and a list of the machines it is connected to that's separated by spaces.
+
+<Aside variant="danger">
+
+Cables are bidirectional.
+Not all machines are listed to the left of the colon, make sure to account for that!
+
+</Aside>
+
+## Parsing
+
+I represented the network of machines and cables as a graph in the form of a map.
+A key in that map is the name of a machine, the value is a list of machines it is connected to.
+
+```rust
+fn parse(input: &str) -> HashMap<&str, HashSet<&str>> {
+    input
+        .lines()
+        .map(|line| line.split_once(": ").unwrap())
+        .fold(HashMap::new(), |mut acc, (from, rhs)| {
+            for to in rhs.split_whitespace() {
+                acc.entry(from).or_default().insert(to);
+                acc.entry(to).or_default().insert(from);
+            }
+            acc
+        })
+}
+```
+
+## Part 1
+
+Disconnect 3 wires to split the network of machines into 2 groups.
+Count the amount of machines in each group.
+
+The question asks what number you get if you multiply the amount of machines in those 2 groups.
+
+<Aside variant="info">
+
+Some vocabulary:  
+The network is represented as a graph.  
+Each machine name is a node in that graph.  
+Each cable between two machines/nodes is called an edge.
+
+</Aside>
+
+In pseudo/skeleton-code:
+```rust
+let mut graph = parse(input);
+
+// find and remove the 3 separating edges
+delete_separating_edges(&mut graph);
+
+// count the amount of nodes reachable from a random starting node, that's the size of 1 half
+let start = graph.keys().next().unwrap()
+let half1 = reachable_nodes(&graph, start);
+// derive the size of the other half
+let half2 = graph.len() - half1;
+
+half1 * half2
+```
+
+## Option 1: count ALL the paths!
+
+Find the path between every pair of nodes.
+We can assume the 3 most used edges (cables) are the 3 separating the 2 groups of nodes.
+
+The reason for this is that every node in one half will have to use one of those 3 edges to reach any node in the other half.
+That magic number 3 is given in the question.
+
+I used [BFS](https://en.wikipedia.org/wiki/Breadth-first_search) to find the path from one node to all other nodes in one loop.
+Incrementing a count for each specific edge that was used.
+
+### Helpers
+
+The function that counts how many times each edge was used.
+
+The order of the nodes does not matter, going from `abc` to `xyz` uses the same edge as going from `xyz` to `abc`.
+That is why before incrementing the edge count, I sort those 2 strings.
+
+```rust
+fn edge_usage<'a>(graph: &HashMap<&'a str, HashSet<&'a str>>) -> HashMap<(&'a str, &'a str), u32> {
+    // key: ("from", "to"), value: amount of times used
+    let mut edges = HashMap::new();
+
+    // starting at every node, follow a shortest path to every other node
+    // count how many time each edge (from, to) was used. The order of (from, to) doesn't matter
+    for &start in graph.keys() {
+        let mut q = VecDeque::from([start]);
+        let mut seen = HashSet::from([start]);
+        let mut prev_map = HashMap::new();
+
+        while let Some(node) = q.pop_front() {
+            for &neighbour in graph.get(node).unwrap() {
+                if seen.insert(neighbour) {
+                    q.push_back(neighbour);
+                    prev_map.insert(neighbour, node);
+                }
+            }
+        }
+
+        // count the amount of times an edge (connection between 2 nodes) was used by backtracking along the path taken to reach a node
+        for node in graph.keys() {
+            let mut curr = *node;
+            while curr != start {
+                let prev = *prev_map.get(curr).unwrap();
+                // order of next and curr can be swapped, it remains the same edge
+                let [min, max] = cmp::minmax(prev, curr);
+                *edges.entry((min, max)).or_default() += 1;
+                curr = prev;
+            }
+        }
+    }
+
+    edges
+}
+```
+
+In this version of the same function, I eliminated the nested loop that does the backtracking.
+
+I did not increment the counts in `edges` for a path between all possible pairs of nodes.
+Instead, I incremented the count for an edge as the BFS was running.
+This means some edges that are used in a buch of paths will only be counted once.
+
+Because one of the 3 separating edges has to be used in every path that goes from one half to the other,
+the 3 most used edges will still be the separating edges.
+
+```rust
+fn edge_usage<'a>(graph: &HashMap<&'a str, HashSet<&'a str>>) -> HashMap<(&'a str, &'a str), u32> {
+    // key: ("from", "to"), value: amount of times used
+    let mut edges = HashMap::new();
+
+    // starting at every node, follow a shortest path to every other node
+    // count how many time each edge (from, to) was used. The order of (from, to) doesn't matter
+    for &start in graph.keys() {
+        let mut q = VecDeque::from([start]);
+        let mut seen = HashSet::from([start]);
+
+        while let Some(node) = q.pop_front() {
+            for &neighbour in graph.get(node).unwrap() {
+                if seen.insert(neighbour) {
+                    q.push_back(neighbour);
+                    // increment usage number for the edge that was used
+                    // the order of neighbour and node can be swapped, it remains the same edge
+                    let [min, max] = cmp::minmax(neighbour, node);
+                    *edges.entry((min, max)).or_default() += 1;
+                }
+            }
+        }
+    }
+
+    edges
+}
+```
+
+A helper that takes in the original graph,
+computes the edge usage counts using the previous helper,
+then sorts those counts and returns the 3 most used edges:
+```rust
+fn most_used_edges<'a>(graph: &HashMap<&'a str, HashSet<&'a str>>) -> [(&'a str, &'a str); 3] {
+    edge_usage(&graph)
+        .into_iter()
+        .sorted_unstable_by_key(|(_, count)| *count)
+        .rev()
+        .map(|(edge, _)| edge)
+        .next_chunk()
+        .unwrap()
+}
+```
+
+Finally a helper that counts the amount of nodes that are reachable when starting from a given node:
+```rust
+fn reachable_nodes(graph: &HashMap<&str, HashSet<&str>>, start: &str) -> usize {
+    let mut q = VecDeque::from([start]);
+    let mut seen = HashSet::from([start]);
+
+    while let Some(node) = q.pop_front() {
+        for next in graph.get(node).unwrap() {
+            if seen.insert(next) {
+                q.push_back(next);
+            }
+        }
+    }
+
+    seen.len()
+}
+```
+
+Now it's time to put these 3 helpers together into the form of the skeletoncode I started with!
+
+### Code
+
+```rust title=day_25.rs
+#![feature(cmp_minmax)]
+#![feature(iter_next_chunk)]
+
+pub fn part_1(input: &str) -> usize {
+    // key: "from", value: list of "to"
+    let mut graph = parse(input);
+    // list of the 3 ("from", "to") edges that separate the graph
+    let separating_edges = most_used_edges(&graph);
+
+    // remove the 3 separating edges
+    for (node1, node2) in separating_edges {
+        graph.entry(node1).or_default().remove(node2);
+        graph.entry(node2).or_default().remove(node1);
+    }
+
+    // pick a random node
+    let start = graph.keys().next().unwrap();
+
+    // count how many nodes are reachable from that node now the separating edges are removed
+    let half1 = reachable_nodes(&graph, start);
+    let half2 = graph.len() - half1;
+
+    half1 * half2
+}
+```
+
+## Option 2: deleting until victorious
+
+For this solution, pick 2 nodes and assume they are in separate halves.
+If they are not, that's not a problem because eventually the code will know they're not and move on until it finds a pair that is.
+
+This solution finds a path from the starting node to the ending node.
+It has to have travelled across one of those 3 separating edges.
+
+Then it deletes all edges along that path.
+It will delete one of the 3 separating edges, leaving 2.
+
+The next path from that same starting node to the same ending node now has to travel across one of those 2 edges.
+The third time, all 3 separating nodes have been deleted, separating the graph in 2 halves.
+
+The other edges that got deleted during this procedure have no impact, all nodes in a half will still be reachable.  
+Because from the problem statement we know it will be impossible to sever the graph with any other 3 cuts.  
+This means all nodes in a half are still reachable when starting from a random node in that half.
+
+### Helpers
+
+A helper function that finds a route between 2 nodes, and deletes all edges it used.
+It first finds a path while keeping track of the route it took, then it backtracks along that route while severing the edges it used:
+```rust
+fn delete_route<'a>(graph: &mut HashMap<&'a str, HashSet<&'a str>>, from: &'a str, to: &'a str) {
+    let mut q = VecDeque::from([from]);
+    let mut seen = HashSet::from([from]);
+    let mut prev_map = HashMap::new();
+
+    'outer: while let Some(node) = q.pop_front() {
+        for &neighbour in graph.get(node).unwrap() {
+            if seen.insert(neighbour) {
+                q.push_back(neighbour);
+                prev_map.insert(neighbour, node);
+                if neighbour == to {
+                    break 'outer;
+                }
+            }
+        }
+    }
+
+    // delete every edge on the path "from"-"to"
+    // if "from" and "to" were in the 2 halves, one of the connecting edges is guaranteed to be deleted this way
+    let mut curr = to;
+    while curr != from {
+        let prev = prev_map.get(curr).unwrap();
+        graph.entry(curr).or_default().remove(prev);
+        graph.entry(prev).or_default().remove(curr);
+        curr = prev;
+    }
+}
+```
+
+The `reachable_nodes` helper from the previous solution is reused with some slight changes.
+It now returns nothing if the graph wasn't cut in 2.
+In Rust, this is done with the `Option` type.
+The function either returns a count of a half, or it returns nothing:
+```rust
+fn reachable_nodes(graph: &HashMap<&str, HashSet<&str>>, from: &str, to: &str) -> Option<usize> {
+    let mut q = VecDeque::from([from]);
+    let mut seen = HashSet::from([from]);
+
+    while let Some(node) = q.pop_front() {
+        for neighbour in graph.get(node).unwrap() {
+            if *neighbour == to {
+                // the graph was not cut in 2
+                return None;
+            }
+            if seen.insert(neighbour) {
+                q.push_back(neighbour);
+            }
+        }
+    }
+
+    Some(seen.len())
+}
+```
+
+These 2 helpers are then put together in the final code.
+It checks every combination of 2 nodes until it finds 2 that are in separate halves.
+
+<Aside>
+
+If you are confused about what the `?` operator is doing here, it's an early return.
+It tells the function it's in nothing was returned and the loop should keep doing its loopy thing.
+
+[I wrote a blogpost about it!](https://nickymeuleman.netlify.app/garden/rust-syntax-questionmark)
+
+</Aside>
+
+### Code
+
+```rust title=day_25.rs
+pub fn part_1(input: &str) -> usize {
+    let graph = parse(input);
+
+    graph
+        .keys()
+        .tuple_combinations()
+        .find_map(|(from, to)| {
+            let mut copy = graph.clone();
+
+            // delete 3 routes starting at "from" and ending in "to"
+            for _ in 0..3 {
+                delete_route(&mut copy, from, to)
+            }
+
+            // if "from" and "to" were in 2 halves, the connecting edges were deleted and "to" will not be reachable starting at "from"
+            // if this is the case, count how many nodes were reachable, this is one half. If not, move on to an other "from"-"to" pair
+            let half1 = reachable_nodes(&copy, from, to)?;
+            let half2 = copy.len() - half1;
+
+            Some(half1 * half2)
+        })
+        .unwrap()
+}
+```
+
+
+## Part 2
+
+This part is very secret.
+
+It started snowing, have a great year, and see you next year for more Advent of Come!
+
+## Final code
+
+```rust title=day_25.rs numberLines
+use std::collections::{HashMap, HashSet, VecDeque};
+
+use itertools::Itertools;
+
+fn parse(input: &str) -> HashMap<&str, HashSet<&str>> {
+    input
+        .lines()
+        .map(|line| line.split_once(": ").unwrap())
+        .fold(HashMap::new(), |mut acc, (from, rhs)| {
+            for to in rhs.split_whitespace() {
+                acc.entry(from).or_default().insert(to);
+                acc.entry(to).or_default().insert(from);
+            }
+            acc
+        })
+}
+
+fn delete_route<'a>(graph: &mut HashMap<&'a str, HashSet<&'a str>>, from: &'a str, to: &'a str) {
+    let mut q = VecDeque::from([from]);
+    let mut seen = HashSet::from([from]);
+    let mut prev_map = HashMap::new();
+
+    'outer: while let Some(node) = q.pop_front() {
+        for &neighbour in graph.get(node).unwrap() {
+            if seen.insert(neighbour) {
+                q.push_back(neighbour);
+                prev_map.insert(neighbour, node);
+                if neighbour == to {
+                    break 'outer;
+                }
+            }
+        }
+    }
+
+    // delete every edge on the path "from"-"to"
+    // if "from" and "to" were in the 2 halves, one of the connecting edges is guaranteed to be deleted this way
+    let mut curr = to;
+    while curr != from {
+        let prev = prev_map.get(curr).unwrap();
+        graph.entry(curr).or_default().remove(prev);
+        graph.entry(prev).or_default().remove(curr);
+        curr = prev;
+    }
+}
+
+fn reachable_nodes(graph: &HashMap<&str, HashSet<&str>>, from: &str, to: &str) -> Option<usize> {
+    let mut q = VecDeque::from([from]);
+    let mut seen = HashSet::from([from]);
+
+    while let Some(node) = q.pop_front() {
+        for neighbour in graph.get(node).unwrap() {
+            if *neighbour == to {
+                // the graph was not cut in 2
+                return None;
+            }
+            if seen.insert(neighbour) {
+                q.push_back(neighbour);
+            }
+        }
+    }
+
+    Some(seen.len())
+}
+
+pub fn part_1(input: &str) -> usize {
+    let graph = parse(input);
+
+    graph
+        .keys()
+        .tuple_combinations()
+        .find_map(|(from, to)| {
+            let mut copy = graph.clone();
+
+            // delete 3 routes starting at "from" and ending in "to"
+            for _ in 0..3 {
+                delete_route(&mut copy, from, to)
+            }
+
+            // if "from" and "to" were in 2 halves, the connecting edges were deleted and "to" will not be reachable starting at "from"
+            // if this is the case, count how many nodes were reachable, this is one half. If not, move on to an other "from"-"to" pair
+            let half1 = reachable_nodes(&copy, from, to)?;
+            let half2 = copy.len() - half1;
+
+            Some(half1 * half2)
+        })
+        .unwrap()
+}
+```

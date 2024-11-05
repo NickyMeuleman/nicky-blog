@@ -1,0 +1,443 @@
+---
+title: "Advent of Code 2023 Day 9"
+date: 2023-12-09
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+section: "garden"
+---
+
+## Day 9: Mirage Maintenance
+
+https://adventofcode.com/2023/day/9
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_09.rs)
+</Aside>
+
+You got out of the sandstorm and arrive at an oasis.
+
+You gather some data on the oasis by tracking some datapoints, that's today's input.
+
+An example input looks like this:
+
+```txt title=input.txt
+0 3 6 9 12 15
+1 3 6 10 15 21
+10 13 16 21 30 45
+```
+
+Each line in the report contains the history of a single value
+
+## Part 1
+
+You want to predict the next value for each datapoint.
+
+The question asks what the sum is of all next values.
+
+To extrapolate the next value of a line, you start by making a new sequence with the difference at each step.
+You do this until all numbers in the new sequence are zeroes.
+
+In the example input, for the first line:
+
+```txt
+0   3   6   9  12  15
+  3   3   3   3   3
+    0   0   0   0
+```
+
+Now to find the next value in the original sequence, start by adding a zero to the end of the last line.
+
+This lets you figure out the last value on every previous line, until you get to the very first line (Nicky's note: I smell recursion).
+
+Also, I recognize this from math class! [Pascal's triangle](https://en.wikipedia.org/wiki/Pascal%27s_triangle).
+I don't remember if there is a clever way to determine a specific value though, so I'm going to code up a brute-force solution and see how that works out.
+(spoiler: it worked out)
+
+### Option 1: imperatively
+
+1. I gather each line into a list of numbers.
+1. For each line, I figure out what the next number would be.
+1. I sum those numbers.
+
+It's the second step that's the interesting part.
+
+It's in an infinite loop.
+
+In that loop I build the new sequence of differences from a starting sequence (it starts as line in the input).
+- If all numbers in that new sequence are 0, I'm done and break out of the loop.
+- If not, I set the starting sequence to the sequence of differences, and do it all again!
+
+I keep track of all numbers at the end of a sequence while looping.
+The next number in a sequence is the sum of its last number + all last numbers in sequences it generates.
+
+To demonstrate, the example for line 3 in the example input:
+
+```txt
+10  13  16  21  30  45  68
+   3   3   5   9  15  23
+     0   2   4   6   8
+       2   2   2   2
+         0   0   0
+```
+
+Pointing your attention to the last number on every line.
+And checking what I've said above: "The next number in a sequence is the sum of its last number + all last numbers in sequences it generates."
+
+- 68 = 45 + 15 + 6 + 2
+- 23 = 15 + 6 + 2
+- 8 = 6 + 2
+- 2 = 2 + 0
+- 0 = 0
+
+#### Code
+
+```rust title=day_09.rs
+pub fn part_1(input: &str) -> i32 {
+    input
+        .lines()
+        .map(|line| {
+            let mut nums: Vec<i32> = line
+                .split_whitespace()
+                .filter_map(|s| s.parse().ok())
+                .collect();
+
+            let mut edge: Vec<i32> = Vec::new();
+            loop {
+                let differences: Vec<i32> = nums
+                    .iter()
+                    .tuple_windows()
+                    .map(|(left, right)| right - left)
+                    .collect();
+
+                edge.push(*nums.last().unwrap());
+
+                if differences.iter().all(|&x| x == 0) {
+                    let sum: i32 = edge.iter().sum();
+                    break sum;
+                } else {
+                    // prepare for next loop
+                    nums = differences;
+                }
+            }
+        })
+        .sum()
+}
+```
+
+#### Bonus: reuse memory
+
+The same code, but keeping some variables around and reusing them.
+And indexing into arrays.
+The result is slightly faster code that uses less memory.
+
+##### Code
+
+```rust title=day_09.rs
+pub fn part_1(input: &str) -> i32 {
+    let mut nums: Vec<i32> = Vec::new();
+    let mut differences: Vec<i32> = Vec::new();
+    let mut edge: Vec<i32> = Vec::new();
+
+    input
+        .lines()
+        .map(|line| {
+            nums.clear();
+            for num in line.split_ascii_whitespace() {
+                nums.push(num.parse().unwrap());
+            }
+
+            edge.clear();
+
+            loop {
+                differences.clear();
+                for i in nums.windows(2) {
+                    differences.push(i[1] - i[0]);
+                }
+                edge.push(nums[nums.len() - 1]);
+                if differences.iter().all(|&x| x == 0) {
+                    let sum: i32 = edge.iter().sum();
+                    break sum;
+                }
+                std::mem::swap(&mut nums, &mut differences);
+            }
+        })
+        .sum()
+}
+```
+
+### Option 2: recursion
+
+The solution I wrote first, shame it's significantly slower than the imperative versions, because it reads so nice.
+
+#### Helpers
+
+A function that takes a line of numbers as a string, and turns it into a vector of integers:
+
+```rust
+fn nums(s: &str) -> Vec<i32> {
+    s.split_whitespace()
+        .filter_map(|s| s.parse().ok())
+        .collect()
+}
+```
+
+A function that returns a list of all differences in a sequence:
+
+```rust
+use itertools::Itertools;
+
+fn differences(nums: &[i32]) -> Vec<i32> {
+    nums.iter()
+        .tuple_windows()
+        .map(|(left, right)| right - left)
+        .collect()
+}
+```
+
+The interesting part, the recursive part!
+A function that returns the next number in a sequence.
+
+If all numbers in the original sequence are 0, the next number is 0 and I break.
+This is the base case that stops the recursion.
+
+Otherwise, I calculate the list of differences.
+The next number is the next number in that list of differences plus the last number in the sequence that was passed in.
+
+```rust
+fn next_num(nums: &[i32]) -> i32 {
+    if nums.iter().all(|&n| n == 0) {
+        return 0;
+    }
+    let differences: Vec<i32> = differences(nums);
+    next_num(&differences) + nums.iter().last().unwrap()
+}
+```
+
+#### Code
+
+```rust title=day_09.rs
+use itertools::Itertools;
+
+fn differences(nums: &[i32]) -> Vec<i32> {
+    nums.iter()
+        .tuple_windows()
+        .map(|(left, right)| right - left)
+        .collect()
+}
+
+fn next_num(nums: &[i32]) -> i32 {
+    if nums.iter().all(|&n| n == 0) {
+        return 0;
+    }
+    let differences: Vec<i32> = differences(nums);
+    next_num(&differences) + nums.iter().last().unwrap()
+}
+
+pub fn part_1(input: &str) -> i32 {
+    input.lines().map(|line| next_num(&nums(line))).sum()
+}
+```
+
+## Part 2
+
+If we can figure out the next number in a sequence, how about the previous number?
+
+The question asks what the sum is of all previous values.
+
+Some copy pasting, some minor changes, and voila!
+
+Now a previous number is the difference between a first number and the previous number from the next line.
+
+The third line in the example again, with special attention to the first number of each line:
+```txt
+5  10  13  16  21  30  45
+  5   3   3   5   9  15
+   -2   0   2   4   6
+      2   2   2   2
+        0   0   0
+```
+
+-  5 = 10 - 5
+-  5 = 3 - -2
+- -2 = 0 - 2
+-  0 = 0
+
+### Option 1: imperative
+
+I only coded the version that reuses memory, the other one is trivial to make from this one.
+
+#### Code
+
+```rust title=day_09.rs
+pub fn part_1(input: &str) -> i32 {
+    let mut nums: Vec<i32> = Vec::new();
+    let mut differences: Vec<i32> = Vec::new();
+    let mut edge: Vec<i32> = Vec::new();
+
+    input
+        .lines()
+        .map(|line| {
+            nums.clear();
+            for num in line.split_ascii_whitespace() {
+                nums.push(num.parse().unwrap());
+            }
+
+            edge.clear();
+
+            loop {
+                differences.clear();
+                for i in nums.windows(2) {
+                    differences.push(i[1] - i[0]);
+                }
+                edge.push(nums[nums.len() - 1]);
+                if differences.iter().all(|&x| x == 0) {
+                    let sum: i32 = edge.iter().sum();
+                    break sum;
+                }
+                std::mem::swap(&mut nums, &mut differences);
+            }
+        })
+        .sum()
+}
+```
+
+### Option 2: recursive
+
+- The `nums` helper gets reused.
+- The `differences` helper gets reused.
+- The `next_num` helper gets replaced by a `prev_num` one.
+
+#### Code
+
+```rust title=day_09.rs
+use itertools::Itertools;
+
+fn nums(s: &str) -> Vec<i32> {
+    s.split_whitespace()
+        .filter_map(|s| s.parse().ok())
+        .collect()
+}
+
+fn prev_num(nums: &[i32]) -> i32 {
+    if nums.iter().all(|&n| n == 0) {
+        return 0;
+    }
+    let differences = differences(nums);
+    nums[0] - prev_num(&differences)
+}
+
+pub fn part_2(input: &str) -> i32 {
+    input.lines().map(|line| prev_num(&nums(line))).sum()
+}
+```
+
+## Final code
+
+### Imperative
+
+```rust title=day_09.rs numberLines
+pub fn part_1(input: &str) -> i32 {
+    let mut nums: Vec<i32> = Vec::new();
+    let mut differences: Vec<i32> = Vec::new();
+    let mut edge: Vec<i32> = Vec::new();
+
+    input
+        .lines()
+        .map(|line| {
+            nums.clear();
+            for num in line.split_ascii_whitespace() {
+                nums.push(num.parse().unwrap());
+            }
+
+            edge.clear();
+
+            loop {
+                differences.clear();
+                for i in nums.windows(2) {
+                    differences.push(i[1] - i[0]);
+                }
+                edge.push(nums[nums.len() - 1]);
+                if differences.iter().all(|&x| x == 0) {
+                    let sum: i32 = edge.iter().sum();
+                    break sum;
+                }
+                std::mem::swap(&mut nums, &mut differences);
+            }
+        })
+        .sum()
+}
+
+pub fn part_2(input: &str) -> i32 {
+    let mut nums: Vec<i32> = Vec::new();
+    let mut differences: Vec<i32> = Vec::new();
+    let mut edge: Vec<i32> = Vec::new();
+
+    input
+        .lines()
+        .map(|line| {
+            nums.clear();
+            for num in line.split_ascii_whitespace() {
+                nums.push(num.parse().unwrap());
+            }
+
+            edge.clear();
+
+            loop {
+                differences.clear();
+                for i in nums.windows(2) {
+                    differences.push(i[0] - i[1]);
+                }
+                edge.push(nums[0]);
+                if differences.iter().all(|&x| x == 0) {
+                    let sum: i32 = edge.iter().sum();
+                    break sum;
+                }
+                std::mem::swap(&mut nums, &mut differences);
+            }
+        })
+        .sum()
+}
+```
+
+### Recursion
+
+```rust title=day_09.rs numberLines
+use itertools::Itertools;
+
+fn nums(s: &str) -> Vec<i32> {
+    s.split_whitespace()
+        .filter_map(|s| s.parse().ok())
+        .collect()
+}
+
+fn differences(nums: &[i32]) -> Vec<i32> {
+    nums.iter()
+        .tuple_windows()
+        .map(|(left, right)| right - left)
+        .collect()
+}
+
+fn next_num(nums: &[i32]) -> i32 {
+    if nums.iter().all(|&n| n == 0) {
+        return 0;
+    }
+    let differences: Vec<i32> = differences(nums);
+    next_num(&differences) + nums.iter().last().unwrap()
+}
+
+pub fn part_1(input: &str) -> i32 {
+    input.lines().map(|line| next_num(&nums(line))).sum()
+}
+
+fn prev_num(nums: &[i32]) -> i32 {
+    if nums.iter().all(|&n| n == 0) {
+        return 0;
+    }
+    let differences = differences(nums);
+    nums[0] - prev_num(&differences)
+}
+
+pub fn part_2(input: &str) -> i32 {
+    input.lines().map(|line| prev_num(&nums(line))).sum()
+}
+```

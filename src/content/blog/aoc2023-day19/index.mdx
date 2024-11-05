@@ -1,0 +1,1005 @@
+---
+title: "Advent of Code 2023 Day 19"
+date: 2023-12-19
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+section: "garden"
+---
+
+## Day 19: Aplenty
+
+https://adventofcode.com/2023/day/19
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_19.rs)
+</Aside>
+
+You arrive at the spot the machine part are forming a formidable pile.
+The elves are already very busy sorthing the parts, but could use your help.
+
+Each part is rated on 4 categories:
+1. `x`: Extremely cool looking
+1. `m`: Musical (it makes a noise when you hit it)
+1. `a`: Aerodynamic
+1. `s`: Shiny
+
+Then each part is sent through some workflows that ultimately decide whether to accept or reject the part.
+
+Today's input is a list of workflows, and parts.
+An example input looks like this:
+
+```txt title=input.txt
+px{a<2006:qkq,m>2090:A,rfg}
+pv{a>1716:R,A}
+lnx{m>1548:A,A}
+rfg{s<537:gd,x>2440:R,A}
+qs{s>3448:A,lnx}
+qkq{x<1416:A,crn}
+crn{x>2662:A,R}
+in{s<1351:px,qqz}
+qqz{s>2770:qs,m<1801:hdj,R}
+gd{a>3333:R,R}
+hdj{m>838:A,pv}
+
+{x=787,m=2655,a=1222,s=2876}
+{x=1679,m=44,a=2067,s=496}
+{x=2036,m=264,a=79,s=2244}
+{x=2461,m=1339,a=466,s=291}
+{x=2127,m=1623,a=2188,s=1013}
+```
+
+Each named workflow has a list of rules.
+
+- If a part passes a rule, it moves to the destination that rule dictates (a new workflow, or a final accept/reject decision)
+- If a part fails a rule, it continues to the next rule in the current list of rules.
+
+The rules are a pass/fail condition that checks if one of the `xmas` values is greater than, or smaller than a given number.
+
+The last "rule" in a workflow has no condition, its destination always applies when that rule is reached.
+
+An example workflow is `ex{x>10:one,m<20:two,a>30:R,A}`.
+It's named `ex`, and has 4 rules.
+
+- Rule `x>10:one`: If the part's `x` is more than `10`, send the part to the workflow named `one`.
+- Rule `m<20:two:` Otherwise, if the part's `m` is less than `20`, send the part to the workflow named `two`.
+- Rule `a>30:R:` Otherwise, if the part's `a` is more than `30`, the part is immediately rejected (`R`).
+- Rule `A`: Otherwise, because no other rules matched the part, the part is immediately accepted (`A`).
+
+An example part is `{x=787,m=2655,a=1222,s=2876}`
+It has these ratings:
+1. `x`: Extremely cool looking: 787
+1. `m`: Musical: 2655
+1. `a`: Aerodynamic: 1222
+1. `s`: Shiny: 2876
+
+Each part starts at the workflow named `in`.
+
+The example parts follow these paths through the workflows while being checked:
+- `{x=787,m=2655,a=1222,s=2876}`: in -> qqz -> qs -> lnx -> A
+- `{x=1679,m=44,a=2067,s=496}`: in -> px -> rfg -> gd -> R
+- `{x=2036,m=264,a=79,s=2244}`: in -> qqz -> hdj -> pv -> A
+- `{x=2461,m=1339,a=466,s=291}`: in -> px -> qkq -> crn -> R
+- `{x=2127,m=1623,a=2188,s=1013}`: in -> px -> rfg -> A
+
+### Parsing
+
+Today was a heavy parsing day.
+I decided to put all data into neat data structures, preferring verbosity and clarity.
+
+A part with the 4 ratings it has:
+```rust
+struct Part {
+    x: usize,
+    m: usize,
+    a: usize,
+    s: usize,
+}
+```
+
+The final decision whether a part is accepted or rejected:
+```rust
+enum Final {
+    Accept,
+    Reject,
+}
+```
+
+The destination a rule points to when it applies is either a new workflow, or a final decision:
+```rust
+enum Dest<'a> {
+    WorkFlow(&'a str),
+    Final(Final),
+}
+```
+
+A rule in a workflow can either be a check, or if it's the last one, only a new destination:
+```rust
+enum Rule<'a> {
+    Check(Check<'a>),
+    Last(Dest<'a>),
+}
+```
+
+A ckeck tests if a single rating of a part is greater than or less than a given number:
+```rust
+struct Check<'a> {
+    part: PartKind,
+    operator: Operator,
+    rhs: usize,
+    dest: Dest<'a>,
+}
+```
+
+To determine which ranking the check is for:
+```rust
+enum PartKind {
+    X,
+    M,
+    A,
+    S,
+}
+```
+
+To determine which kind of comparison the check makes:
+```rust
+enum Operator {
+    LessThan,
+    GreaterThan,
+}
+```
+
+The parsing is split into 2 parts, parsing a list of workflows, and parsing a list of parts:
+```rust
+fn parse(input: &str) -> (HashMap<&str, Vec<Rule>>, Vec<Part>) {
+    let (workflows, parts) = input.split_once("\n\n").unwrap();
+    (parse_workflows(workflows), parse_parts(parts))
+}
+```
+
+Eack workflow is represented by an entry into a map, the key is the workflow name, and the value is the list of rules in that workflow.
+The trickiest part was making sure to correctly handle that last rule that has no check:
+```rust
+fn parse_workflows(s: &str) -> HashMap<&str, Vec<Rule>> {
+    s.lines()
+        .map(|line| {
+            let line = line.strip_suffix("}").unwrap();
+            let (name, rules) = line.split_once("{").unwrap();
+            let (checks, final_dest) = rules.rsplit_once(",").unwrap();
+            let last_dest = match final_dest {
+                "A" => Dest::Final(Final::Accept),
+                "R" => Dest::Final(Final::Reject),
+                name => Dest::WorkFlow(name),
+            };
+
+            let rules = checks
+                .split(",")
+                .map(|check| {
+                    let (check, dest) = check.split_once(":").unwrap();
+                    let part = match &check[0..1] {
+                        "x" => PartKind::X,
+                        "m" => PartKind::M,
+                        "a" => PartKind::A,
+                        "s" => PartKind::S,
+                        _ => panic!("Invalid part kind"),
+                    };
+                    let operator = match &check[1..2] {
+                        "<" => Operator::LessThan,
+                        ">" => Operator::GreaterThan,
+                        _ => panic!("Invalid operator"),
+                    };
+                    let rhs: usize = check[2..].parse().unwrap();
+                    let dest = match dest {
+                        "A" => Dest::Final(Final::Accept),
+                        "R" => Dest::Final(Final::Reject),
+                        name => Dest::WorkFlow(name),
+                    };
+
+                    Check {
+                        part,
+                        operator,
+                        rhs,
+                        dest,
+                    }
+                })
+                .map(|check| Rule::Check(check))
+                .chain(std::iter::once(match last_dest {
+                    Dest::WorkFlow(_) => Rule::Last(last_dest),
+                    Dest::Final(_) => Rule::Last(last_dest),
+                }))
+                .collect();
+
+            (name, rules)
+        })
+        .collect()
+}
+```
+
+The parsing of the parts is a lot more straightforward.
+For each line, I start with a part that has rating 0 in every category.
+I loop through every key=value pair, and set the appropriate rating.
+```rust
+fn parse_parts(s: &str) -> Vec<Part> {
+    s.lines()
+        .map(|line| {
+            let line = line.strip_prefix("{").unwrap().strip_suffix("}").unwrap();
+            line.split(",").map(|s| s.split_once("=").unwrap()).fold(
+                Part {
+                    x: 0,
+                    m: 0,
+                    a: 0,
+                    s: 0,
+                },
+                |mut part, (xmas, n)| {
+                    let n = n.parse().unwrap();
+                    match xmas {
+                        "x" => part.x = n,
+                        "m" => part.m = n,
+                        "a" => part.a = n,
+                        "s" => part.s = n,
+                        _ => panic!("Inval xmas part id"),
+                    };
+                    part
+                },
+            )
+        })
+        .collect()
+}
+```
+
+## Part 1
+
+The question asks what you get if you add together all of the rating numbers for all of the parts that ultimately get accepted?
+
+The code I want to work towards loops over every part, determines whether or not it gets accepted, and sums up all `xmas` ratings.
+
+```rust
+pub fn part_1(input: &str) -> usize {
+    let (workflows, parts) = parse(input);
+
+    parts
+        .iter()
+        .filter(|part| part.accepted(&workflows))
+        .map(|part| part.x + part.m + part.a + part.s)
+        .sum()
+}
+```
+
+### Helpers
+
+A method on `Part` to determine if a part passes a `Check`:
+
+```rust
+impl Part {
+    fn passes_check(&self, check: &Check) -> bool {
+        let n = match check.part {
+            PartKind::X => self.x,
+            PartKind::M => self.m,
+            PartKind::A => self.a,
+            PartKind::S => self.s,
+        };
+
+        match check.operator {
+            Operator::LessThan if n < check.rhs => true,
+            Operator::GreaterThan if n > check.rhs => true,
+            _ => false,
+        }
+
+        // less readable IMO variant:
+        // matches!(check.operator, Operator::LessThan if n < check.rhs)
+        // || matches!(check.operator, Operator::GreaterThan if n > check.rhs)
+    }
+}
+```
+
+I use that helper in both of my solutions (I like the recursive one most).
+The meat of the solution is that `accepted` method on `Part`.
+
+### Option 1: iteratively
+
+The `accepted` method uses an infinite loop that gets broken when a part receives a final decision.
+
+Outside of the loop I track which workflow the part is currently in (it starts off as the workflow named `in`)
+In the loop I track the current location the part is at (it starts off as the desination of the workflow named `in`).
+
+The infinite loop contains a loop that goes through every rule in the current workflow.
+When the part should go to a new destination, it breaks out of that `for` loop.
+
+A new destination can happen:
+1. if a check passed
+2. if it was the final rule that has no condition
+
+After breaking out of that `for` loop I check wich new destination the part went to:
+1. If the new destination was a workflow, we update the current workflow and go through the outer (infinite) loop again.
+2. If the new destination was a final decision, the whole function returns with that final decision.
+
+```rust
+impl Part {
+    fn accepted(&self, workflows: &HashMap<&str, Vec<Rule>>) -> bool {
+        let mut workflow = workflows.get("in").unwrap();
+        loop {
+            let mut dest = &Dest::WorkFlow("in");
+            for rule in workflow {
+                match rule {
+                    Rule::Check(check) => {
+                        if self.passes_check(check) {
+                            dest = &check.dest;
+                            break;
+                        }
+                    }
+                    Rule::Last(last) => {
+                        dest = last;
+                        break;
+                    }
+                };
+            }
+            match dest {
+                Dest::WorkFlow(name) => {
+                    workflow = workflows.get(name).unwrap();
+                }
+                Dest::Final(accepted) => {
+                    return *accepted == Final::Accept;
+                }
+            }
+        }
+    }
+}
+```
+
+### Option 2: recursively
+
+A recursive function that takes in the current `Part`, the current `Dest`, and a map of all workflows.
+
+If the `dest` is a final one, return the result from the function, this is the base case.
+If the `dest` is a workflow is when the recursing happens.
+
+It loops through all rules of the workflow at the current destination.
+
+It then returns the result of following that rule.
+(if it passes, recurse with the new destination, if it fails, move on to the next rule in the workflow by advancing the `for` loop)
+
+```rust
+impl Part {
+    fn accepted(&self, dest: &Dest, workflows: &HashMap<&str, Vec<Rule>>) -> bool {
+        match dest {
+            Dest::Final(end) => *end == Final::Accept,
+            Dest::WorkFlow(name) => {
+                for rule in workflows.get(name).unwrap() {
+                    match rule {
+                        Rule::Check(check) => {
+                            if self.passes_check(check) {
+                                return self.accepted(&check.dest, workflows);
+                            }
+                        }
+                        Rule::Last(dest) => return self.accepted(dest, workflows),
+                    }
+                }
+                panic!("Could not determine if part is accepted")
+            }
+        }
+    }
+}
+```
+
+### Code
+
+Depending on whether or not you choose the recursive solution, the way you call the `accepted` helper on a part slightly changes.
+With the recursive version, you have to pass in the starting destination.
+
+```rust title=day_19.rs
+pub fn part_1(input: &str) -> usize {
+    let (workflows, parts) = parse(input);
+
+    parts
+        .iter()
+        // recursive version
+        .filter(|part| part.accepted(&Dest::WorkFlow("in"), &workflows))
+        // non-recursive version
+        // .filter(|part| part.accepted(&workflows))
+        .map(|part| part.x + part.m + part.a + part.s)
+        .sum()
+}
+```
+
+## Part 2
+
+The sorting still isn't going quick enough, time to change strategies.
+
+The elves want to figure out which combinations of ratings will be accepted or rejected.
+
+Each of the 4 ratings (`x`, `m`, `a`, `s`) ranges from 1 up to, and including 4000.
+
+In the example 167409079868000 combinations of ratings will be accepted.
+
+The question asks how many distinct combinations of ratings will be accepted by the workflows?
+
+Only consider the workflows, the list of individual part ratings is no longer relevant.
+
+---
+
+I represented all possible ranges for a part as a `PartRange`.
+A `PartRange` has 4 ranges, 1 for each rating:
+```rust
+struct PartRange {
+    x: RangeInclusive<usize>,
+    m: RangeInclusive<usize>,
+    a: RangeInclusive<usize>,
+    s: RangeInclusive<usize>,
+}
+```
+
+The plan is to start with a single `PartRange` with ranges that go from 1 to 4000 in each category.
+Then apply the workflow named `"in"`, and sum up all the distinct ranges that lead to a final accept decision.
+
+This is the code I want to work towards, naming the main helper `accepted` again.
+Only this time, it does something different.
+
+```rust
+pub fn part_2(input: &str) -> usize {
+    let (workflows, _) = input.split_once("\n\n").unwrap();
+    let workflows = parse_workflows(workflows);
+
+    let valid_ranges = PartRange {
+        x: 1..=4_000,
+        m: 1..=4_000,
+        a: 1..=4_000,
+        s: 1..=4_000,
+    }
+    .accepted(&Dest::WorkFlow("in"), &workflows);
+
+    valid_ranges.into_iter().map(|range| range.combos()).sum()
+}
+```
+
+### Helpers
+
+A the `combos` method that takes a `PartRange` and returns the amount of distinct combinations it represents.
+For every rating category, it takes the end of it's range, subtracts the start, and adds 1 because that range was inclusive.
+Then it multiplies all those possibilities.
+
+In math this is called permutations.
+Like for a 4 digit number the amount of permutations is 10 * 10 * 10 * 10, for 10 options per digit.
+```rust
+impl PartRange {
+    fn combos(&self) -> usize {
+        (self.x.end() - self.x.start() + 1)
+            * (self.m.end() - self.m.start() + 1)
+            * (self.a.end() - self.a.start() + 1)
+            * (self.s.end() - self.s.start() + 1)
+    }
+}
+```
+
+A helper on `PartRange` that determines which relevant range passes a check, and which range fails a check.
+
+Remember, a check looks at 1 specific range, either `x`, `m`, `a`, or `s`.
+
+There are 3 different options:
+1. The entire range passes a check
+1. The entire range fails a check
+1. The range is split in 2, a failing range, and a passing range
+
+I represented these 3 options as an enum in code:
+```rust
+enum CheckedRange {
+    FullPass,
+    FullFail,
+    Split { pass: PartRange, fail: PartRange },
+}
+```
+The helper returns one of these three options.
+
+Inside the method, it first extracts the range the check applies to.
+It stores the start and end of that range (`start` and `end`).
+It stores the number the check applies (called `rhs`).
+
+Depending on the order of these 3 variables, and the operator (greater than or lessthan), the range falls in one of those 3 variants.
+
+There are 3 different possible orderings of `start`, `end`, and `rhs`.
+When you order those 3 numbers from smallest to largest (start is always smaller than end):
+1. `start` - `end` - `rhs`
+1. `rhs` - `start` - `end`
+1. `start` - `rhs` - `end`
+
+Each of these options has 2 possible operators, greaterthan, or lessthan.
+
+Covering every possibility, each one leads to one of those 3 `CheckedRange` variants.
+The ones where a range totally fails, or totally passes are not that interesting.
+
+In the cases where a range should be split, 2 entirely new ranges are constructed from the original range:
+1. A passing one
+1. A failing one
+
+```rust
+impl PartRange {
+    fn passes_check(&self, check: &Check) -> CheckedRange {
+        let range = match check.part {
+            PartKind::X => &self.x,
+            PartKind::M => &self.m,
+            PartKind::A => &self.a,
+            PartKind::S => &self.s,
+        };
+        let start = *range.start();
+        let end = *range.end();
+        let rhs = check.rhs;
+
+        match check.operator {
+            // rhs -- start -- end
+            Operator::LessThan if rhs <= start => CheckedRange::FullFail,
+            Operator::GreaterThan if start > rhs => CheckedRange::FullPass,
+            // start -- end -- rhs
+            Operator::LessThan if end < rhs => CheckedRange::FullPass,
+            Operator::GreaterThan if end <= rhs => CheckedRange::FullFail,
+            // start -- rhs -- end
+            Operator::LessThan => {
+                CheckedRange::Split {
+                    // passing: start..=rhs-1
+                    pass: self.with_xmas(&check.part, start..=rhs - 1),
+                    // failing: rhs..=end
+                    fail: self.with_xmas(&check.part, rhs..=end),
+                }
+            }
+            Operator::GreaterThan => {
+                CheckedRange::Split {
+                    // passing: rhs+1..=end
+                    pass: self.with_xmas(&check.part, rhs + 1..=end),
+                    // failing: start..=rhs
+                    fail: self.with_xmas(&check.part, start..=rhs),
+                }
+            }
+        }
+    }
+}
+```
+
+This uses a different helper that's only there as convenience for me to make a new `PartRange`, but replace one of the `x`, `m`, `a`, `s` ranges with a new one.
+
+```rust
+impl PartRange {
+    fn with_xmas(&self, kind: &PartKind, range: RangeInclusive<usize>) -> Self {
+        let mut res = self.clone();
+        match kind {
+            PartKind::X => res.x = range,
+            PartKind::M => res.m = range,
+            PartKind::A => res.a = range,
+            PartKind::S => res.s = range,
+        };
+        res
+    }
+}
+```
+
+Now the meat of the problem, the helper that returns a list of `PartRange`s that lead to a final accept decision.
+Again, it's a recursive function that takes in the current destination.
+
+If that destination is a final decision, the result is the entire range if it's accepted, or nothing if it's rejected.
+This is the base case of the recursion, eventually every `PartRange` is either accepted, or rejected.
+
+If that destination is a workflow, a similar logic to part1 happens.
+I keep track of the current `PartRange`, and a list of all `PartRange`s in this workflow that eventually lead to an accept.
+
+Then I loop through all rules in the workflow.
+- If a check passes for the full current range, I recurse to it's destination and add the result to that list of valid `PartRange`s.
+- If a check fails for the full current range, I do nothing and move on to the next rule in the workflow.
+- If a check splits a range, I recurse with the passing part, and set the current `PartRange` to the failing part before moving on to the next rule in this workflow.
+(If I don't do this, I'd never reach the next rule in a workflow, but I would have passed the check that just happened)
+
+```rust
+impl PartRange {
+    fn accepted(&self, dest: &Dest, workflows: &HashMap<&str, Vec<Rule>>) -> Vec<Self> {
+        match dest {
+            Dest::Final(end) => match end {
+                Final::Accept => vec![self.clone()],
+                Final::Reject => vec![],
+            },
+            Dest::WorkFlow(name) => {
+                // keep track of a valid range inside this workflow
+                let mut curr_range = self.clone();
+                // keep track of all ranges that lead to a final accept
+                let mut valid_ranges = Vec::new();
+
+                for rule in workflows.get(name).unwrap() {
+                    match rule {
+                        Rule::Check(check) => {
+                            match curr_range.passes_check(check) {
+                                CheckedRange::FullPass => {
+                                    let passing = curr_range.accepted(&check.dest, workflows);
+                                    valid_ranges.extend(passing);
+                                }
+                                CheckedRange::FullFail => (),
+                                CheckedRange::Split { pass, fail } => {
+                                    // move onto new destination with passing range
+                                    let passing = pass.accepted(&check.dest, workflows);
+                                    valid_ranges.extend(passing);
+                                    // move onto next check in this workflow with failing range
+                                    curr_range = fail;
+                                }
+                            }
+                        }
+                        Rule::Last(dest) => {
+                            let passing = curr_range.accepted(dest, workflows);
+                            valid_ranges.extend(passing);
+                        }
+                    }
+                }
+
+                valid_ranges
+            }
+        }
+    }
+}
+```
+
+But it's not necessary to keep track of all the `PartRange`s that eventually pass.
+More efficient would be to immediately calculate the distinct combinations of that `PartRange` and add it to a sum.
+
+So here is the same helper, only this time, it returns that sum instead of a list of `PartRange`.
+I also rewrote the `for` loop as a `fold`. An operation that's called reduce in many languages.
+It takes a list of something, and condenses it down into a single thing.
+
+Inside that `fold` the accumulator (the thing that's reused every loop and ultimately returned) has 2 parts:
+1. The current `PartRange`
+1. The `sum` so far
+
+When it's done, the thing that interests me is the final value of the `sum`.
+
+```rust
+impl PartRange {
+    fn accepted(&self, dest: &Dest, workflows: &HashMap<&str, Vec<Rule>>) -> usize {
+        match dest {
+            Dest::Final(end) => match end {
+                Final::Accept => self.combos(),
+                Final::Reject => 0,
+            },
+            Dest::WorkFlow(name) => {
+                workflows
+                    .get(name)
+                    .unwrap()
+                    .iter()
+                    // keep track of a valid range inside this workflow
+                    // keep track of the sum of all range combos that lead to an accept
+                    .fold((self.clone(), 0), |(mut curr, sum), rule| {
+                        let accepted = match rule {
+                            Rule::Check(check) => {
+                                match curr.passes_check(check) {
+                                    CheckedRange::FullFail => 0,
+                                    CheckedRange::FullPass => curr.accepted(&check.dest, workflows),
+                                    CheckedRange::Split { pass, fail } => {
+                                        // move onto next check in this workflow with failing range
+                                        curr = fail;
+                                        // count accepted combos with passing range
+                                        pass.accepted(&check.dest, workflows)
+                                    }
+                                }
+                            }
+                            Rule::Last(dest) => curr.accepted(dest, workflows),
+                        };
+
+                        (curr, sum + accepted)
+                    })
+                    .1
+            }
+        }
+    }
+}
+```
+
+### Code
+
+The variant that does not keep track of all passing `PartRange`s:
+```rust title=day_19.rs
+pub fn part_2(input: &str) -> usize {
+    let (workflows, _) = input.split_once("\n\n").unwrap();
+    let workflows = parse_workflows(workflows);
+
+    PartRange {
+        x: 1..=4_000,
+        m: 1..=4_000,
+        a: 1..=4_000,
+        s: 1..=4_000,
+    }
+    .accepted(&Dest::WorkFlow("in"), &workflows)
+}
+```
+
+## Final code
+
+```rust title=day_19.rs numberLines
+use std::{collections::HashMap, ops::RangeInclusive};
+
+enum Rule<'a> {
+    Check(Check<'a>),
+    Last(Dest<'a>),
+}
+
+#[derive(PartialEq, Eq)]
+enum Final {
+    Accept,
+    Reject,
+}
+
+struct Check<'a> {
+    part: PartKind,
+    operator: Operator,
+    rhs: usize,
+    dest: Dest<'a>,
+}
+
+enum Dest<'a> {
+    WorkFlow(&'a str),
+    Final(Final),
+}
+
+enum Operator {
+    LessThan,
+    GreaterThan,
+}
+
+enum PartKind {
+    X,
+    M,
+    A,
+    S,
+}
+
+struct Part {
+    x: usize,
+    m: usize,
+    a: usize,
+    s: usize,
+}
+
+#[derive(Clone)]
+struct PartRange {
+    x: RangeInclusive<usize>,
+    m: RangeInclusive<usize>,
+    a: RangeInclusive<usize>,
+    s: RangeInclusive<usize>,
+}
+
+#[derive(Clone)]
+enum CheckedRange {
+    FullPass,
+    FullFail,
+    Split { pass: PartRange, fail: PartRange },
+}
+
+impl Part {
+    fn passes_check(&self, check: &Check) -> bool {
+        let n = match check.part {
+            PartKind::X => self.x,
+            PartKind::M => self.m,
+            PartKind::A => self.a,
+            PartKind::S => self.s,
+        };
+
+        match check.operator {
+            Operator::LessThan if n < check.rhs => true,
+            Operator::GreaterThan if n > check.rhs => true,
+            _ => false,
+        }
+    }
+
+    fn accepted(&self, dest: &Dest, workflows: &HashMap<&str, Vec<Rule>>) -> bool {
+        match dest {
+            Dest::Final(end) => *end == Final::Accept,
+            Dest::WorkFlow(name) => {
+                for rule in workflows.get(name).unwrap() {
+                    match rule {
+                        Rule::Check(check) => {
+                            if self.passes_check(check) {
+                                return self.accepted(&check.dest, workflows);
+                            }
+                        }
+                        Rule::Last(dest) => return self.accepted(dest, workflows),
+                    }
+                }
+                panic!("Could not determine if part is accepted")
+            }
+        }
+    }
+}
+
+fn parse_workflows(s: &str) -> HashMap<&str, Vec<Rule>> {
+    s.lines()
+        .map(|line| {
+            let line = line.strip_suffix("}").unwrap();
+            let (name, rules) = line.split_once("{").unwrap();
+            let (checks, final_dest) = rules.rsplit_once(",").unwrap();
+            let last_dest = match final_dest {
+                "A" => Dest::Final(Final::Accept),
+                "R" => Dest::Final(Final::Reject),
+                name => Dest::WorkFlow(name),
+            };
+
+            let rules = checks
+                .split(",")
+                .map(|check| {
+                    let (check, dest) = check.split_once(":").unwrap();
+                    let part = match &check[0..1] {
+                        "x" => PartKind::X,
+                        "m" => PartKind::M,
+                        "a" => PartKind::A,
+                        "s" => PartKind::S,
+                        _ => panic!("Invalid part kind"),
+                    };
+                    let operator = match &check[1..2] {
+                        "<" => Operator::LessThan,
+                        ">" => Operator::GreaterThan,
+                        _ => panic!("Invalid operator"),
+                    };
+                    let rhs: usize = check[2..].parse().unwrap();
+                    let dest = match dest {
+                        "A" => Dest::Final(Final::Accept),
+                        "R" => Dest::Final(Final::Reject),
+                        name => Dest::WorkFlow(name),
+                    };
+
+                    Check {
+                        part,
+                        operator,
+                        rhs,
+                        dest,
+                    }
+                })
+                .map(|check| Rule::Check(check))
+                .chain(std::iter::once(match last_dest {
+                    Dest::WorkFlow(_) => Rule::Last(last_dest),
+                    Dest::Final(_) => Rule::Last(last_dest),
+                }))
+                .collect();
+
+            (name, rules)
+        })
+        .collect()
+}
+
+fn parse_parts(s: &str) -> Vec<Part> {
+    s.lines()
+        .map(|line| {
+            let line = line.strip_prefix("{").unwrap().strip_suffix("}").unwrap();
+            line.split(",").map(|s| s.split_once("=").unwrap()).fold(
+                Part {
+                    x: 0,
+                    m: 0,
+                    a: 0,
+                    s: 0,
+                },
+                |mut part, (xmas, n)| {
+                    let n = n.parse().unwrap();
+                    match xmas {
+                        "x" => part.x = n,
+                        "m" => part.m = n,
+                        "a" => part.a = n,
+                        "s" => part.s = n,
+                        _ => panic!("Inval xmas part id"),
+                    };
+                    part
+                },
+            )
+        })
+        .collect()
+}
+
+fn parse(input: &str) -> (HashMap<&str, Vec<Rule>>, Vec<Part>) {
+    let (workflows, parts) = input.split_once("\n\n").unwrap();
+    (parse_workflows(workflows), parse_parts(parts))
+}
+
+pub fn part_1(input: &str) -> usize {
+    let (workflows, parts) = parse(input);
+
+    parts
+        .iter()
+        .filter(|part| part.accepted(&Dest::WorkFlow("in"), &workflows))
+        .map(|part| part.x + part.m + part.a + part.s)
+        .sum()
+}
+
+impl PartRange {
+    fn combos(&self) -> usize {
+        (self.x.end() - self.x.start() + 1)
+            * (self.m.end() - self.m.start() + 1)
+            * (self.a.end() - self.a.start() + 1)
+            * (self.s.end() - self.s.start() + 1)
+    }
+
+    fn with_xmas(&self, kind: &PartKind, range: RangeInclusive<usize>) -> Self {
+        let mut res = self.clone();
+        match kind {
+            PartKind::X => res.x = range,
+            PartKind::M => res.m = range,
+            PartKind::A => res.a = range,
+            PartKind::S => res.s = range,
+        };
+        res
+    }
+
+    fn passes_check(&self, check: &Check) -> CheckedRange {
+        let range = match check.part {
+            PartKind::X => &self.x,
+            PartKind::M => &self.m,
+            PartKind::A => &self.a,
+            PartKind::S => &self.s,
+        };
+        let start = *range.start();
+        let end = *range.end();
+        let rhs = check.rhs;
+
+        match check.operator {
+            // rhs -- start -- end
+            Operator::LessThan if rhs <= start => CheckedRange::FullFail,
+            Operator::GreaterThan if start > rhs => CheckedRange::FullPass,
+            // start -- end -- rhs
+            Operator::LessThan if end < rhs => CheckedRange::FullPass,
+            Operator::GreaterThan if end <= rhs => CheckedRange::FullFail,
+            // start -- rhs -- end
+            Operator::LessThan => {
+                CheckedRange::Split {
+                    // passing: start..=rhs-1
+                    pass: self.with_xmas(&check.part, start..=rhs - 1),
+                    // failing: rhs..=end
+                    fail: self.with_xmas(&check.part, rhs..=end),
+                }
+            }
+            Operator::GreaterThan => {
+                CheckedRange::Split {
+                    // passing: rhs+1..=end
+                    pass: self.with_xmas(&check.part, rhs + 1..=end),
+                    // failing: start..=rhs
+                    fail: self.with_xmas(&check.part, start..=rhs),
+                }
+            }
+        }
+    }
+
+    fn accepted(&self, dest: &Dest, workflows: &HashMap<&str, Vec<Rule>>) -> usize {
+        match dest {
+            Dest::Final(end) => match end {
+                Final::Accept => self.combos(),
+                Final::Reject => 0,
+            },
+            Dest::WorkFlow(name) => {
+                workflows
+                    .get(name)
+                    .unwrap()
+                    .iter()
+                    // keep track of a valid range inside this workflow
+                    // keep track of the sum of all range combos that lead to an accept
+                    .fold((self.clone(), 0), |(mut curr, sum), rule| {
+                        let accepted = match rule {
+                            Rule::Check(check) => {
+                                match curr.passes_check(check) {
+                                    CheckedRange::FullFail => 0,
+                                    CheckedRange::FullPass => curr.accepted(&check.dest, workflows),
+                                    CheckedRange::Split { pass, fail } => {
+                                        // move onto next check in this workflow with failing range
+                                        curr = fail;
+                                        // count accepted combos with passing range
+                                        pass.accepted(&check.dest, workflows)
+                                    }
+                                }
+                            }
+                            Rule::Last(dest) => curr.accepted(dest, workflows),
+                        };
+
+                        (curr, sum + accepted)
+                    })
+                    .1
+            }
+        }
+    }
+}
+
+pub fn part_2(input: &str) -> usize {
+    let (workflows, _) = input.split_once("\n\n").unwrap();
+    let workflows = parse_workflows(workflows);
+
+    PartRange {
+        x: 1..=4_000,
+        m: 1..=4_000,
+        a: 1..=4_000,
+        s: 1..=4_000,
+    }
+    .accepted(&Dest::WorkFlow("in"), &workflows)
+}
+```

@@ -1,0 +1,512 @@
+---
+title: "Advent of Code 2023 Day 22"
+date: 2023-12-22
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+section: "garden"
+---
+
+## Day 22: Sand Slabs
+
+https://adventofcode.com/2023/day/22
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_22.rs)
+</Aside>
+
+The sand is falling in compacted bricks.
+They are stacking on top of each other!
+
+Today's input is a snapshot of the bricks while they were still falling.
+
+An example input looks like this:
+```txt title=input.txt
+1,0,1~1,2,1
+0,0,2~2,0,2
+0,2,3~2,2,3
+0,0,4~0,2,4
+2,0,5~2,2,5
+0,1,6~2,1,6
+1,1,8~1,1,9
+```
+
+Each line of the input represent a single brick.
+It is represented by 2 points, one for each end of the brick/stick/whetever you want to call them.
+
+<Aside variant="info">
+
+That means each brick has the shape of a cuboid
+
+</Aside>
+
+The bricks will never rotate, and are very strong (something, something, magic).
+Even if only one piece of a brick is supporting all other bricks, the tower will not fall.
+
+The bricks cannot pass through eachother, so a falling brick will come to rest when it encounters a space that is either occupied by an other brick, or the ground.
+
+The ground is located at `z=0`, a higher `z` means the brick is up in the air higher.
+
+## Parsing
+
+The 2 points for a brick are separated by a tilde `~`, and each coordinate within it is separated by a comma `,`.
+
+I used the word coordinate, so I made a `Coord` structure.
+One that can handle 3D space this time.
+Paired with a method that can turn a string like `"1,2,3"` into a `Coord { x: 1, y: 2, z: 3}`:
+```rust
+struct Coord {
+    x: u16,
+    y: u16,
+    z: u16,
+}
+
+impl Coord {
+    fn from(s: &str) -> Self {
+        let (x, y, z) = s.split(",").collect_tuple().unwrap();
+        Self {
+            x: x.parse().unwrap(),
+            y: y.parse().unwrap(),
+            z: z.parse().unwrap(),
+        }
+    }
+}
+```
+
+A `Brick` has 2 `Coord`s, one for `from`, and one for `to`.
+```rust
+struct Brick {
+    from: Coord,
+    to: Coord,
+}
+
+impl Brick {
+    fn from(s: &str) -> Self {
+        let (lhs, rhs) = s.split_once("~").unwrap();
+        Self {
+            from: Coord::from(lhs),
+            to: Coord::from(rhs),
+        }
+    }
+}
+```
+
+Using that to parse the input into a list of bricks:
+```rust
+fn parse(input: &str) -> Vec<Brick> {
+    input.lines().map(Brick::from).collect()
+}
+```
+
+## Part 1
+
+First, [let the ~~sky~~ bricks fall](https://www.youtube.com/watch?v=DeumyOzKqgI).
+
+The question asks how many bricks can be safely disintegrated.
+
+A brick can be safely disintegrated if removing it causes no other bricks to fall.
+
+The pseudocode I want to work towards:
+```rust
+let mut bricks = parse(input);
+
+(0..bricks.len())
+    .filter(/* keep bricks that disintegrate safely */)
+    .count()
+```
+
+### Preparation
+
+To let every brick fall, I sorted all bricks by `z` first, then made them fall one by one, starting at the lowest one.
+
+```rust
+fn prepare(bricks: &mut Vec<Brick>) {
+    // sort bricks by lowest height
+    bricks.sort_by_key(|brick| brick.from.z);
+
+    // coord - block_idx
+    let mut occupied = HashSet::new();
+
+    for brick in bricks.iter_mut() {
+        brick.fall(&occupied);
+        for (x, y, z) in iproduct!(
+            brick.from.x..=brick.to.x,
+            brick.from.y..=brick.to.y,
+            brick.from.z..=brick.to.z
+        ) {
+            let coord = Coord { x, y, z };
+            occupied.insert(coord);
+        }
+    }
+}
+```
+The `occupied` map keeps track of every single `Coord` that is occupied by bricks that have come to rest.
+After a `Brick` has fallen, all its coordinates are added to the `occupied` map, and the next `Brick` can start falling.
+
+The `fall` method lets a `Brick` fall as far as possible while respecting the positions that are already occupied.
+```rust
+impl Brick {
+    fn can_fall(&self, occupied: &HashSet<Coord>) -> bool {
+        // ground is at z == 0
+        let above_ground = self.from.z > 1;
+        let blocked = (self.from.x..=self.to.x)
+            .cartesian_product(self.from.y..=self.to.y)
+            .any(|(x, y)| {
+                let pos = Coord {
+                    x,
+                    y,
+                    z: self.from.z - 1,
+                };
+                occupied.contains(&pos)
+            });
+
+        above_ground && !blocked
+    }
+
+    fn fall(&mut self, occupied: &HashSet<Coord>) {
+        while self.can_fall(occupied) {
+            self.from.z -= 1;
+            self.to.z -= 1;
+        }
+    }
+}
+```
+
+Now that the bricks have fallen, I want to build up some data structure that keeps track of which bricks are supporting/supported by other bricks.
+
+This can be done while letting the bricks fall!
+
+For every brick, I kept track if the index in that sorted list to identify it.
+When a brick has fallen, I add every `Coord` the brick occupies to 2 maps.
+1. Above map - given the index of a brick, return all bricks it supports
+1. Below map - given the index of a brick, return all bricks it is supported by.
+
+To achieve this, some minor changes:
+```rust hl=1,7,8,13-28,31
+fn prepare(bricks: &mut Vec<Brick>) -> (HashMap<u16, HashSet<u16>>, HashMap<u16, HashSet<u16>>) {
+    // sort bricks by lowest height
+    bricks.sort_by_key(|brick| brick.from.z);
+
+    // coord - block_idx
+    let mut occupied = HashMap::new();
+    let mut above_map: HashMap<u16, HashSet<u16>> = HashMap::new();
+    let mut below_map: HashMap<u16, HashSet<u16>> = HashMap::new();
+
+    for (idx, brick) in bricks.iter_mut().enumerate() {
+        brick.fall(&occupied);
+
+        for (x, y) in (brick.from.x..=brick.to.x).cartesian_product(brick.from.y..=brick.to.y) {
+            for z in brick.from.z..=brick.to.z {
+                let coord = Coord { x, y, z };
+                occupied.insert(coord, idx as u16);
+            }
+            // check if the coord of a brick below this one (that's why we use the min z, to handle vertical blocks) is occupied
+            let below = Coord {
+                x,
+                y,
+                z: brick.from.z - 1,
+            };
+            if let Some(&below_idx) = occupied.get(&below) {
+                above_map.entry(below_idx).or_default().insert(idx as u16);
+                below_map.entry(idx as u16).or_default().insert(below_idx);
+            }
+        }
+    }
+
+    (above_map, below_map)
+}
+```
+
+And to the methods on `Brick`:
+```rust hl=2,13,19
+impl Brick {
+    fn can_fall(&self, occupied: &HashMap<Coord, u16>) -> bool {
+        // ground is at z == 0
+        let above_ground = self.from.z > 1;
+        let blocked = (self.from.x..=self.to.x)
+            .cartesian_product(self.from.y..=self.to.y)
+            .any(|(x, y)| {
+                let pos = Coord {
+                    x,
+                    y,
+                    z: self.from.z - 1,
+                };
+                occupied.contains_key(&pos)
+            });
+
+        above_ground && !blocked
+    }
+
+    fn fall(&mut self, occupied: &HashMap<Coord, u16>) {
+        while self.can_fall(occupied) {
+            self.from.z -= 1;
+            self.to.z -= 1;
+        }
+    }
+}
+```
+
+### Helpers
+
+Using those 2 maps I can write a helper function to determine if a brick is safe to disintegrate.
+
+The function takes in an id (index in the list of resting bricks) along with those 2 maps.
+
+For every id that gets passed to the function:
+1. If no bricks are above it, it is safe to disintegrate.
+1. If there are bricks above it, removing it should not cause any of those bricks to fall.
+
+```rust
+fn disintegrates_safely(
+    id: u16,
+    above_map: &HashMap<u16, HashSet<u16>>,
+    below_map: &HashMap<u16, HashSet<u16>>,
+) -> bool {
+    if let Some(above) = above_map.get(&id) {
+        // check if the removed block was the only one supporting this upper block
+        above
+            .iter()
+            .all(|idx| below_map.get(idx).unwrap().len() > 1)
+    } else {
+        // no blocks above, this block is safe to remove
+        true
+    }
+}
+```
+
+### Code
+
+```rust title=day_22.rs
+pub fn part_1(input: &str) -> usize {
+    let mut bricks = parse(input);
+    let (above_map, below_map) = prepare(&mut bricks);
+
+    (0..bricks.len())
+        .filter(|&id| disintegrates_safely(id as u16, &above_map, &below_map))
+        .count()
+}
+```
+
+## Part 2
+
+It's not fast enough!
+We'll have to take risks and set off a chain reaction.
+
+For every individual brick, calculate how many bricks would fall if you remove it.
+
+The question asks what the sum is of all those bricks.
+
+The pseudocode I want to work towards:
+```rust
+let mut bricks = parse(input);
+let (above_map, below_map) = prepare(&mut bricks);
+
+(0..bricks.len())
+    .map(/* remove 1 brick and calculate how many other bricks fall */)
+    .sum()
+```
+
+### Helpers
+
+The parsing and preparating are identical to part1.
+
+A function that takes in the id of a `Brick`, removes it, and recurses with the ids of all `Brick`s that no longer have any `Brick` supporting them:
+```rust
+fn disintegrate(
+    id: u16,
+    above_map: &HashMap<u16, HashSet<u16>>,
+    below_map: &HashMap<u16, HashSet<u16>>,
+    disintegrated: &mut HashSet<u16>,
+) {
+    disintegrated.insert(id);
+
+    if let Some(above) = above_map.get(&id) {
+        for above_idx in above {
+            if let Some(below) = below_map.get(above_idx) {
+                if below.iter().all(|idx| disintegrated.contains(idx)) {
+                    disintegrate(*above_idx, above_map, below_map, disintegrated)
+                }
+            }
+        }
+    }
+}
+```
+
+The id of every removed `Brick` is remembered in a set.
+So the length of that set - 1 is the amount of every other brick the first brick caused to fall.
+(minus 1 because it includes the brick that was originally removed, and the question doesn't ask for that)
+
+### Code
+
+```rust title=day_22.rs
+pub fn part_2(input: &str) -> usize {
+    let mut bricks = parse(input);
+    let (above_map, below_map) = prepare(&mut bricks);
+
+    (0..bricks.len())
+        .map(|id| {
+            let mut disintegrated = HashSet::new();
+            disintegrate(id as u16, &above_map, &below_map, &mut disintegrated);
+            disintegrated.len() - 1
+        })
+        .sum()
+}
+```
+
+## Final code
+
+```rust title=day_22.rs numberLines
+use std::collections::{HashMap, HashSet};
+
+use itertools::{iproduct, Itertools};
+
+#[derive(PartialEq, Eq, Hash)]
+struct Coord {
+    x: u16,
+    y: u16,
+    z: u16,
+}
+
+impl Coord {
+    fn from(s: &str) -> Self {
+        let (x, y, z) = s.split(",").collect_tuple().unwrap();
+        Self {
+            x: x.parse().unwrap(),
+            y: y.parse().unwrap(),
+            z: z.parse().unwrap(),
+        }
+    }
+}
+
+struct Brick {
+    from: Coord,
+    to: Coord,
+}
+
+impl Brick {
+    fn from(s: &str) -> Self {
+        let (lhs, rhs) = s.split_once("~").unwrap();
+        Self {
+            from: Coord::from(lhs),
+            to: Coord::from(rhs),
+        }
+    }
+
+    fn can_fall(&self, occupied: &HashMap<Coord, u16>) -> bool {
+        // ground is at z == 0
+        let above_ground = self.from.z > 1;
+        let blocked = (self.from.x..=self.to.x)
+            .cartesian_product(self.from.y..=self.to.y)
+            .any(|(x, y)| {
+                let pos = Coord {
+                    x,
+                    y,
+                    z: self.from.z - 1,
+                };
+                occupied.contains_key(&pos)
+            });
+
+        above_ground && !blocked
+    }
+
+    fn fall(&mut self, occupied: &HashMap<Coord, u16>) {
+        while self.can_fall(occupied) {
+            self.from.z -= 1;
+            self.to.z -= 1;
+        }
+    }
+}
+
+fn parse(input: &str) -> Vec<Brick> {
+    input.lines().map(Brick::from).collect()
+}
+
+fn disintegrate(
+    id: u16,
+    above_map: &HashMap<u16, HashSet<u16>>,
+    below_map: &HashMap<u16, HashSet<u16>>,
+    disintegrated: &mut HashSet<u16>,
+) {
+    disintegrated.insert(id);
+
+    if let Some(above) = above_map.get(&id) {
+        for above_idx in above {
+            if let Some(below) = below_map.get(above_idx) {
+                if below.iter().all(|idx| disintegrated.contains(idx)) {
+                    disintegrate(*above_idx, above_map, below_map, disintegrated)
+                }
+            }
+        }
+    }
+}
+
+fn disintegrates_safely(
+    id: u16,
+    above_map: &HashMap<u16, HashSet<u16>>,
+    below_map: &HashMap<u16, HashSet<u16>>,
+) -> bool {
+    if let Some(above) = above_map.get(&id) {
+        // check if the removed block was the only one supporting this upper block
+        above
+            .iter()
+            .all(|idx| below_map.get(idx).unwrap().len() > 1)
+    } else {
+        // no blocks above, this block is safe to remove
+        true
+    }
+}
+
+fn prepare(bricks: &mut Vec<Brick>) -> (HashMap<u16, HashSet<u16>>, HashMap<u16, HashSet<u16>>) {
+    // sort bricks by lowest height
+    bricks.sort_by_key(|brick| brick.from.z);
+
+    // coord - block_idx
+    let mut occupied = HashMap::new();
+    let mut above_map: HashMap<u16, HashSet<u16>> = HashMap::new();
+    let mut below_map: HashMap<u16, HashSet<u16>> = HashMap::new();
+
+    for (idx, brick) in bricks.iter_mut().enumerate() {
+        brick.fall(&occupied);
+
+        for (x, y) in (brick.from.x..=brick.to.x).cartesian_product(brick.from.y..=brick.to.y) {
+            for z in brick.from.z..=brick.to.z {
+                let coord = Coord { x, y, z };
+                occupied.insert(coord, idx as u16);
+            }
+            // check if the coord of a brick below this one (that's why we use the min z, to handle vertical blocks) is occupied
+            let below = Coord {
+                x,
+                y,
+                z: brick.from.z - 1,
+            };
+            if let Some(&below_idx) = occupied.get(&below) {
+                above_map.entry(below_idx).or_default().insert(idx as u16);
+                below_map.entry(idx as u16).or_default().insert(below_idx);
+            }
+        }
+    }
+
+    (above_map, below_map)
+}
+
+pub fn part_1(input: &str) -> usize {
+    let mut bricks = parse(input);
+    let (above_map, below_map) = prepare(&mut bricks);
+
+    (0..bricks.len())
+        .filter(|&id| disintegrates_safely(id as u16, &above_map, &below_map))
+        .count()
+}
+
+pub fn part_2(input: &str) -> usize {
+    let mut bricks = parse(input);
+    let (above_map, below_map) = prepare(&mut bricks);
+
+    (0..bricks.len())
+        .map(|id| {
+            let mut disintegrated = HashSet::new();
+            disintegrate(id as u16, &above_map, &below_map, &mut disintegrated);
+            disintegrated.len() - 1
+        })
+        .sum()
+}
+```

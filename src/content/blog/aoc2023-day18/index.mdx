@@ -1,0 +1,319 @@
+---
+title: "Advent of Code 2023 Day 18"
+date: 2023-12-18
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+section: "garden"
+---
+
+## Day 18: Lavaduct Lagoon
+
+https://adventofcode.com/2023/day/18
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_18.rs)
+</Aside>
+
+The factory needs so much lava to work through its backlog, that the elves are digging a collection pool right in front of the entrance.
+
+Today's input is a list of instructions to dig the perimeter of the pool.
+
+An example input looks like this:
+```txt title=input.txt
+R 6 (#70c710)
+D 5 (#0dc571)
+L 2 (#5713f0)
+D 2 (#d2c081)
+R 2 (#59c680)
+D 2 (#411b91)
+L 5 (#8ceee2)
+U 2 (#caa173)
+L 1 (#1b58a2)
+U 2 (#caa171)
+R 2 (#7807d2)
+U 3 (#a77fa3)
+L 2 (#015232)
+U 2 (#7a21e3)
+```
+
+Each instruction tells the digger to move to a different point, and dig every tile it passes through.
+
+When followed, it results in a closed loop of trench being dug.
+
+## Part 1
+
+The first letter in an instruction is the direction the digger should move in next:
+- `U` up
+- `D` down
+- `L` left
+- `R` right
+
+The number tells the digger how far it should move in that direction.
+
+That hexcode looking thing is not used in part1.
+
+Every tile the loop enloses should also be dug out.
+
+The question asks how many tiles are dug out.
+
+---
+
+I broke this up into 2 parts:
+- Parsing an instruction per line
+- Calculating the area when following the instructions
+
+### Helpers
+
+I represented each instruction as an `Instr`:
+```rust
+struct Instr {
+    dir: Dir,
+    amount: i64,
+}
+```
+
+Each direction is a `Dir`:
+```rust
+enum Dir {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+```
+
+The parsing:
+```rust
+let instructions = input.lines().map(|line| {
+    let (instr, _) = line.split_once(" (").unwrap();
+    let (dir, amount) = instr.split_once(" ").unwrap();
+    let dir = match dir {
+        "U" => Dir::Up,
+        "D" => Dir::Down,
+        "L" => Dir::Left,
+        "R" => Dir::Right,
+        _ => panic!("wrong dir"),
+    };
+    let amount = amount.parse().unwrap();
+    Instr { dir, amount }
+});
+```
+
+If you follow each instruction, the trench is a polygon with square edges.
+The question is asking for the area of that polygon.
+
+That polygon has a bunch of coordinates at its edges that are specified by following the instructions.
+So I made a `Coord`:
+```rust
+struct Coord {
+    x: i64,
+    y: i64,
+}
+```
+
+I used the [shoelace formula](https://en.wikipedia.org/wiki/Shoelace_formula) to calculate its area.
+
+[More information about polygon coordinates and areas](https://www.themathdoctors.org/polygon-coordinates-and-areas/)
+
+Calculating the area, a function that takes the list of instructions:
+```rust
+fn calc_area(instructions: impl Iterator<Item = Instr>) -> i64 {
+    let (area, perimeter, _) = instructions.fold(
+        (0, 0, Coord { x: 0, y: 0 }),
+        |(area, perimeter, pos), Instr { dir, amount }| {
+            let new_pos = pos.advance(&dir, amount);
+            let new_area = area + (pos.x * new_pos.y - new_pos.x * pos.y);
+            let new_perimeter = (new_pos.x - pos.x).abs() + (new_pos.y - pos.y).abs() + perimeter;
+            (new_area, new_perimeter, new_pos)
+        },
+    );
+
+    (area.abs() + perimeter) / 2 + 1
+}
+```
+
+<Aside variant="danger">
+
+[Be sure to account for the perimeter correctly!](https://www.reddit.com/r/adventofcode/comments/18l8mao/2023_day_18_intuition_for_why_spoiler_alone/)
+
+</Aside>
+
+That function uses a helper that lets a coordinate move in a direction for an amount of steps:
+```rust
+impl Coord {
+    pub fn advance(&self, direction: &Dir, amount: i64) -> Self {
+        match direction {
+            Dir::Up => Self {
+                x: self.x + amount,
+                y: self.y,
+            },
+            Dir::Down => Self {
+                x: self.x - amount,
+                y: self.y,
+            },
+            Dir::Left => Self {
+                x: self.x,
+                y: self.y - amount,
+            },
+            Dir::Right => Self {
+                x: self.x,
+                y: self.y + amount,
+            },
+        }
+    }
+}
+```
+
+### Code
+
+```rust title=day_18.rs
+pub fn part_1(input: &str) -> i64 {
+    let instructions = input.lines().map(|line| {
+        let (instr, _) = line.split_once(" (").unwrap();
+        let (dir, amount) = instr.split_once(" ").unwrap();
+        let dir = match dir {
+            "U" => Dir::Up,
+            "D" => Dir::Down,
+            "L" => Dir::Left,
+            "R" => Dir::Right,
+            _ => panic!("wrong dir"),
+        };
+        let amount = amount.parse().unwrap();
+        Instr { dir, amount }
+    });
+
+    calc_area(instructions)
+}
+```
+
+## Part 2
+
+Oops! The instructions should be interpreted differently.
+
+Each hexadecimal code is six digits long.
+- The first five hexadecimal digits encode the distance in meters as a five-digit hexadecimal number.
+- The last hexadecimal digit encodes the direction to dig: 0 means R, 1 means D, 2 means L, and 3 means U.
+
+The question asks how many tiles are dug out.
+
+---
+
+Only the parsing logic changes.
+
+### Code
+
+```rust title=day_18.rs
+pub fn part_2(input: &str) -> i64 {
+    let instructions = input.lines().map(|line| {
+        let line = line.strip_suffix(")").unwrap();
+        let (_, hex) = line.split_once("(#").unwrap();
+        let (amount, dir) = hex.split_at(5);
+        let amount = i64::from_str_radix(amount, 16).unwrap();
+        let dir = match dir {
+            "3" => Dir::Up,
+            "1" => Dir::Down,
+            "2" => Dir::Left,
+            "0" => Dir::Right,
+            _ => panic!("wrong dir"),
+        };
+        Instr { dir, amount }
+    });
+
+    calc_area(instructions)
+}
+```
+
+## Final code
+
+```rust title=day_18.rs numberLines
+struct Coord {
+    x: i64,
+    y: i64,
+}
+
+impl Coord {
+    pub fn advance(&self, direction: &Dir, amount: i64) -> Self {
+        match direction {
+            Dir::Up => Self {
+                x: self.x + amount,
+                y: self.y,
+            },
+            Dir::Down => Self {
+                x: self.x - amount,
+                y: self.y,
+            },
+            Dir::Left => Self {
+                x: self.x,
+                y: self.y - amount,
+            },
+            Dir::Right => Self {
+                x: self.x,
+                y: self.y + amount,
+            },
+        }
+    }
+}
+
+struct Instr {
+    dir: Dir,
+    amount: i64,
+}
+
+enum Dir {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+fn calc_area(instructions: impl Iterator<Item = Instr>) -> i64 {
+    let (area, perimeter, _) = instructions.fold(
+        (0, 0, Coord { x: 0, y: 0 }),
+        |(area, perimeter, pos), Instr { dir, amount }| {
+            let new_pos = pos.advance(&dir, amount);
+            let new_area = area + (pos.x * new_pos.y - new_pos.x * pos.y);
+            let new_perimeter = (new_pos.x - pos.x).abs() + (new_pos.y - pos.y).abs() + perimeter;
+            (new_area, new_perimeter, new_pos)
+        },
+    );
+
+    (area.abs() + perimeter) / 2 + 1
+}
+
+pub fn part_1(input: &str) -> i64 {
+    let instructions = input.lines().map(|line| {
+        let (instr, _) = line.split_once(" (").unwrap();
+        let (dir, amount) = instr.split_once(" ").unwrap();
+        let dir = match dir {
+            "U" => Dir::Up,
+            "D" => Dir::Down,
+            "L" => Dir::Left,
+            "R" => Dir::Right,
+            _ => panic!("wrong dir"),
+        };
+        let amount = amount.parse().unwrap();
+        Instr { dir, amount }
+    });
+
+    calc_area(instructions)
+}
+
+pub fn part_2(input: &str) -> i64 {
+    let instructions = input.lines().map(|line| {
+        let line = line.strip_suffix(")").unwrap();
+        let (_, hex) = line.split_once("(#").unwrap();
+        let (amount, dir) = hex.split_at(5);
+        let amount = i64::from_str_radix(amount, 16).unwrap();
+        let dir = match dir {
+            "3" => Dir::Up,
+            "1" => Dir::Down,
+            "2" => Dir::Left,
+            "0" => Dir::Right,
+            _ => panic!("wrong dir"),
+        };
+        Instr { dir, amount }
+    });
+
+    calc_area(instructions)
+}
+```

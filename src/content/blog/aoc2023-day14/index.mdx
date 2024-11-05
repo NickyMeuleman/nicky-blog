@@ -1,0 +1,332 @@
+---
+title: "Advent of Code 2023 Day 14"
+date: 2023-12-14
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+section: "garden"
+---
+
+## Day 14: Parabolic Reflector Dish
+
+https://adventofcode.com/2023/day/14
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_14.rs)
+</Aside>
+
+Turns out the mirrors from yesterday are used to power a [concentrated solar mirror](https://en.wikipedia.org/wiki/Concentrated_solar_power) thingamajig.
+The mirrors are not calibrated correctly, that must be why the lava isn't being made.
+
+It being an advent of code elven mirror, it's calibrated in the most convoluted way possible.
+
+It uses a bunch of rocks to put pressure on the mirrors.
+
+Today's input is the arrangement of the calibration device (so, plane with a bunch of rocks on it).
+
+An example input looks like this:
+```txt title=input.txt
+O....#....
+O.OO#....#
+.....##...
+OO.#O....O
+.O.....O#.
+O.#..O.#.#
+..O..#O..O
+.......O..
+#....###..
+#OO..#....
+```
+
+- `O` is a round rock
+- `#` is a square rock
+- `.` is empty space
+
+You can tilt the calibration device.
+
+The round rocks roll, the square rocks stay put.
+
+## Parsing
+
+An enum to keep track of what a tile holds:
+```rust
+enum Tile {
+    Round,
+    Square,
+    Empty,
+}
+```
+
+A function to parse the input into a 2D list of `Tile`:
+```rust
+fn parse(input: &str) -> Vec<Vec<Tile>> {
+    input
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|c| match c {
+                    '.' => Tile::Empty,
+                    '#' => Tile::Square,
+                    'O' => Tile::Round,
+                    _ => panic!("at the disco"),
+                })
+                .collect()
+        })
+        .collect()
+}
+```
+
+## Part 1
+
+The question asks how much total load would be on the north support beams after sliding the rocks north.
+
+The load is determined by the location of the rounded rocks.
+
+Each rounded rock contributes a load equal to the number of rows from the rock to the south edge of the platform, including the row the rock is on.
+
+### Helpers
+
+A function that slides all round rocks to the north:
+```rust
+fn slide_north(grid: &mut Vec<Vec<Tile>>) {
+    for col in 0..grid[0].len() {
+        let mut empty_or_round_row = 0;
+        for row in 0..grid.len() {
+            let curr = grid[row][col];
+            match curr {
+                Tile::Square => empty_or_round_row = row + 1,
+                Tile::Round => {
+                    // swap the current tile with the empty_or_round one
+                    let replace_with = std::mem::replace(&mut grid[empty_or_round_row][col], curr);
+                    let _ = std::mem::replace(&mut grid[row][col], replace_with);
+                    empty_or_round_row += 1;
+                }
+                Tile::Empty => (),
+            }
+        }
+    }
+}
+```
+
+A function that calculated the total weight of a grid:
+```rust
+fn weight(grid: &Vec<Vec<Tile>>) -> usize {
+    grid.iter()
+        .rev()
+        .enumerate()
+        .map(|(i, row)| {
+            let round_rocks = row.iter().filter(|tile| **tile == Tile::Round).count();
+            round_rocks * (i + 1)
+        })
+        .sum()
+}
+```
+
+Combining these helpers makes the final code for part1 very short.
+
+### Code
+
+```rust title=day_14.rs
+pub fn part_1(input: &str) -> usize {
+    let mut grid = parse(input);
+    slide_north(&mut grid);
+    weight(&grid)
+}
+```
+
+## Part 2
+
+The platform has a "spin cycle" button.
+
+It slides the rocks: north, the west, then south, then east.
+
+If you do that enough times, the mirrors will surely be calibrated.
+
+The question asks what the total load is after 1000000000 cycles.
+
+---
+
+So, Advent of Code, huge number of cycles, that must mean a cycle detection problem.
+
+First, I'll code enough to try this problem brute-force, but I'm not getting my hopes up.
+
+### Helpers
+
+
+First, a function that applies a full cycle to a grid (tilting north, west, south, east).
+
+Tilting north, west, south, east means tilting in a counterclockwise pattern.
+
+That's the same as:
+1. Tilt north
+1. Turn grid clockwise
+1. Tilt north
+1. Turn grid clockwise
+1. Tilt north
+1. Turn grid clockwise
+1. Tilt north
+1. Turn grid clockwise
+
+```rust
+fn cycle(mut grid: Vec<Vec<Tile>>) -> Vec<Vec<Tile>> {
+    for _ in 0..4 {
+        slide_north(&mut grid);
+        let rotated = clockwise(&grid);
+        grid = rotated;
+    }
+    grid
+}
+```
+
+So the next helper is the one that turns a grid clockwise.
+To do that, change every (x, y) coordinate to an (y, -x) coordinate.
+
+```rust
+// rotate 90 degrees clockwise: (x, y) -> (y, -x)
+fn clockwise(grid: &Vec<Vec<Tile>>) -> Vec<Vec<Tile>> {
+    let size = grid.len();
+    let mut rotated = vec![vec![Tile::Empty; size]; size];
+    for row in 0..size {
+        for col in 0..size {
+            rotated[col][size - 1 - row] = grid[row][col];
+        }
+    }
+    rotated
+}
+```
+
+---
+
+As I suspected, brute-forcing is a no-go.
+Time to put on the cycle-detecting hat! (It's a regular hat, my ears are cold.)
+
+I keep track of every grid pattern I saw so far.
+Each time I cycle the grid, I check if the new pattern exists in that list.
+
+If the pattern appeared before, I hit the start of a new cycle.
+The length of a cycle is the total length of the list - the index where the repeat happened.
+
+Using that length, figure out the index of the pattern the entire loop will end on.
+
+### Code
+
+```rust title=day_14.rs
+pub fn part_2(input: &str) -> usize {
+    let mut grid = parse(input);
+    let mut seen = vec![grid.clone()];
+
+    loop {
+        grid = cycle(grid);
+        // check if the cycled map has already been seen
+        if let Some(idx) = seen.iter().position(|x| x == &grid) {
+            // figure out length of cycle (watch out: a cycle might only start after a number of steps)
+            let cycle_len = seen.len() - idx;
+            // use cycle length to figure out the index of the final step in the seen list
+            let final_idx = idx + (1_000_000_000 - idx) % cycle_len;
+            return weight(&seen[final_idx]);
+        }
+        seen.push(grid.clone());
+    }
+}
+```
+
+## Final code
+
+```rust title=day_14.rs numberLines
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum Tile {
+    Round,
+    Square,
+    Empty,
+}
+
+fn parse(input: &str) -> Vec<Vec<Tile>> {
+    input
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|c| match c {
+                    '.' => Tile::Empty,
+                    '#' => Tile::Square,
+                    'O' => Tile::Round,
+                    _ => panic!("at the disco"),
+                })
+                .collect()
+        })
+        .collect()
+}
+
+fn slide_north(grid: &mut Vec<Vec<Tile>>) {
+    for col in 0..grid[0].len() {
+        let mut empty_or_round_row = 0;
+        for row in 0..grid.len() {
+            let curr = grid[row][col];
+            match curr {
+                Tile::Square => empty_or_round_row = row + 1,
+                Tile::Round => {
+                    // swap the current tile with the empty_or_round one
+                    let replace_with = std::mem::replace(&mut grid[empty_or_round_row][col], curr);
+                    let _ = std::mem::replace(&mut grid[row][col], replace_with);
+                    empty_or_round_row += 1;
+                }
+                Tile::Empty => (),
+            }
+        }
+    }
+}
+
+fn weight(grid: &Vec<Vec<Tile>>) -> usize {
+    grid.iter()
+        .rev()
+        .enumerate()
+        .map(|(i, row)| {
+            let round_rocks = row.iter().filter(|tile| **tile == Tile::Round).count();
+            round_rocks * (i + 1)
+        })
+        .sum()
+}
+
+// rotate 90 degrees clockwise: (x, y) -> (y, -x)
+fn clockwise(grid: &Vec<Vec<Tile>>) -> Vec<Vec<Tile>> {
+    let size = grid.len();
+    let mut rotated = vec![vec![Tile::Empty; size]; size];
+    for row in 0..size {
+        for col in 0..size {
+            rotated[col][size - 1 - row] = grid[row][col];
+        }
+    }
+    rotated
+}
+
+fn cycle(mut grid: Vec<Vec<Tile>>) -> Vec<Vec<Tile>> {
+    for _ in 0..4 {
+        slide_north(&mut grid);
+        let rotated = clockwise(&grid);
+        grid = rotated;
+    }
+    grid
+}
+
+pub fn part_1(input: &str) -> usize {
+    let mut grid = parse(input);
+    slide_north(&mut grid);
+    weight(&grid)
+}
+
+pub fn part_2(input: &str) -> usize {
+    let mut grid = parse(input);
+    let mut seen = vec![grid.clone()];
+
+    loop {
+        grid = cycle(grid);
+        // check if the cycled map has already been seen
+        if let Some(idx) = seen.iter().position(|x| x == &grid) {
+            // figure out length of cycle (watch out: a cycle might only start after a number of steps)
+            let cycle_len = seen.len() - idx;
+            // use cycle length to figure out the index of the final step in the seen list
+            let final_idx = idx + (1_000_000_000 - idx) % cycle_len;
+            return weight(&seen[final_idx]);
+        }
+        seen.push(grid.clone());
+    }
+}
+```

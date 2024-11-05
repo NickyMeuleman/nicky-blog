@@ -1,0 +1,315 @@
+---
+title: "Advent of Code 2023 Day 1"
+date: 2023-12-01
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+section: "garden"
+---
+
+## Day 1: Trebuchet?!
+
+https://adventofcode.com/2023/day/1
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_01.rs)
+</Aside>
+
+Something is wrong with the global snow production and you are the lucky fixer! (yay?)
+
+Snow comes from the sky, and the sky is where you are going.
+The vehicle of choice to get to the destination is a trebuchet.
+
+Today's input is a list of calibration instructions for that trebuchet.
+
+An example input looks like this:
+
+```txt title=input.txt
+1abc2
+pqr3stu8vwx
+a1b2c3d4e5f
+treb7uchet
+```
+
+## Part 1
+
+Each line of input holds a calibration value.
+A calibration value is a two-digit number.
+
+It can be constructed by concatenating the first digit in a line with the last digit in that line.
+The question asks for sum of all calibration values in the input.
+
+### Option 1: A for loop
+
+Some skeleton/pseudo-code to start with:
+
+```rust
+let mut sum = 0;
+for line in input.lines() {
+    let first = // first digit in line
+    let last = // last digit in line;
+    let num = first * 10 + last; // smoosh the two digits together really close
+    sum += num; // add the combined two-digit number to the sum
+}
+sum
+```
+
+I chose to not overthink this one and to be very verbose on purpose.
+
+Starting to search from the front of the line, I look for the first character that is a digit.
+Then I turn that into an integer so I can do math on it.
+
+To find the last digit, I do the same thing starting from the back of the line.
+
+When I found both digits, I merge them into a two-digit number and add that number to the final sum.
+
+```rust
+let mut sum = 0;
+for line in input.lines() {
+    let first = line.chars().find(|c| c.is_ascii_digit()).unwrap();
+    let first: u32 = first.to_digit(10).unwrap();
+    let last = line.chars().rfind(|c| c.is_ascii_digit()).unwrap();
+    let last: u32 = last.to_digit(10).unwrap();
+    let num = first * 10 + last;
+    sum += num;
+}
+sum
+```
+
+### Option 2: An iterator chain
+
+The exact same idea, but implemented a bit differently.
+
+Split the input into lines.
+Turn each line into a number.
+Sum those numbers.
+
+```rust
+input
+    .lines()
+    .map(|line| {
+        let first = line.chars().find_map(|c| c.to_digit(10)).unwrap();
+        let last = line.chars().rev().find_map(|c| c.to_digit(10)).unwrap();
+        10 * first + last
+    })
+    .sum()
+```
+
+### Code
+
+```rust title=day_01.rs
+fn part_1(input: &str) -> u32 {
+    input
+        .lines()
+        .map(|line| {
+            let first = line.chars().find_map(|c| c.to_digit(10)).unwrap();
+            let last = line.chars().rev().find_map(|c| c.to_digit(10)).unwrap();
+            10 * first + last
+        })
+        .sum()
+}
+```
+
+## Part 2
+
+It turns out spelled out digits are also valid.  
+So "one", "two", "three", "four", "five", "six", "seven", "eight", and "nine" also count as valid "digits",
+with values from 1 to 9 respectively.
+
+Input lines can look like this:
+
+```txt
+two1nine
+eightwothree
+abcone2threexyz
+xtwone3four
+4nineeightseven2
+zoneight234
+7pqrstsixteen
+```
+
+For example, the first digit on the first line would be `"two"`, with a numeric value of `2`.  
+The last digit on that line is `"nine"`, with a value of `9`.  
+That means the calibration value for that line is `29`.
+
+This complicates things, because you can't look at a line 1 character at a time like in part 1.
+
+The skeleton code remains unchanged from part 1.
+
+```rust
+let mut sum = 0;
+for line in input.lines() {
+    let first = // first digit in line
+    let last = // last digit in line;
+    let num = first * 10 + last; // smoosh the two digits together really close
+    sum += num; // add the combined two-digit number to the sum
+}
+sum
+```
+
+To find the first digit, I create a temporary line that starts off as the entire line.
+If it starts with a valid prefix, the digit was found.
+If it does not, I shorten that temporary variable so it starts one character later and do the check again.
+
+To find the last digit, I apply the same logic with 2 changes:
+1. I check if the temporary line **ends** with a valid suffix.
+2. I shorten that temporary line by removing one character from the **end**.
+
+In pseudocode that looks like:
+```rust
+let nums = // a map with all possible valid strings as key, and their number as value. (ie. key: "nine", value: 9)
+for line in lines {
+    let mut first = 0;
+    'first: loop {
+        let mut temporary = line;
+        for (prefix, digit) in nums {
+            if line.starts_with(prefix) {
+                first = digit;
+                // break out of the outer loop marked as 'first
+                break 'first;
+            }
+        }
+        // all valid digits were checked an none matched, shorten the temporary line by removing one character from the front
+        temporary = &temporary[1..];
+    }
+    // the same logic for the last digit
+    // the summing logic
+}
+```
+
+### Code
+
+<Aside variant="info">
+Thanks to [Chris Biscardi](https://www.christopherbiscardi.com/) for showing me a cleaner way to build the `nums` map
+</Aside>
+
+```rust title=day_01.rs
+use std::collections::HashMap;
+
+fn part_2(input: &str) -> u32 {
+    let nums = HashMap::from([
+        ("1", 1),
+        ("2", 2),
+        ("3", 3),
+        ("4", 4),
+        ("5", 5),
+        ("6", 6),
+        ("7", 7),
+        ("8", 8),
+        ("9", 9),
+        ("one", 1),
+        ("two", 2),
+        ("three", 3),
+        ("four", 4),
+        ("five", 5),
+        ("six", 6),
+        ("seven", 7),
+        ("eight", 8),
+        ("nine", 9),
+    ]);
+
+    let mut sum = 0;
+    for line in input.lines() {
+        let mut forwards = line;
+        let mut backwards = line;
+
+        let first = 'outer: loop {
+            for (prefix, num) in nums.iter() {
+                if forwards.starts_with(prefix) {
+                    break 'outer num;
+                }
+            }
+            forwards = &forwards[1..];
+        };
+
+        let last = 'outer: loop {
+            for (suffix, num) in nums.iter() {
+                if backwards.ends_with(suffix) {
+                    break 'outer num;
+                }
+            }
+            backwards = &backwards[..backwards.len() - 1];
+        };
+
+        let num = first * 10 + last;
+        sum += num;
+    }
+
+    sum
+}
+```
+
+## Final code
+
+```rust title=day_01.rs numberLines
+use std::collections::HashMap;
+
+fn main() {
+    let input = include_str!("day_01.txt");
+    println!("{}", part_1(input));
+    println!("{}", part_2(input));
+}
+
+
+fn part_1(input: &str) -> u32 {
+    input
+        .lines()
+        .map(|line| {
+            let first = line.chars().find_map(|c| c.to_digit(10)).unwrap();
+            let last = line.chars().rev().find_map(|c| c.to_digit(10)).unwrap();
+            10 * first + last
+        })
+        .sum()
+}
+
+fn part_2(input: &str) -> u32 {
+    let nums = HashMap::from([
+        ("1", 1),
+        ("2", 2),
+        ("3", 3),
+        ("4", 4),
+        ("5", 5),
+        ("6", 6),
+        ("7", 7),
+        ("8", 8),
+        ("9", 9),
+        ("one", 1),
+        ("two", 2),
+        ("three", 3),
+        ("four", 4),
+        ("five", 5),
+        ("six", 6),
+        ("seven", 7),
+        ("eight", 8),
+        ("nine", 9),
+    ]);
+
+    let mut sum = 0;
+    for line in input.lines() {
+        let mut forwards = line;
+        let mut backwards = line;
+
+        let first = 'outer: loop {
+            for (prefix, num) in nums.iter() {
+                if forwards.starts_with(prefix) {
+                    break 'outer num;
+                }
+            }
+            forwards = &forwards[1..];
+        };
+
+        let last = 'outer: loop {
+            for (suffix, num) in nums.iter() {
+                if backwards.ends_with(suffix) {
+                    break 'outer num;
+                }
+            }
+            backwards = &backwards[..backwards.len() - 1];
+        };
+
+        let num = first * 10 + last;
+        sum += num;
+    }
+
+    sum
+}
+```
