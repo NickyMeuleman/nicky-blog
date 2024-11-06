@@ -12,5 +12,13 @@ export default defineConfig({
   redirects: {
     "/garden/[slug]": "/blog/[slug]",
   },
+  image: {
+    service: {
+      entrypoint: "astro/assets/services/sharp",
+      config: {
+        limitInputPixels: false,
+      },
+    },
+  },
   integrations: [react(), mdx(), sitemap(), tailwind(), icon()],
 });

@@ -2,19 +2,45 @@
 import { getCollection } from "astro:content";
 import Layout from "../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
+import { Picture } from "astro:assets";
 
 const posts = await getCollection("blog");
 ---
 
 <Layout title="We have liftoff">
-  <ul class="m-5 list-disc">
+  <ul class="m-5">
     {
       posts
         .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
         .map((post) => {
           return (
-            <li class="m-1">
-              <a href={`/blog/${post.slug}`}>{post.data.title}</a>
+            <li class="mt-4 grid grid-cols-[20ex_2fr] grid-rows-[20ex] gap-8 hover:bg-blue-950 hover:text-blue-50">
+              <div class="grid">
+                {post.data.cover ? (
+                  <Picture
+                    src={post.data.cover}
+                    alt={post.data.coverAlt ?? ""}
+                    width={post.data.cover.width / 4}
+                    densities={[1.5, 2]}
+                    formats={["avif", "webp"]}
+                  />
+                ) : (
+                  <p class="place-self-center">placeholder</p>
+                )}
+              </div>
+              <div class="my-2">
+                <time datetime={post.data.date.toISOString()}>
+                  {new Intl.DateTimeFormat("en-US", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                    timeZone: "UTC",
+                  }).format(post.data.date)}
+                </time>
+                <a href={`/blog/${post.slug}`}>
+                  <h2>{post.data.title}</h2>
+                </a>
+              </div>
             </li>
           );
         })
@@ -23,3 +49,10 @@ const posts = await getCollection("blog");
   <Icon class="h-44 w-44 text-blue-500" name="lucide:github" />
   <Icon class="h-44 w-44 text-blue-500" name="twitter" />
 </Layout>
+
+<style>
+  img {
+    height: 100%;
+    object-fit: cover;
+  }
+</style>

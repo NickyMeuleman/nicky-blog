@@ -7,6 +7,7 @@ import { Aside } from "../../components/Aside";
 import Tweet from "../../components/Tweet.astro";
 import CodePen from "../../components/CodePen.astro";
 import YouTube from "../../components/YouTube.astro";
+import { Picture } from "astro:assets";
 
 export const getStaticPaths = (async () => {
   const posts = await getCollection("blog");
@@ -27,6 +28,19 @@ const { Content } = await post.render();
 <Layout title={post.data.title}>
   <article class="m-5">
     <h1 class="my-2 text-4xl">{post.data.title}</h1>
+    {
+      post.data.cover && (
+        <Picture
+          src={post.data.cover}
+          alt={post.data.coverAlt ?? ""}
+          width={post.data.cover.width / 2}
+          densities={[1.5, 2]}
+          formats={["avif", "webp"]}
+          loading="eager"
+          fetchpriority="high"
+        />
+      )
+    }
     <Content components={{ Aside, Tweet, YouTube, CodePen }} />
   </article>
 </Layout>
