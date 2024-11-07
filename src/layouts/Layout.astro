@@ -1,4 +1,5 @@
 ---
+import { ViewTransitions } from "astro:transitions";
 import Font from "../components/Font.astro";
 
 interface Props {
@@ -23,8 +24,9 @@ const {
     <link rel="sitemap" href="/sitemap-index.xml" />
     <title>{title}</title>
     <Font />
+    <ViewTransitions />
   </head>
-  <body>
+  <body class="bg-blue-50">
     <slot />
   </body>
 </html>
