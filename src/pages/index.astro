@@ -23,6 +23,7 @@ const posts = await getCollection("blog");
                     width={post.data.cover.width / 4}
                     densities={[1.5, 2]}
                     formats={["avif", "webp"]}
+                    class="h-full object-cover"
                   />
                 ) : (
                   <p class="place-self-center">placeholder</p>
@@ -49,10 +50,3 @@ const posts = await getCollection("blog");
   <Icon class="h-44 w-44 text-blue-500" name="lucide:github" />
   <Icon class="h-44 w-44 text-blue-500" name="twitter" />
 </Layout>
-
-<style>
-  img {
-    height: 100%;
-    object-fit: cover;
-  }
-</style>
