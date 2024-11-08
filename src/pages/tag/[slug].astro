@@ -1,0 +1,58 @@
+---
+import { type GetStaticPaths } from "astro";
+import { type CollectionEntry } from "astro:content";
+import { getCollection } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+import { slugify } from "../../utils/index";
+
+type Post = CollectionEntry<"blog">;
+interface Props {
+  count: number;
+  name: Post["data"]["tags"][number];
+  slug: string;
+  posts: Post[];
+}
+
+export const getStaticPaths = (async () => {
+  const posts: Post[] = await getCollection("blog");
+  const tags = [...new Set(posts.flatMap((p) => p.data.tags))];
+
+  return tags.map((tag) => {
+    const slug = slugify(tag);
+    const filteredPosts = posts.filter((post) => post.data.tags.includes(tag));
+    return {
+      params: { slug },
+      props: {
+        slug,
+        name: tag,
+        posts: filteredPosts,
+        count: filteredPosts.length,
+      },
+    };
+  });
+}) satisfies GetStaticPaths;
+
+const { slug, name, posts, count } = Astro.props;
+---
+
+<Layout title={`Posts tagged "${name}"`}>
+  <h1 class="my-5 text-2xl">
+    {`${count} post${count != 1 ? "s" : ""} tagged`} "<span
+      transition:name={`${slug}-tag`}>{name}</span
+    >"
+  </h1>
+  <p><a href="/tag">All tags</a></p>
+  <ul class="m-4 list-inside list-disc">
+    {
+      posts.map((p) => {
+        return (
+          <li>
+            <a href={`/blog/${p.slug}`} transition:name={`${p.slug}-title`}>
+              {p.data.title}
+            </a>
+          </li>
+        );
+      })
+    }
+  </ul>
+</Layout>
