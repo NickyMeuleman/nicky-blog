@@ -36,3 +36,9 @@ const {
     font-family: system-ui, sans-serif;
   }
 </style>
+
+<script>
+  if (document.querySelector(".katex")) {
+    await import("katex/dist/katex.min.css");
+  }
+</script>

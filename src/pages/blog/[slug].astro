@@ -9,8 +9,11 @@ import CodePen from "../../components/CodePen.astro";
 import YouTube from "../../components/YouTube.astro";
 import { Picture } from "astro:assets";
 
+type Post = CollectionEntry<"blog">;
+type Props = { post: Post };
+
 export const getStaticPaths = (async () => {
-  const posts = await getCollection("blog");
+  const posts: Post[] = await getCollection("blog");
   return posts
     .filter((p) => !p.data.draft)
     .map((p) => ({
@@ -19,7 +22,6 @@ export const getStaticPaths = (async () => {
     }));
 }) satisfies GetStaticPaths;
 
-type Props = { post: CollectionEntry<"blog"> };
 const { post } = Astro.props;
 if (!post) return Astro.rewrite("/404");
 const { Content } = await post.render();

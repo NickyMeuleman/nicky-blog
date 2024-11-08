@@ -1,0 +1,349 @@
+---
+title: "Advent of Code 2023 Day 6"
+date: 2023-12-06
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2023"
+section: "garden"
+---
+
+## Day 6: Wait For It
+
+https://adventofcode.com/2023/day/6
+
+<Aside>
+TL;DR: [my solution in Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2023/solutions/src/day_06.rs)
+</Aside>
+
+A ferry brings you to a boat race.
+The prize for winning the race is a trip to desert island, you want to go there, because you heard some sand is needed to fix the snow issue.
+A island named **Desert Island** will surely have a lot of that [annoying, course, stuff](https://youtu.be/2tLf1JO5bvE?si=rneA0KA-ari18Ct8).
+
+This race is slightly unusual, the amount of **time everyone gets is fixed**.
+Whoever gets the **furthest in that time wins**.
+
+Today's input is a report of previous races.
+
+An example input looks like this:
+
+```txt title=input.txt
+Time:      7  15   30
+Distance:  9  40  200
+```
+
+It maps time-limits of races to the current furthest distance.
+
+This document describes three races:
+
+1. Race 1 lasts 7 milliseconds. The record distance in this race is 9 millimeters.
+2. Race 2 lasts 15 milliseconds. The record distance in this race is 40 millimeters.
+3. Race 3 lasts 30 milliseconds. The record distance in this race is 200 millimeters.
+
+The boats are toy boats.
+
+Before they start moving, you have to charge them by holding a button.
+The longer you charge them, the larger the boat's speed.
+
+- The moment you start charging, the time starts
+- The moment you stop charging, the boat starts moving (and doesn't lose speed, apparently they were made by a physics teacher elf that assumed a frictionless vaccuum)
+
+## Part 1
+
+For each race, determine the amount of ways you can beat the current record.
+
+For the first race in the example (that lasts 7 milliseconds), there are 4 ways to beat the record of 9 millimeters:
+1. Hold the button for 2 milliseconds at the start of the race.
+1. Hold the button for 3 milliseconds at the start of the race.
+1. Hold the button for 4 milliseconds at the start of the race.
+1. Hold the button for 5 milliseconds at the start of the race.
+
+The question asks you to multiply the number of ways you can win each race.
+
+### Parsing
+
+Getting 2 lists of numbers, and combining them.
+
+For my own convenience, I used a `Race` structure to represent each race, so I don't confuse myself by accessing things by index.
+
+```rust
+struct Race {
+    time: u32,
+    dist: u32,
+}
+```
+
+I chose to create a list of times and a list of distances, then zip those 2 lists together to get a list of races.
+
+```rust
+let (time, dist) = input.split_once("\n").unwrap();
+let time = time
+    .strip_prefix("Time: ")
+    .unwrap()
+    .split_whitespace()
+    .map(|s| s.parse::<u32>().unwrap());
+let dist = dist
+    .strip_prefix("Distance: ")
+    .unwrap()
+    .split_whitespace()
+    .map(|s| s.parse::<u32>().unwrap());
+let races = time.zip(dist).map(|(time, dist)| Race { time, dist });
+```
+### Code
+
+The logic then loops over each race and determines how many ways I can win for each one.
+At the end, those counts are multiplied.
+
+For every race:
+I determined the distance I would travel for every possible time I held the button.
+If the resulting final distance was greater than the current record, I won.
+
+```rust title=day_06.rs
+struct Race {
+    time: u32,
+    dist: u32,
+}
+
+pub fn part_1(input: &str) -> usize {
+    let (time, dist) = input.split_once("\n").unwrap();
+    let time = time
+        .strip_prefix("Time: ")
+        .unwrap()
+        .split_whitespace()
+        .map(|s| s.parse::<u32>().unwrap());
+    let dist = dist
+        .strip_prefix("Distance: ")
+        .unwrap()
+        .split_whitespace()
+        .map(|s| s.parse::<u32>().unwrap());
+    let races = time.zip(dist).map(|(time, dist)| Race { time, dist });
+
+    races
+        .map(|race| {
+            (0..=race.time)
+                .map(|elapsed| {
+                    let speed = elapsed;
+                    speed * (race.time - elapsed)
+                })
+                .filter(|&dist| dist > race.dist)
+                .count()
+        })
+        .product::<usize>()
+}
+```
+
+## Part 2
+
+It turns out the input had really bad [keming](https://xkcd.com/1015/).
+Each line is one number.
+
+The question stays the same, but this time there is only 1 race.
+
+### Parsing
+
+For both time, and distance, I made a list of single digits.
+For each digit I encountered, I concatenate it to the end of the current number with math.
+
+In the example input:
+```txt title=input.txt
+Time:      7  15   30
+Distance:  9  40  200
+```
+
+For time:
+- The first digit is 7, the current number becomes 7
+- The second digit is 1, the current number becomes 71
+- The third digit is 5, the current number becomes 715
+- The fourth digit is 3, the current number becomes 7153
+- The final digit is 0, the current number becomes 71530
+
+```rust
+let (time, dist) = input.split_once("\n").unwrap();
+let race_time = time
+    .strip_prefix("Time: ")
+    .unwrap()
+    .chars()
+    .filter_map(|c| c.to_digit(10))
+    .fold(0u64, |curr, digit| curr * 10 + digit as u64);
+let race_dist = dist
+    .strip_prefix("Distance: ")
+    .unwrap()
+    .chars()
+    .filter_map(|c| c.to_digit(10))
+    .fold(0u64, |curr, digit| curr * 10 + digit as u64);
+```
+<Aside variant="danger">
+
+These number are BIG, really big.
+That's why I stored them as 64 bit integers.
+
+</Aside>
+
+### Option 1: brute-force
+
+The code from part 1 can largely be reused.
+
+And joy, oh joy, I could even **remove** some code!
+
+#### Code
+
+```rust title=day_06.rs
+pub fn part_2(input: &str) -> usize {
+    let (time, dist) = input.split_once("\n").unwrap();
+    let race_time = time
+        .strip_prefix("Time: ")
+        .unwrap()
+        .chars()
+        .filter_map(|c| c.to_digit(10))
+        .fold(0u64, |curr, digit| curr * 10 + digit as u64);
+    let race_dist = dist
+        .strip_prefix("Distance: ")
+        .unwrap()
+        .chars()
+        .filter_map(|c| c.to_digit(10))
+        .fold(0u64, |curr, digit| curr * 10 + digit as u64);
+
+    (0..=race_time)
+        .map(|elapsed| {
+            let speed = elapsed;
+            speed * (race_time - elapsed)
+        })
+        .filter(|&dist| dist > race_dist)
+        .count()
+}
+```
+
+### Option 2: math
+
+This question was describing a quadratic graph.
+The answer is the difference between the two intersections with the y-axis on that graph.
+
+Time to dust of the highschool math!
+
+
+The equation we used to determine the distance we travel:  
+$x * (time - x) = dist$
+
+Written differently, that looks more familiar:  
+$y = x^2 - time*x + dist$
+
+To find the 2 intersections of the second degree function with the x-axis, we set y to 0 and solve for x:  
+$0 = x^2 - time*x + dist$
+
+[A refresher on the quadratic equation from Khan Academy](https://youtu.be/i7idZfS8t8w?si=FHnYI6--op32fkdk).
+
+$$
+x = \frac {-b \pm \sqrt{b^2 - 4ac}} {2a}
+$$
+
+The answer is the difference between the two points where the graph intersects with the x-axis.
+
+I can only hold the button for an integer amount, so I need to round up the lowest value, and round down the highest value.
+
+Then add 1 to the difference between those 2, because I want to include that last point where I can win the race.
+
+#### Code
+
+```rust title=day_06.rs
+pub fn part_two_math(input: &str) -> u32 {
+    let (time, dist) = input.split_once("\n").unwrap();
+    let race_time = time
+        .strip_prefix("Time: ")
+        .unwrap()
+        .chars()
+        .filter_map(|c| c.to_digit(10))
+        .fold(0u64, |curr, digit| curr * 10 + digit as u64);
+    let race_dist = dist
+        .strip_prefix("Distance: ")
+        .unwrap()
+        .chars()
+        .filter_map(|c| c.to_digit(10))
+        .fold(0u64, |curr, digit| curr * 10 + digit as u64);
+
+    // time to dust off the math I learned in high school, a refresher: https://youtu.be/i7idZfS8t8w?si=FHnYI6--op32fkdk
+    // x * (time - x) = dist
+    // y = x^2 - time*x + dist
+    // find the 2 intersections of the second degree function with the x-axis
+    // so we set y to 0 and solve for x
+    // 0 = x^2 - time*x + dist
+
+    // The answer is the difference between the two points the graph intersects with the x-axis
+    // x1 = (-b - SQRT(b^2 - 4*a*c)) / (2 * a)
+    // x2 = (-b + SQRT(b^2 - 4*a*c)) / (2 * a)
+    let a = 1.0;
+    let b = 0.0 - race_time as f64;
+    let c = race_dist as f64;
+
+    let x1 = ((0.0 - b) - (b.powf(2.0) - (4.0 * a * c)).sqrt()) / (2.0 * a);
+    let x2 = ((0.0 - b) + (b.powf(2.0) - (4.0 * a * c)).sqrt()) / (2.0 * a);
+
+    // Because you can only hold the button for integer amounts, round up the lower value and round down the upper value
+    // And add 1 since |x2 - x1| gives you the amount from x1 to below x2 but we want to include x2.
+    let lower_bound = x1.ceil() as u32;
+    let upper_bound = x2.floor() as u32 + 1;
+
+    upper_bound - lower_bound
+}
+```
+
+## Final code
+
+```rust title=day_06.rs numberLines
+struct Race {
+    time: u32,
+    dist: u32,
+}
+
+pub fn part_1(input: &str) -> usize {
+    let (time, dist) = input.split_once("\n").unwrap();
+    let time = time
+        .strip_prefix("Time: ")
+        .unwrap()
+        .split_whitespace()
+        .map(|s| s.parse::<u32>().unwrap());
+    let dist = dist
+        .strip_prefix("Distance: ")
+        .unwrap()
+        .split_whitespace()
+        .map(|s| s.parse::<u32>().unwrap());
+    let races = time.zip(dist).map(|(time, dist)| Race { time, dist });
+
+    races
+        .map(|race| {
+            (0..=race.time)
+                .map(|elapsed| {
+                    let speed = elapsed;
+                    speed * (race.time - elapsed)
+                })
+                .filter(|&dist| dist > race.dist)
+                .count()
+        })
+        .product::<usize>()
+}
+
+pub fn part_2(input: &str) -> u32 {
+    let (time, dist) = input.split_once("\n").unwrap();
+    let race_time = time
+        .strip_prefix("Time: ")
+        .unwrap()
+        .chars()
+        .filter_map(|c| c.to_digit(10))
+        .fold(0u64, |curr, digit| curr * 10 + digit as u64);
+    let race_dist = dist
+        .strip_prefix("Distance: ")
+        .unwrap()
+        .chars()
+        .filter_map(|c| c.to_digit(10))
+        .fold(0u64, |curr, digit| curr * 10 + digit as u64);
+
+    let a = 1.0;
+    let b = 0.0 - race_time as f64;
+    let c = race_dist as f64;
+
+    let x1 = ((0.0 - b) - (b.powf(2.0) - (4.0 * a * c)).sqrt()) / (2.0 * a);
+    let x2 = ((0.0 - b) + (b.powf(2.0) - (4.0 * a * c)).sqrt()) / (2.0 * a);
+
+    let lower_bound = x1.ceil() as u32;
+    let upper_bound = x2.floor() as u32 + 1;
+
+    upper_bound - lower_bound
+}
+```

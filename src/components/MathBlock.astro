@@ -1,0 +1,17 @@
+---
+import katex from "katex";
+import "katex/dist/katex.min.css";
+
+interface Props {
+  math: string;
+  title: string | undefined;
+}
+
+const { math, title } = Astro.props;
+const html = katex.renderToString(math, { throwOnError: false });
+---
+
+<div class="text-center">
+  {title && <p>{title}</p>}
+  <Fragment set:html={html} />
+</div>
