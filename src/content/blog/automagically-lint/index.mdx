@@ -1,0 +1,588 @@
+---
+title: Automagically lint and format your code
+date: 2018-05-04
+updatedAt: "2021-08-20"
+cover: "./cover.png"
+tags: ["JavaScript", "how-to", "DX"]
+---
+
+import MultiLangCode from "../../../components/MultiLangCode";
+
+<Aside>
+
+You can skip all the explanation and go straight to [the part with all the steps](#tldr-version) to make [ESLint](https://eslint.org/) and [Prettier](https://prettier.io/) automagically lint and format your code.
+
+Prefer to see [an example repo](https://github.com/NickyMeuleman/automagical-linting)?
+
+</Aside>
+
+Setting up your editor to automatically [lint](<https://en.wikipedia.org/wiki/Lint_(software)>) and format code leaves you free to think about the functionality of that code. Not whether or not a variable is defined or if you should insert more whitespace.
+
+To achieve this goal for a JavaScript project, you can use 2 powerful tools.
+
+- The linting part can be handled by [ESLint](https://eslint.org/)
+- The formatting part can be handled by [Prettier](https://prettier.io/)
+
+On their own, those tools are very powerful.  
+Combined, they will make you feel like you have superpowers.
+
+## Initial Setup
+
+If you want to follow along, I'll start a new project from scratch.
+
+```bash
+mkdir automagical-linting
+cd automagical-linting
+```
+
+Initialize a `package.json` with your favorite tool.
+
+<MultiLangCode values={[{label: "yarn"}, {label: "npm"}]}>
+
+```bash title=automagical-linting/
+yarn init -y
+```
+
+```bash title=automagical-linting/
+npm init -y
+```
+
+</MultiLangCode>
+
+Open an editor in the newly created directory.
+
+We'll install everything we need locally, as a devDependency.
+That way we avoid a big part of the _"works on my machine"_-factor.
+
+Don't worry, there's no magic here, I'll briefly explain what each package we use does.
+
+<Aside variant="info">
+  "devDependencies": Packages that are only needed for local development and
+  testing.
+</Aside>
+
+## Starting with ESLint
+
+Start by installing the main linting package ([ESLint](https://www.npmjs.com/package/eslint)), and the main formatting package ([Prettier](https://www.npmjs.com/package/prettier)).
+
+<MultiLangCode values={[{label: "yarn"}, {label: "npm"}]}>
+
+```bash title=automagical-linting/
+yarn add eslint prettier -D
+```
+
+```bash title=automagical-linting/
+npm i eslint prettier -D
+```
+
+</MultiLangCode>
+
+Next, initialize ESLint.
+The initialization will ask you a couple of questions and set up a configuration file that reflects your answers.
+
+<MultiLangCode values={[{label: "yarn"}, {label: "npm"}]}>
+
+```bash title=automagical-linting/
+yarn run eslint --init
+```
+
+```bash title=automagical-linting/
+npx eslint --init
+```
+
+</MultiLangCode>
+
+![eslint initialization](init.png)
+
+Here are the choices I made:
+
+- How would you like to use ESLint?  
+  To check syntax, find problems, and enforce code style
+- What type of modules does your project use?  
+  JavaScript modules (import/export)
+- Which framework does your project use?  
+  React
+- Does your project use TypeScript?  
+  No
+- Where does your code run?  
+  Browser, Node
+- How would you like to define a style for your project?  
+  Use a popular style guide
+- Which style guide do you want to follow?  
+  [Airbnb](https://github.com/airbnb/javascript)
+- What format do you want your config file to be in?  
+  `JSON`
+- Would you like to install them now with npm?  
+  No
+
+This process will create a `.eslintrc.json` file in the root folder of the project.
+
+Because I used `yarn` instead of `npm`, I chose not to install the extra needed packages with npm.
+
+If you also answered no, install the needed packages manually.
+In my case that meant installing everything [`eslint-config-airbnb`](https://www.npmjs.com/package/eslint-config-airbnb) needs with `yarn`.
+
+```bash
+npx install-peerdeps --dev eslint-config-airbnb
+```
+
+<Aside variant="info">
+
+I chose to use the version of the Airbnb styleguide for React, so quite a few React specific packages will be installed.
+This is not a problem! They just won't do anything until I set up React in this project.
+
+</Aside>
+
+### Running ESLint
+
+Any file or directory can now be linted by running `eslint <path>`.
+The rules to follow are determined by that `.eslintrc.json` file.
+
+I created an `index.js` file with some sloppy code in the root of the `automagical-linting/` directory.
+
+To check this file:
+
+<MultiLangCode values={[{label: "yarn"}, {label: "npm"}]}>
+
+```bash title=automagical-linting/
+yarn eslint index.js
+```
+
+```bash title=automagical-linting/
+npx eslint index.js
+```
+
+</MultiLangCode>
+
+Lots of errors! Oh no!
+
+These are all coming from rules the [`airbnb` styleguide](https://www.npmjs.com/package/eslint-config-airbnb) sets.
+
+We'll configure the rules to our liking later.
+First, it's time to add the main formatting package to the mix!
+
+### Adding the power of Prettier
+
+#### Using Prettier through ESLint
+
+Next up is the [Prettier plugin package for ESLint](https://github.com/prettier/eslint-plugin-prettier)
+
+<MultiLangCode values={[{label: "yarn"}, {label: "npm"}]}>
+
+```bash title=automagical-linting/
+yarn add eslint-plugin-prettier -D
+```
+
+```bash title=automagical-linting/
+npm i eslint-plugin-prettier -D
+```
+
+</MultiLangCode>
+
+This package will run Prettier as an ESLint rule and reports differences as individual ESLint issues.
+
+To use it we'll add `"prettier"` to the `"plugins"` array and report all differences by setting the `"prettier/prettier"` rule.
+
+```json title=.eslintrc.json hl=3,5
+{
+  // --snip--
+  "plugins": ["react", "prettier"],
+  "rules": {
+    "prettier/prettier": "warn"
+  }
+}
+```
+
+<Aside variant="info">
+
+I set the issues prettier finds to be reported as warnings, if you prefer you can set them to be reported as errors.
+
+```json
+"prettier/prettier": "error"
+```
+
+</Aside>
+
+#### Prevent conflicts between ESLint and Prettier
+
+The problem we are faced with if we combine ESLint and Prettier is: both tools have significant overlap.
+Some rules exist in both packages, causing conflicts between the two.
+
+To prevent the conflicts we'll install and configure the [Prettier config package for ESLint](https://github.com/prettier/eslint-config-prettier).
+This package disables all formatting-related ESLint rules.
+
+<MultiLangCode values={[{label: "yarn"}, {label: "npm"}]}>
+
+```bash title=automagical-linting/
+yarn add eslint-config-prettier -D
+```
+
+```bash title=automagical-linting/
+npm i eslint-config-prettier -D
+```
+
+</MultiLangCode>
+
+To use it, add `"prettier"` to the `"extends"` array in the `eslintrc` file.
+
+```json title=.eslintrc.json hl=3
+{
+  // --snip--
+  "extends": ["plugin:react/recommended", "airbnb", "prettier"],
+  "plugins": ["react", "prettier"],
+  "rules": {
+    "prettier/prettier": "warn"
+  }
+}
+```
+
+<Aside variant="danger">
+
+Make sure the `"prettier"` rules are last, that way they overwrite previous configurations.
+
+</Aside>
+
+<Aside variant="danger">
+
+`"arrow-body-style"` and `"prefer-arrow-callback"` are two ESLint core rules that can cause [issues with this plugin](https://github.com/prettier/eslint-plugin-prettier#arrow-body-style-and-prefer-arrow-callback-issue), so turn them off.
+
+```json title=.eslintrc.json hl=5,6
+{
+  // --snip--
+  "rules": {
+    "prettier/prettier": "warn",
+    "arrow-body-style": "off",
+    "prefer-arrow-callback": "off"
+  }
+}
+```
+
+</Aside>
+
+### Dictating our own rules
+
+While the [Airbnb configuration](https://www.npmjs.com/package/eslint-config-airbnb) contains an excellent set of rules, we'll make this linting/formatting setup our own and use the existing configuation as a starting point.
+
+#### Prettier configuration
+
+Let's add some rules specific to Prettier to our ESLint configuration.
+
+The `"prettier/prettier"` rule can be set to an array, and the second item in that array accepts an object with [Prettier rules](https://prettier.io/docs/en/options.html)
+
+```json title=.eslintrc.json
+{
+  // --snip--
+  "rules": {
+    "prettier/prettier": [
+      "warn",
+      {
+        "semi": false
+      }
+    ]
+    // --snip--
+  }
+}
+```
+
+<Aside variant="info">
+
+If you prefer to set these rules via a `.prettierrc` file, that's possible
+too.
+
+</Aside>
+
+<Aside variant="info">
+
+Prettier rules specified in the `eslintrc` file will overwrite ones
+in a `prettierrc` file.
+
+</Aside>
+
+#### More ESLint configuration
+
+Next we'll override/add to some of the rules set by the Airbnb styleguide by adding some entries to the `"rules"` object.
+
+```json title=.eslintrc.json hl=7-13
+{
+  // --snip--
+  "rules": {
+    "prettier/prettier": "warn",
+    "arrow-body-style": "off",
+    "prefer-arrow-callback": "off",
+    "no-unused-vars": [
+      "error",
+      {
+        "vars": "local",
+        "args": "none"
+      }
+    ]
+  }
+}
+```
+
+The code snippets above are examples of what you could do, check out the configuration options for [Prettier](https://prettier.io/docs/en/options.html) and for [ESLint](https://eslint.org/docs/user-guide/configuring) for more information.
+
+## Run the linting setup
+
+If we try to run ESLint on `index.js` again, there are even more lines of output now!
+
+<MultiLangCode values={[{label: "yarn"}, {label: "npm"}]}>
+
+```bash title=automagical-linting/
+yarn eslint index.js
+```
+
+```bash title=automagical-linting/
+npx eslint index.js
+```
+
+</MultiLangCode>
+
+These extra lines are coming from Prettier and are about the formatting of the code.
+
+I like semicolons, so I changed the `"prettier/prettier"` rule to require them.
+
+<Aside variant="info">
+
+Prettier's default settings enable semicolons, so I deleted the `"semi": false` line in the Prettier config
+
+</Aside>
+
+For our next trick, we will run `eslint` with the `--fix` flag.
+Watch the `index.js` file while you run the next command.
+
+<MultiLangCode values={[{label: "yarn"}, {label: "npm"}]}>
+
+```bash title=automagical-linting/
+yarn eslint src --fix
+```
+
+```bash title=automagical-linting/
+npx eslint src --fix
+```
+
+</MultiLangCode>
+
+Much better!
+
+All the errors that were automatically fixable are now gone.
+That's quite a lot, of the 50+ issues I had before, only a few remain.
+
+<Aside variant="info">
+
+I haven't installed React in this demo project yet, so it notified me about it not being there, neat!
+
+</Aside>
+
+Both Prettier and Eslint have a bunch of rules that are automatically fixable.
+That means that not only will the file you run `eslint --fix` on be formatted (according to the Prettier rules),
+it will also do things like changing `let` to `const` where appropriate [if you wish](https://eslint.org/docs/rules/prefer-const).
+
+- [Eslint rules](https://eslint.org/docs/rules/) that are automatically fixable have a wrench icon next to them in the linked docs.
+- [Prettier rules](https://prettier.io/docs/en/options.html) are all automatically fixable.
+
+## A tighter feedback loop: editor configuration
+
+While this is very powerful, faster feedback would be very useful.
+
+I'm using [Visual Studio Code](https://code.visualstudio.com/) as editor, so that's the one I'll cover here.
+The same result can be achieved in many other editors.
+
+### Editor plugin
+
+Install the [VSCode ESLint extension](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint).
+
+This extension will display the errors inside the editor, by showing squiggly lines underneath the detected problems.
+
+Those detected problems will appear while you write code, no need to fiddle with the terminal!
+
+A huge step up from the output we saw in the terminal!
+
+![Squiggly lines beneath detected errors](squigglies.png)
+
+### Automatically fix issues on save
+
+We can take it [a step further](https://www.youtube.com/watch?v=4xgx4k83zzc) and make VSCode perform linting and formatting fixes each time a file is saved.
+
+Go to the user-settings (`file > preferences > settings`)
+
+<Aside variant="info">
+
+I prefer to keep these settings in the "workspace" tab so they are specific to
+this project.
+
+</Aside>
+
+Automatically run `eslint --fix` on save by enabling the `fixAll.eslint` setting.
+
+```json title=settings.json
+{
+  // --snip--
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  }
+}
+```
+
+After reloading the editor, go to a `.js` file and try out your fancy new setup!
+
+Try writing the following snippet and save the file.
+
+{/* prettier-ignore */}
+```js title=index.js
+var num=1
+var newNum=num+5;;
+```
+
+It will turn into
+
+```js title=index.js
+const num = 1;
+const newNum = num + 5;
+```
+
+The whitespace and semicolons were handled by the Prettier plugin.
+The `var`s turned into `const`s because of the [no-var rule](https://eslint.org/docs/rules/no-var) that was enabled.
+
+#### Bonus: Prettier VSCode extension
+
+Prettier is now integrated into our ESLint setup.
+That only applies to `.js` files.
+
+Prettier also [supports other languages](https://prettier.io/docs/en/)!
+
+To use the formatting power of Prettier on other languages too, you can install an editor extension for Prettier.
+
+[VSCode Prettier extension](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+
+Since we set up Prettier to run through ESLint, disable the editor extension for `.js`.  
+Otherwise, the editor extension and the ESLint plugin might have a fight ~~for world domination~~.
+
+Enabling the prettier formatter for all languages except JavaScript is what we want.
+
+That can be done in the VSCode settings
+
+```json title=settings.json
+{
+  // --snip--
+  // enable prettier as default formatter for all supported filetypes
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  // JavaScript specific settings:
+  "[javascript]": {
+    // disable prettier
+    "editor.defaultFormatter": null
+  }
+}
+```
+
+Now Prettier wil run on all file formats it supports except for JavaScript, those files will be handled by our ESLint setup.
+
+I like Prettier to fix files on save, so I set that up too.
+
+```json title=settings.json hl=4,12
+{
+  // --snip--
+  // Format all filetypes on save
+  "editor.formatOnSave": true,
+  // enable prettier as default formatter for all supported filetypes
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  // JavaScript specific settings:
+  "[javascript]": {
+    // disable prettier
+    "editor.defaultFormatter": null,
+    // disable formatting on save
+    "editor.formatOnSave": false
+  }
+}
+```
+
+Ready to test it out!
+
+Try writing a `.css` file that's badly formatted.
+
+{/* prettier-ignore */}
+```css title=styles.css
+html        { background-color: gray}
+```
+
+Save the file and POW, automatic formatting.
+
+```css title=styles.css
+html {
+  background-color: gray;
+}
+```
+
+## Success!
+
+<Aside variant="success">
+  We successfully set up ESLint to work together with Prettier.
+</Aside>
+
+We get notified in our editor about linting problems that ESLint picks up and about
+formatting problems that Prettier picks up. Each time we save a `.js` file those
+2 packages will work together and fix all the issues that they can (as it turns out,
+that's quite a lot of them).
+
+Go and write some beautiful code!
+
+## TL;DR version
+
+Install deps.
+
+```bash
+npm i eslint prettier eslint-plugin-prettier eslint-config-prettier -D
+```
+
+Initialise an eslint configuration
+
+```bash
+npx eslint --init
+```
+
+Add options to that eslint configuration
+
+```json title=.eslintrc.json
+{
+  "extends": ["prettier"],
+  "plugins": ["prettier"],
+  "rules": {
+    "prettier/prettier": "warn",
+    "arrow-body-style": "off",
+    "prefer-arrow-callback": "off"
+  }
+}
+```
+
+Install the ESLint editor plugin. Like the [VSCode ESLint extension](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
+
+If you also want to format other languages, install the Prettier editor plugin. Like the [VSCode Prettier extension](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+
+Optionally configure your editor to fix linting and formatting problems on save.
+
+My relevant VSCode settings:
+
+```json title=settings.json
+// these settings format all file types but js on save with the prettier vscode extension
+// for javascript, prettier is ran through eslint, and on save eslint --fix is ran
+// eslint errors are shown in the editor with the eslint vscode extension, the status is always shown
+{
+  // Format all filetypes on save
+  "editor.formatOnSave": true,
+  // enable prettier as default formatter for all supported filetypes
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  // JavaScript specific settings:
+  "[javascript]": {
+    // disable prettier
+    "editor.defaultFormatter": null,
+    // disable formatting on save
+    "editor.formatOnSave": false
+  },
+  // run eslint --fix on save
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  // always show eslint in the statusbar
+  "eslint.alwaysShowStatus": true
+}
+```
