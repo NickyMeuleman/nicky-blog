@@ -1,8 +1,8 @@
 ---
 import { type CollectionEntry } from "astro:content";
 import { getCollection } from "astro:content";
-import Layout from "../../layouts/Layout.astro";
-import { slugify } from "../../utils";
+import Layout from "$layouts/Layout.astro";
+import { slugify } from "$utils/index";
 
 const posts: CollectionEntry<"blog">[] = await getCollection("blog");
 const tagsNames = [...new Set(posts.flatMap((p) => p.data.tags))];

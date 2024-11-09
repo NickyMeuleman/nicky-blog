@@ -2,8 +2,8 @@
 import { type GetStaticPaths } from "astro";
 import { type CollectionEntry } from "astro:content";
 import { getCollection } from "astro:content";
-import Layout from "../../layouts/Layout.astro";
-import { slugify } from "../../utils/index";
+import Layout from "$layouts/Layout.astro";
+import { slugify } from "$utils/index";
 
 type Post = CollectionEntry<"blog">;
 interface Props {
