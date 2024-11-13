@@ -32,4 +32,10 @@ export default defineConfig({
     ],
   },
   integrations: [react(), mdx(), sitemap(), tailwind(), icon()],
+  vite: {
+    worker: {
+      // allow dynamic import in webworker: https://github.com/vitejs/vite/issues/18585
+      format: "es",
+    },
+  },
 });

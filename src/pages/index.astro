@@ -8,44 +8,54 @@ const posts: CollectionEntry<"blog">[] = await getCollection("blog");
 ---
 
 <Layout title="We have liftoff">
+  <h2>Advent of Code solvers:</h2>
   <ul class="m-5">
     {
-      posts
-        .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
-        .map((post) => {
-          return (
-            <li class="mt-4 grid grid-cols-[20ex_2fr] grid-rows-[20ex] gap-8 bg-blue-100 hover:bg-blue-950 hover:text-blue-50">
-              {post.data.cover && (
-                <Picture
-                  src={post.data.cover}
-                  alt={post.data.coverAlt ?? ""}
-                  width={post.data.cover.width / 4}
-                  densities={[1.5, 2]}
-                  formats={["avif", "webp"]}
-                  class="h-full object-cover"
-                  transition:name={`${post.slug}-image`}
-                />
-              )}
-              <div class={`my-2 ${post.data.cover ? "" : "col-span-full"}`}>
-                <time datetime={post.data.date.toISOString()}>
-                  {new Intl.DateTimeFormat("en-US", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                    timeZone: "UTC",
-                  }).format(post.data.date)}
-                </time>
-                <a href={`/blog/${post.slug}`}>
-                  <h2 transition:name={`${post.slug}-title`}>
-                    {post.data.title}
-                  </h2>
-                </a>
-              </div>
-            </li>
-          );
-        })
+      [2020, 2021, 2022, 2023].map((year) => (
+        <li class="list-disc mt-1">
+          <a href={`/aoc${year}-solver`}>{year}</a>
+        </li>
+      ))
     }
+    <ul class="m-5">
+      {
+        posts
+          .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+          .map((post) => {
+            return (
+              <li class="mt-4 grid grid-cols-[20ex_2fr] grid-rows-[20ex] gap-8 bg-blue-100 hover:bg-blue-950 hover:text-blue-50">
+                {post.data.cover && (
+                  <Picture
+                    src={post.data.cover}
+                    alt={post.data.coverAlt ?? ""}
+                    width={post.data.cover.width / 4}
+                    densities={[1.5, 2]}
+                    formats={["avif", "webp"]}
+                    class="h-full object-cover"
+                    transition:name={`${post.slug}-image`}
+                  />
+                )}
+                <div class={`my-2 ${post.data.cover ? "" : "col-span-full"}`}>
+                  <time datetime={post.data.date.toISOString()}>
+                    {new Intl.DateTimeFormat("en-US", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                      timeZone: "UTC",
+                    }).format(post.data.date)}
+                  </time>
+                  <a href={`/blog/${post.slug}`}>
+                    <h2 transition:name={`${post.slug}-title`}>
+                      {post.data.title}
+                    </h2>
+                  </a>
+                </div>
+              </li>
+            );
+          })
+      }
+    </ul>
+    <Icon class="h-44 w-44 text-blue-500" name="lucide:github" />
+    <Icon class="h-44 w-44 text-blue-500" name="twitter" />
   </ul>
-  <Icon class="h-44 w-44 text-blue-500" name="lucide:github" />
-  <Icon class="h-44 w-44 text-blue-500" name="twitter" />
 </Layout>

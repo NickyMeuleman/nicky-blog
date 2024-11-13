@@ -1,0 +1,112 @@
+---
+import type { GetStaticPaths } from "astro";
+import Layout from "$layouts/Layout.astro";
+
+export const getStaticPaths = (() => {
+  return [2020, 2021, 2022, 2023].map((year) => ({ params: { year } }));
+}) satisfies GetStaticPaths;
+
+const { year } = Astro.params;
+---
+
+<Layout title={`AoC ${year} solver`}>
+  <a href="/" class="m-8">Home</a>
+  <main class="m-8">
+    <h1 class="my-4 text-2xl" data-year={year}>
+      <span>Advent of Code {year}</span> solver
+    </h1>
+    <h2 class="my-2">Day:</h2>
+    <input id="day" type="number" min="1" max="25" />
+    <h2 class="my-2">Part:</h2>
+    <select id="part">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option selected value="3">Both</option>
+    </select>
+    <h2 class="my-2">Input (starts calculation):</h2>
+    <input id="file" type="file" disabled />
+    <h2 class="my-2">Result:</h2>
+    <output id="result">No result yet!</output>
+  </main>
+</Layout>
+
+<script>
+  document.addEventListener("astro:page-load", () => {
+    const worker = new Worker(new URL("$workers/aoc.ts", import.meta.url), {
+      type: "module",
+      name: "aocworker",
+    });
+
+    const year = document.querySelector("h1")?.dataset.year;
+    // make sure year exists (before number coersion and passing it) or else this code errors when navigating from a solver to another page
+    // Uncaught (in promise) Error: Unknown variable dynamic import: ../wasm/aoc-NaN/aocNaN_wasm.js
+    // at dynamic-import-helper.js:10:9 -- this is an internal Vite thing
+    // at new Promise (<anonymous>)
+    // at default (dynamic-import-helper.js:6:10)
+    // at importWasm (aoc.ts:34:10) -- this is the function in my worker that does the dynamic importing
+    // at handleMessage (aoc.ts:46:12)
+    // at aoc.ts:18:8
+    if (!year) {
+      return;
+    }
+    worker.postMessage({
+      type: "init",
+      payload: { year: Number(year) },
+    });
+
+    const fileInputEl = document.querySelector<HTMLInputElement>("#file");
+    const dayInputEl = document.querySelector<HTMLInputElement>("#day");
+    const partInputEl = document.querySelector<HTMLSelectElement>("#part");
+    const resultEl = document.querySelector<HTMLOutputElement>("#result");
+
+    worker.addEventListener("message", (event) => {
+      switch (event.data.type) {
+        case "ready": {
+          fileInputEl?.removeAttribute("disabled");
+          break;
+        }
+        case "solved": {
+          const { part1, part2, elapsed } = event.data.payload;
+
+          let resultHTML = "";
+          if (part1) {
+            resultHTML += `<h3>Part1:</h3><p>${part1}</p>`;
+          }
+          if (part2) {
+            resultHTML += `<h3>Part2:</h3><p>${part2}</p>`;
+          }
+
+          if (resultEl) {
+            resultHTML += `<p>Time to calculate: ${elapsed} ms</p>`;
+            resultEl.innerHTML = resultHTML;
+          }
+          break;
+        }
+        case "error": {
+          const { day, message } = event.data.payload;
+          if (resultEl) {
+            resultEl.innerHTML = `
+<h3>Ya done goofed!<h3>
+<p>Failed to solve day ${day}</p>
+<p>Error message: ${message}</p>
+`;
+          }
+          break;
+        }
+      }
+    });
+
+    fileInputEl?.addEventListener("change", async function (event) {
+      const day = Number(dayInputEl?.value);
+      const part = Number(partInputEl?.value);
+      const file = (event.target as HTMLInputElement)?.files?.[0];
+      const input = await file?.text();
+
+      if (!day || !part || !input) {
+        return;
+      }
+
+      worker.postMessage({ type: "solve", payload: { day, part, input } });
+    });
+  });
+</script>

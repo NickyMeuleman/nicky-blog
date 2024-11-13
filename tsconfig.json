@@ -20,6 +20,12 @@
       ],
       "$utils/*": [
         "src/utils/*"
+      ],
+      "$wasm/*": [
+        "src/wasm/*"
+      ],
+      "$workers/*": [
+        "src/workers/*"
       ]
     }
   },
