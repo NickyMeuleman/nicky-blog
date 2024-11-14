@@ -1,0 +1,97 @@
+---
+import { cva, type VariantProps } from "class-variance-authority";
+
+const asideVariants = cva(
+  [
+    "my-4",
+    "rounded-r",
+    "border-l-2",
+    "bg-opacity-5",
+    "p-4",
+    "italic",
+    "relative",
+  ],
+  {
+    variants: {
+      variant: {
+        primary: ["border-l-primary", "bg-primary"],
+        default: ["border-l-primary", "bg-primary"],
+        info: [
+          "border-l-info",
+          "bg-info",
+          "before:inline-flex",
+          "before:items-center",
+          "before:justify-center",
+          "before:absolute",
+          "before:left-0",
+          "before:top-0",
+          "before:h-[35px]",
+          "before:w-[35px]",
+          "before:-translate-x-1/2",
+          "before:-translate-y-1/2",
+          "before:rounded-full",
+          "before:bg-info",
+          "before:font-bold",
+          "before:not-italic",
+          "before:text-background",
+          "before:content-['i']",
+          "before:text-xl",
+        ],
+        danger: [
+          "border-l-danger",
+          "bg-danger",
+          "before:grid",
+          "before:items-end",
+          "before:justify-center",
+          "before:absolute",
+          "before:left-0",
+          "before:top-0",
+          "before:h-[35px]",
+          "before:w-[35px]",
+          "before:-translate-x-1/2",
+          "before:-translate-y-1/2",
+          "before:bg-danger",
+          "before:font-bold",
+          "before:not-italic",
+          "before:text-background",
+          "before:content-['!']",
+          "before:text-xl",
+          "before:[clip-path:_polygon(50%_0,0_100%,100%_100%)]",
+        ],
+        success: [
+          "border-l-success",
+          "bg-success",
+          "before:inline-flex",
+          "before:items-center",
+          "before:justify-center",
+          "before:absolute",
+          "before:left-0",
+          "before:top-0",
+          "before:h-[35px]",
+          "before:w-[35px]",
+          "before:-translate-x-1/2",
+          "before:-translate-y-1/2",
+          "before:bg-success",
+          "before:font-bold",
+          "before:not-italic",
+          "before:text-background",
+          "before:content-['\\2713']", // checkmark
+          "before:text-xl",
+          "before:rounded-full",
+        ],
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  },
+);
+
+type Props = VariantProps<typeof asideVariants>;
+
+const { variant = "default" } = Astro.props;
+---
+
+<aside class={asideVariants({ variant })}>
+  <slot />
+</aside>

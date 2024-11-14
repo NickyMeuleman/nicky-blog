@@ -21,6 +21,7 @@
     "astro-embed": "^0.8.0",
     "astro-font": "^0.1.81",
     "astro-icon": "^1.1.1",
+    "class-variance-authority": "^0.7.0",
     "katex": "^0.16.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

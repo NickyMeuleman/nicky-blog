@@ -38,7 +38,7 @@ const posts: CollectionEntry<"blog">[] = await getCollection("blog");
                 <div class={`my-2 ${post.data.cover ? "" : "col-span-full"}`}>
                   <time
                     datetime={post.data.date.toISOString()}
-                    class="m-0 uppercase tracking-wider text-mutedTextBg font-bold"
+                    class="m-0 font-bold uppercase tracking-wider text-mutedTextBg"
                   >
                     {new Intl.DateTimeFormat("en-US", {
                       day: "numeric",
