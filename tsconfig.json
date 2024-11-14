@@ -26,6 +26,9 @@
       ],
       "$workers/*": [
         "src/workers/*"
+      ],
+      "$styles/*": [
+        "src/styles/*"
       ]
     }
   },

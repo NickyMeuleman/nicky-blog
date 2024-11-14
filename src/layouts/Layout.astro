@@ -1,6 +1,7 @@
 ---
 import { ViewTransitions } from "astro:transitions";
-import Font from "$/components/Font.astro";
+import Font from "$components/Font.astro";
+import "$styles/tailwind.css";
 
 interface Props {
   title?: string;
@@ -14,7 +15,7 @@ const {
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class="bg-background text-text">
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
@@ -26,16 +27,10 @@ const {
     <Font />
     <ViewTransitions />
   </head>
-  <body class="bg-blue-50">
+  <body>
     <slot />
   </body>
 </html>
-
-<style is:global>
-  html {
-    font-family: system-ui, sans-serif;
-  }
-</style>
 
 <script>
   if (document.querySelector(".katex")) {

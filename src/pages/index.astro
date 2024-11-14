@@ -12,7 +12,7 @@ const posts: CollectionEntry<"blog">[] = await getCollection("blog");
   <ul class="m-5">
     {
       [2020, 2021, 2022, 2023].map((year) => (
-        <li class="list-disc mt-1">
+        <li class="mt-1 list-disc">
           <a href={`/aoc${year}-solver`}>{year}</a>
         </li>
       ))
@@ -23,7 +23,7 @@ const posts: CollectionEntry<"blog">[] = await getCollection("blog");
           .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
           .map((post) => {
             return (
-              <li class="mt-4 grid grid-cols-[20ex_2fr] grid-rows-[20ex] gap-8 bg-blue-100 hover:bg-blue-950 hover:text-blue-50">
+              <li class="mt-4 grid grid-cols-[20ex_2fr] grid-rows-[20ex] gap-8 hover:bg-mutedBackground hover:text-mutedText">
                 {post.data.cover && (
                   <Picture
                     src={post.data.cover}
@@ -36,7 +36,10 @@ const posts: CollectionEntry<"blog">[] = await getCollection("blog");
                   />
                 )}
                 <div class={`my-2 ${post.data.cover ? "" : "col-span-full"}`}>
-                  <time datetime={post.data.date.toISOString()}>
+                  <time
+                    datetime={post.data.date.toISOString()}
+                    class="m-0 uppercase tracking-wider text-mutedTextBg font-bold"
+                  >
                     {new Intl.DateTimeFormat("en-US", {
                       day: "numeric",
                       month: "long",

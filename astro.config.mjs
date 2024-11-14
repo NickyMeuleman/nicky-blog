@@ -31,7 +31,16 @@ export default defineConfig({
       ],
     ],
   },
-  integrations: [react(), mdx(), sitemap(), tailwind(), icon()],
+  integrations: [
+    react(),
+    mdx(),
+    sitemap(),
+    tailwind({
+      // Disable the default styles as they are added with the @tailwind; css directives
+      applyBaseStyles: false,
+    }),
+    icon(),
+  ],
   vite: {
     worker: {
       // allow dynamic import in webworker: https://github.com/vitejs/vite/issues/18585
