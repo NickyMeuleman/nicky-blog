@@ -6,6 +6,6 @@
 /* don't remove the whole thing because most of that reset is good */
 @layer base {
   p {
-    @apply m-4;
+    @apply my-4;
   }
 }
