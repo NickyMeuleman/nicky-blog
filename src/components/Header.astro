@@ -1,0 +1,71 @@
+---
+interface ListItem {
+  label: string;
+  url: string;
+}
+
+const links: ListItem[] = [
+  { label: "Home", url: "/" },
+  { label: "Uses", url: "/uses" },
+  { label: "Blog", url: "/blog" },
+];
+
+// Remove trailing slashes
+const urlPath = new URL(Astro.request.url).pathname.replace(/\/$/, "") || "/";
+
+function isMatch(urlPath: string, linkPath: string) {
+  if (linkPath === "/") return urlPath === "/";
+  return urlPath.startsWith(linkPath);
+}
+---
+
+<header
+  class="grid grid-cols-[1fr_minmax(20ch,70ch)_1fr] border-b-2 border-b-mutedPrimary bg-mutedBackground px-[5vw] py-8"
+>
+  <span class="col-start-2 col-end-3 row-start-1 row-end-1 justify-self-start">
+    <a href="/" class="hidden text-mutedText no-underline sm:block">
+      NickyMeuleman
+    </a>
+    <a
+      href="/"
+      aria-label="Nicky Meuleman"
+      class="text-mutedText no-underline sm:hidden"
+    >
+      Nime
+    </a>
+  </span>
+  <nav class="col-start-2 col-end-3 row-start-1 row-end-1">
+    <ul class="flex gap-8 justify-self-end">
+      {
+        links.map((link) => (
+          <li class="">
+            <a
+              data-active={isMatch(urlPath, link.url)}
+              style={{ "--underline-width": "2px" }}
+              class="border-0 bg-gradient-to-r from-mutedPrimary to-mutedPrimary bg-left-bottom bg-no-repeat text-mutedText no-underline hover:border-0 hover:text-mutedPrimary hover:no-underline data-[active]:border-0 data-[active]:bg-gradient-to-r data-[active]:to-mutedPrimary data-[active]:bg-no-repeat data-[active]:text-mutedText data-[active]:hover:text-mutedPrimary"
+              href={link.url}
+            >
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</header>
+
+<style>
+  li a {
+    background-size: 0 var(--underline-width);
+    transition:
+      background-size cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s,
+      color cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s;
+    &:hover {
+      background-size: 100% var(--underline-width);
+    }
+    &[data-active] {
+      transition: color cubic-bezier(0.39, 0.575, 0.565, 1) 3.3s;
+      background-size: 100% var(--underline-width);
+    }
+  }
+</style>

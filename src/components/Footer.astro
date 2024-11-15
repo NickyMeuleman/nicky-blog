@@ -1,0 +1,36 @@
+---
+import { Icon } from "astro-icon/components";
+---
+
+<footer
+  class="grid grid-cols-[1fr_minmax(20ch,70ch)_1fr] items-center bg-mutedBackground px-[5vw] py-8 text-mutedText"
+>
+  <div
+    class="col-start-2 col-end-3 row-start-1 row-end-2 justify-self-start text-sm"
+  >
+    <p class="m-0">Designed and developed by Nicky Meuleman</p>
+    <p class="m-0">
+      Built with
+      <a href="https://astro.build/" target="_blank" rel="noopener noreferrer">
+        Astro</a
+      >. Hosted on
+      <a
+        href="https://www.netlify.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Netlify</a
+      >.
+    </p>
+  </div>
+  <nav
+    class="col-start-2 col-end-3 row-start-1 row-end-2 flex gap-8 justify-self-end"
+  >
+    <a href="https://twitter.com/NMeuleman" aria-label="Twitter">
+      <Icon name="twitter" class="hover:text-mutedPrimary" />
+    </a>
+    <a href="https://github.com/NickyMeuleman" aria-label="GitHub">
+      <Icon name="lucide:github" class="hover:text-mutedPrimary" />
+    </a>
+  </nav>
+</footer>

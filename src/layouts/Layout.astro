@@ -2,6 +2,8 @@
 import { ViewTransitions } from "astro:transitions";
 import Font from "$components/Font.astro";
 import "$styles/tailwind.css";
+import Header from "$components/Header.astro";
+import Footer from "$components/Footer.astro";
 
 interface Props {
   title?: string;
@@ -28,7 +30,9 @@ const {
     <ViewTransitions />
   </head>
   <body>
+    <Header />
     <slot />
+    <Footer />
   </body>
 </html>
 

@@ -1,7 +1,6 @@
 ---
 import { getCollection, type CollectionEntry } from "astro:content";
 import Layout from "$layouts/Layout.astro";
-import { Icon } from "astro-icon/components";
 import { Picture } from "astro:assets";
 
 const posts: CollectionEntry<"blog">[] = await getCollection("blog");
@@ -58,7 +57,5 @@ const posts: CollectionEntry<"blog">[] = await getCollection("blog");
           })
       }
     </ul>
-    <Icon class="h-44 w-44 text-blue-500" name="lucide:github" />
-    <Icon class="h-44 w-44 text-blue-500" name="twitter" />
   </ul>
 </Layout>
