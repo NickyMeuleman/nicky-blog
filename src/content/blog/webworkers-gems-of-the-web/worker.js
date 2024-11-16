@@ -1,0 +1,4 @@
+ 
+addEventListener("message", () => {
+  postMessage("");
+});

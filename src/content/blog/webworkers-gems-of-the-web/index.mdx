@@ -1,0 +1,775 @@
+---
+title: "Underused gems of the web: WebWorkers"
+date: 2022-07-25
+updatedAt: 2022-07-30
+cover: "./cover.jpg"
+tags: ["JavaScript"]
+---
+
+import {
+  ProblemDemo,
+  SolutionDemo,
+  MainToWorkerChart,
+  MainStillNeededDemo,
+  ProgressDemo,
+} from "./index.jsx";
+
+{/* Photo by <a href="https://unsplash.com/@rewdew?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Kyle Larivee</a> on <a href="https://unsplash.com/s/photos/bus-lane?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a> */}
+
+The browsers we use to surf the web are amazing pieces of technology.
+But they do a lot of work to make it possible for me to watch cat videos.
+
+Over the years, website have gotten orders of magnitude more complicated.
+Without going into detail, many sites are now classified as "apps".
+They're no longer static documents.
+Those sites have to do much more work.
+
+Nowadays, each tab in a browser has its own thread.
+
+<Aside variant="info">
+
+A thread can be thought of as a place in your computer where work happens.
+It does one thing at a time.
+In [Concurrent vs parallel](/garden/concurrent-vs-parallel) I
+explain what the difference is between concurrency and parallellism.
+
+</Aside>
+
+Within that tab, you are bound to that one thread <small>(pretty much)</small> that does <small>nearly</small> **everything**.
+
+It parses the document, executes JavaScript, lays out all things and paints them to the screen.
+All these steps take time.
+
+Oh, it also processes user interactions (things like a hover).
+It's a lot of work, and we keep adding to it.
+
+A large part of the work is (in)directly caused by executing JavaScript.
+
+## A problem
+
+**JavaScript is a single threaded language.**
+
+That's a problem.
+
+JavaScript was designed around the concept of having access to a single thread.
+
+This greatly simplifies a lot of programming in JavaScript (before writing the post, I had literally never thought about [race conditions](https://en.wikipedia.org/wiki/Race_condition) in JS).
+But it also comes with a bunch of downsides.
+
+<Aside variant="info">
+
+Adding threading and shared memory support to everything now would cause a lot of problems.
+
+That's why the concept of shared memory was isolated to a single type: [`SharedArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer).
+
+</Aside>
+
+The biggest downside comes in the form of user experience.
+
+When that main thread is busy, it's can't do anything else, like responding to your clicks or scrolls.
+
+<Aside variant="info">
+
+Browser vendors know this is a problem, so they use threads internally to keep the user experience of browsing the web as smooth as possible.
+
+Some examples:
+
+- [An animated .gif keeps animating in Chromium browsers](https://developer.chrome.com/articles/renderingng-architecture/#threads) because that's handled by a seperate thread.
+- [Scrolling with a blocked main thread is still possible](https://blogs.windows.com/msedgedev/2017/03/08/scrolling-on-the-web/) because it's done on a different thread.
+- [Some CSS animations keep animating](https://web.dev/non-composited-animations/) with a blocked thread because they are handled on a thread called the "compositor thread".
+
+</Aside>
+
+### Demo
+
+This demo has a button that blocks the main thread for three seconds with a `while` loop.
+During the time the browser is blocked, several things are noticible.
+
+1. You can no longer select text
+1. The JS Animation froze
+1. Your browser cursor, and the hover styles don't change
+1. You cannot increment the counter on the page
+
+A second button exists that doesn't fully block the browser for three seconds, but causes what's known as "jank".
+It causes some chunks of JavaScript work.
+During each chunk, the browser is unresponsive as before, but in between, it can ship a frame and react to user actions.
+
+That is why you can still increment the counter.
+The animation doesn't come to a complete standstill, but it has an ugly "start-stop"-behaviour.
+
+<ProblemDemo client:visible />
+
+## A solution
+
+In other words, [not threading makes your event listeners sad](https://macarthur.me/posts/use-web-workers-for-your-event-listeners).
+
+Eventhough I just said JavaScript is a single threaded language and doesn't have threads, you can still use multiple threads on the web to do work in parallel!
+
+The browser has the [Web Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) for this.
+
+It's not a JavaScript -the language- thing, it's a browser thing.
+
+A Web Worker executes your code in a new thread that has an entire seperate [execution context](https://www.youtube.com/watch?v=Fd9VaW0M7K4).
+You can think of it like a seperate tab without a UI. It shares nothing with the main thread.
+
+It's has its own event loop, but this loop isn't responsible for shipping frames to the browser, only the main thread is.
+
+<Aside variant="success">
+
+This talk about the [event loop](https://www.youtube.com/watch?v=cCOL7MC4Pl0) is great and I highly recommend watching it.
+
+</Aside>
+
+While blocking the event loop on the main thread will stop new frames from being shipped,
+blocking a Web Worker leaves the main thread free to respond to user interaction and ship new frames.
+
+A real-world analogue would be a street with two lanes.
+One lane represents the main thread and the second lane represents a web worker.
+The second lane is a dedicated bus lane.
+When the main lane is blocked, that doesn't affect the bus lane and vice versa.
+
+### Demo
+
+The same demo as before, only this time the first two buttons do not affect the main thread, but a worker thread.
+
+The main thread is entirely unaffected.
+
+I promise that a worker thread is doing the same heavy work as the main thread did in the previous demo.
+This isn't a magic trick.
+Open your system monitor and you will see a jump in CPU usage when you click on a button.
+
+<SolutionDemo client:visible />
+
+## How
+
+The [Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Worker/Worker) API has been around for a long time. Since IE10.
+
+[The browser support for web workers](https://caniuse.com/webworkers) is excellent, it's even better than [the browser support for `fetch`](https://caniuse.com/mdn-api_fetch).
+
+A worker can be created by passing the path to a seperate JavaScript file to its constructor.
+
+```js title=index.js
+const worker = new Worker("./worker.js");
+```
+
+Everything in that file will be executed in a seperate thread.
+Because of [the required isolation](#a-problem) between the main thread and a worker thread, the threads don't have access to any variables or other code from eachother.
+
+This combined with the fact that workers have an entirely seperate execution context means they don't have access to a bunch of things you expect to "just be there", like the [DOM](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model).
+That means web workers can't update the UI directly!
+
+An other result of that isolation is that the threads have to exchange data by passing messages.
+
+This is done through the [`postMessage` API](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage).
+It will copy the message, and fire an event in the other thread with that copied data.
+
+<MainToWorkerChart client:visible />
+
+On the main thread, the `postMessage` function is available on that `worker` object you got from calling the `new Worker()` constructor.
+
+In the worker file, `postMessage` is one of the functions global to the worker.
+
+On both sides, you can listen to the `"message"` event this causes.
+The data you provided as an argument to `postMessage` will be available on the `.data` property of the event.
+
+To listen to that event, add an [`addEventListener` method](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener).
+On the main thread, that method is available on the worker object.
+
+In the worker, it's the same deal as with `postMessage`.
+The `addEventListener` method is available on the [global web worker scope](https://developer.mozilla.org/en-US/docs/Web/API/DedicatedWorkerGlobalScope).
+
+This way, the threads can still communicate with eachother while adhering to that needed strict seperation, great!
+
+This method of using web workers can be summed up in the same way the [Go programming language](https://go.dev/) approaches multithreading.
+
+> Don't communicate by sharing memory; share memory by communicating.
+>
+> <footer>
+>
+> [The Go docs](https://go.dev/doc/codewalk/sharemem/#:~:text=Go's%20approach%20to%20concurrency%20differs,to%20data%20structures%20between%20goroutines.)
+>
+> </footer>
+
+You can handle different messages with your favourite method of controlling code flow.
+In this example, I used a `switch` statement to respond differently to certain messages.
+
+```js title=index.js
+const worker = new Worker("./worker.js");
+worker.addEventListener("message", (event) => {
+  console.log(event.data);
+});
+
+worker.postMessage("tick");
+```
+
+```js title=worker.js
+addEventListener("message", (event) => {
+  switch (event.data) {
+    case "tic": {
+      postMessage("tac");
+      break;
+    }
+    case "ping": {
+      postMessage("pong");
+      break;
+    }
+    default: {
+      postMessage("A hotdog is a sandwich");
+    }
+  }
+});
+```
+
+This example used strings as arguments to `postMessage`, but it can handle way more.
+
+`postMessage` uses the [structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm) to copy the messages.
+It can handle a lot!
+
+A message can be a `Set`, `Map`, `Blob`, or even some cyclical data structure!  
+It can't handle functions, trying to copy those will cause an error.
+A class will be converted to a standard JavaScript object, losing methods in the process.
+
+<Aside variant="success">
+
+[The `structuredClone()` method](https://developer.mozilla.org/en-US/docs/Web/API/structuredClone) is available directly too!
+You can use it to make deep clones of things.
+
+no mo' lodash!
+
+```js
+const original = makeLinkedList();
+const clone = structuredClone(original);
+```
+
+</Aside>
+
+## The main thread is still needed
+
+Sometimes, even if your code doesn't touch the DOM.
+You still need to run it on the main thread as a bunch of APIs aren't available in workers.
+
+<Aside variant="info">
+
+[The list of web APIs available in a worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API#supported_web_apis) is quite large.
+
+It doesn't include a bunch of APIs that are available on the main thread though. (eg. `Image`, `Video`, `USB`)
+I hope that list grows smaller and smaller as time goes on.
+The less I have to think about the difference between code I write for the main thread versus for a web worker, the better.
+
+</Aside>
+
+But because we cannot move everything in a chunk of work to a worker doesn't mean we should abandon it altogether.
+A web worker still might be able to perform most of the work before passing off a result to the main thread that then handles the needed mainthread work.
+
+The following example expands on the previous one.
+It plays a sound-clip in response to a message of a certain type.
+
+The messages sent to and from the worker are now objects with a `type` property.
+This is done to make it possible to send messages with seperate data attached to them.
+
+If you ever worked with the Flux-pattern (like [Redux](https://redux.js.org/usage/reducing-boilerplate#actions)), these messages might seem familiar.
+
+They're actions.
+In fact, [the actor model](https://www.youtube.com/watch?v=Vg60lf92EkM) is a perfect fit here.
+
+Because `Audio` is one of the APIs that _need_ the main thread, it is created and listened to on the main thread.
+But everything involved in getting the things that audio object needs to be created in the first place is done on the worker thread.
+
+```js title=index.js numberLines hl=4,7,20
+const worker = new Worker("./worker.js");
+
+worker.addEventListener("message", (event) => {
+  switch (event.data.type) {
+    // ...
+    case "hiResponse": {
+      const audio = new Audio(event.data.audioPath);
+      audio.addEventListener("ended", () => {
+        console.log("It's quiet...");
+      });
+      audio.play();
+      break;
+    }
+    default: {
+      console.log(event.data);
+    }
+  }
+});
+
+worker.postMessage({ type: "hi" });
+```
+
+The callback that is passed to the event listener is now `async` in order to be able to use `await` in combination with the call to `fetch`.
+
+```js title=worker.js numberLines hl=1-2,5,9
+addEventListener("message", async (event) => {
+  switch (event.data.type) {
+    // ...
+    case "hi": {
+      const res = await fetch("./cereal-is-soup.json");
+      const json = await res.json();
+      // ...lots of data janitor work here...
+      const audioPath = json.audioPath;
+      postMessage({ type: "hiResponse", audioPath });
+      break;
+    }
+    // ...
+  }
+});
+```
+
+### Demo
+
+<MainStillNeededDemo client:visible />
+
+## Importing packages
+
+Using code you didn't write is ubiquitous.
+Web workers originally weren't built with module imports in mind, because modules didn't exist yet.
+
+That changed!
+
+The `Worker` constructor takes an options object where you can specify it will use modules.
+
+You can now use `import` inside a web worker, yay!
+
+```js title=index.js
+const worker = new Worker("worker.js", {
+  type: "module",
+});
+```
+
+<Aside variant="info">
+
+The [browser support for module workers](https://caniuse.com/mdn-api_worker_worker_ecmascript_modules) is decent, but Firefox is lagging behind.
+This is being [actively worked on](https://bugzilla.mozilla.org/show_bug.cgi?id=1247687), so expect support soon™.
+
+If you use a bundler for your code like [Webpack](https://webpack.js.org/), [Vite](https://vitejs.dev/), ... this will be supported regardless of browser.
+If you do not, be aware Firefox (and IE) don't support ESModules in workers.
+
+</Aside>
+
+Expanding on the example again, let's import a heavy [machine vision](https://en.wikipedia.org/wiki/Machine_vision) library that detects what object is in a photo.
+
+The photo is grabbed from a `canvas` element as an [`ImageData` object](https://developer.mozilla.org/en-US/docs/Web/API/ImageData).
+
+```js title=index.js numberLines hl=1
+const worker = new Worker("./worker.js", { type: "module" });
+
+worker.addEventListener("message", (event) => {
+  switch (event.data.type) {
+    // ...
+    case "detectionResult": {
+      console.log(
+        `There was ${
+          event.data.result === true ? "a" : "no"
+        } sandwich in this picture`,
+      );
+      break;
+    }
+    default: {
+      console.log(event.data);
+    }
+  }
+});
+
+const input = document.querySelector("input");
+const canvas = document.querySelector("canvas");
+const ctx = canvas.getContext("2d");
+
+input.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  const bitmap = await createImageBitmap(file);
+
+  canvas.height = bitmap.height;
+  canvas.width = bitmap.width;
+  ctx.drawImage(bitmap, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+  worker.postMessage({ type: "isSandwich", imageData });
+});
+```
+
+```js title=worker.js numberLines hl=1
+import { whatIsThis } from "some-fictional-machine-vision-library";
+
+addEventListener("message", async (event) => {
+  switch (event.data.type) {
+    // ...
+    case "isSandwich": {
+      const item = await whatIsThis(event.data.imageData);
+      postMessage({ type: "detectionResult", result: item === "hotdog" });
+      break;
+    }
+    default: {
+      postMessage("A hotdog is a sandwich");
+    }
+  }
+});
+```
+
+## Third-party-scripts
+
+Including third-party scripts in your website is an other very common way JavaScript you didn't write ends up executing.
+These are often code snippets for analytics, metrics, tracking, advertising, ...
+
+Executing on the main thread.
+Consuming valuable performance budget you might need to ensure a smooth experience.
+
+<Tweet url="https://x.com/floydophone/status/1549408445597716480" />
+
+Because these script are outside of your control, they're a common source of frustration.
+You can carefully design an entire webapp that's tuned for performance, and a (few) third-party script(s) can easily dwarf all of those efforts.
+
+But chucking those scripts in a webworker can't easily be done because [sometimes you still need the main thread](#the-main-thread-is-still-needed).
+One call to anything on `window` or `document`, and it _needs_ to run that piece of code on the main thread.
+
+[Partytown](https://partytown.builder.io/) offers a solution to that problem.
+It lets you run third-party scripts in a webworker.
+
+They use an ingenious method to make synchronous calls to things on the main thread.
+
+The method they use is [explained in this video](https://www.youtube.com/watch?v=eP6Mti85HeQ).
+The TL;DW is: it uses a synchronous [`XMLHttpRequest`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) (remember those?) to block the worker thread until data the script needs from the main thread arrives.
+
+## Performance
+
+Runtime performance is just as important as startup performance.
+
+If your app loads in 2ms but stutters on every action I try to take, it's not a performant app.
+
+It might score straight 100s on a [Lighthouse test](https://web.dev/measure/), but using it will suck.
+
+<Aside variant="info">
+
+I know the Google team is actively trying to include metrics that consider runtime performance and that statement was plain wrong.
+Now that I've got your attention.
+My point is that the web developers seem to be hyperfocused on load performance, sadly often dismissing the importance of runtime performance.
+
+</Aside>
+
+In [a talk from way back in 2014](https://www.youtube.com/watch?v=RCFQu0hK6bU), [Paul Lewis](https://twitter.com/aerotwist) discusses runtime performance.
+
+Performance doesn't always mean doing work faster.
+I consider a responsive page that does a task slightly slower more performant than a blocked page that completes the task a little faster.
+
+Using more than one thread won't make your app any faster if the logic it uses isn't parallellizable.
+On the contrary, calls to `postMessage` aren't magic, they aren't free.
+
+In most cases, using a web worker means moving a chunk of work to a worker thread unchanged.
+The overall amount of work will rise slightly due to the added overhead between the worker and the main thread.
+The big difference is that the main thread is able to react to user events and ship updated frames while that chunk of work is happening in a worker.
+
+This behaviour has a significant impact on how an app feels.
+Sometimes, slower feels faster.
+
+> It's often better to make the user wait a little bit longer than to drop a frame.
+>
+> - The time to drop a frame is on the order of milliseconds.
+> - The time to maka a user wait is on the oder os 100s of milliseconds.
+>
+> <footer>
+>
+> [Surma](https://twitter.com/DasSurma) in [The main thread is overworked &
+> underpaid](https://www.youtube.com/watch?v=7Rrv9qFMWNM)
+>
+> </footer>
+
+This becomes even more important when you consider the devices your code will run on are unknown to you.
+
+The web is the most accessible UI in the world.
+
+Your code might be ran on a high-end desktop computer, or on a low-end smartphone.
+A task that took the machine you write code on 5ms to complete might take 100ms on a different device.
+
+You don't know, you **can't** know.
+
+Different screens run at different refresh rates.
+60Hz is a very popular frequency for a screen (60 images per second).
+But that's far from a universal number.
+And guess what, that number determines the time that is available for a frame to either be shown on the screen, or not.
+
+For a 60Hz screen, that time is 16.666ms.
+Remember, **everything** has to happen inside that timeframe if you want the browser to ship a frame: from running your JS, to calculating the layout, to painting the screen and compositing.
+
+Got a screen with a faster refresh rate?
+Cool. Every frame is shorter now and you have less time to not drop a frame.
+
+The slower the computer/phone running your code is, the less work it will be able to do within that time.
+
+Dropping a frame here and there might not be a big deal, it might even be unnoticable to visitors of the site.
+But do it too often and you've got a case of my pick for word of the year: **jank**.
+
+### Load
+
+Remember that time I had that mini-rant about loadtime performance?
+Of course you do, it was a paragraph ago.
+This is the part where I tell you that you can have your cake and eat it too.
+
+When you move logic to a worker thread, you are not only moving execution costs off the main thread.
+If that logic uses a module the main thread doesn't need, you're also moving parsing costs off the main thread.
+
+This makes that initial load performance better.
+Your UI thread is ready to show something faster: better [First Contentful Paint](https://web.dev/fcp/) and [Time to Interactive](https://web.dev/tti/).
+
+[David East](https://twitter.com/_davideast) dropped [95% of their bundle size](https://davidea.st/articles/firebase-bundle-size/) by loading the heaviest part of their site in a web worker.
+
+### `postMessage`
+
+About that cost of a call to `postMessage`.
+[Surma](https://twitter.com/DasSurma) wrote a great post called [is `postMessage` slow](https://surma.dev/things/is-postmessage-slow/).
+
+The TL;DR is: Nope. Payloads up to 10KiB are risk-free. (and 10 kilobytes is quite a lot)
+
+#### Transferring objects
+
+In situations where the message you want to send is huge, calls to `postMessage` can become slow, because copying a huge object takes time.
+Thankfully, there is a method to make these calls fast again, very fast, regardless of the message-size.
+
+[Transferable objects](https://developer.mozilla.org/en-US/docs/Glossary/Transferable_objects) can be sent to a different thread near instantly.
+
+These objects aren't copied.
+Instead, a pointer to the same piece of memory is created.
+
+Because the [required isolation](#a-problem) between threads in JavaScript to ensure thread safety,
+transferred objects are no longer available to the thread that sent them after they are transferred.
+
+In the last example in this post, we sent an image through `postMessage`.
+Because that image could be huge in size, cloning all that data might take a large amount of time.
+It's a great candidate to be **transferred** instead of copied.
+
+```diff
+-   worker.postMessage({ type: "isSandwich", imageData });
++   worker.postMessage({ type: "isSandwich", imageData }, [
++   imageData.data.buffer,
++ ]);
+```
+
+## It's time to stop
+
+A great feature of web workers is the ability to stop them at a whim.
+No. Really.
+
+A web worker might be responsible for a type of work that can block an entire thread while an algorithm crunches numbers.
+
+If a new input from the main thread comes in that causes the same type of work, a blocked thread won't be able to start until it's done with the previous work.
+
+That's where a [`.terminate()` on the worker](https://developer.mozilla.org/en-US/docs/Web/API/Worker/terminate) comes in.
+It can be called on the main thread and stops a web worker regardless of what it's doing.
+In the middle of a million long for-loop? Don't care, it will stop the web worker immediately.
+
+That means a partially done heavy calculation that became useless because of a new user input can be stopped, saving wasted CPU cycles.
+
+A neat pattern is terminating a worker that's busy and spinning up a new identical one to handle a new input.
+
+A way to stop the worker from within itself exists on the global scope of the worker called [`close`](https://developer.mozilla.org/en-US/docs/Web/API/DedicatedWorkerGlobalScope/close).
+It's annoying these two methods don't have the same name, but, eeeeh 🤷‍♀️, web standards are weird sometimes.
+
+Be it when a user navigates away from a page, or after a set idle period, you should terminate web workers that aren't used.
+They do consume some memory after all.
+
+The advice for event listeners also applies to web workers: clean up folks!
+
+## Show progress
+
+Performing a large task in a web worker provides the opportunity to show the user that something is happening.
+
+While a multi-second calculation is happening, the web worker can periodically call `postMessage`.
+The main thread is then free to display those updates to the screen.
+Be it in the form of a progress bar or a partially rendered picture.
+
+If that task was done on the main thread, the UI would be frozen, and there would be no indication anything is really happening.
+(No, a CSS spinner you started before the operation doesn't count.)
+
+### Demo
+
+In this demo, a button starts a three second long while loop that increments a counter.
+
+The web worker sends a message with the progress so far every 50,000 ticks.
+
+```js title=worker.js
+addEventListener("message", (msg) => {
+  let count = 0;
+
+  const startTime = Date.now();
+  while (Date.now() < startTime + 3000) {
+    count += 1;
+
+    // communicate progress
+    if (count % 50_000 === 0) {
+      postMessage(count);
+    }
+  }
+  // final count
+  postMessage(count);
+});
+```
+
+The message listener on the main thread updates the UI with the received number.
+
+Trying to do the counting on the main thread would block the thread, preventing any updates from being shown.
+
+<ProgressDemo client:visible />
+
+## WebAssembly
+
+WASM is what got me so excited about bringing heavier applications to the web in the first place.
+
+[My blogpost on WASM](/blog/webassembly) basically said "WASM is good, use it".  
+This post is very similar, "web workers are good, use them".
+
+Turns out WASM and web workers are an **excellent** match.
+
+WASM is a [first class](https://www.w3.org/2019/12/pressrelease-wasm-rec.html.en) programming language that runs on the web.
+
+Since WASM is synchronous, I'd say it should almost always be run in workers, excluding those situations where it needs access to some main thread-only APIs.
+
+### WASM threading
+
+WASM is the place where I expect a second method of threading on the web I've largely glossed over in this post to be used most often.
+
+[Shared memory](https://www.smashingmagazine.com/2021/06/web-workers-2021/#concurrency-model-2-shared-memory).
+
+The concept of shared memory was isolated to a single type in JavaScript: [`SharedArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer).
+
+[WASM threads](https://web.dev/webassembly-threads/) use this data structure under the hood enable parallellism.
+
+The shared memory method of multithreading is very powerful and is closely related to some methods languages like C and [Rust](/blog/multithreading-rust) use to handle multithreading.
+
+Because of that [necessary seperation](#a-problem) between threads on the web, it comes with a bunch of cavaets.
+It's possible to do, but I'd call it anything but ergonomic.
+
+You need to make sure you don't touch the bits that make up that shared buffer at the same time by using [Atomics](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Atomics).
+The [`SharedArrayBuffer` object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) itself was disabled for a long time because of some very scary exploits named [Spectre and Meltdown](https://tweakers.net/reviews/5939/meltdown-en-spectre-vraag-en-antwoord.html).
+
+It has since been [re-enabled](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer#security_requirements) with the requirement of making your site [cross-origin isolated](https://hacks.mozilla.org/2020/07/safely-reviving-shared-memory/) to protect against those exploits.
+
+All this to say: I think the shared memory method of concurrency on the web will mostly be used by packages (like [the glue-code](https://nickymeuleman.netlify.app/blog/webassembly#how-does-wasm-work) WASM uses) under the hood.
+You as website author will probably never touch it directly if you don't want to.
+
+## Case study: [Advent of Code Solver](/aoc2021-solver/)
+
+I participated in [Advent of Code](https://adventofcode.com/) in 2021.
+It's a series of (programming) puzzles that can be solved by any method you would like.
+The answer to each problem is typically a single number or a small string.
+
+I picked the [Rust language](https://www.rust-lang.org/) to solve those puzzles.
+[The source code for my solutions](https://github.com/NickyMeuleman/scrapyard/tree/main/advent_of_code/2021) is available to view.
+
+Sharing your solutions is done often and is encouraged, as the goal of this event is to [become better at programming](https://www.youtube.com/watch?v=bS9882S0ZHs).
+Learning from reading each others source code is one of those ways to get better at programming.
+
+With a varying amounts of effort, getting the solution for a day consists of: copy and paste someones code, run it on your problem-input.
+
+I wanted to lower the amount of effort needed to do that.
+
+So I made my solutions in Rust usable on my website by using WASM and created the [AoC solver](/aoc2021-solver/).
+
+For most days running that WASM directly on the main thread was performant enough.
+The calculation function took a small enough time to return.
+This made it seem like the results appeared immediately.
+
+But for some days, my code wasn't so fast and a solution would be calculating for multiple seconds before it spit out the answer 😱.
+
+The browser being blocked for so long was unacceptable.
+Putting the solution code into a web worker was the answer.
+
+Not only did my page load faster because that big WASM-package was no longer loaded on the main thread.
+The main thread remained responsive while a calculation was happening.
+
+If a user decides start a new calculation, the previous one (if running) is aborted by terminating the web worker and spinning up a new one.
+
+Before using web workers, this wasn't possible.
+If you started a calculation you had to wait until it completed, with an unresponsive main thread and no sign that something was happening.
+
+This little project is more complex than it looks, and to manage that complexity I used state machines.
+More specifically, [Xstate](https://xstate.js.org/docs/).
+
+The [actor model](https://xstate.js.org/docs/about/concepts.html#actor-model) it uses is a perfect fit for communication with your worker with `postMessage`s.
+My event handlers were a single line of code that sent an action to the state machine.
+
+The state machine handled the app logic and called `postMessage` when it needed to.
+Any messages returned from the web worker fired an action that got sent to the state machine.
+
+This flow significantly simplified state management.
+I write the whole thing using a [`useReducer`](https://reactjs.org/docs/hooks-reference.html#usereducer) before refactoring to a state machine.
+It worked, but it was way more complex, and full of impossible situations it could get into.
+
+## Realworld examples
+
+That's all neat, but my how do I use it in my NextJs app?
+What about my SvelteKit app?
+
+I made [a repository filled with webworker example usages](https://github.com/NickyMeuleman/webworker-examples).
+
+Good news!
+
+Most tools are able to use the same syntax.
+They use the [`Worker` constructor](https://developer.mozilla.org/en-US/docs/Web/API/Worker/Worker).
+The path to the file is typically provided by [creating a `URL`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) with [`import.meta.url`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta) as a base.
+
+```js
+const worker = new Worker(new URL("./worker.js", import.meta.url), {
+  name: "my-worker",
+  type: "module",
+});
+```
+
+## [Comlink](https://github.com/GoogleChromeLabs/comlink)
+
+`postMessage` isn't the most ergonomic API to use.
+It can be awesome (especially when used as part of the actor pattern/combined with a state machine) but you have to have take into account it's a fire and forget function.
+It sends a message to an other thread, that's it.
+
+If you want to wait for a response to that message specifically, you have to build that logic yourself.
+
+[Comlink](https://github.com/GoogleChromeLabs/comlink) makes it seem like objects from a worker are accessible from the main thread.
+But every "thing" that's returned is a [`Promise`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) to that "thing" now.
+
+Combined with the `async`/`await` syntax, this leads to a very nice developer experience where you don't need to think about `postMessage` to use code that's in a worker.
+
+A lightly modified version of the example in the Comlink docs, using the npm package and a module worker:
+
+```js title=index.js
+import { wrap } from "comlink";
+
+const counter = wrap(new Worker("./worker.js", { type: "module" }));
+
+console.log(await counter.count); // 0
+await counter.increment();
+console.log(await counter.count); // 1
+```
+
+```js title=worker.js
+import { expose } from "comlink";
+
+expose({
+  count: 0,
+  increment() {
+    this.count++;
+  },
+});
+```
+
+## Do it
+
+Go and use workers!
+
+Web workers can (and should) be used in more situations than they are today.
+A while ago, [Surma](https://twitter.com/DasSurma) wrote ["When should you be using Web Workers?"](https://surma.dev/things/when-workers/index.html),
+and the answer is pretty much "all the time".
+
+Every time a piece of logic can run seperately from the UI, you should ask yourself if it makes sense to put into a worker.
+
+Your entire app state is an example of this.
+It's related to the UI, but the whole process of creating and changing it doesn't need to live on the main thread.
+Surma also blogged about putting [React and Redux into a worker](https://surma.dev/things/react-redux-comlink/).
+
+While they are incredibly useful, web workers aren't silver bullets that solve all problems.
+
+> Silver bullets only work on werewolf-shaped problems
+>
+> <footer>
+>
+> [Sunil Pai](https://twitter.com/threepointone) (paraphrased)
+>
+> </footer>
