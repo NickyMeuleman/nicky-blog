@@ -1,0 +1,50 @@
+---
+import { Picture } from "astro:assets";
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  post: CollectionEntry<"blog">;
+}
+const { post } = Astro.props;
+---
+
+<li
+  class="group mt-4 grid grid-cols-[20ex_1fr] gap-8 rounded-sm focus-within:bg-mutedBackground focus-within:text-mutedText hover:bg-mutedBackground hover:text-mutedText"
+>
+  <a href={`/blog/${post.slug}`} class="contents">
+    {
+      post.data.cover && (
+        <Picture
+          src={post.data.cover}
+          alt={post.data.coverAlt ?? ""}
+          width={post.data.cover.width / 4}
+          densities={[1.5, 2]}
+          formats={["avif", "webp"]}
+          class="aspect-square h-full object-cover"
+          transition:name={`${post.slug}-image`}
+        />
+      )
+    }
+    <div class={`m-2 ${post.data.cover ? "" : "col-span-full"}`}>
+      <time
+        datetime={post.data.date.toISOString()}
+        class="block text-sm uppercase tracking-wider text-mutedTextBg leading-tight"
+      >
+        {
+          new Intl.DateTimeFormat("en-US", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+            timeZone: "UTC",
+          }).format(post.data.date)
+        }
+      </time>
+      <h2
+        transition:name={`${post.slug}-title`}
+        class="text-xl font-bold text-text group-hover:underline"
+      >
+        {post.data.title}
+      </h2>
+    </div>
+  </a>
+</li>

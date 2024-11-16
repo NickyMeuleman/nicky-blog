@@ -17,7 +17,7 @@ const {
 ---
 
 <!doctype html>
-<html lang="en" class="bg-background text-text">
+<html lang="en" class="bg-background text-lg text-text">
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
@@ -31,7 +31,9 @@ const {
   </head>
   <body>
     <Header />
-    <slot />
+    <main class="m-auto max-w-[90ch] my-5">
+      <slot />
+    </main>
     <Footer />
   </body>
 </html>

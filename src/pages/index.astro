@@ -1,7 +1,7 @@
 ---
 import { getCollection, type CollectionEntry } from "astro:content";
 import Layout from "$layouts/Layout.astro";
-import { Picture } from "astro:assets";
+import PostPreview from "$components/PostPreview.astro";
 
 const posts: CollectionEntry<"blog">[] = await getCollection("blog");
 ---
@@ -16,46 +16,12 @@ const posts: CollectionEntry<"blog">[] = await getCollection("blog");
         </li>
       ))
     }
-    <ul class="m-5">
-      {
-        posts
-          .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
-          .map((post) => {
-            return (
-              <li class="mt-4 grid grid-cols-[20ex_2fr] grid-rows-[20ex] gap-8 hover:bg-mutedBackground hover:text-mutedText">
-                {post.data.cover && (
-                  <Picture
-                    src={post.data.cover}
-                    alt={post.data.coverAlt ?? ""}
-                    width={post.data.cover.width / 4}
-                    densities={[1.5, 2]}
-                    formats={["avif", "webp"]}
-                    class="h-full object-cover"
-                    transition:name={`${post.slug}-image`}
-                  />
-                )}
-                <div class={`my-2 ${post.data.cover ? "" : "col-span-full"}`}>
-                  <time
-                    datetime={post.data.date.toISOString()}
-                    class="m-0 font-bold uppercase tracking-wider text-mutedTextBg"
-                  >
-                    {new Intl.DateTimeFormat("en-US", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                      timeZone: "UTC",
-                    }).format(post.data.date)}
-                  </time>
-                  <a href={`/blog/${post.slug}`}>
-                    <h2 transition:name={`${post.slug}-title`}>
-                      {post.data.title}
-                    </h2>
-                  </a>
-                </div>
-              </li>
-            );
-          })
-      }
-    </ul>
+  </ul>
+  <ul class="m-5">
+    {
+      posts
+        .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+        .map((post) => <PostPreview {post} />)
+    }
   </ul>
 </Layout>
