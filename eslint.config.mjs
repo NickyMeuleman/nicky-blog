@@ -91,7 +91,7 @@ export default tseslint.config(
   // Disable typed rules for scripts inside Astro files
   // https://github.com/ota-meshi/eslint-plugin-astro/issues/240
   {
-    files: ["**/*.astro/*.ts"],
+    files: ["**/*.astro/*.ts", "**/*.js", "**/*.jsx"],
     languageOptions: {
       parserOptions: {
         project: null,
