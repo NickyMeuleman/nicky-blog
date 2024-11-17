@@ -1,0 +1,269 @@
+---
+title: CSS Position
+date: 2021-09-13
+cover: cover.jpg
+tags: ["CSS"]
+---
+
+import {
+  AbsoluteChart,
+  RelativeDemo,
+  AbsoluteDemo,
+  StickyDemo,
+} from "./index.jsx";
+
+{/* Photo by <a href="https://unsplash.com/@bel2000a?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Belinda Fewings</a> on <a href="https://unsplash.com/s/photos/stacking?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a> */}
+
+Positioning things on the web is ...
+
+I'm bad at writing intros, let's dive in.
+
+## Document flow
+
+**flow** is the way we refer to the browser laying out elements when there are no changes made to those elements.
+
+Every element has a natural size, and **elements in flow affect the location of the elements around it**.
+
+Boxes in normal flow are either block or inline, but not both at the same time.
+
+- Inline ones sit in the same direction as text.
+- Block ones are stacked along the cross axis.
+
+The [`display` CSS property](https://www.w3.org/TR/CSS2/visuren.html#propdef-display) can set this.
+
+```css
+p {
+  display: block;
+}
+
+span {
+  display: inline;
+}
+```
+
+<Aside variant="info">
+
+[Flexbox and grid _containers_ still participate in this block and inline layout.](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Flow_Layout/Block_and_Inline_Layout_in_Normal_Flow#the_display_property_and_flow_layout)
+That is why you can set the `display` property to both `flex` or `inline-flex`.  
+Or to `grid`/`inline-grid`.
+
+Or, if you like the [two value display syntax](https://developer.mozilla.org/en-US/docs/Web/CSS/display#syntax): `display: block flex;` and `display: inline flex`.
+
+</Aside>
+
+There are 2 popular methods to take an element out of flow.
+
+- absolute positioning, which we discuss later
+- floating an element
+
+## Position
+
+The default value for [the CSS `position` property](https://developer.mozilla.org/en-US/docs/Web/CSS/position) is `static`.
+That's why you almost never see it written in code, when a `position` is set explicitly, it's usually with a different value.
+
+The most important aspect is if the item gets taken out of [flow](#document-flow) or not.
+
+Values for `position` that keep the element in the document flow:
+
+- `static`
+- `relative`
+- `sticky`
+
+Values for `position` that remove the element from the document flow:
+
+- `absolute`
+- `fixed`
+
+Positioned elements can be offset by also defining a value for the `top`, `right`, `bottom`, and `left` properties with a distance.
+
+<Aside variant="info">
+
+The demos in this blogpost use pixels for these offsets.
+They can have many other values too!
+Including [lengths (`rem`, `em`, `ch`, `vw`, ...)](https://developer.mozilla.org/en-US/docs/Web/CSS/length) and percentages.
+
+The offsets can also have a negative value!
+
+</Aside>
+
+Where that element is offset _from_ is determined by the value you chose for `position`.
+
+<Aside variant="info">
+
+Elements with `position: static;` are positioned according to the normal document flow.
+
+The `top`, `right`, `bottom`, and `left` properties don't have an effect.
+
+They are about as useful as [Radioactive man's goggles](https://www.youtube.com/watch?v=hkaBT-u7qn8).
+So, not at all.
+
+</Aside>
+
+### Relative
+
+Relatively positioned elements remain in flow.
+They are offset relative to their original position.
+
+That final offset position has no effect on other elements,
+they are laid out in the regular flow as if nothing happend.
+
+<RelativeDemo client:visible />
+
+If you played around with the interactive demo above, you might have noticed setting a `bottom` had no effect until you disabled `top`.
+The `top` property takes priority.
+
+`bottom` is ignored if CSS sees both properties are set.
+
+The same thing happens with `left` and `right`.
+If CSS sees both, `left` gets priority.
+
+<Aside variant="info">
+
+- In left to right writing modes, `left` has priority.
+- In right to left writing modes, `right` has priority.
+
+</Aside>
+
+### Absolute
+
+An absolutely positioned element is removed from flow.
+Other elements are not affected by where the element is displayed on the page.
+
+The absolute element is offset relative to the nearest positioned ancestor.
+In other words: the closest element up the tree with a `position` set (that isn't `static`).
+
+If no `top`, `right`, `bottom`, or `left` offsets are set, the element is shown where it would be had it been in flow.
+Because it was removed from the document flow, that means it will probably overlap the element after it though.
+
+<Aside variant="danger">
+
+In the demo below, this doesn't appear to be the case.
+But try setting `position: absolute;` on an element without any other styles.
+It will stay in place, and items after it will move to fill up the space in flow it just left
+
+</Aside>
+
+An absolutely positioned element is as small as it can be, based on its content.
+
+<AbsoluteDemo client:visible />
+
+Contrary to the `relative` demo, setting both `left` and `right` at the same time does work.
+
+It will respect both unless a `width` is set.
+In that case you're asking the browser to satisfy two conflicting commands and it will ignore `right` again.
+
+> When both left and right are defined, and width constraints don't prevent it, the element will stretch to satisfy both.
+> If the element cannot stretch to satisfy both, the position of the element is overspecified.
+> When this is the case, the left value has precedence when the container is left-to-right; the right value has precedence when the container is right-to-left.
+>
+> <footer>
+>
+> [The MDN docs](https://developer.mozilla.org/en-US/docs/Web/CSS/left)
+>
+> </footer>
+
+So, `position: absolute;` is pretty cool, and unlike [that space trek quote](https://www.youtube.com/watch?v=wgpytjlW5wU), I also deal in absolutes.
+
+#### One two punch
+
+It is a very popular practice to set `position: relative;` on the direct parent of an element with `position: absolute;`.
+
+That way the provided offsets will be offsets from that parent, which is usually what you want.
+
+The results _might_ be identical if you didn't do that, but it's good to avoid unexpected results.
+
+#### Tweaking
+
+Setting a `top`, `right`, `bottom`, or `left` offset would lose the element's original position.
+
+If that position is not quite right, adding a `margin` is a useful tool.
+It will affect the location of the absolutely positioned element but nothing else, as it is out of flow.
+
+#### Centering
+
+The method of placing an item with offsets makes it a bit awkward to exactly center things.
+
+We don't need to rely on [magic numbers](<https://en.wikipedia.org/wiki/Magic_number_(programming)>) for those values however, a few techniques exist.
+
+##### Margin
+
+Setting the `top` and `bottom` to 0, with a `margin-top` of `auto` and a `margin-bottom` of `auto` will vertically center the absolutely positioned element.
+The same logic can be applied to `left`, and `right`.
+
+```css title=styles.css
+.absolute-center {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  width: 100px; /* has to be known for horizontal centering */
+  height: 100px; /* has to be known for vertical centering */
+}
+```
+
+##### Transform
+
+A solution that doesn't need known dimensions leverages the `transform` property.
+
+1. Move the element's top left edge to be in the exact center of the parent.
+2. Scoot the element over by half the size of that element with a `transform`.
+
+```css title=styles.css
+.absolute-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+```
+
+Both the margin and transform methods can be seen in [this codepen](https://codepen.io/NMeuleman/pen/GREZpey).
+
+##### Flexbox and grid
+
+This surprised me (because I thought flexbox and grid would have no effect on items that are out of flow),
+but flexbox and grid can be used to place absolutely positioned elements!
+
+<CodePen url="https://codepen.io/NMeuleman/pen/OJgpOrL" />
+
+### Fixed
+
+Fixed positioning is a specialized form of absolute positioning.
+The offsets are relative to the viewport, even when the page is scrolled.
+
+### Sticky
+
+Elements with `position: sticky` are offset relative to nearest scrolling
+ancestor.
+
+That enables [a bunch of neat applications](https://mastery.games/post/position-sticky/)
+
+<StickyDemo client:visible />
+
+Sticky elements don't always have to be offset from the top.
+Using multiple offsets works too.
+
+The scrolling also doesn't have to be vertical.
+
+[This CodePen](https://codepen.io/NMeuleman/pen/VwWvNqg) has a horizontally scrolling parent with a sticky child that has a `right` set.
+
+## Conclusion
+
+Positioning allows us to take elements out of the _normal_ [document flow](#flow).
+
+Some values remove an item from flow entirely, others don't.
+
+Elements in flow take up space, they affect elements next to them.
+
+<AbsoluteChart />
+
+<Aside variant="info">
+
+In this post I completely glossed over the effects CSS `position` has on the stacking order.
+
+[Stacking contexts](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Positioning/Understanding_z_index/The_stacking_context) are a big topic.
+Armed with the knowledge of this blogpost, understanding them will happen a bit quicker.
+
+</Aside>
