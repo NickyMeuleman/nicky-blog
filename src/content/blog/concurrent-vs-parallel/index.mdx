@@ -1,0 +1,95 @@
+---
+title: Concurrent vs parallel
+date: 2021-10-04
+tags: ["CS"]
+section: "garden"
+---
+
+import { Sequential, Concurrent, Parallel, Both } from "./index.jsx";
+
+<Aside>
+
+TL;DR:
+
+Concurrent programming and parallel programming are not the same thing!
+Only one always means "at the same time".
+
+- Concurrent: working on different parts of code that are independent from each other.
+- Parallel: working on different parts of code at the same time.
+
+---
+
+- Concurrency: more than one task was active over a given timeframe.
+- Parallelism: more than one task was active at the same instant
+
+</Aside>
+
+The concepts of concurrency and parallelism are used to fully use the computational power of a [<abbr title="Central Processing Unit" style={{textDecoration: "none"}}>CPU</abbr>](https://en.wikipedia.org/wiki/Central_processing_unit).
+
+The general idea is to do as much work as possible in as small a time as possible.
+
+- A CPU core is a place that can perform work, it can execute lines of code.
+  It can only do one thing at a time.
+  Modern computers nearly all have multiple cores.
+
+- A thread is a collection of work with lines of code that should be executed in order, top to bottom.
+
+**Concurrent** execution of a large piece of work means that piece was broken into smaller pieces that were distributed over multiple threads.  
+The computer works on completing those individual threads by executing code on each thread little by little, often **switching between threads** before that thread's work is finished.
+
+**Parallel** execution of a large piece of code means multiple threads are being executed **at the same time**.  
+Since a core can only do one thing at a time, this means multiple cores are needed for parallelism.
+
+Nearly all code that is executed in parallel is also concurrent.  
+To always achieve the same end result, code in threads is written so it is able to execute independent from what other threads are doing.  
+This allows multiple threads to execute at the exact same time while still reaching the same result every time the entire program is ran.
+
+<Aside variant="info">
+
+There are several mechanisms that enable you to write concurrent code while still depending on pieces of work done on different threads.
+The most popular exaples are [mutexes](https://en.wikipedia.org/wiki/Mutual_exclusion) and [channels](<https://en.wikipedia.org/wiki/Channel_(programming)>).
+They achieve this by [blocking](<https://en.wikipedia.org/wiki/Blocking_(computing)>) a thread until it is ready/safe to resume.
+
+</Aside>
+
+## Demos
+
+Hover over the demo to start it.
+
+The line represents a core executing lines of code.
+
+A core can work on one thread at a time.
+
+### Sequential
+
+One thread, one CPU core
+
+Not a lot to say here, the lines of code in a thread get executed one after the other, in order.
+
+<Sequential />
+
+### Concurrency
+
+Two threads, one CPU core
+
+The OS can decide which thread a CPU core works on, so the order in which threads are executed is not guaranteed.  
+The order of tasks within a single thread is.
+
+<Concurrent />
+
+### Parallelism
+
+Two threads, two CPU cores
+
+Using multiple cores means multiple things can be executed at once.
+
+<Parallel />
+
+### Make them kiss
+
+Four threads, two CPU cores
+
+Using multiple cores means multiple things can be executed at once.  
+A single core can still only do one thing at a time.
+
+<Both />
