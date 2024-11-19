@@ -10,6 +10,7 @@ const asideVariants = cva(
     "p-4",
     "italic",
     "relative",
+    "[&_p:only-child]:m-0",
   ],
   {
     variants: {
@@ -75,7 +76,7 @@ const asideVariants = cva(
           "before:font-bold",
           "before:not-italic",
           "before:text-background",
-          "before:content-['\\2713']", // checkmark
+          "before:content-checkmark",
           "before:text-xl",
           "before:rounded-full",
         ],

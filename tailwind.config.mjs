@@ -22,6 +22,9 @@ export default {
         // danger: "#d95757",
         success: "rgb(92, 212, 125)",
       },
+      content: {
+        checkmark: "'\\2713'",
+      },
     },
   },
   plugins: [],
