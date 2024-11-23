@@ -8,6 +8,7 @@ const blog = defineCollection({
       cover: image().optional(),
       coverAlt: z.string().optional(),
       date: z.date(),
+      updatedAt: z.date().optional(),
       draft: z.boolean().default(false),
       tags: z
         .enum([
