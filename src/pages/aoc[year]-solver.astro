@@ -10,8 +10,7 @@ const { year } = Astro.params;
 ---
 
 <Layout title={`AoC ${year} solver`}>
-  <a href="/" class="m-8">Home</a>
-  <main class="m-8">
+  <div class="col-start-4">
     <h1 class="my-4 text-2xl" data-year={year}>
       <span>Advent of Code {year}</span> solver
     </h1>
@@ -27,7 +26,7 @@ const { year } = Astro.params;
     <input id="file" type="file" disabled />
     <h2 class="my-2">Result:</h2>
     <output id="result">No result yet!</output>
-  </main>
+  </div>
 </Layout>
 
 <script>

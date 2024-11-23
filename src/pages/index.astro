@@ -7,21 +7,28 @@ const posts: CollectionEntry<"blog">[] = await getCollection("blog");
 ---
 
 <Layout title="We have liftoff">
-  <h2>Advent of Code solvers:</h2>
-  <ul class="m-5">
-    {
-      [2020, 2021, 2022, 2023].map((year) => (
-        <li class="mt-1 list-disc">
-          <a href={`/aoc${year}-solver`}>{year}</a>
-        </li>
-      ))
-    }
-  </ul>
-  <ul class="m-5">
-    {
-      posts
-        .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
-        .map((post) => <PostPreview {post} />)
-    }
-  </ul>
+  <div class="col-start-4">
+    <h2>Advent of Code solvers:</h2>
+    <ul class="list-inside">
+      {
+        [2020, 2021, 2022, 2023].map((year) => (
+          <li class="mt-1 list-disc">
+            <a href={`/aoc${year}-solver`}>{year}</a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+  <div class="col-start-4">
+    <h2 class="font-bold uppercase tracking-wider text-mutedText">
+      👀 {posts.length} posts total
+    </h2>
+    <ul>
+      {
+        posts
+          .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+          .map((post) => <PostPreview {post} />)
+      }
+    </ul>
+  </div>
 </Layout>

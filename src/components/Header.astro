@@ -20,9 +20,11 @@ function isMatch(urlPath: string, linkPath: string) {
 ---
 
 <header
-  class="grid grid-cols-[1fr_minmax(20ch,90ch)_1fr] border-b-2 border-b-mutedPrimary bg-mutedBackground px-[5vw] py-8"
+  class="col-span-full mb-16 grid grid-cols-subgrid border-b-2 border-b-mutedPrimary bg-mutedBackground px-[5vw] py-8"
 >
-  <span class="col-start-2 col-end-3 row-start-1 row-end-1 justify-self-start">
+  <span
+    class="col-start-2 md:col-start-4 col-end-auto row-start-1 row-end-1 justify-self-start"
+  >
     <a href="/" class="hidden text-mutedText no-underline sm:block">
       NickyMeuleman
     </a>
@@ -34,8 +36,8 @@ function isMatch(urlPath: string, linkPath: string) {
       Nime
     </a>
   </span>
-  <nav class="col-start-2 col-end-3 row-start-1 row-end-1">
-    <ul class="flex gap-8 justify-self-end">
+  <nav class="col-start-2 md:col-start-4 col-end-auto row-start-1 row-end-1 justify-self-end">
+    <ul class="flex gap-8">
       {
         links.map((link) => (
           <li class="">
