@@ -8,44 +8,149 @@ import Tweet from "$components/Tweet.astro";
 import CodePen from "$components/CodePen.astro";
 import YouTube from "$components/YouTube.astro";
 import { Picture } from "astro:assets";
+import { slugify } from "$/utils";
+import MetadataItem from "$/components/MetadataItem.astro";
 
 type Post = CollectionEntry<"blog">;
-type Props = { post: Post };
+type Props = { post: Post; prev: Post; next: Post };
 
 export const getStaticPaths = (async () => {
-  const posts: Post[] = await getCollection("blog");
-  return posts
-    .filter((p) => !p.data.draft)
-    .map((p) => ({
-      params: { slug: p.slug },
-      props: { post: p },
-    }));
+  const posts: Post[] = await getCollection("blog", (p) => !p.data.draft);
+  const sorted = posts.toSorted(
+    (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+  );
+  return sorted.map((post, idx) => ({
+    params: { slug: post.slug },
+    props: {
+      post,
+      prev: idx === 0 ? null : sorted[idx - 1],
+      next: idx + 1 === posts.length ? null : sorted[idx + 1],
+    },
+  }));
 }) satisfies GetStaticPaths;
 
-const { post } = Astro.props;
+const { post, prev, next } = Astro.props;
 if (!post) return Astro.rewrite("/404");
 const { Content } = await post.render();
+
+const urlObj = post.data.canonicalUrl ? new URL(post.data.canonicalUrl) : null;
+const seriesPosts = post.data.series
+  ? await getCollection(
+      "blog",
+      (entry) => entry.data.series === post.data.series,
+    )
+  : null;
+
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
 ---
 
 <Layout title={post.data.title}>
-  <article>
-    <h1 class="my-2 text-4xl" transition:name={`${post.slug}-title`}>
-      {post.data.title}
-    </h1>
-    {
-      post.data.cover && (
-        <Picture
-          src={post.data.cover}
-          alt={post.data.coverAlt ?? ""}
-          width={post.data.cover.width / 2}
-          densities={[1.5, 2]}
-          formats={["avif", "webp"]}
-          loading="eager"
-          fetchpriority="high"
-          transition:name={`${post.slug}-image`}
-        />
-      )
-    }
-    <Content components={{ Aside, Tweet, YouTube, CodePen }} />
+  <article class="col-span-full grid grid-cols-subgrid">
+    <div class="col-start-2 col-end-auto md:col-start-6 md:row-start-1">
+      <details open class="mb-8 border border-watermarkBg p-4">
+        <summary class="m-0 font-bold uppercase tracking-wider text-mutedTextBg"
+          >Metadata</summary
+        >
+        <ul>
+          <MetadataItem title="Date">
+            <time datetime={post.data.date.toISOString()}>
+              {dateFormatter.format(post.data.date)}
+            </time>
+          </MetadataItem>
+          {
+            post.data.updatedAt && (
+              <MetadataItem title="Last update">
+                <time datetime={post.data.updatedAt.toISOString()}>
+                  {dateFormatter.format(post.data.updatedAt)}
+                </time>
+              </MetadataItem>
+            )
+          }
+          {
+            urlObj && (
+              <MetadataItem title="Originally at">
+                <a href={urlObj.toString()}>{urlObj.hostname}</a>
+              </MetadataItem>
+            )
+          }
+          {
+            post.data.tags && (
+              <MetadataItem title="Tagged">
+                <ul>
+                  {post.data.tags.map((tag, idx) => (
+                    <li class={idx === 0 ? "mt-0" : "mt-1"}>
+                      <a href={`/tag/${slugify(tag)}`}>{tag}</a>
+                    </li>
+                  ))}
+                </ul>
+              </MetadataItem>
+            )
+          }
+          {
+            seriesPosts && (
+              <MetadataItem title="Part of series">
+                <ul>
+                  {seriesPosts.map((entry, idx) => (
+                    <li class={idx === 0 ? "mt-0" : "mt-1"}>
+                      <a
+                        href={`/blog/${entry.slug}`}
+                        data-current={post.slug === entry.slug}
+                      >
+                        {entry.data.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </MetadataItem>
+            )
+          }
+          {
+            prev && (
+              <MetadataItem title="Older post">
+                <a href={`/blog/${prev.slug}`}>{prev.data.title}</a>
+              </MetadataItem>
+            )
+          }
+          {
+            next && (
+              <MetadataItem title="Newer post">
+                <a href={`/blog/${next.slug}`}>{next.data.title}</a>
+              </MetadataItem>
+            )
+          }
+        </ul>
+      </details>
+    </div>
+    <div class="col-start-2 col-end-auto md:col-start-4 md:row-start-1">
+      <h1 class="my-2 text-4xl" transition:name={`${post.slug}-title`}>
+        {post.data.title}
+      </h1>
+      {
+        post.data.cover && (
+          <Picture
+            src={post.data.cover}
+            alt={post.data.coverAlt ?? ""}
+            width={post.data.cover.width / 2}
+            densities={[1.5, 2]}
+            formats={["avif", "webp"]}
+            loading="eager"
+            fetchpriority="high"
+            transition:name={`${post.slug}-image`}
+          />
+        )
+      }
+      <Content components={{ Aside, Tweet, YouTube, CodePen }} />
+    </div>
   </article>
 </Layout>
+
+<style>
+  [data-current] {
+    @apply text-mutedPrimary;
+  }
+</style>
