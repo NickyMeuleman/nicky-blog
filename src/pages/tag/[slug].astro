@@ -36,23 +36,25 @@ const { slug, name, posts, count } = Astro.props;
 ---
 
 <Layout title={`Posts tagged "${name}"`}>
-  <h1 class="my-5 text-2xl">
-    {`${count} post${count != 1 ? "s" : ""} tagged`} "<span
-      transition:name={`${slug}-tag`}>{name}</span
-    >"
-  </h1>
-  <p><a href="/tag">All tags</a></p>
-  <ul class="m-4 list-inside list-disc">
-    {
-      posts.map((p) => {
-        return (
-          <li>
-            <a href={`/blog/${p.slug}`} transition:name={`${p.slug}-title`}>
-              {p.data.title}
-            </a>
-          </li>
-        );
-      })
-    }
-  </ul>
+  <div class="col-start-2 md:col-start-4">
+    <h1 class="my-5 text-2xl">
+      {`${count} post${count != 1 ? "s" : ""} tagged`} "<span
+        transition:name={`${slug}-tag`}>{name}</span
+      >"
+    </h1>
+    <p><a href="/tag">All tags</a></p>
+    <ul class="m-4 list-inside list-disc">
+      {
+        posts.map((p) => {
+          return (
+            <li>
+              <a href={`/blog/${p.slug}`} transition:name={`${p.slug}-title`}>
+                {p.data.title}
+              </a>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
 </Layout>

@@ -14,18 +14,20 @@ const tags = tagsNames.map((name) => ({
 ---
 
 <Layout title="All tags">
-  <h1 class="my-5 text-2xl">All tags</h1>
-  <ul class="m-4 list-inside list-disc">
-    {
-      tags.map((tag) => {
-        return (
-          <li>
-            <a href={`/tag/${tag.slug}`} transition:name={`${tag.slug}-tag`}>
-              {tag.name} ({tag.count})
-            </a>
-          </li>
-        );
-      })
-    }
-  </ul>
+  <div class="col-start-2 md:col-start-4">
+    <h1 class="my-5 text-2xl">All tags</h1>
+    <ul class="m-4 list-inside list-disc">
+      {
+        tags.map((tag) => {
+          return (
+            <li>
+              <a href={`/tag/${tag.slug}`} transition:name={`${tag.slug}-tag`}>
+                {tag.name} ({tag.count})
+              </a>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
 </Layout>
