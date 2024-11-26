@@ -1,0 +1,28 @@
+---
+import { createNestedHeadings } from "$/utils";
+import NestedList from "$components/NestedList.astro";
+import type { MarkdownHeading } from "astro";
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+
+const nestedHeadings = createNestedHeadings(headings);
+console.log(headings)
+console.log("======================")
+console.log(nestedHeadings)
+---
+
+<details
+  open
+  class="top-16 mb-8 overflow-clip border border-watermarkBg p-4 md:sticky md:max-h-[80vh]"
+>
+  <summary class="m-0 font-bold uppercase tracking-wider text-mutedTextBg"
+    >Table of contents</summary
+  >
+  <nav>
+    <NestedList headings={nestedHeadings} recursive={false} />
+  </nav>
+</details>

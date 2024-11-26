@@ -1,0 +1,128 @@
+---
+import type { HeadingData } from "$utils/types";
+
+interface Props {
+  headings: HeadingData[];
+  recursive: boolean;
+}
+
+const { headings, recursive } = Astro.props;
+---
+
+<ol class="list-none p-0">
+  {
+    headings.map((heading) => (
+      <li class={`${recursive && "ml-1"}`}>
+        <a
+          href={`#${heading.slug}`}
+          data-active={heading.slug === "show-progress"}
+          style={{ "--underline-width": "2px" }}
+        >
+          {heading.text}
+        </a>
+        {heading.items.length > 0 && (
+          <Astro.self headings={heading.items} recursive={true} />
+        )}
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  a {
+    --underlineWidth: theme("borderWidth.2");
+    --blockLength: theme("spacing.4");
+    color: theme("colors.mutedText");
+    text-decoration: none;
+    background-image: linear-gradient(
+        90deg,
+        theme("colors.background"),
+        theme("colors.background")
+      ),
+      linear-gradient(
+        theme("colors.mutedPrimary"),
+        theme("colors.mutedPrimary")
+      ),
+      linear-gradient(theme("colors.primary"), theme("colors.primary"));
+    background-repeat: no-repeat;
+    background-size:
+      var(--blockLength) var(--underlineWidth),
+      0 var(--underlineWidth),
+      0 var(--underlineWidth);
+    background-position:
+      calc(var(--blockLength) * -1) 100%,
+      100% 100%,
+      0 100%;
+    transition:
+      background-size cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s,
+      background-position cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s,
+      color cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s;
+    &:hover {
+      color: theme("colors.mutedPrimary");
+      background-image: linear-gradient(
+          90deg,
+          theme("colors.background"),
+          theme("colors.background")
+        ),
+        linear-gradient(
+          theme("colors.mutedPrimary"),
+          theme("colors.mutedPrimary")
+        ),
+        linear-gradient(theme("colors.primary"), theme("colors.primary"));
+      background-size:
+        var(--blockLength) var(--underlineWidth),
+        0 var(--underlineWidth),
+        100% var(--underlineWidth);
+      background-position:
+        calc(100% + var(--blockLength)) 100%,
+        100% 100%,
+        0 100%;
+    }
+  }
+
+  [data-active] {
+    --underlineWidth: theme("borderWidth.2");
+    --blockLength: theme("spacing.4");
+    color: theme("colors.mutedPrimary");
+    text-decoration: none;
+    background-image: linear-gradient(
+        90deg,
+        theme("colors.background"),
+        theme("colors.background")
+      ),
+      linear-gradient(
+        theme("colors.mutedPrimary"),
+        theme("colors.mutedPrimary")
+      ),
+      linear-gradient(theme("colors.primary"), theme("colors.primary"));
+    background-repeat: no-repeat;
+    background-size:
+      var(--blockLength) var(--underlineWidth),
+      100% var(--underlineWidth),
+      0 var(--underlineWidth);
+    background-position:
+      calc(var(--blockLength) * -1) 100%,
+      100% 100%,
+      0 100%;
+    transition:
+      background-size cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s,
+      background-position cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s,
+      color cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s;
+    border: none;
+    &:hover {
+      color: theme("colors.mutedPrimary");
+      background-size:
+        var(--blockLength) var(--underlineWidth),
+        0 var(--underlineWidth),
+        100% var(--underlineWidth);
+      background-position:
+        calc(100% + var(--blockLength)) 100%,
+        100% 100%,
+        0 100%;
+    }
+  }
+</style>
+
+<script>
+  // TODO: intersectionobserver to mark current heading as active
+</script>

@@ -1,3 +1,6 @@
+import type { MarkdownHeading } from "astro";
+import type { HeadingData } from "./types";
+
 function slugify(text: string): string {
   return encodeURIComponent(
     text
@@ -11,4 +14,21 @@ function slugify(text: string): string {
   );
 }
 
-export { slugify };
+function createNestedHeadings(headings: MarkdownHeading[]): HeadingData[] {
+  const result: HeadingData[] = [];
+  const startDepth = headings[0]?.depth ?? 1;
+
+  headings.forEach((heading) => {
+    const prevDepth = result[result.length - 1]?.depth ?? startDepth;
+    if (heading.depth === prevDepth || heading.depth < prevDepth) {
+      result.push({ ...heading, items: [] });
+    } else if (heading.depth === prevDepth + 1) {
+      result[result.length - 1]?.items.push({ ...heading, items: [] });
+    } else {
+      console.error("You did something naughty, didn't you?");
+    }
+  });
+  return result;
+}
+
+export { slugify, createNestedHeadings };
