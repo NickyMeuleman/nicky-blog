@@ -10,6 +10,8 @@ import YouTube from "$components/YouTube.astro";
 import { Picture } from "astro:assets";
 import { slugify } from "$/utils";
 import MetadataItem from "$/components/MetadataItem.astro";
+import TableOfContents from "$/components/TableOfContents.astro";
+import Prose from "$/components/Prose.astro";
 
 type Post = CollectionEntry<"blog">;
 type Props = { post: Post; prev: Post; next: Post };
@@ -31,7 +33,7 @@ export const getStaticPaths = (async () => {
 
 const { post, prev, next } = Astro.props;
 if (!post) return Astro.rewrite("/404");
-const { Content } = await post.render();
+const { Content, headings } = await post.render();
 
 const urlObj = post.data.canonicalUrl ? new URL(post.data.canonicalUrl) : null;
 const seriesPosts = post.data.series
@@ -51,7 +53,9 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
 
 <Layout title={post.data.title}>
   <article class="col-span-full grid grid-cols-subgrid">
-    <div class="col-start-2 col-end-auto md:col-start-6 md:row-start-1">
+    <div
+      class="col-start-2 col-end-auto min-h-[1000px] overflow-clip md:col-start-6 md:row-start-1"
+    >
       <details open class="mb-8 border border-watermarkBg p-4">
         <summary class="m-0 font-bold uppercase tracking-wider text-mutedTextBg"
           >Metadata</summary
@@ -84,7 +88,13 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
                 <ul>
                   {post.data.tags.map((tag, idx) => (
                     <li class={idx === 0 ? "mt-0" : "mt-1"}>
-                      <a href={`/tag/${slugify(tag)}`}>{tag}</a>
+                      <a
+                        class="anchor"
+                        style={{ "--underlineWidth": "1px" }}
+                        href={`/tag/${slugify(tag)}`}
+                      >
+                        {tag}
+                      </a>
                     </li>
                   ))}
                 </ul>
@@ -98,6 +108,8 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
                   {seriesPosts.map((entry, idx) => (
                     <li class={idx === 0 ? "mt-0" : "mt-1"}>
                       <a
+                        class="anchor"
+                        style={{ "--underlineWidth": "1px" }}
                         href={`/blog/${entry.slug}`}
                         data-current={post.slug === entry.slug}
                       >
@@ -112,19 +124,32 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
           {
             prev && (
               <MetadataItem title="Older post">
-                <a href={`/blog/${prev.slug}`}>{prev.data.title}</a>
+                <a
+                  class="anchor"
+                  style={{ "--underlineWidth": "1px" }}
+                  href={`/blog/${prev.slug}`}
+                >
+                  {prev.data.title}
+                </a>
               </MetadataItem>
             )
           }
           {
             next && (
               <MetadataItem title="Newer post">
-                <a href={`/blog/${next.slug}`}>{next.data.title}</a>
+                <a
+                  class="anchor"
+                  style={{ "--underlineWidth": "1px" }}
+                  href={`/blog/${next.slug}`}
+                >
+                  {next.data.title}
+                </a>
               </MetadataItem>
             )
           }
         </ul>
       </details>
+      <TableOfContents headings={headings} />
     </div>
     <div class="col-start-2 col-end-auto md:col-start-4 md:row-start-1">
       <h1 class="my-2 text-4xl" transition:name={`${post.slug}-title`}>
@@ -144,7 +169,9 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
           />
         )
       }
-      <Content components={{ Aside, Tweet, YouTube, CodePen }} />
+      <Prose class="max-w-none prose-a:anchor">
+        <Content components={{ Aside, Tweet, YouTube, CodePen }} />
+      </Prose>
     </div>
   </article>
 </Layout>
