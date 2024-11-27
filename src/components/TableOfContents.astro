@@ -8,21 +8,52 @@ interface Props {
 }
 
 const { headings } = Astro.props;
-
 const nestedHeadings = createNestedHeadings(headings);
-console.log(headings)
-console.log("======================")
-console.log(nestedHeadings)
 ---
 
 <details
   open
-  class="top-16 mb-8 overflow-clip border border-watermarkBg p-4 md:sticky md:max-h-[80vh]"
+  id="toc"
+  class="top-16 mb-8 overflow-clip overflow-y-scroll border border-watermarkBg p-4 motion-safe:scroll-smooth md:sticky md:max-h-[80vh] [&::-webkit-scrollbar-thumb:hover:active]:bg-text [&::-webkit-scrollbar-thumb:hover]:bg-mutedText [&::-webkit-scrollbar-thumb]:min-h-[58px] [&::-webkit-scrollbar-thumb]:rounded-lg [&::-webkit-scrollbar-thumb]:border-4 [&::-webkit-scrollbar-thumb]:border-background [&::-webkit-scrollbar-thumb]:bg-mutedTextBg [&::-webkit-scrollbar]:w-2"
 >
   <summary class="m-0 font-bold uppercase tracking-wider text-mutedTextBg"
     >Table of contents</summary
   >
-  <nav>
+  <nav data-slugs={headings.map((heading) => heading.slug).join(",")}>
     <NestedList headings={nestedHeadings} recursive={false} />
   </nav>
 </details>
+
+<script>
+  import { scrollIfNeeded } from "$/utils";
+
+  document.addEventListener("astro:page-load", () => {
+    const slugEl = document.querySelector<HTMLElement>("[data-slugs]");
+    const slugs = slugEl?.dataset.slugs?.split(",") ?? [];
+    const headings = slugs.map((slug) =>
+      document.querySelector<HTMLElement>(`#${slug}`),
+    );
+    const toc = document.querySelector<HTMLElement>("#toc");
+    const tocLinks = toc?.querySelectorAll("a");
+
+    const observer = new IntersectionObserver((entries) => {
+      if (!toc) return;
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const el = toc.querySelector<HTMLElement>(
+            `[href="#${entry.target.id}"]`,
+          );
+          if (!el) return;
+          tocLinks?.forEach((el) => el.classList.remove("active"));
+          el.classList.add("active");
+          scrollIfNeeded(el, toc);
+        }
+      });
+    });
+
+    for (const heading of headings) {
+      if (!heading) continue;
+      observer.observe(heading);
+    }
+  });
+</script>

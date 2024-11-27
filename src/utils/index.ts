@@ -1,5 +1,5 @@
 import type { MarkdownHeading } from "astro";
-import type { HeadingData } from "./types";
+import type { NestedHeading } from "./types";
 
 function slugify(text: string): string {
   return encodeURIComponent(
@@ -14,21 +14,33 @@ function slugify(text: string): string {
   );
 }
 
-function createNestedHeadings(headings: MarkdownHeading[]): HeadingData[] {
-  const result: HeadingData[] = [];
+function createNestedHeadings(headings: MarkdownHeading[]) {
   const startDepth = headings[0]?.depth ?? 1;
+  const result: NestedHeading[] = [];
+  const parents = new Map<number, NestedHeading>();
 
-  headings.forEach((heading) => {
-    const prevDepth = result[result.length - 1]?.depth ?? startDepth;
-    if (heading.depth === prevDepth || heading.depth < prevDepth) {
-      result.push({ ...heading, items: [] });
-    } else if (heading.depth === prevDepth + 1) {
-      result[result.length - 1]?.items.push({ ...heading, items: [] });
+  for (const h of headings) {
+    const heading: NestedHeading = { ...h, items: [] };
+    if (heading.depth === startDepth) {
+      result.push(heading);
     } else {
-      console.error("You did something naughty, didn't you?");
+      parents.get(heading.depth - 1)?.items.push(heading);
     }
-  });
+    parents.set(heading.depth, heading);
+  }
   return result;
 }
 
-export { slugify, createNestedHeadings };
+function scrollIfNeeded(element: HTMLElement, container: HTMLElement) {
+  if (element.offsetTop < container.scrollTop) {
+    container.scrollTop = element.offsetTop;
+  } else {
+    const offsetBottom = element.offsetTop + element.offsetHeight;
+    const scrollBottom = container.scrollTop + container.offsetHeight;
+    if (offsetBottom > scrollBottom) {
+      container.scrollTop = offsetBottom - container.offsetHeight;
+    }
+  }
+}
+
+export { slugify, createNestedHeadings, scrollIfNeeded };

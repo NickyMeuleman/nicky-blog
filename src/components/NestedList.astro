@@ -1,25 +1,19 @@
 ---
-import type { HeadingData } from "$utils/types";
+import type { NestedHeading } from "$utils/types";
 
 interface Props {
-  headings: HeadingData[];
+  headings: NestedHeading[];
   recursive: boolean;
 }
 
 const { headings, recursive } = Astro.props;
 ---
 
-<ol class="list-none p-0">
+<ol class={`list-none p-0 ${recursive && "pl-2"}`}>
   {
     headings.map((heading) => (
-      <li class={`${recursive && "ml-1"}`}>
-        <a
-          href={`#${heading.slug}`}
-          data-active={heading.slug === "show-progress"}
-          style={{ "--underline-width": "2px" }}
-        >
-          {heading.text}
-        </a>
+      <li class={`${recursive ? "mt-1" : "mt-4"}`}>
+        <a href={`#${heading.slug}`}>{heading.text}</a>
         {heading.items.length > 0 && (
           <Astro.self headings={heading.items} recursive={true} />
         )}
@@ -80,7 +74,7 @@ const { headings, recursive } = Astro.props;
     }
   }
 
-  [data-active] {
+  .active {
     --underlineWidth: theme("borderWidth.2");
     --blockLength: theme("spacing.4");
     color: theme("colors.mutedPrimary");
@@ -122,7 +116,3 @@ const { headings, recursive } = Astro.props;
     }
   }
 </style>
-
-<script>
-  // TODO: intersectionobserver to mark current heading as active
-</script>
