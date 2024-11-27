@@ -44,6 +44,9 @@ export default {
             strong: {
               color: "inherit",
             },
+            blockquote: {
+              color: "inherit",
+            },
           },
         },
       },
