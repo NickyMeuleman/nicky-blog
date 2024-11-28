@@ -4,16 +4,15 @@ import Font from "$components/Font.astro";
 import "$styles/tailwind.css";
 import Header from "$components/Header.astro";
 import Footer from "$components/Footer.astro";
+import SEO from "$components/SEO.astro";
 
 interface Props {
+  date?: Date;
   title?: string;
   description?: string;
 }
 
-const {
-  title = "Nicky Meuleman",
-  description = "Personal website. It's a blog, and more!",
-} = Astro.props;
+const { title, description, date } = Astro.props;
 ---
 
 <!doctype html>
@@ -28,7 +27,16 @@ const {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <title>{title}</title>
+    <SEO
+      image={undefined}
+      title={title ?? undefined}
+      description={description ?? undefined}
+      keywords={undefined}
+      canonicalUrl={undefined}
+      twitterHandle={undefined}
+      date={date ?? undefined}
+      author={undefined}
+    />
     <Font />
     <ViewTransitions />
   </head>
