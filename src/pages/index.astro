@@ -2,7 +2,6 @@
 import { getCollection, type CollectionEntry } from "astro:content";
 import Layout from "$layouts/Layout.astro";
 import PostPreview from "$components/PostPreview.astro";
-
 const posts: CollectionEntry<"blog">[] = await getCollection("blog");
 ---
 

@@ -7,6 +7,7 @@ import tailwind from "@astrojs/tailwind";
 import icon from "astro-icon";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
+import expressiveCode from "astro-expressive-code";
 
 // https://astro.build/config
 export default defineConfig({
@@ -33,6 +34,7 @@ export default defineConfig({
   },
   integrations: [
     react(),
+    expressiveCode({ themes: ["night-owl"] }),
     mdx(),
     sitemap(),
     tailwind({
