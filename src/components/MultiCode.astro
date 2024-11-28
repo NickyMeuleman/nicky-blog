@@ -1,0 +1,21 @@
+---
+import Tabs from "$components/Tabs/Tabs.astro";
+import TabItem from "$components/Tabs/TabItem.astro";
+
+// use the slot render api because using <slot name="thing"> requires a static string
+// slot[name] must be a static string
+const { slots } = Astro;
+const slotNames = Object.keys(slots).filter((name) => name != "default");
+---
+
+<div class="not-prose my-8">
+  <Tabs>
+    {
+      slotNames.map((name) => (
+        <TabItem label={name}>
+          <Fragment set:html={Astro.slots.render(name)} />
+        </TabItem>
+      ))
+    }
+  </Tabs>
+</div>

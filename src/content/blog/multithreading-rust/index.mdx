@@ -5,7 +5,7 @@ cover: "./cover.jpg"
 tags: ["Rust"]
 ---
 
-import MultiLangCode from "$components/MultiLangCode";
+import MultiCode from "$components/MultiCode.astro";
 
 {/* Photo by <a href="https://unsplash.com/@chriscurry92?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Chris Curry</a> on <a href="https://unsplash.com/s/photos/yarns?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a> */}
 
@@ -547,7 +547,9 @@ That meant every other thread couldn't even be spawned before the previous one f
 
 ## Final code
 
-<MultiLangCode values={[{title: "lib.rs", label: "Joinhandle"}, {title: "lib.rs", label: "Channel"}, {title: "lib.rs", label: "Mutex"}]}>
+<MultiCode>
+
+<Fragment slot="Joinhandle">
 
 ```rust title=lib.rs
 use std::collections::HashMap;
@@ -581,6 +583,10 @@ pub fn frequency(input: &[&str], worker_count: usize) -> HashMap<char, usize> {
     result
 }
 ```
+
+</Fragment>
+
+<Fragment slot="Channel">
 
 ```rust title=lib.rs
 use std::collections::HashMap;
@@ -620,6 +626,10 @@ pub fn frequency(input: &[&str], worker_count: usize) -> HashMap<char, usize> {
 }
 ```
 
+</Fragment>
+
+<Fragment slot="Mutex">
+
 ```rust title=lib.rs
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -658,4 +668,6 @@ pub fn frequency(input: &[&str], worker_count: usize) -> HashMap<char, usize> {
 }
 ```
 
-</MultiLangCode>
+</Fragment>
+
+</MultiCode>

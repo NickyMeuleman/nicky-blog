@@ -6,7 +6,7 @@ cover: "./cover.png"
 tags: ["JavaScript", "how-to", "DX"]
 ---
 
-import MultiLangCode from "$components/MultiLangCode";
+import MultiCode from "$components/MultiCode.astro";
 
 <Aside>
 
@@ -37,17 +37,25 @@ cd automagical-linting
 
 Initialize a `package.json` with your favorite tool.
 
-<MultiLangCode values={[{label: "yarn"}, {label: "npm"}]}>
+<MultiCode>
 
-```bash title=automagical-linting/
+<Fragment slot="yarn">
+
+```bash title=automagical-linting
 yarn init -y
 ```
 
-```bash title=automagical-linting/
+</Fragment>
+
+<Fragment slot="npm">
+
+```bash title=automagical-linting
 npm init -y
 ```
 
-</MultiLangCode>
+</Fragment>
+
+</MultiCode>
 
 Open an editor in the newly created directory.
 
@@ -65,32 +73,48 @@ Don't worry, there's no magic here, I'll briefly explain what each package we us
 
 Start by installing the main linting package ([ESLint](https://www.npmjs.com/package/eslint)), and the main formatting package ([Prettier](https://www.npmjs.com/package/prettier)).
 
-<MultiLangCode values={[{label: "yarn"}, {label: "npm"}]}>
+<MultiCode>
 
-```bash title=automagical-linting/
+<Fragment slot="yarn">
+
+```bash title=automagical-linting
 yarn add eslint prettier -D
 ```
 
-```bash title=automagical-linting/
+</Fragment>
+
+<Fragment slot="npm">
+
+```bash title=automagical-linting
 npm i eslint prettier -D
 ```
 
-</MultiLangCode>
+</Fragment>
+
+</MultiCode>
 
 Next, initialize ESLint.
 The initialization will ask you a couple of questions and set up a configuration file that reflects your answers.
 
-<MultiLangCode values={[{label: "yarn"}, {label: "npm"}]}>
+<MultiCode>
 
-```bash title=automagical-linting/
+<Fragment slot="yarn">
+
+```bash title=automagical-linting
 yarn run eslint --init
 ```
 
-```bash title=automagical-linting/
+</Fragment>
+
+<Fragment slot="npm">
+
+```bash title=automagical-linting
 npx eslint --init
 ```
 
-</MultiLangCode>
+</Fragment>
+
+</MultiCode>
 
 ![eslint initialization](init.png)
 
@@ -142,17 +166,25 @@ I created an `index.js` file with some sloppy code in the root of the `automagic
 
 To check this file:
 
-<MultiLangCode values={[{label: "yarn"}, {label: "npm"}]}>
+<MultiCode>
 
-```bash title=automagical-linting/
+<Fragment slot="yarn">
+
+```bash title=automagical-linting
 yarn eslint index.js
 ```
 
-```bash title=automagical-linting/
+</Fragment>
+
+<Fragment slot="npm">
+
+```bash title=automagical-linting
 npx eslint index.js
 ```
 
-</MultiLangCode>
+</Fragment>
+
+</MultiCode>
 
 Lots of errors! Oh no!
 
@@ -167,17 +199,25 @@ First, it's time to add the main formatting package to the mix!
 
 Next up is the [Prettier plugin package for ESLint](https://github.com/prettier/eslint-plugin-prettier)
 
-<MultiLangCode values={[{label: "yarn"}, {label: "npm"}]}>
+<MultiCode>
 
-```bash title=automagical-linting/
+<Fragment slot="yarn">
+
+```bash title=automagical-linting
 yarn add eslint-plugin-prettier -D
 ```
 
-```bash title=automagical-linting/
+</Fragment>
+
+<Fragment slot="npm">
+
+```bash title=automagical-linting
 npm i eslint-plugin-prettier -D
 ```
 
-</MultiLangCode>
+</Fragment>
+
+</MultiCode>
 
 This package will run Prettier as an ESLint rule and reports differences as individual ESLint issues.
 
@@ -211,17 +251,25 @@ Some rules exist in both packages, causing conflicts between the two.
 To prevent the conflicts we'll install and configure the [Prettier config package for ESLint](https://github.com/prettier/eslint-config-prettier).
 This package disables all formatting-related ESLint rules.
 
-<MultiLangCode values={[{label: "yarn"}, {label: "npm"}]}>
+<MultiCode>
 
-```bash title=automagical-linting/
+<Fragment slot="yarn">
+
+```bash title=automagical-linting
 yarn add eslint-config-prettier -D
 ```
 
-```bash title=automagical-linting/
+</Fragment>
+
+<Fragment slot="npm">
+
+```bash title=automagical-linting
 npm i eslint-config-prettier -D
 ```
 
-</MultiLangCode>
+</Fragment>
+
+</MultiCode>
 
 To use it, add `"prettier"` to the `"extends"` array in the `eslintrc` file.
 
@@ -326,17 +374,25 @@ The code snippets above are examples of what you could do, check out the configu
 
 If we try to run ESLint on `index.js` again, there are even more lines of output now!
 
-<MultiLangCode values={[{label: "yarn"}, {label: "npm"}]}>
+<MultiCode>
 
-```bash title=automagical-linting/
+<Fragment slot="yarn">
+
+```bash title=automagical-linting
 yarn eslint index.js
 ```
 
-```bash title=automagical-linting/
+</Fragment>
+
+<Fragment slot="npm">
+
+```bash title=automagical-linting
 npx eslint index.js
 ```
 
-</MultiLangCode>
+</Fragment>
+
+</MultiCode>
 
 These extra lines are coming from Prettier and are about the formatting of the code.
 
@@ -351,17 +407,25 @@ Prettier's default settings enable semicolons, so I deleted the `"semi": false` 
 For our next trick, we will run `eslint` with the `--fix` flag.
 Watch the `index.js` file while you run the next command.
 
-<MultiLangCode values={[{label: "yarn"}, {label: "npm"}]}>
+<MultiCode>
 
-```bash title=automagical-linting/
+<Fragment slot="yarn">
+
+```bash title=automagical-linting
 yarn eslint src --fix
 ```
 
-```bash title=automagical-linting/
+</Fragment>
+
+<Fragment slot="npm">
+
+```bash title=automagical-linting
 npx eslint src --fix
 ```
 
-</MultiLangCode>
+</Fragment>
+
+</MultiCode>
 
 Much better!
 

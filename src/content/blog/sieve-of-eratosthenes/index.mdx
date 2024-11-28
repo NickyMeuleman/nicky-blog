@@ -7,7 +7,7 @@ section: "garden"
 ---
 
 import MathBlock from "$components/MathBlock.astro";
-import MultiLangCode from "$components/MultiLangCode";
+import MultiCode from "$components/MultiCode.astro";
 
 The [sieve of Eratosthenes](https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes) finds all [prime numbers](https://en.wikipedia.org/wiki/Prime_number) up to a given limit.
 
@@ -260,7 +260,9 @@ The returned value is a list of prime numbers, starting at 2, and ending in the 
 
 ## Final code
 
-<MultiLangCode>
+<MultiCode>
+
+<Fragment slot="Rust">
 
 ```rust title=sieve.rs numberLines
 pub fn primes_up_to(upper_bound: usize) -> Vec<usize> {
@@ -298,6 +300,10 @@ pub fn primes_up_to(upper_bound: usize) -> Vec<usize> {
 }
 ```
 
+</Fragment>
+
+<Fragment slot="JavaScript">
+
 ```javascript title=sieve.js numberLines
 function primesUpTo(upperBound) {
   // initialise sieve that marks all numbers as prime
@@ -332,6 +338,10 @@ function primesUpTo(upperBound) {
 }
 ```
 
+</Fragment>
+
+<Fragment slot="Python">
+
 ```python title=sieve.py numberLines
 import math
 
@@ -359,4 +369,6 @@ def primes_up_to(upper_bound):
   return [idx for idx, mark in enumerate(sieve) if mark]
 ```
 
-</MultiLangCode>
+</Fragment>
+
+</MultiCode>

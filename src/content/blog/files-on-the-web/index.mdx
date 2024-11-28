@@ -7,7 +7,7 @@ section: "garden"
 ---
 
 import { Demo } from "./index.jsx";
-import MultiLangCode from "$components/MultiLangCode";
+import MultiCode from "$components/MultiCode.astro";
 
 Here is where I would put an intro to an article about using files on the web, [IF I HAD ONE](https://www.youtube.com/watch?v=omguEZ7jy5E).
 
@@ -75,7 +75,9 @@ This API is handy if you also want to support the dropping of things that are **
 <div>Welcome to THE DROP ZONE</div>
 ```
 
-<MultiLangCode values={[{label: "dataTransfer.files"}, {label: "dataTransfer.items"}]}>
+<MultiCode>
+
+<Fragment slot="dataTransfer.files">
 
 ```js title=index.js
 const dropZoneEl = document.querySelector("div");
@@ -90,6 +92,10 @@ dropZoneEl.addEventListener("drop", (event) => {
   console.log("Name:", file.name);
 });
 ```
+
+</Fragment>
+
+<Fragment slot="dataTransfer.items">
 
 ```js title=index.js hl=9-12
 const dropZoneEl = document.querySelector("div");
@@ -107,7 +113,9 @@ dropZoneEl.addEventListener("drop", (event) => {
 });
 ```
 
-</MultiLangCode>
+</Fragment>
+
+</MultiCode>
 
 ### The The File System Access API
 
