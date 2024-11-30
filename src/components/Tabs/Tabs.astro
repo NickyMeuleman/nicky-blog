@@ -49,7 +49,7 @@ if (isSynced) {
 			if (!syncKey) return;
 			const label = localStorage.getItem(`starlight-synced-tabs__${syncKey}`);
 			if (!label) return;
-			const tabs = [...starlightTabs?.querySelectorAll('[role="tab"]')];
+      const tabs = [...starlightTabs?.querySelectorAll('[role="tab"]') ?? []];
 			const tabIndexToRestore = tabs.findIndex(
 				(tab) => tab instanceof HTMLAnchorElement && tab.textContent?.trim() === label
 			);
@@ -74,7 +74,7 @@ if (isSynced) {
 		panels && (
 			<div class="tablist-wrapper not-content">
 				<ul role="tablist">
-					{panels.map(({ label, panelId, tabId }, idx) => (
+      {(panels as any).map(({ label, panelId, tabId }: any, idx: number) => (
 						<li role="presentation" class="tab">
 							<a
 								role="tab"

@@ -1,4 +1,6 @@
-import type { Element } from "hast";
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { select } from "hast-util-select";
 import { rehype } from "rehype";
 import { CONTINUE, SKIP, visit } from "unist-util-visit";
@@ -51,10 +53,10 @@ const getIDs = () => {
 const tabsProcessor = rehype()
   .data("settings", { fragment: true })
   .use(function tabs() {
-    return (tree: Element, file) => {
+    return (tree , file) => {
       file.data.panels = [];
       let isFirst = true;
-      visit(tree, "element", (node) => {
+      visit(tree, "element", (node: any) => {
         if (node.tagName !== TabItemTagname || !node.properties) {
           return CONTINUE;
         }
