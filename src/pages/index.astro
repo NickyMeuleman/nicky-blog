@@ -6,11 +6,15 @@ const posts: CollectionEntry<"blog">[] = await getCollection("blog");
 ---
 
 <Layout title="Nicky's place on the web">
-  <div class="col-start-4">
-    <h2>Advent of Code solvers:</h2>
+  <div class="col-start-4 mb-8">
+    <h2
+      class="relative mb-2 text-xl text-text before:absolute before:bottom-0 before:h-[2px] before:w-[3ch] before:bg-mutedPrimary"
+    >
+      Advent of Code solvers
+    </h2>
     <ul class="list-inside">
       {
-      [2020, 2021, 2022, 2023, 2024].map((year) => (
+        [2020, 2021, 2022, 2023, 2024].map((year) => (
           <li class="mt-1 list-disc">
             <a href={`/aoc${year}-solver`}>{year}</a>
           </li>
@@ -19,13 +23,23 @@ const posts: CollectionEntry<"blog">[] = await getCollection("blog");
     </ul>
   </div>
   <div class="col-start-4">
-    <h2 class="font-bold uppercase tracking-wider text-mutedText">
-      👀 {posts.length} posts total
-    </h2>
+    <div class="mb-3 flex justify-between">
+      <h2
+        class="relative mb-2 text-xl text-text before:absolute before:bottom-0 before:h-[2px] before:w-[3ch] before:bg-mutedPrimary"
+      >
+        Latest blogposts
+      </h2>
+      <div class="uppercase text-mutedTextBg">
+        <a href="/blog" class="tracking-wide hover:text-mutedPrimary">
+          View all
+        </a>
+      </div>
+    </div>
     <ul>
       {
         posts
           .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+          .slice(0, 5)
           .map((post) => <PostPreview {post} />)
       }
     </ul>
