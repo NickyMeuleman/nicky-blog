@@ -8,16 +8,19 @@ interface Props {
 
 export const getStaticPaths = (() => {
   // years can not be a variable
-  return [2020, 2021, 2022, 2023].map((year) => ({ params: { year } }));
+  return [2020, 2021, 2022, 2023, 2024].map((year) => ({ params: { year } }));
 }) satisfies GetStaticPaths;
 
 const { year } = Astro.params;
 // TODO: figure out how to make dynamic images work so they don't have to be in public/ but can be in src/assets/
 // https://docs.astro.build/en/recipes/dynamically-importing-images/
-const images = [2020, 2021, 2022, 2023].reduce<Record<string,string>>((acc, year) => {
-  acc[year] = new URL(`aoc${year}-solver-og.png`, Astro.site).href;
-  return acc;
-}, {});
+const images = [2020, 2021, 2022, 2023, 2024].reduce<Record<string, string>>(
+  (acc, year) => {
+    acc[year] = new URL(`aoc${year}-solver-og.png`, Astro.site).href;
+    return acc;
+  },
+  {},
+);
 ---
 
 <Layout
@@ -30,15 +33,30 @@ const images = [2020, 2021, 2022, 2023].reduce<Record<string,string>>((acc, year
       <span>Advent of Code {year}</span> solver
     </h1>
     <h2 class="my-2">Day:</h2>
-    <input id="day" type="number" min="1" max="25" />
+    <input
+      id="day"
+      type="number"
+      min="1"
+      max="25"
+      value="1"
+      class="border bg-mutedBackground p-1 text-text hover:border-mutedPrimary"
+    />
     <h2 class="my-2">Part:</h2>
-    <select id="part">
+    <select
+      id="part"
+      class="border bg-mutedBackground p-1 text-text hover:border-mutedPrimary"
+    >
       <option value="1">1</option>
       <option value="2">2</option>
       <option selected value="3">Both</option>
     </select>
     <h2 class="my-2">Input (starts calculation):</h2>
-    <input id="file" type="file" disabled />
+    <input
+      id="file"
+      type="file"
+      disabled
+      class="outline-1 outline-offset-2 file:border-text file:bg-mutedBackground file:px-2 file:py-1 file:text-text file:hover:border-mutedPrimary disabled:cursor-not-allowed disabled:border-inherit disabled:bg-gray-800/90 disabled:text-mutedText"
+    />
     <h2 class="my-2">Result:</h2>
     <output id="result">No result yet!</output>
   </div>
