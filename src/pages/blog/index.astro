@@ -1,0 +1,21 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import Layout from "$layouts/Layout.astro";
+import PostPreview from "$components/PostPreview.astro";
+const posts: CollectionEntry<"blog">[] = await getCollection("blog");
+---
+
+<Layout title="Nicky's place on the web">
+  <div class=" col-start-4">
+    <h2 class="font-bold uppercase tracking-wider text-mutedText">
+      👀 {posts.length} posts total
+    </h2>
+    <ul>
+      {
+        posts
+          .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+          .map((post) => <PostPreview {post} />)
+      }
+    </ul>
+  </div>
+</Layout>

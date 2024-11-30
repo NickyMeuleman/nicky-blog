@@ -9,9 +9,13 @@ const { post } = Astro.props;
 ---
 
 <li
-  class="group mt-4 grid grid-cols-[20ex_1fr] gap-8 rounded-sm focus-within:bg-mutedBackground focus-within:text-mutedText hover:bg-mutedBackground hover:text-mutedText"
+  class={`${post.data.cover ? "" : "hover:-mx-2 hover:px-2 focus-within:-mx-2 focus-within:px-2"} group mt-4 rounded-sm focus-within:bg-mutedBackground focus-within:text-mutedText hover:bg-mutedBackground hover:text-mutedText`}
 >
-  <a href={`/blog/${post.slug}`} class="contents">
+  <!-- TODO: fix focus https://github.com/mozilla/standards-positions/issues/772  -->
+  <!-- originally the grid was on the li and the a was display:contents -->
+  <!-- https://codepen.io/leaverou/pen/oROLQm  -->
+  <!-- https://hidde.blog/more-accessible-markup-with-display-contents/ -->
+  <a href={`/blog/${post.slug}`} class="grid grid-cols-[20ex_1fr] gap-8">
     {
       post.data.cover && (
         <Picture
@@ -25,10 +29,10 @@ const { post } = Astro.props;
         />
       )
     }
-    <div class={`m-2 ${post.data.cover ? "" : "col-span-full"}`}>
+    <div class={`my-2 ${post.data.cover ? "" : "col-span-full"}`}>
       <time
         datetime={post.data.date.toISOString()}
-        class="block text-sm uppercase tracking-wider text-mutedTextBg leading-tight"
+        class="block text-sm uppercase leading-tight tracking-wider text-mutedTextBg"
       >
         {
           new Intl.DateTimeFormat("en-US", {
