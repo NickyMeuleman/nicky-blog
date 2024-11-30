@@ -10,9 +10,11 @@ interface Props {
   date?: Date;
   title?: string;
   description?: string;
+  canonicalUrl?: string;
+  image?: string;
 }
 
-const { title, description, date } = Astro.props;
+const { title, description, date, canonicalUrl, image } = Astro.props;
 ---
 
 <!doctype html>
@@ -22,20 +24,16 @@ const { title, description, date } = Astro.props;
 >
   <head>
     <meta charset="UTF-8" />
-    <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <SEO
-      image={undefined}
+      image={image ?? undefined}
       title={title ?? undefined}
       description={description ?? undefined}
-      keywords={undefined}
-      canonicalUrl={undefined}
-      twitterHandle={undefined}
+      canonicalUrl={canonicalUrl ?? undefined}
       date={date ?? undefined}
-      author={undefined}
     />
     <Font />
     <ViewTransitions />

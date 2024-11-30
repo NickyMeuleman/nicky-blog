@@ -2,14 +2,29 @@
 import type { GetStaticPaths } from "astro";
 import Layout from "$layouts/Layout.astro";
 
+interface Props {
+  year: number;
+}
+
 export const getStaticPaths = (() => {
+  // years can not be a variable
   return [2020, 2021, 2022, 2023].map((year) => ({ params: { year } }));
 }) satisfies GetStaticPaths;
 
 const { year } = Astro.params;
+// TODO: figure out how to make dynamic images work so they don't have to be in public/ but can be in src/assets/
+// https://docs.astro.build/en/recipes/dynamically-importing-images/
+const images = [2020, 2021, 2022, 2023].reduce<Record<string,string>>((acc, year) => {
+  acc[year] = new URL(`aoc${year}-solver-og.png`, Astro.site).href;
+  return acc;
+}, {});
 ---
 
-<Layout title={`AoC ${year} solver`}>
+<Layout
+  title={`Advent of Code ${year} solver`}
+  description="Choose a day, choose an input file, get the answers!"
+  image={images[year]}
+>
   <div class="col-start-4">
     <h1 class="my-4 text-2xl" data-year={year}>
       <span>Advent of Code {year}</span> solver

@@ -5,11 +5,8 @@ interface Props {
   image?: string;
   title?: string;
   description?: string;
-  keywords?: string[];
   canonicalUrl?: string;
-  twitterHandle?: string;
   date?: Date;
-  author?: string;
 }
 
 const titleSuffix = "Nicky Meuleman";
@@ -17,11 +14,8 @@ const {
   image,
   title = titleSuffix,
   description = "Personal website. It's a blog, and more!",
-  keywords,
   canonicalUrl,
-  twitterHandle = "@NMeuleman",
   date,
-  author = "Nicky Meuleman",
 } = Astro.props;
 let url = Astro.url.toString();
 
@@ -40,15 +34,15 @@ if (date) {
       .toUpperCase(),
     dateColor: "99A8CF",
     dateExtraConfig: "letter_spacing_2",
-    author,
-    twitter: twitterHandle,
+    author: "Nicky Meuleman",
+    twitter: "@NMeuleman",
     titleFontSize: 64,
     dateFontSize: 36,
     authorFontSize: 36,
     twitterFontSize: 36,
   });
 } else if (image) {
-  metaImage = `${url}${image}`;
+  metaImage = image;
 }
 if (url.endsWith("/")) {
   // if url ends in "/", remove it
@@ -56,29 +50,22 @@ if (url.endsWith("/")) {
 }
 
 const formattedTitle = title ? `${title} | ${titleSuffix}` : titleSuffix;
-
-console.log({
-  astro: Astro.url,
-  meta: import.meta.url,
-});
 ---
 
-<Fragment>
-  <title>{formattedTitle}</title>
-  <meta name="description" content={description} />
-  {metaImage && <meta name="image" content={metaImage} />}
-  {metaImage && <meta property="og:image" content={metaImage} />}
-  <meta property="og:title" content={title} />
-  <meta property="og:url" content={url} />
-  <meta property="og:description" content={description} />
-  {metaImage && <meta property="og:image" content={metaImage} />}
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content={title} />
-  <meta name="twitter:url" content={url} />
-  <meta name="twitter:description" content={description} />
-  {metaImage && <meta name="twitter:image" content={metaImage} />}
-  <meta name="twitter:creator" content={twitterHandle} />
-  {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
-  {keywords && <meta name="keywords" content={keywords.join(", ")} />}
-</Fragment>
+<title>{formattedTitle}</title>
+<meta name="description" content={description} />
+{metaImage && <meta name="image" content={metaImage} />}
+{metaImage && <meta property="og:image" content={metaImage} />}
+<meta property="og:title" content={title} />
+<meta property="og:url" content={url} />
+<meta property="og:description" content={description} />
+{metaImage && <meta property="og:image" content={metaImage} />}
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:url" content={url} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:domain" content={import.meta.env.SITE} />
+{metaImage && <meta name="twitter:image" content={metaImage} />}
+<meta name="twitter:creator" content="@NMeuleman" />
+{canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
