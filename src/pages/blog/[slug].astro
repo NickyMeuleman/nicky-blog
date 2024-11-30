@@ -17,16 +17,16 @@ type Post = CollectionEntry<"blog">;
 type Props = { post: Post; prev: Post; next: Post };
 
 export const getStaticPaths = (async () => {
-  const posts: Post[] = await getCollection("blog", (p) => !p.data.draft);
-  const sorted = posts.toSorted(
+  const allPosts: Post[] = await getCollection("blog") ;
+  const posts = allPosts.filter((p) => !p.data.draft).toSorted(
     (a, b) => b.data.date.getTime() - a.data.date.getTime(),
   );
-  return sorted.map((post, idx) => ({
+  return posts.map((post, idx) => ({
     params: { slug: post.slug },
     props: {
       post,
-      prev: idx === 0 ? null : sorted[idx - 1],
-      next: idx + 1 === posts.length ? null : sorted[idx + 1],
+      prev: idx === 0 ? null : posts[idx - 1],
+      next: idx + 1 === posts.length ? null : posts[idx + 1],
     },
   }));
 }) satisfies GetStaticPaths;
