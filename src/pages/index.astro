@@ -2,7 +2,9 @@
 import { getCollection, type CollectionEntry } from "astro:content";
 import Layout from "$layouts/Layout.astro";
 import PostPreview from "$components/PostPreview.astro";
-const posts: CollectionEntry<"blog">[] = await getCollection("blog");
+const posts: CollectionEntry<"blog">[] = await getCollection("blog", (p) => {
+  return import.meta.env.DEV ? true : !p.data.draft;
+});
 ---
 
 <Layout title="Nicky's place on the web">
