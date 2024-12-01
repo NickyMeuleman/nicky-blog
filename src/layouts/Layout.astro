@@ -40,7 +40,7 @@ const { title, description, date, canonicalUrl, image } = Astro.props;
   </head>
   <!-- using the 4rem spacing as columns instead of gap-16 intentionally -->
   <body
-    class="grid grid-cols-[minmax(5vw,1fr)_minmax(0,70ch)_minmax(5vw,1fr)] md:grid-cols-[minmax(5vw,1fr)_minmax(0,30ch)_minmax(0,4rem)_70ch_4rem_30ch_minmax(5vw,1fr)]"
+    class="grid min-h-[100vh] grid-cols-[minmax(5vw,1fr)_minmax(0,70ch)_minmax(5vw,1fr)] grid-rows-[auto_1fr_auto] md:grid-cols-[minmax(5vw,1fr)_minmax(0,30ch)_minmax(0,4rem)_70ch_4rem_30ch_minmax(5vw,1fr)]"
   >
     <Header />
     <main class="contents">
