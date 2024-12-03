@@ -1,0 +1,230 @@
+---
+title: "Advent of Code 2024 Day 1"
+date: 2024-12-01
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 1: Historian Hysteria
+
+https://adventofcode.com/2024/day/1
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_01.rs)
+</Aside>
+
+The elvish chief historian is missing!
+Your task throughout this advent is finding him.
+
+The elves decided to start looking in the historian's office.
+
+The elves split in two groups, each group compiles a list of places to look.
+
+That todays input, the two lists of numbers.
+
+- Each line has one number from each list.
+
+An example input looks like this:
+
+```txt title=input.txt
+3   4
+4   3
+2   5
+1   3
+3   9
+3   3
+```
+
+## Parsing
+
+Gettig the input into two lists of numbers.
+
+### Option 1: loopin' with `for`
+
+Keeping it simple.
+Loop through each line, get 2 numbers, push them each to a list.
+
+```rust
+fn parse(input: &str) -> (Vec<u32>, Vec<u32>) {
+    let mut left = vec![];
+    let mut right = vec![];
+
+    for line in input.lines() {
+        let nums: Vec<u32> = line
+            .split_whitespace()
+            .map(|s| s.parse().unwrap())
+            .collect();
+        left.push(nums[0]);
+        right.push(nums[1]);
+    }
+
+    (left, right)
+}
+```
+
+### Option 2: Iterators
+
+Same idea as above, but turn each line into a tuple of two numbers first, then `unzip` the iterator of tuples into two lists.
+
+```rust
+fn parse(input: &str) -> (Vec<u32>, Vec<u32>) {
+    input
+        .lines()
+        .map(|line| {
+            let mut nums = line.split_whitespace().map(|s| s.parse::<u32>().unwrap());
+            (nums.next().unwrap(), nums.next().unwrap())
+        })
+        .unzip()
+}
+```
+
+## Part 1
+
+The lists don't _look_ very similar, but maybe they are.
+
+Pair op the smallest number in the left list with the smallest number in the right list.
+Calculate the absolute difference between those 2 numbers.
+Do this for all pairs in your input.
+
+The question asks for the sum of all those absolute differences.
+
+### Option 1: Loopin' with `for`
+
+1. Get the two lists
+1. Sort the two lists
+1. Calculate the absolute differences
+1. Add each difference to a running total before moving on to the next pair
+
+```rust title=day_01.rs
+pub fn part_1(input: &str) -> usize {
+  let (mut left, mut right) = parse(input);
+
+  left.sort();
+  right.sort();
+
+  let mut sum = 0;
+  for (l, r) in left.iter().zip(right) {
+      sum += l.abs_diff(r);
+  }
+
+  sum
+}
+```
+
+### Option 2: Iterators
+
+Same idea as option 1, but taking advantage of `zip` to turn the two lists into an iterator over pairs.
+
+Finishing off with a `sum` that sums each item in the iterator.
+
+```rust title=day_01.rs
+fn part_1(input: &str) -> u32 {
+  let (mut left, mut right) = parse(input);
+
+  left.sort_unstable();
+  right.sort_unstable();
+
+  left.into_iter()
+      .zip(right)
+      .map(|(l, r)| l.abs_diff(r))
+      .sum()
+}
+```
+
+## Part 2
+
+Turns out the lists are very different after all.
+(Who would have thought? [Not me](https://www.youtube.com/watch?v=3Yd3lQVbkYc))
+
+A lot of the numbers appear in both lists, maybe that's meaningful?
+
+In part 2 you need to figure out how often each number from the left list appears in the right list.
+
+Calculate a **total similarity score** by adding up each number in the left list after multiplying it by the number of times that number appears in the right list.
+
+### Option 1: Loopin' with `for`
+
+For each number in the left list, loop through the right list and count how many times you see the same number.
+
+<Aside variant="info">
+  For Rustaceans reading this: Notice the return type of the function is now a
+  `usize` because the `count()` function returns one.
+</Aside>
+
+```rust title=day_01.rs
+pub fn part_2(input: &str) -> usize {
+    let (left, right) = parse(input);
+
+    let mut sum = 0;
+
+    for l in &left {
+        let product = l * right.iter().filter(|&r| l == r).count();
+        sum += product;
+    }
+
+    sum
+}
+```
+
+### Option 2: Count occurrences
+
+Count how many times each number appears in the right list first.
+Then calculate the product based on that result.
+
+```rust title=day_01.rs
+pub fn part_2(input: &str) -> u32 {
+    let (left, right) = parse(input);
+
+    let counts: HashMap<u32, u32> = right.into_iter().fold(HashMap::new(), |mut acc, r| {
+        *acc.entry(r).or_default() += 1;
+        acc
+    });
+
+    left.into_iter()
+        .map(|l| l * counts.get(&l).copied().unwrap_or_default())
+        .sum()
+}
+```
+
+## Final code
+
+```rust title=day_01.rs showLineNumbers
+use std::collections::HashMap;
+
+fn parse(input: &str) -> (Vec<u32>, Vec<u32>) {
+    input
+        .lines()
+        .map(|line| {
+            let mut nums = line.split_whitespace().map(|s| s.parse::<u32>().unwrap());
+            (nums.next().unwrap(), nums.next().unwrap())
+        })
+        .unzip()
+}
+
+pub fn part_1(input: &str) -> u32 {
+    let (mut left, mut right) = parse(input);
+
+    left.sort_unstable();
+    right.sort_unstable();
+
+    left.into_iter()
+        .zip(right)
+        .map(|(l, r)| l.abs_diff(r))
+        .sum()
+}
+
+fn part_2(input: &str) -> u32 {
+    let (left, right) = parse(input);
+
+    let counts: HashMap<u32, u32> = right.into_iter().fold(HashMap::new(), |mut acc, r| {
+        *acc.entry(r).or_default() += 1;
+        acc
+    });
+
+    left.into_iter()
+        .map(|l| l * counts.get(&l).copied().unwrap_or_default())
+        .sum()
+}
+```

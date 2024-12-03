@@ -13,3 +13,6 @@ pnpm-debug.log*
 # environment variables
 .env
 .env.production
+
+# Local Netlify folder
+.netlify

@@ -32,33 +32,35 @@ const images = [2020, 2021, 2022, 2023, 2024].reduce<Record<string, string>>(
     <h1 class="my-4 text-2xl" data-year={year}>
       <span>Advent of Code {year}</span> solver
     </h1>
-    <h2 class="my-2">Day:</h2>
+    <h2 class="my-2 text-xl">Day:</h2>
     <input
       id="day"
       type="number"
       min="1"
       max="25"
       value="1"
-      class="border bg-mutedBackground p-1 text-text hover:border-mutedPrimary"
+      class="border bg-mutedBackground p-1 text-xl text-text hover:border-mutedPrimary"
     />
-    <h2 class="my-2">Part:</h2>
+    <h2 class="my-2 text-xl">Part:</h2>
     <select
       id="part"
-      class="border bg-mutedBackground p-1 text-text hover:border-mutedPrimary"
+      class="border bg-mutedBackground p-1 text-xl text-text hover:border-mutedPrimary"
     >
       <option value="1">1</option>
       <option value="2">2</option>
       <option selected value="3">Both</option>
     </select>
-    <h2 class="my-2">Input (starts calculation):</h2>
+    <h2 class="my-2 text-xl">Input (starts calculation):</h2>
     <input
       id="file"
       type="file"
       disabled
       class="outline-1 outline-offset-2 file:border-text file:bg-mutedBackground file:px-2 file:py-1 file:text-text file:hover:border-mutedPrimary disabled:cursor-not-allowed disabled:border-inherit disabled:bg-gray-800/90 disabled:text-mutedText"
     />
-    <h2 class="my-2">Result:</h2>
-    <output id="result">No result yet!</output>
+    <h2 class="my-2 text-2xl">Result:</h2>
+    <output id="result" class="prose text-text prose-headings:text-text"
+      >No result yet!</output
+    >
   </div>
 </Layout>
 

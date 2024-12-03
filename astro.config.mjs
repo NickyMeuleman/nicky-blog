@@ -8,6 +8,7 @@ import icon from "astro-icon";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import expressiveCode from "astro-expressive-code";
+import { pluginLineNumbers } from "@expressive-code/plugin-line-numbers";
 
 // https://astro.build/config
 export default defineConfig({
@@ -34,7 +35,11 @@ export default defineConfig({
   },
   integrations: [
     react(),
-    expressiveCode({ themes: ["night-owl"] }),
+    expressiveCode({
+      themes: ["night-owl"],
+      plugins: [pluginLineNumbers()],
+      defaultProps: { showLineNumbers: false },
+    }),
     mdx(),
     sitemap(),
     tailwind({

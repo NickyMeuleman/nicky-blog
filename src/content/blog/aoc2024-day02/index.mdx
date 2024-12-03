@@ -1,0 +1,241 @@
+---
+title: "Advent of Code 2024 Day 2"
+date: 2024-12-02
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 2: Red-Nosed Reports
+
+https://adventofcode.com/2024/day/2
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_02.rs)
+</Aside>
+
+Today's location to search for the chief historian is familiar.
+You [remember visiting it](https://adventofcode.com/2015/day/19), in the before times (of 2015).
+
+The elves in charge of the place ask you to help with some weird report data the reactor spit out.
+That's your input, a list of reports, one per line.
+Each report is a bunch of numbers separated by spaces.
+
+An example input looks like this:
+
+```txt title=input.txt
+7 6 4 2 1
+1 2 7 8 9
+9 7 6 2 1
+1 3 2 4 5
+8 6 4 4 1
+1 3 6 7 9
+```
+
+## Parsing
+
+Today, I chose to make a function to parse a single line into a list of numbers.
+Why not the entire input? Because I wrote it like this first, and this is fine.
+
+```rust
+fn parse_line(line: &str) -> Vec<i32> {
+    line.split_whitespace()
+        .map(|s| s.parse().unwrap())
+        .collect()
+}
+```
+
+## Part 1
+
+You need to determine if a report is safe.
+
+A report is safe if:
+
+1. All levels are increasing or they are all decreasing
+1. Any two adjacent levels differ by at least 1 and at most 3
+
+I wrote two solutions, one with good ol' `for` loops, and one focussing on using iterators.
+
+Both solutions use a helper method called `is_safe` that takes in a report and returns a boolean.
+For both solutions I used [`itertools`](https://docs.rs/itertools/latest/itertools/) to help iterate over a sliding window of size 2.
+
+The question asks how many reports are safe.
+
+### Helper
+
+#### Option 1: Loopin' with `for`
+
+```rust
+fn is_safe(report: &[i32]) -> bool {
+    let dir = (report[0] - report[1]).signum();
+    for (a, b) in report.iter().tuple_windows() {
+        let diff = a - b;
+        if diff == 0 || diff.abs() > 3 || diff.signum() != dir {
+            return false;
+        }
+    }
+    true
+}
+```
+
+#### Option 2: Iterators
+
+```rust
+fn is_safe(report: &[i32]) -> bool {
+    let dir = (report[0] - report[1]).signum();
+    report.iter().tuple_windows().all(|(&a, &b)| {
+        let diff = a - b;
+        diff != 0 && diff.abs() <= 3 && diff.signum() == dir
+    })
+}
+```
+
+### Option 1: Loopin' with `for`
+
+```rust title=day_02.rs
+pub fn part_1(input: &str) -> usize {
+    let mut count = 0;
+    for line in input.lines() {
+        let report = parse_line(line);
+        if is_safe(&report) {
+            count += 1;
+        }
+    }
+    count
+}
+```
+
+### Option 2: Iterators
+
+```rust title=day_02.rs
+pub fn part_1(input: &str) -> usize {
+    input
+        .lines()
+        .map(parse_line)
+        .filter(|report| is_safe(report))
+        .count()
+}
+```
+
+## Part 2
+
+Turns out the reactor can handle one bad level.
+If it sees a bad level for the first time, it pretends nothing happened.
+
+Do the same sum, but count reports that have a single bad value as well.
+
+Same thing here, I coded 2 solutions.
+
+The question asks how many reports are safe.
+
+### Helper
+
+The helper for part2 uses the helper for part1.
+Aaaaaaah, _code reuse_.
+
+It loops over each report, deleting one value at a time.
+If it finds a safe report (with a deleted value), the report is deemed safe.
+
+It's brute-force, but no worries, computer goes BRRRRRRRRRRR after all.
+
+#### Option 1: Loopin' with `for`
+
+```rust
+fn is_safe_p2(report: &[i32]) -> bool {
+    for idx in 0..report.len() {
+        let mut report = report.to_vec();
+        report.remove(idx);
+        if is_safe(&report) {
+            return true;
+        }
+    }
+    false
+}
+```
+
+#### Option 2: Iterators
+
+```rust
+fn is_safe_p2(report: &[i32]) -> bool {
+    (0..report.len()).any(|idx| {
+        let mut report = report.to_vec();
+        report.remove(idx);
+        is_safe_iter(&report)
+    })
+}
+```
+
+### Option 1: Loopin' with `for`
+
+```rust title=day_02.rs
+fn part_2(input: &str) -> usize {
+    let mut count = 0;
+    for line in input.lines() {
+        let report = parse_line(line);
+        if is_safe_p2(&report) {
+            count += 1;
+        }
+    }
+    count
+}
+```
+
+### Option 2: Iterators
+
+```rust title=day_01.rs
+fn part_2(input: &str) -> usize {
+    input
+        .lines()
+        .map(parse_line)
+        .filter(|report| is_safe_p2(report))
+        .count()
+}
+```
+
+## Final code
+
+```rust title=day_02.rs showLineNumbers
+use itertools::Itertools;
+
+fn parse_line(line: &str) -> Vec<i32> {
+    line.split_whitespace()
+        .map(|s| s.parse().unwrap())
+        .collect()
+}
+
+fn is_safe(report: &[i32]) -> bool {
+    let dir = (report[0] - report[1]).signum();
+    report.iter().tuple_windows().all(|(&a, &b)| {
+        let diff = a - b;
+        diff != 0 && diff.abs() <= 3 && diff.signum() == dir
+    })
+}
+
+fn part_1(input: &str) -> usize {
+    input
+        .lines()
+        .map(parse_line)
+        .filter(|report| is_safe(report))
+        .count()
+}
+
+fn is_safe_p2(report: &[i32]) -> bool {
+    if is_safe_iter(report) {
+        return true;
+    }
+    (0..report.len()).any(|idx| {
+        let mut report = report.to_vec();
+        report.remove(idx);
+        is_safe(&report)
+    })
+}
+
+fn part_2(input: &str) -> usize {
+    input
+        .lines()
+        .map(parse_line)
+        .filter(|report| is_safe_p2(report))
+        .count()
+}
+```
