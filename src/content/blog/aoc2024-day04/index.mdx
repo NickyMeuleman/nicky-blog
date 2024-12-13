@@ -1,0 +1,313 @@
+---
+title: "Advent of Code 2024 Day 4"
+date: 2024-12-04
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 4: Ceres Search
+
+https://adventofcode.com/2024/day/4
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_04.rs)
+</Aside>
+
+Today's location to search for the chief historian is familiar (Again! Makes sense, you've been to many interesting places.).
+You [remember visiting it](https://adventofcode.com/2019/day/10).
+
+As is tradition, the an elf there asks for your help with something.
+
+With a word search puzzle!
+
+That's your input, the puzzle.
+
+An example input looks like this:
+
+```txt title=input.txt
+MMMSXXMASM
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX
+```
+
+You can form words in all 8 directions, horizontals, verticals, and diagonals.
+Words can overlap.
+
+## Part 1
+
+You might have already guessed by looking at the example input, the word you have to search for is "XMAS".
+
+The question asks how many times "XMAS" appears in the puzzle.
+Remember overlapping letters is allowed!
+
+I coded two option per part again.
+A good ol reliable `for` loop, and a fancy-schmancy iterator chain.
+
+In both methods, I look for an "X" first.
+Then look in all directions, and if I find "MAS", I increment the counter.
+
+This brings out my love-hate relationship with number data types that can't become negative.
+On one hand, they prevent so many issue, but on the other LET ME CALCULATE OFFSETS IN PEACE.
+
+The iterator example is commented better, so if you want an idea of which steps are executed, it might be better to look at that first.
+
+### A teeny tiny lil helping constant
+
+I chose to represent the directions in a list of offsets.
+Each item in the list is what should happen to the row and column indices to take a step in that direction.
+
+```rust
+// up, up-right, right, down-right, down, down-left, left, up-left
+const DIRS: [(i32, i32); 8] = [
+    (-1, 0),
+    (-1, 1),
+    (0, 1),
+    (1, 1),
+    (1, 0),
+    (1, -1),
+    (0, -1),
+    (-1, -1),
+];
+```
+
+### Option 1: `for` loop
+
+```rust title=day_04.rs
+fn part_1(input: &str) -> usize {
+    let grid: Vec<_> = input.lines().map(|line| line.as_bytes()).collect();
+    let mut count = 0;
+    for r in 0..grid.len() {
+        for c in 0..grid[0].len() {
+            if grid[r][c] != b'X' {
+                continue;
+            }
+            let r = r as i32;
+            let c = c as i32;
+            for (dr, dc) in DIRS {
+                // bounds check (last char has to be inside the grid)
+                let final_r = r + dr * 3;
+                let final_c = c + dc * 3;
+                if final_r < 0
+                    || final_c < 0
+                    || final_r >= grid.len() as i32
+                    || final_c >= grid[0].len() as i32
+                {
+                    continue;
+                }
+
+                if &[
+                    grid[(r + dr) as usize][(c + dc) as usize],
+                    grid[(r + dr * 2) as usize][(c + dc * 2) as usize],
+                    grid[(r + dr * 3) as usize][(c + dc * 3) as usize],
+                ] == b"MAS"
+                {
+                    count += 1;
+                }
+            }
+        }
+    }
+    count
+}
+```
+
+### Option 2: Iterator chain
+
+```rust title=day_04.rs
+pub fn part_1(input: &str) -> usize {
+    let grid: Vec<_> = input.lines().map(|line| line.as_bytes()).collect();
+    (0..grid.len())
+        // turn into iterator over (row_idx, col_idx)
+        .flat_map(|r| (0..grid[0].len()).map(move |c| (r, c)))
+        // first char must be X
+        .filter(|(r, c)| grid[*r][*c] == b'X')
+        // map into indexes in one direction
+        .flat_map(|(r, c)| {
+            DIRS.iter().map(move |(dr, dc)| {
+                [
+                    (r as i32 + dr, c as i32 + dc),
+                    (r as i32 + 2 * dr, c as i32 + 2 * dc),
+                    (r as i32 + 3 * dr, c as i32 + 3 * dc),
+                ]
+            })
+        })
+        // bounds check the last letter
+        .filter(|&[_, _, (r, c)]| {
+            (r >= 0 && r < grid.len() as i32) && (c >= 0 && c < grid[0].len() as i32)
+        })
+        // turn indexes back into usizes
+        .map(|[(r1, c1), (r2, c2), (r3, c3)]| {
+            [
+                (r1 as usize, c1 as usize),
+                (r2 as usize, c2 as usize),
+                (r3 as usize, c3 as usize),
+            ]
+        })
+        // turn idxes into letters
+        .map(|[(r1, c1), (r2, c2), (r3, c3)]| [grid[r1][c1], grid[r2][c2], grid[r3][c3]])
+        // check if word spells MAS
+        .filter(|word| word == b"MAS")
+        .count()
+}
+```
+
+## Part 2
+
+You misunderstood, this isn't an "XMAS" puzzle, it's an X-"MAS" puzzle.
+
+You are supposed to count the amount of times "MAS" appears in an X pattern, like this:
+
+```text
+M.S
+.A.
+M.S
+```
+
+The dots here are characters that are irrelevant.
+
+The question asks how many times "MAS" appears in an X pattern in the puzzle.
+
+For this part, I start by looking for an "A".
+Then I note the 4 adjacent corner letters.
+
+If they are in a valid order, I increment the count.
+
+The iterator chain example is commented better again.
+
+### Option 1: `for` loop
+
+```rust title=day_04.rs
+fn part_2(input: &str) -> usize {
+    let grid: Vec<_> = input.lines().map(|line| line.as_bytes()).collect();
+    let mut count = 0;
+    for r in 1..grid.len() - 1 {
+        for c in 1..grid[0].len() - 1 {
+            if grid[r][c] != b'A' {
+                continue;
+            }
+            let circle = [
+                grid[r - 1][c - 1],
+                grid[r - 1][c + 1],
+                grid[r + 1][c + 1],
+                grid[r + 1][c - 1],
+            ];
+            if &circle == b"MSSM" || &circle == b"MMSS" || &circle == b"SMMS" || &circle == b"SSMM"
+            {
+                count += 1;
+            }
+        }
+    }
+    count
+}
+```
+
+### Option 2: Iterator chain
+
+```rust title=day_04.rs
+fn part_2(input: &str) -> usize {
+    let grid: Vec<_> = input.lines().map(|line| line.as_bytes()).collect();
+    (1..grid.len() - 1)
+        // turn into iterator over (row_idx, col_idx)
+        .flat_map(|r| (1..grid[0].len() - 1).map(move |c| (r, c)))
+        // middle char must be A
+        .filter(|(r, c)| grid[*r][*c] == b'A')
+        // turn into up-left, up-right, down-right, down-left
+        .map(|(r, c)| {
+            [
+                grid[r - 1][c - 1],
+                grid[r - 1][c + 1],
+                grid[r + 1][c + 1],
+                grid[r + 1][c - 1],
+            ]
+        })
+        // only accept valid circles
+        .filter(|circle| {
+            circle == b"MSSM" || circle == b"MMSS" || circle == b"SMMS" || circle == b"SSMM"
+        })
+        .count()
+}
+```
+
+## Final code
+
+Linelength, nice.
+
+```rust title=day_04.rs showLineNumbers
+const DIRS: [(i32, i32); 8] = [
+    (-1, 0),
+    (-1, 1),
+    (0, 1),
+    (1, 1),
+    (1, 0),
+    (1, -1),
+    (0, -1),
+    (-1, -1),
+];
+
+pub fn part_1(input: &str) -> usize {
+    let grid: Vec<_> = input.lines().map(|line| line.as_bytes()).collect();
+    let mut count = 0;
+    for r in 0..grid.len() {
+        for c in 0..grid[0].len() {
+            if grid[r][c] != b'X' {
+                continue;
+            }
+            let r = r as i32;
+            let c = c as i32;
+            for (dr, dc) in DIRS {
+                // bounds check (last char has to be inside the grid)
+                let final_r = r + dr * 3;
+                let final_c = c + dc * 3;
+                if final_r < 0
+                    || final_c < 0
+                    || final_r >= grid.len() as i32
+                    || final_c >= grid[0].len() as i32
+                {
+                    continue;
+                }
+
+                if &[
+                    grid[(r + dr) as usize][(c + dc) as usize],
+                    grid[(r + dr * 2) as usize][(c + dc * 2) as usize],
+                    grid[(r + dr * 3) as usize][(c + dc * 3) as usize],
+                ] == b"MAS"
+                {
+                    count += 1;
+                }
+            }
+        }
+    }
+    count
+}
+
+pub fn part_2(input: &str) -> usize {
+    let grid: Vec<_> = input.lines().map(|line| line.as_bytes()).collect();
+    let mut count = 0;
+    for r in 1..grid.len() - 1 {
+        for c in 1..grid[0].len() - 1 {
+            if grid[r][c] != b'A' {
+                continue;
+            }
+            let circle = [
+                grid[r - 1][c - 1],
+                grid[r - 1][c + 1],
+                grid[r + 1][c + 1],
+                grid[r + 1][c - 1],
+            ];
+            if &circle == b"MSSM" || &circle == b"MMSS" || &circle == b"SMMS" || &circle == b"SSMM"
+            {
+                count += 1;
+            }
+        }
+    }
+    count
+}
+```

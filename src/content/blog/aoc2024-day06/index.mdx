@@ -1,0 +1,369 @@
+---
+title: "Advent of Code 2024 Day 6"
+date: 2024-12-06
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 6: Guard Gallivant
+
+https://adventofcode.com/2024/day/6
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_06.rs)
+</Aside>
+
+Another day, another [familiar location](https://adventofcode.com/2018/day/5).
+
+You are at a manufacturing facility, and make a map of the area, that's today's input.
+
+An example input looks like this:
+
+```txt title=input.txt
+....#.....
+.........#
+..........
+..#.......
+.......#..
+..........
+.#..^.....
+........#.
+#.........
+......#...
+```
+
+- A `.` is an empty spot
+- A `#` is a blocked spot
+- The `^` is a guard that is facing north.
+
+The guard can only move forward, one step at a time.
+When the guard comes across a blocked spot, they turn 90 degrees clockwise, then go forward again.
+
+## Parsing
+
+A 2D puzzle, those are familiar!
+As a lot of previous days in advent of code, I took the very verbose way of parsing on purpose, for clarity.
+
+I return:
+
+1. The starting position of the guard (with numbers that can go negative, because calculating offsets is in my future!)
+1. The 2D-grid with a character in each position, replacing the position the guard was in with an empty space.
+
+```rust
+fn parse(input: &str) -> ((isize, isize), Vec<Vec<char>>) {
+    let mut grid = Vec::new();
+    let mut start = (0, 0);
+    for (row_idx, line) in input.lines().enumerate() {
+        let mut row = Vec::new();
+        for (col_idx, mut c) in line.chars().enumerate() {
+            if c == '^' {
+                start = (row_idx as isize, col_idx as isize);
+                c = '.';
+            }
+            row.push(c);
+        }
+        grid.push(row);
+    }
+    (start, grid)
+}
+```
+
+## Part 1
+
+The question asks how many positions on your map are in the guard's patrol path before they leave the area your map describes.
+
+### Helper
+
+The helper for part 1 will do most of the heavy lifting today.
+It returns a set of all the positions the guard visited during their patrol.
+
+I started off by defining some variables to keep track of during the loop (the guard's patrol):
+
+- `dir`: either `^`, `>`, `v`, or `<` depending on which way the guard is facing
+- `pos`: the current position of the guard, has a row index and a column index into the map
+- `seen`: A set of all positions the guard visits before leaving the bounds of the map
+
+I defined a little helping constant that allows me to look up how the position should change given a direction.
+
+The loop does the loopy thing while the current position is inside the grid.
+
+It inserts the current position into a set of visited positions.
+
+Then it calculates what the new position would be if the guard kept walking in the current direction.
+If that new position is a blocked spot `#`, the guard turns clockwise, if it's empty, the current position is updated to that new postion and the loop body ends.
+
+Once the loop exits, the guard left the grid, and the set is filled with locations they visited.
+
+```rust
+fn get_path(
+    grid: &[Vec<char>],
+    start_pos: (isize, isize),
+    start_dir: char,
+) -> HashSet<(isize, isize)> {
+    let dir_map = HashMap::from([('^', (-1, 0)), ('>', (0, 1)), ('v', (1, 0)), ('<', (0, -1))]);
+
+    let mut dir = start_dir;
+    let mut pos = start_pos;
+    let mut seen = HashSet::new();
+
+    while (pos.0 >= 0 && pos.0 < grid.len() as isize)
+        && (pos.1 >= 0 && pos.1 < grid[0].len() as isize)
+    {
+        seen.insert(pos);
+        let offset = dir_map[&dir];
+        let new_pos = ((pos.0 + offset.0), (pos.1 + offset.1));
+        if let Some('#') = grid
+            .get(new_pos.0 as usize)
+            .and_then(|row| row.get(new_pos.1 as usize))
+        {
+            dir = match dir {
+                '^' => '>',
+                '>' => 'v',
+                'v' => '<',
+                '<' => '^',
+                _ => panic!("at the disco"),
+            }
+        } else {
+            pos = new_pos;
+        }
+    }
+
+    seen
+}
+```
+
+### Part 1 code
+
+```rust title=day_06.rs
+fn part_1(input: &str) -> usize {
+    let (start, grid) = parse(input);
+    get_path(&grid, start, '^').len()
+}
+```
+
+## Part 2
+
+The historians you are with need more time to search before the guard leaves the grid.
+It is possible to place 1 extra obstruction, and cause the guard to walk loops inside the grid!
+
+The question asks how many spaces you could place that single obstruction to cause the guard to walk loops.
+
+The question has the caveat that the obstruction can't be placed at the guard's starting position, because the guard would see it!
+
+I don't know why 1 space in front of the guard is fine, but I'll pretend it's a really nearsighted guard that lost their glasses.
+Oh, and blasting loud jingle bells music as to not hear nearby obstructions being placed.
+
+(Ah, overthinking a pretend backstory for a coding puzzle ... I'm fun at parties!)
+
+### Helper
+
+The helper function for part 2 detects a loop given some starting conditions.
+Instead of returning the visited positions, it returns a boolean signalling if there is a loop or not.
+It is _very_ similar to the helper for part 1
+
+The most important change is that it no longer tracks 2 position coordinated in the set, but a (position, direction) pair.
+After all, the guard could cross their path without being in a loop, but if they revisit a location facing the same direction, that's a loop.
+
+```rust
+fn loops(grid: &[Vec<char>], start_pos: (isize, isize), start_dir: char) -> bool {
+    let dir_map = HashMap::from([('^', (-1, 0)), ('>', (0, 1)), ('v', (1, 0)), ('<', (0, -1))]);
+
+    let mut dir = start_dir;
+    let mut pos = start_pos;
+    let mut seen = HashSet::new();
+
+    while (pos.0 >= 0 && pos.0 < grid.len() as isize)
+        && (pos.1 >= 0 && pos.1 < grid[0].len() as isize)
+    {
+        if seen.contains(&(pos, dir)) {
+            // loop detected
+            return true;
+        }
+        seen.insert((pos, dir));
+        let offset = dir_map[&dir];
+        let new_pos = ((pos.0 + offset.0), (pos.1 + offset.1));
+        if let Some('#') = grid
+            .get(new_pos.0 as usize)
+            .and_then(|row| row.get(new_pos.1 as usize))
+        {
+            dir = match dir {
+                '^' => '>',
+                '>' => 'v',
+                'v' => '<',
+                '<' => '^',
+                _ => panic!("at the disco"),
+            }
+        } else {
+            pos = new_pos;
+        }
+    }
+
+    false
+}
+```
+
+### Part 2 code
+
+That helper makes the code for the main `part_2` method fairly short.
+It starts by getting all the original positions the guard visits.
+In each spot, it places an obstacle, checks if that would cause a loop, and increments a counter if it does.
+
+```rust title=day_06.rs
+pub fn part_2(input: &str) -> usize {
+    let (start, mut grid) = parse(input);
+    let path = get_path(&grid, start, '^');
+
+    let mut sum = 0;
+    for path_pos in path {
+        // obstruction can't be placed at the guard's starting position
+        if path_pos == start {
+            continue;
+        }
+
+        // place obstruction
+        grid[path_pos.0 as usize][path_pos.1 as usize] = '#';
+
+        // detect loop
+        if loops(&grid, start, '^') {
+            sum += 1;
+        }
+
+        // remove obstruction again
+        grid[path_pos.0 as usize][path_pos.1 as usize] = '.';
+    }
+    sum
+}
+```
+
+## Extra credit
+
+Faster would be tracking the seen positions and directions not in a set, but in a 3D-list.
+
+I did this and while my solution for part 1 was orders of magnitude faster, the part 2 solution was twice as slow, so I didn't write that one up.
+
+## Final code
+
+```rust title=day_06.rs showLineNumbers
+use std::collections::{HashMap, HashSet};
+
+fn parse(input: &str) -> ((isize, isize), Vec<Vec<char>>) {
+    let mut grid = Vec::new();
+    let mut start = (0, 0);
+    for (row_idx, line) in input.lines().enumerate() {
+        let mut row = Vec::new();
+        for (col_idx, mut c) in line.chars().enumerate() {
+            if c == '^' {
+                start = (row_idx as isize, col_idx as isize);
+                c = '.';
+            }
+            row.push(c);
+        }
+        grid.push(row);
+    }
+    (start, grid)
+}
+
+fn get_path(
+    grid: &[Vec<char>],
+    start_pos: (isize, isize),
+    start_dir: char,
+) -> HashSet<(isize, isize)> {
+    let dir_map = HashMap::from([('^', (-1, 0)), ('>', (0, 1)), ('v', (1, 0)), ('<', (0, -1))]);
+
+    let mut dir = start_dir;
+    let mut pos = start_pos;
+    let mut seen = HashSet::new();
+
+    while (pos.0 >= 0 && pos.0 < grid.len() as isize)
+        && (pos.1 >= 0 && pos.1 < grid[0].len() as isize)
+    {
+        seen.insert(pos);
+        let offset = dir_map[&dir];
+        let new_pos = ((pos.0 + offset.0), (pos.1 + offset.1));
+        if let Some('#') = grid
+            .get(new_pos.0 as usize)
+            .and_then(|row| row.get(new_pos.1 as usize))
+        {
+            dir = match dir {
+                '^' => '>',
+                '>' => 'v',
+                'v' => '<',
+                '<' => '^',
+                _ => panic!("at the disco"),
+            }
+        } else {
+            pos = new_pos;
+        }
+    }
+
+    seen
+}
+
+pub fn part_1(input: &str) -> usize {
+    let (start, grid) = parse(input);
+    get_path(&grid, start, '^').len()
+}
+
+fn loops(grid: &[Vec<char>], start_pos: (isize, isize), start_dir: char) -> bool {
+    let dir_map = HashMap::from([('^', (-1, 0)), ('>', (0, 1)), ('v', (1, 0)), ('<', (0, -1))]);
+
+    let mut dir = start_dir;
+    let mut pos = start_pos;
+    let mut seen = HashSet::new();
+
+    while (pos.0 >= 0 && pos.0 < grid.len() as isize)
+        && (pos.1 >= 0 && pos.1 < grid[0].len() as isize)
+    {
+        if seen.contains(&(pos, dir)) {
+            // loop detected
+            return true;
+        }
+        seen.insert((pos, dir));
+        let offset = dir_map[&dir];
+        let new_pos = ((pos.0 + offset.0), (pos.1 + offset.1));
+        if let Some('#') = grid
+            .get(new_pos.0 as usize)
+            .and_then(|row| row.get(new_pos.1 as usize))
+        {
+            dir = match dir {
+                '^' => '>',
+                '>' => 'v',
+                'v' => '<',
+                '<' => '^',
+                _ => panic!("at the disco"),
+            }
+        } else {
+            pos = new_pos;
+        }
+    }
+
+    false
+}
+
+pub fn part_2(input: &str) -> usize {
+    let (start, mut grid) = parse(input);
+    let path = get_path(&grid, start, '^');
+
+    let mut sum = 0;
+    for path_pos in path {
+        // obstruction can't be placed at the guard's starting position
+        if path_pos == start {
+            continue;
+        }
+
+        // place obstruction
+        grid[path_pos.0 as usize][path_pos.1 as usize] = '#';
+
+        // detect loop
+        if loops(&grid, start, '^') {
+            sum += 1;
+        }
+
+        // remove obstruction again
+        grid[path_pos.0 as usize][path_pos.1 as usize] = '.';
+    }
+    sum
+}
+```

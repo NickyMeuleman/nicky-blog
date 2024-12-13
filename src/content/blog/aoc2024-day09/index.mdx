@@ -1,0 +1,313 @@
+---
+title: "Advent of Code 2024 Day 9"
+date: 2024-12-09
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 9: Disk Fragmenter
+
+https://adventofcode.com/2024/day/9
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_09.rs)
+</Aside>
+
+Another day, another [familiar location](https://adventofcode.com/2021/day/23).
+
+Today we are [under the sea](https://www.youtube.com/watch?v=GC_mV1IpjWA).
+
+> It was fun hearing this song in English, as the version I thought of was the Dutch one.
+
+You meet an old pal, struggling with their hard drive, as it's nearly full.
+
+Today's input is the (compressed) disk map for that hard drive.
+
+An example input looks like this:
+
+```txt title=input.txt
+2333133121414131402
+```
+
+It contains information about **files** and **free space** on the disk.
+
+The digits (so 0-9!) alternate between indicating:
+
+1. The amount of file blocks
+1. The amount of free space blocks
+
+That means that this input would be:
+
+1. 2 block file
+1. 3 blocks of free space
+1. 3 blocks of file
+1. 3 blocks of free space
+1. 1 block file
+1. etc
+
+Each file has a corresponding **file ID**, based on the order of files in the input.
+Being a computersciency question, those IDs start at 0 ([lua mentioned](https://www.youtube.com/watch?v=0uQ3bkiW5SE))
+
+So expanding this example input partially,
+using a `.` to represent free space block,
+and the id of a file to represent each file block:
+
+```txt
+00...111...2...333.44.5555.6666.777.888899
+```
+
+## Parsing
+
+Today is a day again where I _could_ have done without any data structures.
+But I used one anyway, because it allowed me to not use a magic number to represent free space.
+
+I parsed the input into a list where each item in that list is represented by a pair of:
+
+1. An amount of blocks
+1. The kind of block that is repeated that many times
+
+```rust
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Block {
+    Empty,
+    File(usize),
+}
+
+fn parse(input: &str) -> Vec<(usize, Block)> {
+    let mut filesystem = Vec::new();
+    let mut file_id = 0;
+    for (i, b) in input.bytes().enumerate() {
+        let block = if i % 2 == 0 {
+            let file = Block::File(file_id);
+            file_id += 1;
+            file
+        } else {
+            Block::Empty
+        };
+        filesystem.push(((b - b'0') as usize, block));
+    }
+    filesystem
+}
+```
+
+## Part 1
+
+The amphipod wants to reclaim contigious space on the disk by moving file blocks one at a time.
+From the end of the disk, to the leftmost open space, over and over.
+At the end a big chunk of free space should be available at the end of the disk.
+
+To see a neat visualisation of this process, check out the [question text](https://adventofcode.com/2024/day/9).
+
+The final step is calculating a checksum on the moved filesystem.
+For each file, calculate `index_of_file_block * file_id`, sum all those up, and boom, sum checked!
+
+The question asks what the checksum is for the resulting filesystem.
+
+<Aside variant="danges">
+Today deals with some large numbers, I repeat, large numbers.
+
+(That means if your programming language of choice has number sizes, pick a large one.)
+
+</Aside>
+
+I started off my part1 by decompressing the thing I parsed.
+In hindsight, I could have parsed the data directly into this format ... [FOR PART 1](https://www.youtube.com/watch?v=cphNpqKpKc4).
+
+This is a great `while` loop opportunity.
+Start a running index at the end of the filesystem list.
+Process an item in that list and one by one move to the front of this list.
+
+If the item in the list is an empty block, move backwards and continue looping.
+
+Otherwise, check for the first free block, and place the current (file!) block there.
+Perform the ol' switcheroo, if you will.
+
+```rust title=day_09.rs
+fn part_1(input: &str) -> usize {
+    // expand compression, turn (5, Empty) into 5 times Empty
+    let mut filesystem: Vec<Block> = parse(input)
+        .iter()
+        .flat_map(|&(size, item)| (0..size).map(move |_| item))
+        .collect();
+
+    let mut i = filesystem.len() - 1;
+    while i > 0 {
+        if filesystem[i] == Block::Empty {
+            i -= 1;
+            continue;
+        }
+        let empty_pos = filesystem[0..i]
+            .iter()
+            .position(|&item| item == Block::Empty);
+        if let Some(j) = empty_pos {
+            filesystem.swap(i, j);
+        }
+        i -= 1;
+    }
+
+    filesystem
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, item)| match item {
+            Block::Empty => None,
+            Block::File(file_id) => Some(idx * file_id),
+        })
+        .sum()
+}
+```
+
+## Part 2
+
+That method made the hard drive even slower!
+
+It introduced a bunch of [fragmentation](https://en.wikipedia.org/wiki/File_system_fragmentation), and that's bad.  
+[Who would have thought?](https://www.youtube.com/watch?v=3Yd3lQVbkYc)
+
+New plan, moving entire files at a time.
+Move files to the leftmost chunck of free space blocks that can hold the file.
+
+In code this is very similar.
+The decompressing step at the start of the function disappears, the check for free space gains a conditions,
+and the switching of the files gains an extra step in case I switch a smaller file into a bigger empty space.
+
+```rust title=day_09.rs
+fn part_2(input: &str) -> usize {
+    let mut filesystem = parse(input);
+
+    let mut i = filesystem.len() - 1;
+    while i > 0 {
+        let (curr_size, curr_item) = filesystem[i];
+        if curr_item == Block::Empty {
+            i -= 1;
+            continue;
+        }
+        let empty_pos = filesystem[0..i]
+            .iter()
+            .position(|&(size, item)| item == Block::Empty && size >= curr_size);
+        if let Some(j) = empty_pos {
+            let empty_size = filesystem[j].0;
+            filesystem[j] = (curr_size, curr_item);
+            filesystem[i] = (curr_size, Block::Empty);
+            // Check for and insert any remaining free space
+            if empty_size > curr_size {
+                let remaining_empty = empty_size - curr_size;
+                filesystem.insert(j + 1, (remaining_empty, Block::Empty));
+            }
+        }
+        i -= 1;
+    }
+
+    filesystem
+        .iter()
+        // turn (5, Item) into 5 times Item
+        .flat_map(|&(size, item)| (0..size).map(move |_| item))
+        .enumerate()
+        // filter out empty items and turn files into idx * file_id
+        .filter_map(|(idx, item)| match item {
+            Block::Empty => None,
+            Block::File(file_id) => Some(idx * file_id),
+        })
+        .sum()
+}
+```
+
+## Final code
+
+I could combine the logic for part 1 and part 2 into one function, but, eeeeeeeh.
+
+```rust title=day_09.rs showLineNumbers
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Block {
+    Empty,
+    File(usize),
+}
+
+fn parse(input: &str) -> Vec<(usize, Block)> {
+    let mut filesystem = Vec::new();
+    let mut file_id = 0;
+    for (i, b) in input.bytes().enumerate() {
+        let block = if i % 2 == 0 {
+            let file = Block::File(file_id);
+            file_id += 1;
+            file
+        } else {
+            Block::Empty
+        };
+        filesystem.push(((b - b'0') as usize, block));
+    }
+    filesystem
+}
+
+fn part_1(input: &str) -> usize {
+    // expand compression, turn (5, Empty) into 5 times Empty
+    let mut filesystem: Vec<Block> = parse(input)
+        .iter()
+        .flat_map(|&(size, item)| (0..size).map(move |_| item))
+        .collect();
+
+    let mut i = filesystem.len() - 1;
+    while i > 0 {
+        if filesystem[i] == Block::Empty {
+            i -= 1;
+            continue;
+        }
+        let empty_pos = filesystem[0..i]
+            .iter()
+            .position(|&item| item == Block::Empty);
+        if let Some(j) = empty_pos {
+            filesystem.swap(i, j);
+        }
+        i -= 1;
+    }
+
+    filesystem
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, item)| match item {
+            Block::Empty => None,
+            Block::File(file_id) => Some(idx * file_id),
+        })
+        .sum()
+}
+
+fn part_2(input: &str) -> usize {
+    let mut filesystem = parse(input);
+
+    let mut i = filesystem.len() - 1;
+    while i > 0 {
+        let (curr_size, curr_item) = filesystem[i];
+        if curr_item == Block::Empty {
+            i -= 1;
+            continue;
+        }
+        let empty_pos = filesystem[0..i]
+            .iter()
+            .position(|&(size, item)| item == Block::Empty && size >= curr_size);
+        if let Some(j) = empty_pos {
+            let empty_size = filesystem[j].0;
+            filesystem[j] = (curr_size, curr_item);
+            filesystem[i] = (curr_size, Block::Empty);
+            // Check for and insert any remaining free space
+            if empty_size > curr_size {
+                let remaining_empty = empty_size - curr_size;
+                filesystem.insert(j + 1, (remaining_empty, Block::Empty));
+            }
+        }
+        i -= 1;
+    }
+
+    filesystem
+        .iter()
+        // turn (5, Item) into 5 times Item
+        .flat_map(|&(size, item)| (0..size).map(move |_| item))
+        .enumerate()
+        // filter out empty items and turn files into idx * file_id
+        .filter_map(|(idx, item)| match item {
+            Block::Empty => None,
+            Block::File(file_id) => Some(idx * file_id),
+        })
+        .sum()
+}
+```

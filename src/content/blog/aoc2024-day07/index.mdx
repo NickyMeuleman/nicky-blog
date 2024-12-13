@@ -1,0 +1,240 @@
+---
+title: "Advent of Code 2024 Day 7"
+date: 2024-12-07
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 7: Bridge Repair
+
+https://adventofcode.com/2024/day/7
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_07.rs)
+</Aside>
+
+Another day, another [familiar location](https://adventofcode.com/2022/day/9).
+
+You are at a bridge that needs repairing.
+The elves fixing it need to do some final calculations, but they lost their _operators_, elephants stole them!  
+[Tricksy elephantses](https://www.youtube.com/watch?v=OAEHqgvztT8)
+
+An example input looks like this:
+
+```txt title=input.txt
+190: 10 19
+3267: 81 40 27
+83: 17 5
+156: 15 6
+7290: 6 8 6 15
+161011: 16 10 13
+192: 17 8 14
+21037: 9 7 18 13
+292: 11 6 16 20
+```
+
+Each line is information for a calculation.
+
+- The number to the left of the colon is the goal number, the number the calculation should result in.
+- The numbers to the right of the colon are the operands, the numbers being operated on.
+
+It is your job to determine if the goal can be reached by applying operators to the operands.
+
+Operators are alway evaluated left to right, elves are not bound by puny things like order of operations when doing math.
+
+The only types of operands that are missing is add: `+`, and multiply `*`.
+
+## Parsing
+
+Again, keeping things simple because that's the most surefire way lots of people can translate this code to their language of preference without much effort.
+
+Take in the input, return a list of:
+
+1. The goal number
+1. A list of numbers
+
+<Aside variant="info">
+For my friends using a language where you have to indicate integer size: pick a large size.
+This question mentioned multiplication, expect the numbers to get huuuuuuuuuuuuuuuuge.
+
+To everyone else: I'm kinda jealous of people that don't have to think about number size right now.
+
+</Aside>
+
+```rust
+pub fn parse(input: &str) -> Vec<(u64, Vec<u64>)> {
+    let mut equations = Vec::new();
+    for line in input.lines() {
+        let (goal, nums) = line.split_once(':').unwrap();
+        let goal: u64 = goal.parse().unwrap();
+        let nums: Vec<u64> = nums
+            .split_whitespace()
+            .map(|s| s.parse().unwrap())
+            .collect();
+        equations.push((goal, nums));
+    }
+    equations
+}
+```
+
+## Part 1
+
+The question asks for the sum of all goal numbers that are reachable.
+
+Do you like recursion? I like recursion.
+
+The main effort is in the helper function again.
+In the `part_1` code, I loop over each line, determine if it's reachable, and add the goal number to a sum if it is.
+
+### Helper
+
+The helper takes in a goal number and a list of operands.
+It returns a boolean stating if that goal is reachable given the list of nums.
+
+It does so one number at a time, applying an operation (`+` or `*`), and recursing with the rest of the list.
+
+I did this from left to right at first, but after watching [HyperNeutrino's video](https://www.youtube.com/watch?v=1ZIJ9qo9bnY) for today, I changed it to go from right to left.
+
+This meant flipping the logic for the goal number from `+` to `-`, and from `*` to `/`.
+But it allowed me to check if performing an operation would even make sense before recursing,
+speeding the function up considerably.
+
+```rust
+fn is_reachable(goal: u64, nums: &[u64]) -> bool {
+    if nums.len() == 1 {
+        return goal == nums[0];
+    }
+    let (&last, rest) = nums.split_last().unwrap();
+    if goal % last == 0 && is_reachable(goal / last, rest) {
+        return true;
+    }
+    if goal > last && is_reachable(goal - last, rest) {
+        return true;
+    }
+    false
+}
+```
+
+### Part 1 code
+
+```rust title=day_07.rs
+fn part_1(input: &str) -> u64 {
+    let equations = parse(input);
+    equations
+        .into_iter()
+        .filter(|(goal, nums)| is_reachable(*goal, nums))
+        .map(|(goal, _nums)| goal)
+        .sum()
+}
+```
+
+## Part 2
+
+Turn out the elephants also stole some concatenation operators.
+
+It squooshes two numbers together real tight, it's like string concatenation, but with numbers.
+
+### Helper
+
+The helper function changes slightly.
+It adds a check to see if concatenating a number makes sense (if the goal number ends in the last number),
+then it recurses with that last number "un"-concatenated (is that a word? It is now!).
+
+I did this with some math as this is much faster than converting the numbers to strings first.
+
+```rust
+fn is_reachable_2(goal: u64, nums: &[u64]) -> bool {
+    if nums.len() == 1 {
+        return goal == nums[0];
+    }
+    let (&last, rest) = nums.split_last().unwrap();
+    if goal % last == 0 && is_reachable_2(goal / last, rest) {
+        return true;
+    }
+    if goal > last && is_reachable_2(goal - last, rest) {
+        return true;
+    }
+    let last_len = last.ilog10() + 1;
+    let magnitude = 10u64.pow(last_len);
+    let goal_len = goal.ilog10() + 1;
+    let ending = goal % magnitude;
+    if goal_len > last_len && last == ending && is_reachable_2(goal / magnitude, rest) {
+        return true;
+    }
+    false
+}
+```
+
+### Part 2 code
+
+Same as part 1, but use the helper for part 2.
+
+```rust title=day_07.rs
+fn part_2(input: &str) -> u64 {
+    let equations = parse(input);
+    equations
+        .into_iter()
+        .filter(|(goal, nums)| is_reachable_2(*goal, nums))
+        .map(|(goal, _nums)| goal)
+        .sum()
+}
+```
+
+## Final code
+
+For the final code I combined both helpers into one,
+and changed the parsing logic to be able to operate on one line at a time without first parsing the entire input.
+
+```rust title=day_07.rs showLineNumbers
+fn parse(input: &str) -> impl Iterator<Item = (u64, Vec<u64>)> + '_ {
+    input.lines().map(|line| {
+        let (goal, nums) = line.split_once(':').unwrap();
+        (
+            goal.parse().unwrap(),
+            nums.split_whitespace()
+                .map(|s| s.parse().unwrap())
+                .collect(),
+        )
+    })
+}
+
+fn is_reachable_all(goal: u64, nums: &[u64], concat: bool) -> bool {
+    if nums.len() == 1 {
+        return goal == nums[0];
+    }
+    let (&last, rest) = nums.split_last().unwrap();
+    if goal % last == 0 && is_reachable_all(goal / last, rest, concat) {
+        return true;
+    }
+    if goal > last && is_reachable_all(goal - last, rest, concat) {
+        return true;
+    }
+    if concat {
+        let last_len = last.ilog10() + 1;
+        let magnitude = 10u64.pow(last_len);
+        let goal_len = goal.ilog10() + 1;
+        let ending = goal % magnitude;
+        if goal_len > last_len && last == ending && is_reachable_all(goal / magnitude, rest, concat)
+        {
+            return true;
+        }
+    }
+    false
+}
+
+pub fn part_1(input: &str) -> u64 {
+    parse(input)
+        .filter(|(goal, nums)| is_reachable_all(*goal, nums, false))
+        .map(|(goal, _nums)| goal)
+        .sum()
+}
+
+pub fn part_2(input: &str) -> u64 {
+    parse(input)
+        .filter(|(goal, nums)| is_reachable_all(*goal, nums, true))
+        .map(|(goal, _nums)| goal)
+        .sum()
+}
+```

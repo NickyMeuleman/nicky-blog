@@ -1,0 +1,339 @@
+---
+title: "Advent of Code 2024 Day 10"
+date: 2024-12-10
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 10: Hoof It
+
+https://adventofcode.com/2024/day/10
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_10.rs)
+</Aside>
+
+Another day, another [familiar location](https://adventofcode.com/2023/day/15).
+
+Today's input is a map of the surrounding area.
+
+An example input looks like this:
+
+```txt title=input.txt
+89010123
+78121874
+87430965
+96549874
+45678903
+32019012
+01329801
+10456732
+```
+
+Each number is the height of that point on the map (from 0 to 9).
+
+So the location at row index 0 and column index 0 has a height of 8.
+
+## Parsing
+
+Today is a day again where I _could_ have done without any data structures.
+But I used one anyway, because I like typing `.row` instead of `.0` or `.x` to get at the row index of a point.
+
+The structure I parsed the input into is also not the most efficient way to store this map (that would probably be a 1D-list).
+But it works perfectly and is nice to work with.
+
+I represented the input map as a map where each key is a `Point`, and each value is a height.
+
+As in a previous day, I made sure to remember the amount of rows and the amount of columns.
+
+```rust
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+}
+
+fn parse(input: &str) -> (i32, i32, HashMap<Point, u32>) {
+    let rows = input.lines().count() as i32;
+    let cols = input.lines().next().unwrap().chars().count() as i32;
+
+    let mut map = HashMap::new();
+    for (row, line) in input.lines().enumerate() {
+        for (col, c) in line.chars().enumerate() {
+            let point = Point::new(row as i32, col as i32);
+            let height = c.to_digit(10).unwrap();
+            map.insert(point, height);
+        }
+    }
+    (rows, cols, map)
+}
+```
+
+## Part 1
+
+The goal is to go hiking and find a good trail.
+
+A trail:
+
+- starts at 0
+- ends at 9
+- goes up by 1 each step
+- only has steps in 4 directions (up, right, down, left)
+
+Each trailhead (a height 0 point that starts a trail) has a score.
+It's the amount of `9`-height points that are reachable from it.
+
+The question asks what the sum of the score for all trailheads is.
+
+So, a pathfinding day!
+Time to break out the [bfs](https://en.wikipedia.org/wiki/Breadth-first_search)!
+
+### Helpers
+
+First, some helpers!
+I reused some of the logic for `Point` from a previous day.
+Collecting the logic about working with `Point`s there lets me keep the final solving code nice and tidy.
+
+```rust
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+
+    fn is_in_bounds(&self, rows: i32, cols: i32) -> bool {
+        (self.row >= 0 && self.row < rows) && (self.col >= 0 && self.col < cols)
+    }
+
+    fn add(&self, other: &Self) -> Self {
+        Self::new(self.row + other.row, self.col + other.col)
+    }
+
+    fn neighbours(&self, rows: i32, cols: i32) -> Vec<Self> {
+        let mut neighbours = Vec::new();
+        let dirs = [
+            // up
+            Point::new(-1, 0),
+            // right
+            Point::new(0, 1),
+            // down
+            Point::new(1, 0),
+            // left
+            Point::new(0, -1),
+        ];
+        for dir in dirs {
+            let next = self.add(&dir);
+            if next.is_in_bounds(rows, cols) {
+                neighbours.push(next);
+            }
+        }
+        neighbours
+    }
+}
+```
+
+<Aside variant="info">
+[Chris Biscardi](https://www.youtube.com/c/chrisbiscardi) pointed me to a great crate you could also use that has all this functionality and more: [glam](https://docs.rs/glam/latest/glam/).
+
+More specifically: the [`IVec2`](https://docs.rs/glam/latest/glam/i32/struct.IVec2.html) structure it has.
+
+</Aside>
+
+### Part 1 code
+
+Starting at every point of height 0,
+I did a search and incremented a sum each time I saw a unique height 9 point.
+
+Those points are unique because I keep track of every location to visit during the search in a set,
+and only push points to visit onto the queue when it has not already been marked to be visited previously.
+
+```rust title=day_10.rs
+fn part_1(input: &str) -> usize {
+    let (rows, cols, grid) = parse(input);
+
+    let starts = grid
+        .iter()
+        .filter_map(|(point, &height)| (height == 0).then_some(*point));
+
+    let mut sum = 0;
+    for start in starts {
+        // (point, height)
+        let mut q = VecDeque::new();
+        let mut seen = HashSet::new();
+        q.push_back((start, 0));
+        seen.insert(start);
+
+        while let Some((point, height)) = q.pop_front() {
+            if height == 9 {
+                sum += 1;
+                continue;
+            }
+            for neighbour in point.neighbours(rows, cols) {
+                let neighbour_height = grid[&neighbour];
+                if neighbour_height != height + 1 {
+                    continue;
+                }
+                if seen.insert(neighbour) {
+                    q.push_back((neighbour, neighbour_height));
+                }
+            }
+        }
+    }
+    sum
+}
+```
+
+## Part 2
+
+Oops, that was wrong!
+Multiple trails end in the same 9 height tile, and they should all be counted.
+
+The question asks what the sum of the amount of paths is.
+
+For me, this meant deleting the set that prevent going to spots we already visited.
+This results in all trails being walked.
+
+```rust title=day_10.rs
+fn part_2(input: &str) -> usize {
+    let (rows, cols, grid) = parse(input);
+
+    let starts = grid
+        .iter()
+        .filter_map(|(point, &height)| (height == 0).then_some(*point));
+
+    let mut sum = 0;
+    for start in starts {
+        // (point, height)
+        let mut q = VecDeque::new();
+        q.push_back((start, 0));
+
+        while let Some((point, height)) = q.pop_front() {
+            if height == 9 {
+                sum += 1;
+                continue;
+            }
+            for neighbour in point.neighbours(rows, cols) {
+                let neighbour_height = grid[&neighbour];
+                if neighbour_height != height + 1 {
+                    continue;
+                }
+                q.push_back((neighbour, neighbour_height));
+            }
+        }
+    }
+    sum
+}
+```
+
+## Final code
+
+I combined the logic from part1 and part2.
+Keeping track of all reached nines, and deduplicating them by putting them in a set for part1.
+
+```rust title=day_10.rs showLineNumbers
+use std::collections::{HashMap, HashSet, VecDeque};
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+
+    fn is_in_bounds(&self, rows: i32, cols: i32) -> bool {
+        (self.row >= 0 && self.row < rows) && (self.col >= 0 && self.col < cols)
+    }
+
+    fn add(&self, other: &Self) -> Self {
+        Self::new(self.row + other.row, self.col + other.col)
+    }
+
+    fn neighbours(&self, rows: i32, cols: i32) -> Vec<Self> {
+        let mut neighbours = Vec::new();
+        let dirs = [
+            // up
+            Point::new(-1, 0),
+            // right
+            Point::new(0, 1),
+            // down
+            Point::new(1, 0),
+            // left
+            Point::new(0, -1),
+        ];
+        for dir in dirs {
+            let next = self.add(&dir);
+            if next.is_in_bounds(rows, cols) {
+                neighbours.push(next);
+            }
+        }
+        neighbours
+    }
+}
+
+fn parse(input: &str) -> (i32, i32, HashMap<Point, u32>) {
+    let rows = input.lines().count() as i32;
+    let cols = input.lines().next().unwrap().chars().count() as i32;
+
+    let mut map = HashMap::new();
+    for (row, line) in input.lines().enumerate() {
+        for (col, c) in line.chars().enumerate() {
+            let point = Point::new(row as i32, col as i32);
+            let height = c.to_digit(10).unwrap();
+            map.insert(point, height);
+        }
+    }
+    (rows, cols, map)
+}
+
+fn both(input: &str) -> (usize, usize) {
+    let (rows, cols, grid) = parse(input);
+
+    let starts = grid
+        .iter()
+        .filter_map(|(point, &height)| (height == 0).then_some(*point));
+
+    let mut nines = 0;
+    let mut routes = 0;
+    for start in starts {
+        // (point, height)
+        let mut q = VecDeque::new();
+        let mut endings = Vec::new();
+        q.push_back((start, 0));
+
+        while let Some((point, height)) = q.pop_front() {
+            if height == 9 {
+                endings.push(point);
+                continue;
+            }
+            for neighbour in point.neighbours(rows, cols) {
+                let neighbour_height = grid[&neighbour];
+                if neighbour_height != height + 1 {
+                    continue;
+                }
+                q.push_back((neighbour, neighbour_height));
+            }
+        }
+        routes += endings.len();
+        nines += endings.iter().collect::<HashSet<_>>().len();
+    }
+
+    (nines, routes)
+}
+```

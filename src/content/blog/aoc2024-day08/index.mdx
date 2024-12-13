@@ -1,0 +1,307 @@
+---
+title: "Advent of Code 2024 Day 8"
+date: 2024-12-08
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 8: Resonant Collinearity
+
+https://adventofcode.com/2024/day/8
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_08.rs)
+</Aside>
+
+On top of the building you are on is a radio antenna, and it is up to no good.
+There are many more like it across the city.
+
+A pair of antennas broadcasting the same wavelength create two _antinodes_ (spots where the nefarious purposes of the antenna are realised, making people buy _easter bunny stuff_).
+
+An example input looks like this:
+
+```txt title=input.txt
+............
+........0...
+.....0......
+.......0....
+....0.......
+......A.....
+............
+............
+........A...
+.........A..
+............
+............
+```
+
+It's a 2D-grid of the city.
+Each alphanumeric character is an antenna.
+Identical characters send out identical wavelengths.
+
+<Aside variant="danger">
+  Mind you that capitalization matters, `a` and `A` are **not** the same.
+</Aside>
+
+## Parsing
+
+I turned the input string into a few datapoints, the bounds of the grid (rows and cols),
+and a mapping from each type of radiotower to a list of points where a tower of that type exists.
+
+### Helper structure
+
+In a previous day, I said I'd start parsing data into neat data structures in order to get confused less often.
+I had some trouble keeping track if index 0 was a row index or a column index, and was `x` the variable for column again? Oh no, that was `y`...
+
+So, `Point`!
+This is not necessary at all, it probably even hurts performance a tiny bit, but it's way nicer to show and understand code.
+
+```rust
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+}
+```
+
+## Parsing code
+
+For convenience, I turned all numbers here into numbers that can go negative again,
+because before typing this post I solved the day, and we get to do some offset calculating again!
+
+```rust
+fn parse(input: &str) -> (i32, i32, HashMap<char, Vec<Point>>) {
+    let rows = input.lines().count();
+    let cols = input.lines().next().unwrap().chars().count();
+
+    let mut antennas: HashMap<char, Vec<Point>> = HashMap::new();
+    for (row, line) in input.lines().enumerate() {
+        for (col, c) in line.chars().enumerate() {
+            if c != '.' {
+                let point = Point::new(row as i32, col as i32);
+                antennas.entry(c).or_default().push(point);
+            }
+        }
+    }
+    (rows as i32, cols as i32, antennas)
+}
+```
+
+## Part 1
+
+A pair of the same antenna types create 2 antinodes, one on each side of the antennas.
+That happens at 2 locations directly in line with the antennas.
+
+For a location to be an antinode, it has to be exactly twice as far away from one antenna as it is from the other.
+
+Visualized, this pair of `a` antennas create 2 antinodes marked with `#`:
+
+```text
+..........
+...#......
+..........
+....a.....
+..........
+.....a....
+..........
+......#...
+..........
+..........
+```
+
+The question asks how many points within the bounds are an antinode.
+
+### Helpers
+
+I expanded the `Point` structure with some methods.
+
+- To add 2 `Point`s together
+- To calculate the distance between 2 `Point`s
+- To check if a `Point` is within the bounds of the grid
+
+```rust
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+
+    fn is_in_bounds(&self, rows: i32, cols: i32) -> bool {
+        (self.row >= 0 && self.row < rows) && (self.col >= 0 && self.col < cols)
+    }
+
+    fn dist(&self, other: &Self) -> Self {
+        Point::new(self.row - other.row, self.col - other.col)
+    }
+
+    fn add(&self, other: &Self) -> Self {
+        Point::new(self.row + other.row, self.col + other.col)
+    }
+}
+```
+
+### Part 1 code
+
+These helpers make the code for part 1 much simpler to read (as opposed to a bunch of loose numbers) in my opinion.
+
+I iterate over the map of antennas, so each loop has a list of equal antennas.
+
+I then loop over all combinations of 2 `Point`s.
+The distance between the `Point`s is added to the first `Point`.
+
+If the resulting `Point` is within the bounds of the map, it's an antinode and is added to a set.
+
+So, per loop, only 1 antinode can be added to the final set, because each pair will appear twice:
+
+1. once as (point1, point2)
+1. once as (point2, point1)
+
+At the end of the loop, the length of that set is the answer to p1!
+
+```rust title=day_08.rs
+pub fn part_1(input: &str) -> usize {
+    let (rows, cols, antennas) = parse(input);
+    let mut antinodes = HashSet::new();
+    for points in antennas.values() {
+        for p1 in points {
+            for p2 in points {
+                if p1 == p2 {
+                    continue;
+                }
+                let dist = p1.dist(p2);
+                let new = p1.add(&dist);
+                if new.is_in_bounds(rows, cols) {
+                    antinodes.insert(new);
+                }
+            }
+        }
+    }
+    antinodes.len()
+}
+```
+
+## Part 2
+
+It turns out that an antinode occurs at **any** grid position exactly in line with at least two antennas of the same frequency.
+
+So there are more than 2 per pair, they keep going until they leave the bounds of the map.
+
+This was a small change!
+Adding a `while` loop to the part 1 code, adding the distance to a point each time we loop.
+
+```rust title=day_08.rs
+fn part_2(input: &str) -> usize {
+    let (rows, cols, antennas) = parse(input);
+    let mut antinodes = HashSet::new();
+    for points in antennas.values() {
+        for p1 in points {
+            for p2 in points {
+                if p1 == p2 {
+                    continue;
+                }
+                let dist = p1.dist(p2);
+                let mut new = *p1;
+                while new.is_in_bounds(rows, cols) {
+                    antinodes.insert(new);
+                    new = new.add(&dist);
+                }
+            }
+        }
+    }
+    antinodes.len()
+}
+```
+
+## Final code
+
+```rust title=day_08.rs showLineNumbers
+use std::collections::{HashMap, HashSet};
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+
+    fn is_in_bounds(&self, rows: i32, cols: i32) -> bool {
+        (self.row >= 0 && self.row < rows) && (self.col >= 0 && self.col < cols)
+    }
+
+    fn dist(&self, other: &Self) -> Self {
+        Point::new(self.row - other.row, self.col - other.col)
+    }
+
+    fn add(&self, other: &Self) -> Self {
+        Point::new(self.row + other.row, self.col + other.col)
+    }
+}
+
+fn parse(input: &str) -> (i32, i32, HashMap<char, Vec<Point>>) {
+    let rows = input.lines().count();
+    let cols = input.lines().next().unwrap().chars().count();
+
+    let mut antennas: HashMap<char, Vec<Point>> = HashMap::new();
+    for (row, line) in input.lines().enumerate() {
+        for (col, c) in line.chars().enumerate() {
+            if c != '.' {
+                let point = Point::new(row as i32, col as i32);
+                antennas.entry(c).or_default().push(point);
+            }
+        }
+    }
+    (rows as i32, cols as i32, antennas)
+}
+
+pub fn part_1(input: &str) -> usize {
+    let (rows, cols, antennas) = parse(input);
+    let mut antinodes = HashSet::new();
+    for points in antennas.values() {
+        for p1 in points {
+            for p2 in points {
+                if p1 == p2 {
+                    continue;
+                }
+                let dist = p1.dist(p2);
+                let new = p1.add(&dist);
+                if new.is_in_bounds(rows, cols) {
+                    antinodes.insert(new);
+                }
+            }
+        }
+    }
+    antinodes.len()
+}
+
+pub fn part_2(input: &str) -> usize {
+    let (rows, cols, antennas) = parse(input);
+    let mut antinodes = HashSet::new();
+    for points in antennas.values() {
+        for p1 in points {
+            for p2 in points {
+                if p1 == p2 {
+                    continue;
+                }
+                let dist = p1.dist(p2);
+                let mut new = *p1;
+                while new.is_in_bounds(rows, cols) {
+                    antinodes.insert(new);
+                    new = new.add(&dist);
+                }
+            }
+        }
+    }
+    antinodes.len()
+}
+```

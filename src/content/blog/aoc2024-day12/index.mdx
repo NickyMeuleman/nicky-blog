@@ -1,0 +1,438 @@
+---
+title: "Advent of Code 2024 Day 12"
+date: 2024-12-12
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 12: Garden Groups
+
+https://adventofcode.com/2024/day/12
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_12.rs)
+</Aside>
+
+Another day, another [familiar location](https://adventofcode.com/2023/day/21).
+
+Today's input is the layout of the huge garden plot you are at.
+
+An example input looks like this:
+
+```txt title=input.txt
+RRRRIICCFF
+RRRRIICCCF
+VVRRRCCFFF
+VVRCCCJFFF
+VVVVCJJCFE
+VVIVCCJJEE
+VVIIICJJEE
+MIIIIIJJEE
+MIIISIJEEE
+MMMISSJEEE
+```
+
+It's a 2D-grid again where each letter signals a type of crop that grows in that location.
+
+## Parsing
+
+If you've been following along, you know what I do when I see a grid puzzle by now, `Point`!
+
+### `Point`
+
+```rust
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+}
+```
+
+---
+
+I stored each letter in a map again.
+This is not the most efficient way to store this, but it's very nice to work with and think about.
+
+```rust
+fn parse(input: &str) -> HashMap<Point, char> {
+    let mut map = HashMap::new();
+    for (row, line) in input.lines().enumerate() {
+        for (col, c) in line.chars().enumerate() {
+            let point = Point::new(row as i32, col as i32);
+            map.insert(point, c);
+        }
+    }
+    map
+}
+```
+
+## Part 1
+
+The elves want to put up fences around regions of plots that grow the same crop.
+A plot that touches another plot (up/right/down/left) that grows the same crop belongs to the same region.
+
+You need to figure out each plot's **area** and **perimeter**.
+The price for an amount of fence is `area * perimeter`.
+Don't ask why, the answer is ✨reasons✨.
+
+The question asks for the sum of all region prices.
+
+Some skeleton/pseudo-code
+
+```rust
+let map = parse(input);
+let mut sum = 0;
+for (point, crop) in &map {
+  // ignore points that are already contributing to the sum
+  let shape = shape(point, crop);
+  let area = area(shape);
+  let circumference = circumference(shape);
+  sum += area * circumference;
+}
+sum
+```
+
+### Helpers
+
+Time to write the code that can make my skeleton-code a reality.
+
+```rust
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+
+    fn add(&self, other: &Self) -> Self {
+        Self::new(self.row + other.row, self.col + other.col)
+    }
+
+    fn same_neighbours(&self, map: &HashMap<Point, char>, target_crop: char) -> Vec<Self> {
+        let mut neighbours = Vec::new();
+        for dir in Self::dirs() {
+            let next = self.add(&dir);
+            if map.get(&next).is_some_and(|&crop| crop == target_crop) {
+                neighbours.push(next);
+            }
+        }
+        neighbours
+    }
+
+    fn dirs() -> [Point; 4] {
+        [
+            // up
+            Self::new(-1, 0),
+            // right
+            Self::new(0, 1),
+            // down
+            Self::new(1, 0),
+            // left
+            Self::new(0, -1),
+        ]
+    }
+}
+
+fn shape(
+    start: Point,
+    crop: char,
+    map: &HashMap<Point, char>,
+    seen: &mut HashSet<Point>,
+) -> HashSet<Point> {
+    let mut q = VecDeque::new();
+    let mut shape = HashSet::new();
+    q.push_back(start);
+    shape.insert(start);
+
+    while let Some(point) = q.pop_front() {
+        for neighbour in point.same_neighbours(map, crop) {
+            if seen.insert(neighbour) {
+                shape.insert(neighbour);
+                q.push_back(neighbour);
+            }
+        }
+    }
+
+    shape
+}
+
+fn circumference(map: &HashMap<Point, char>, shape: &HashSet<Point>) -> usize {
+    shape
+        .iter()
+        .map(|point| 4 - point.same_neighbours(map, map[point]).len())
+        .sum()
+}
+```
+
+### Code
+
+A global set makes sure I don't count garden plots that already contribute to the sum twice.
+Each time a shape (a set of `Point`s) is calculated,
+those `Point`s are added to the set so they can't be included in future shapes.
+
+You might have noticed the distinct lack of `area()`,
+well, that's a oneliner and making a function for it would be a bit silly.
+
+```rust title=day_12.rs
+fn part_1(input: &str) -> usize {
+    let map = parse(input);
+    let mut seen = HashSet::new();
+    let mut sum = 0;
+    for (point, crop) in &map {
+        if seen.contains(point) {
+            continue;
+        }
+        let shape = shape(*point, *crop, &map, &mut seen);
+        let area = shape.len();
+        let circumference = circumference(&map, &shape);
+        sum += area * circumference;
+    }
+    sum
+}
+```
+
+## Part 2
+
+Instead of the circumference of garden plots, use the amount of sides the plot has.
+
+The question asks for the sum of all region prices again.
+
+Some skeleton/pseudo-code again, changing `circumference` to `sides`:
+
+```rust {7-8}
+let map = parse(input);
+let mut sum = 0;
+for (point, crop) in &map {
+  // ignore points that are already contributing to the sum
+  let shape = shape(point, crop);
+  let area = area(shape);
+  let sides = sides(shape);
+  sum += area * sides;
+}
+sum
+```
+
+### Helpers
+
+Updating the helpers from part 1.
+The most interesting is the `sides` function, which I adapted from solutions I saw only.
+It chooses a direction, goes in it until the garden plot ends, and then follows the side in the perpendicular direction until that ends.
+
+```rust title=day_12.rs
+impl Point {
+    // -- snip --
+    fn perp(&self) -> Self {
+        // turn and face a perpendicular direction
+        // does not matter if (row, col) turns into (-col, row) or (col, row) for this algorithm
+        Point::new(-self.col, self.row)
+    }
+}
+
+fn sides(shape: HashSet<Point>) -> usize {
+    let mut sides = HashSet::new();
+    for point in &shape {
+        for dir in Point::dirs() {
+            // look for first out of bounds element in dir
+            if shape.contains(&point.add(&dir)) {
+                continue;
+            }
+            // perpendicular dir
+            let perp = dir.perp();
+            let mut curr = *point;
+
+            // keep moving in the perpendicular direction while:
+            // - a block in the perpendicular direction exists
+            // - a block in the original direction doesn't exist
+            while shape.contains(&curr.add(&perp)) && !shape.contains(&curr.add(&dir)) {
+                curr = curr.add(&perp);
+            }
+            // when edge was followed, add this (point, dir) to the sides.
+            // include dir because 1 point has 4 sides
+            sides.insert((curr, dir));
+        }
+    }
+    sides.len()
+}
+```
+
+### Code
+
+```rust
+fn part_2(input: &str) -> usize {
+    let map = parse(input);
+    let mut seen = HashSet::new();
+    let mut sum = 0;
+    for (point, crop) in &map {
+        if seen.contains(point) {
+            continue;
+        }
+        let shape = shape(*point, *crop, &map, &mut seen);
+        let area = shape.len();
+        let sides = sides(shape);
+        sum += area * sides;
+    }
+    sum
+}
+```
+
+## Final code
+
+```rust title=day_12.rs showLineNumbers
+use std::collections::{HashMap, HashSet, VecDeque};
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+
+    fn add(&self, other: &Self) -> Self {
+        Self::new(self.row + other.row, self.col + other.col)
+    }
+
+    fn same_neighbours(&self, map: &HashMap<Point, char>, target_crop: char) -> Vec<Self> {
+        let mut neighbours = Vec::new();
+        for dir in Self::dirs() {
+            let next = self.add(&dir);
+            if map.get(&next).is_some_and(|&crop| crop == target_crop) {
+                neighbours.push(next);
+            }
+        }
+        neighbours
+    }
+
+    fn dirs() -> [Point; 4] {
+        [
+            // up
+            Self::new(-1, 0),
+            // right
+            Self::new(0, 1),
+            // down
+            Self::new(1, 0),
+            // left
+            Self::new(0, -1),
+        ]
+    }
+
+    fn perp(&self) -> Self {
+        // does not matter if (row, col) turns into (-col, row) or (col, row) for this algorithm
+        Point::new(-self.col, self.row)
+    }
+}
+
+fn parse(input: &str) -> HashMap<Point, char> {
+    let mut map = HashMap::new();
+    for (row, line) in input.lines().enumerate() {
+        for (col, c) in line.chars().enumerate() {
+            let point = Point::new(row as i32, col as i32);
+            map.insert(point, c);
+        }
+    }
+    map
+}
+
+fn shape(
+    start: Point,
+    crop: char,
+    map: &HashMap<Point, char>,
+    seen: &mut HashSet<Point>,
+) -> HashSet<Point> {
+    let mut q = VecDeque::new();
+    let mut shape = HashSet::new();
+    q.push_back(start);
+    shape.insert(start);
+
+    while let Some(point) = q.pop_front() {
+        for neighbour in point.same_neighbours(map, crop) {
+            if seen.insert(neighbour) {
+                shape.insert(neighbour);
+                q.push_back(neighbour);
+            }
+        }
+    }
+
+    shape
+}
+
+fn circumference(map: &HashMap<Point, char>, shape: &HashSet<Point>) -> usize {
+    shape
+        .iter()
+        .map(|point| 4 - point.same_neighbours(map, map[point]).len())
+        .sum()
+}
+
+fn sides(shape: HashSet<Point>) -> usize {
+    let mut sides = HashSet::new();
+    for point in &shape {
+        for dir in Point::dirs() {
+            // look for first out of bounds element in dir
+            if shape.contains(&point.add(&dir)) {
+                continue;
+            }
+            // perpendicular dir
+            let perp = dir.perp();
+            let mut curr = *point;
+
+            // keep moving in the perpendicular direction while:
+            // - a block in the perpendicular direction exists
+            // - a block in the original direction doesn't exist
+            while shape.contains(&curr.add(&perp)) && !shape.contains(&curr.add(&dir)) {
+                curr = curr.add(&perp);
+            }
+            // when edge was followed, add this (point, dir) to the sides.
+            // include dir because 1 point has 4 sides
+            sides.insert((curr, dir));
+        }
+    }
+    sides.len()
+}
+
+pub fn part_1(input: &str) -> usize {
+    let map = parse(input);
+    let mut seen = HashSet::new();
+    let mut sum = 0;
+    for (point, crop) in &map {
+        if seen.contains(point) {
+            continue;
+        }
+        let shape = shape(*point, *crop, &map, &mut seen);
+        let area = shape.len();
+        let circumference = circumference(&map, &shape);
+        sum += area * circumference;
+    }
+    sum
+}
+
+pub fn part_2(input: &str) -> usize {
+    let map = parse(input);
+    let mut seen = HashSet::new();
+    let mut sum = 0;
+    for (point, crop) in &map {
+        if seen.contains(point) {
+            continue;
+        }
+        let shape = shape(*point, *crop, &map, &mut seen);
+        let area = shape.len();
+        let sides = sides(shape);
+        sum += area * sides;
+    }
+    sum
+}
+```

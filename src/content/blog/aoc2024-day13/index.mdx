@@ -1,0 +1,304 @@
+---
+title: "Advent of Code 2024 Day 13"
+date: 2024-12-13
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 13: Claw Contraption
+
+https://adventofcode.com/2024/day/13
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_13.rs)
+</Aside>
+
+Another day, another [familiar location](https://adventofcode.com/2020/day/24).
+
+Today's input is the behaviour of a bunch of [arcade claw machines](https://en.wikipedia.org/wiki/Claw_machine).
+
+An example input looks like this:
+
+```txt title=input.txt
+Button A: X+94, Y+34
+Button B: X+22, Y+67
+Prize: X=8400, Y=5400
+
+Button A: X+26, Y+66
+Button B: X+67, Y+21
+Prize: X=12748, Y=12176
+
+Button A: X+17, Y+86
+Button B: X+84, Y+37
+Prize: X=7870, Y=6450
+
+Button A: X+69, Y+23
+Button B: X+27, Y+71
+Prize: X=18641, Y=10279
+```
+
+Each block of input represents one machine.
+Their grippers all move on a 2D-plane directly above the prize.
+
+Each machine has 2 buttons, which each move the gripper some direction in the `x` and `y` axis.
+
+The 3 lines per machine tell you:
+
+1. What pressing A does to the gripper coordinates
+1. What pressing B does to the gripper coordinates
+1. The coordinates of the prize
+
+The goal is to place the gripper directly over the prize.
+You do this by pressing the A and B button a number of times.
+
+<Aside variant="info">
+  Not every machine has a winnable combination, sometimes there is no possible
+  way to win!
+</Aside>
+
+## Parsing
+
+If you've been following along, you know what I do when I see a puzzle with coordinates by now, `Point`!
+
+### `Point`
+
+```rust
+#[derive(PartialEq, Eq)]
+struct Point {
+    x: i64,
+    y: i64,
+}
+
+impl Point {
+    fn new(x: i64, y: i64) -> Self {
+        Self { x, y }
+    }
+}
+```
+
+I stored each machine as a 3-item array of `Point`s.
+
+```rust
+use itertools::Itertools;
+
+fn parse(input: &str) -> Vec<[Point; 3]> {
+    let mut machines = Vec::new();
+    for block in input.split("\n\n") {
+        let (adx, ady, bdx, bdy, x, y) = block
+            .split(|c: char| !c.is_ascii_digit())
+            .filter(|s| !s.is_empty())
+            .map(|s| s.parse().unwrap())
+            .collect_tuple()
+            .unwrap();
+        let a = Point::new(adx, ady);
+        let b = Point::new(bdx, bdy);
+        let prize = Point::new(x, y);
+        machines.push([a, b, prize]);
+    }
+    machines
+}
+```
+
+## Part 1
+
+- Pressing the A button costs 3 tokens.
+- Pressing the B button costs 1 token.
+
+Don't overthink why, the answer is ✨reasons✨.
+
+The question asks for sum of the lowest cost for all winnable machines.
+
+This is a system of 2 linear equations.
+
+Variable definitions:
+
+- $a_n$ The amount of times button A is pressed
+- $b_n$ The amount of times button B is pressed
+- $a_x$ The change in `x` coordinate pressing A causes
+- $a_y$ The change in `y` coordinate pressing A causes
+- $b_x$ The change in `x` coordinate pressing B causes
+- $b_y$ The change in `y` coordinate pressing B causes
+- $p_x$ The `x` coordinate of the prize
+- $p_y$ The `y` coordinate of the prize
+
+The 2 equations describe which `x` and `y` coordinate the gripper has after `n` presses.
+This location should be equal to the location of the prize to win:
+
+1. $a_n * a_x + b_n * b_x = p_x$
+1. $a_n * a_y + b_n * b_y = p_y$
+
+Solving for $a_n$ first.
+By multiplying both sides of each equation so the $b_n$ term cancels out when I subtract the 2 equations from eachother:
+
+1. the top is multiplied by $b_y$
+1. the bottom is multiplied by $b_x$
+
+<Aside variant="info">
+  I am inexperienced at writing math syntax, so ignore the bracketed number on
+  the right, and pretend there is a `-` sign in front of the horizontal line.
+</Aside>
+
+$$
+\begin{align}
+a_n*a_x*b_y &+ b_n*b_x*b_y &=& p_x \\
+a_n*a_y*b_x &+ b_n*b_y*b_x &=& p_y \\
+\hline \\
+a_n * (a_x * b_y - a_y * b_x) &+ 0 &=& p_x - p_y
+\end{align}
+$$
+
+Isolating $a_n$ as that is the only unknown, all other variables can be replaced by numbers.
+
+$$
+a_n = \frac{p_x - p_y}{a_x * b_y - a_y * b_x}
+$$
+
+After calculating the amount of times A should be pressed, calculate the amount of times B should be pressed.
+I did this by replacing $a_n$ by its value in one of the original functions.
+
+$$
+b_n = \frac{p_x - a_n * a_x}{b_x}
+$$
+
+Now that we have the amount of times to press the A button and the amount of times to press the B button, we need to check if those numbers make sense.
+After all, when dealing with 2 linear equations there are 3 possibilities:
+
+1. They intersect once
+1. They are parallel and never intersect
+1. They represent the same line, overlap, so intersect infinitely many times
+
+Luckily, this question never runs in to option 2 or 3.
+Because the puzzlemaster decided to be kind today.
+
+But there is still an extra option I have to handle, I'm not magic and can not press a button a fractional amount of times. (bummer, I know)
+
+So in the code, I check if the position the gripper reaches after $a_n$ A presses and $b_n$ B presses is the same as the position of the prize.
+
+If it is, I return a successful result with a price of $3 * a_n + 1 * b_n$.
+
+<Aside variant="info">
+  I'm not working with floating point numbers in my code. If a final variable is
+  not an integer, the final check will fail, so this works out well even without
+  working with floating point number and confirming the result is an integer
+  like I should.
+</Aside>
+
+### Helpers
+
+Coding that math into a function.
+
+It returns something when the found intersection of the 2 lines is the same as the location of the prize.  
+If the intersection exists, but is not reachable in whole button presses, the function returns nothing.
+
+```rust
+fn solve(a: Point, b: Point, prize: Point) -> Option<i64> {
+    // lines are never parallel in this question
+    assert!((a.y as f64 / a.x as f64) != (b.y as f64 / b.x as f64));
+
+    let na = ((prize.x * b.y) - (prize.y * b.x)) / ((a.x * b.y) - (a.y * b.x));
+    let nb = (prize.x - na * a.x) / b.x;
+    let solution = Point::new(na * a.x + nb * b.x, na * a.y + nb * b.y);
+    (solution == prize).then_some(3 * na + nb)
+}
+```
+
+### Code
+
+A short function because of the helper functions again.
+- Parse the input into a list of `[A, B, Prize]` points.
+- Solve using that combination of `Point`s
+- If solveable: add the solution cost to the sum
+
+```rust title=day_13.rs
+fn part_1(input: &str) -> i64 {
+    parse(input)
+        .into_iter()
+        .filter_map(|[a, b, prize]| solve(a, b, prize))
+        .sum()
+}
+```
+
+## Part 2
+
+Woopsie, small mistake.
+The prize coordinates are both (x and y) 10 trillion less than what they should have been.
+
+```rust {1,6-7}
+const TEN_TRILLY: i64 = 10_000_000_000_000;
+pub fn part_2(input: &str) -> i64 {
+    parse(input)
+        .into_iter()
+        .filter_map(|[a, b, mut prize]| {
+            prize.x += TEN_TRILLY;
+            prize.y += TEN_TRILLY;
+            solve(a, b, prize)
+        })
+        .sum()
+}
+```
+
+## Final code
+
+```rust title=day_13.rs showLineNumbers
+use itertools::Itertools;
+
+#[derive(PartialEq, Eq)]
+struct Point {
+    x: i64,
+    y: i64,
+}
+
+impl Point {
+    fn new(x: i64, y: i64) -> Self {
+        Self { x, y }
+    }
+}
+
+fn parse(input: &str) -> Vec<[Point; 3]> {
+    let mut machines = Vec::new();
+    for block in input.split("\n\n") {
+        let (adx, ady, bdx, bdy, x, y) = block
+            .split(|c: char| !c.is_ascii_digit())
+            .filter(|s| !s.is_empty())
+            .map(|s| s.parse().unwrap())
+            .collect_tuple()
+            .unwrap();
+        let a = Point::new(adx, ady);
+        let b = Point::new(bdx, bdy);
+        let prize = Point::new(x, y);
+        machines.push([a, b, prize]);
+    }
+    machines
+}
+
+fn solve(a: Point, b: Point, prize: Point) -> Option<i64> {
+    // lines are never parallel in this question
+    assert!((a.y as f64 / a.x as f64) != (b.y as f64 / b.x as f64));
+
+    let na = ((prize.x * b.y) - (prize.y * b.x)) / ((a.x * b.y) - (a.y * b.x));
+    let nb = (prize.x - na * a.x) / b.x;
+    let solution = Point::new(na * a.x + nb * b.x, na * a.y + nb * b.y);
+    (solution == prize).then_some(3 * na + nb)
+}
+
+pub fn part_1(input: &str) -> i64 {
+    parse(input)
+        .into_iter()
+        .filter_map(|[a, b, prize]| solve(a, b, prize))
+        .sum()
+}
+
+const TEN_TRILLY: i64 = 10_000_000_000_000;
+pub fn part_2(input: &str) -> i64 {
+    parse(input)
+        .into_iter()
+        .filter_map(|[a, b, mut prize]| {
+            prize.x += TEN_TRILLY;
+            prize.y += TEN_TRILLY;
+            solve(a, b, prize)
+        })
+        .sum()
+}
+```

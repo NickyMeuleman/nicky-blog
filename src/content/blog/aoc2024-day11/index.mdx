@@ -1,0 +1,177 @@
+---
+title: "Advent of Code 2024 Day 11"
+date: 2024-12-11
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 11: Plutonian Pebbles
+
+https://adventofcode.com/2024/day/11
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_11.rs)
+</Aside>
+
+Another day, another [familiar location](https://adventofcode.com/2019/day/20).
+
+You are in a spot with a bunch of numbered stones in a straight line.
+
+An example input looks like this:
+
+```txt title=input.txt
+0 1 10 99 999
+```
+
+The input is one line.
+Each stone number is separated by a space.
+
+Each time you blink, the stones change all at once according to a few rules.
+
+> Ooh, I know this one, it's a cellular automaton, like the [game of life](https://nl.wikipedia.org/wiki/Game_of_Life)
+
+The rules for how the (markings on the) stones change:
+
+- 0 becomes 1
+- Even number of digit stones turn into 2 new stones:
+  1. Left stone gets the first half of the digits
+  1. Right stone gets the second half of the digits
+- Otherwise, the number get multiplied by 2024
+
+<Aside variant="danger">
+  Do not be fooled by the bold text that says **"order is preserved"**, it's a
+  red herring. The stones are completely independent from each other, so their
+  order does not matter.
+</Aside>
+
+## Parsing
+
+Because each stone is completely independent,
+and stones with the same number acts in exactly the same way,
+I chose to work on a map of key-value pairs where a key is a stone number,
+and the value is the amount of stones with that number.
+
+Oh, and this is a day again where the numbers can get **large**.
+
+```rust
+fn parse(input: &str) -> HashMap<u64, u64> {
+    let mut stones: HashMap<u64, u64> = HashMap::new();
+    for num in input.split_ascii_whitespace() {
+        let num = num.parse().unwrap();
+        *stones.entry(num).or_default() += 1;
+    }
+    stones
+}
+```
+
+## Helper
+
+Implementing the rules for what happens when you blink.
+This helper function takes in a map of stones, and returns a new map of stones.
+
+```rust
+fn blink(stones: &HashMap<u64, u64>) -> HashMap<u64, u64> {
+    let mut new = HashMap::new();
+    for (stone, amount) in stones {
+        if *stone == 0 {
+            *new.entry(1).or_default() += amount;
+        } else {
+            let digits = stone.ilog10() + 1;
+            if digits % 2 == 0 {
+                let magnitude = 10u64.pow(digits / 2);
+                *new.entry(stone % magnitude).or_default() += amount;
+                *new.entry(stone / magnitude).or_default() += amount;
+            } else {
+                *new.entry(stone * 2024).or_default() += amount;
+            }
+        }
+    }
+    new
+}
+```
+
+## Part 1
+
+The question asks how many stones there would be after blinking 25 times.
+
+```rust title=day_11.rs
+fn part_1(input: &str) -> u64 {
+    let mut stones = parse(input);
+    for _ in 0..25 {
+        stones = blink(&stones);
+    }
+    stones.values().sum()
+}
+```
+
+## Part 2
+
+What was this, blinking [for ants?!](https://www.youtube.com/watch?v=7ffj8SHrbk0),
+it needs to be at least 3 times bigger!
+
+The question asks how many stones there would be after blinking 75 times.
+
+1. Take the part 1 code
+1. Change 25 to 75
+1. Success
+
+```rust title=day_11.rs {3}
+fn part_2(input: &str) -> u64 {
+    let mut stones = parse(input);
+    for _ in 0..75 {
+        stones = blink(&stones);
+    }
+    stones.values().sum()
+}
+```
+
+## Final code
+
+To combine both parts:
+Looping 75 times and recording the sum at loop number 25.
+
+```rust title=day_11.rs showLineNumbers
+use std::collections::HashMap;
+
+fn parse(input: &str) -> HashMap<u64, u64> {
+    let mut stones: HashMap<u64, u64> = HashMap::new();
+    for num in input.split_ascii_whitespace() {
+        let num = num.parse().unwrap();
+        *stones.entry(num).or_default() += 1;
+    }
+    stones
+}
+
+fn blink(stones: &HashMap<u64, u64>) -> HashMap<u64, u64> {
+    let mut new = HashMap::new();
+    for (stone, amount) in stones {
+        if *stone == 0 {
+            *new.entry(1).or_default() += amount;
+        } else {
+            let digits = stone.ilog10() + 1;
+            if digits % 2 == 0 {
+                let magnitude = 10u64.pow(digits / 2);
+                *new.entry(stone % magnitude).or_default() += amount;
+                *new.entry(stone / magnitude).or_default() += amount;
+            } else {
+                *new.entry(stone * 2024).or_default() += amount;
+            }
+        }
+    }
+    new
+}
+
+fn both(input: &str) -> (u64, u64) {
+    let mut stones = parse(input);
+    let mut p1 = 0;
+    for i in 0..75 {
+        if i == 25 {
+            p1 = stones.values().sum();
+        }
+        stones = blink(&stones);
+    }
+    (p1, stones.values().sum())
+}
+```

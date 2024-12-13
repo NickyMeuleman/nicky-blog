@@ -1,0 +1,273 @@
+---
+title: "Advent of Code 2024 Day 5"
+date: 2024-12-05
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 5: Print Queue
+
+https://adventofcode.com/2024/day/5
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_05.rs)
+</Aside>
+
+<Aside>
+  I KNEW IT! [CALLED IT!](/blog/aoc2024-day03) It was only a matter of time
+  until we were fixing printers.
+</Aside>
+
+Today's location to search for the chief historian is familiar (Again! Makes sense, you've been to many interesting places.).
+You [remember visiting it](https://adventofcode.com/2017/day/1).
+
+As is tradition, the an elf there asks for your help with something (it's their printer, yaaaaaaaay).
+They want to print updates to some manual (at least they are saving paper and not printing the entire thing again).
+
+Your puzzle input today are printing instructions.
+
+The updates need to be printed in a specific order.
+
+The first part of the input consists of the ordering rules.  
+`X|Y` notation, where `X` and `Y` are both numbers, means that page number `X` **must** be printed before page number `Y`.
+
+The second part of your input is a list of updates, one per line.
+Each update has several page numbers, separated by a comma.
+
+An example input looks like this:
+
+```txt title=input.txt
+47|53
+97|13
+97|61
+97|47
+75|29
+61|13
+75|53
+29|13
+97|29
+53|29
+61|53
+97|53
+61|29
+47|13
+75|47
+97|75
+47|61
+75|61
+47|29
+75|13
+53|13
+
+75,47,61,53,29
+97,61,53,29,13
+75,29,13
+75,97,47,61,53
+61,13,29
+97,13,75,29,47
+```
+
+[Apparently](https://www.youtube.com/watch?v=rz5TGN7eUcM) for today, each input is constructed so each possible page number pair is represented in the ordering rules.
+
+## Part 1
+
+Start by printing the updates that are already correctly ordered.
+
+The question asks for the sum of the middle page number from the correctly-ordered updates.
+
+I chose 2 solving methods again today, I don't know which one I like more, you decide!
+
+The first one builds up a map of orderings that maps each page number to a list of numbers that come before it.
+
+The second one builds up a map of orderings for each 2 number pair.  
+eg. `(47, 53)` maps to `Less` because of the `47|53` rule.
+
+The code checks if an update is ordered correctly using those maps, and if it is adds the middle page number to a sum.
+
+### Option 1: Map numbers to a list of numbers
+
+```rust title=day_05.rs
+fn part_1(input: &str) -> u32 {
+    let (rules, pages) = input.split_once("\n\n").unwrap();
+
+    let mut orderings: HashMap<u32, HashSet<u32>> = HashMap::new();
+    for rule in rules.lines() {
+        let (n1, n2) = rule.split_once('|').unwrap();
+        orderings
+            .entry(n2.parse().unwrap())
+            .or_default()
+            .insert(n1.parse().unwrap());
+    }
+
+    let mut updates: Vec<Vec<u32>> = vec![];
+    for page in pages.lines() {
+        let mut update = vec![];
+        for num in page.split(',') {
+            update.push(num.parse().unwrap());
+        }
+        updates.push(update);
+    }
+
+    let mut sum = 0;
+
+    for update in updates {
+        if update.is_sorted_by(|a, b| orderings[b].contains(a)) {
+            sum += update[update.len() / 2];
+        }
+    }
+
+    sum
+}
+```
+
+### Option 2: Build a map of individual orderings
+
+```rust title=day_05.rs
+fn part_1(input: &str) -> u32 {
+    let (rules, pages) = input.split_once("\n\n").unwrap();
+
+    let mut order: HashMap<(u32, u32), Ordering> = HashMap::new();
+    for rule in rules.lines() {
+        let (n1, n2) = rule.split_once('|').unwrap();
+        let n1 = n1.parse().unwrap();
+        let n2 = n2.parse().unwrap();
+        order.insert((n1, n2), Ordering::Less);
+        order.insert((n2, n1), Ordering::Greater);
+    }
+
+    let mut sum = 0;
+    for line in pages.lines() {
+        let update: Vec<u32> = line.split(',').map(|s| s.parse().unwrap()).collect();
+        if update.is_sorted_by(|&a, &b| order.get(&(a, b)) == Some(&Ordering::Less)) {
+            sum += update[update.len() / 2];
+        }
+    }
+    sum
+}
+```
+
+## Part 2
+
+Now print the incorrectly ordered updates.
+
+The question asks for the sum of the middle page number from the incorrectly-ordered updates.
+
+A small change to the code from part 1.
+If an update is already ordered, skip it, if it is not, sort it, and add to the sum.
+
+### Option 1: Map numbers to a list of numbers
+
+```rust title=day_05.rs
+fn part_2(input: &str) -> u32 {
+    let (rules, pages) = input.split_once("\n\n").unwrap();
+
+    let mut orderings: HashMap<u32, HashSet<u32>> = HashMap::new();
+    for rule in rules.lines() {
+        let (n1, n2) = rule.split_once('|').unwrap();
+        orderings
+            .entry(n2.parse().unwrap())
+            .or_default()
+            .insert(n1.parse().unwrap());
+    }
+
+    let mut updates: Vec<Vec<u32>> = vec![];
+    for page in pages.lines() {
+        let mut update = vec![];
+        for num in page.split(',') {
+            update.push(num.parse().unwrap());
+        }
+        updates.push(update);
+    }
+
+    let mut sum = 0;
+
+    for mut update in updates {
+        if !update.is_sorted_by(|a, b| orderings[b].contains(a)) {
+            update.sort_unstable_by(|a, b| orderings[b].contains(a).cmp(&true));
+            sum += update[update.len() / 2];
+        }
+    }
+
+    sum
+}
+```
+
+### Option 2: Build a map of individual orderings
+
+```rust title=day_05.rs
+fn part_2(input: &str) -> u32 {
+    let (rules, pages) = input.split_once("\n\n").unwrap();
+
+    let mut order: HashMap<(u32, u32), Ordering> = HashMap::new();
+    for rule in rules.lines() {
+        let (n1, n2) = rule.split_once('|').unwrap();
+        let n1 = n1.parse().unwrap();
+        let n2 = n2.parse().unwrap();
+        order.insert((n1, n2), Ordering::Less);
+        order.insert((n2, n1), Ordering::Greater);
+    }
+
+    let mut sum = 0;
+    for line in pages.lines() {
+        let mut update: Vec<u32> = line.split(',').map(|s| s.parse().unwrap()).collect();
+        if !update.is_sorted_by(|&a, &b| order.get(&(a, b)) == Some(&Ordering::Less)) {
+            update.sort_by(|&a, &b| *order.get(&(a, b)).unwrap_or(&Ordering::Equal));
+            sum += update[update.len() / 2];
+        }
+    }
+    sum
+}
+```
+
+## Final code
+
+```rust title=day_05.rs showLineNumbers
+use std::{cmp::Ordering, collections::HashMap};
+
+fn part_1(input: &str) -> u32 {
+    let (rules, pages) = input.split_once("\n\n").unwrap();
+
+    let mut order: HashMap<(u32, u32), Ordering> = HashMap::new();
+    for rule in rules.lines() {
+        let (n1, n2) = rule.split_once('|').unwrap();
+        let n1 = n1.parse().unwrap();
+        let n2 = n2.parse().unwrap();
+        order.insert((n1, n2), Ordering::Less);
+        order.insert((n2, n1), Ordering::Greater);
+    }
+
+    let mut sum = 0;
+    for line in pages.lines() {
+        let update: Vec<u32> = line.split(',').map(|s| s.parse().unwrap()).collect();
+        if update.is_sorted_by(|&a, &b| order.get(&(a, b)) == Some(&Ordering::Less)) {
+            sum += update[update.len() / 2];
+        }
+    }
+    sum
+}
+
+fn part_2(input: &str) -> u32 {
+    let (rules, pages) = input.split_once("\n\n").unwrap();
+
+    let mut order: HashMap<(u32, u32), Ordering> = HashMap::new();
+    for rule in rules.lines() {
+        let (n1, n2) = rule.split_once('|').unwrap();
+        let n1 = n1.parse().unwrap();
+        let n2 = n2.parse().unwrap();
+        order.insert((n1, n2), Ordering::Less);
+        order.insert((n2, n1), Ordering::Greater);
+    }
+
+    let mut sum = 0;
+    for line in pages.lines() {
+        let mut update: Vec<u32> = line.split(',').map(|s| s.parse().unwrap()).collect();
+        if !update.is_sorted_by(|&a, &b| order.get(&(a, b)) == Some(&Ordering::Less)) {
+            update.sort_by(|&a, &b| *order.get(&(a, b)).unwrap_or(&Ordering::Equal));
+            sum += update[update.len() / 2];
+        }
+    }
+    sum
+}
+```
