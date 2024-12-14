@@ -135,24 +135,19 @@ By multiplying both sides of each equation so the $b_n$ term cancels out when I 
 1. the top is multiplied by $b_y$
 1. the bottom is multiplied by $b_x$
 
-<Aside variant="info">
-  I am inexperienced at writing math syntax, so ignore the bracketed number on
-  the right, and pretend there is a `-` sign in front of the horizontal line.
-</Aside>
-
 $$
-\begin{align}
-a_n*a_x*b_y &+ b_n*b_x*b_y &=& p_x \\
-a_n*a_y*b_x &+ b_n*b_y*b_x &=& p_y \\
-\hline \\
-a_n * (a_x * b_y - a_y * b_x) &+ 0 &=& p_x - p_y
-\end{align}
+\begin{align*}
+  & & a_n*a_x*b_y &+ b_n*b_x*b_y &=& ~p_x*b_y \\
+\text{--} & & a_n*a_y*b_x &+ b_n*b_y*b_x &=& ~p_y*b_x \\
+\hline
+  & & a_n * (a_x * b_y - a_y * b_x) &+ 0 &=& ~p_x*b_y - p_y*b_x
+\end{align*}
 $$
 
 Isolating $a_n$ as that is the only unknown, all other variables can be replaced by numbers.
 
 $$
-a_n = \frac{p_x - p_y}{a_x * b_y - a_y * b_x}
+a_n = \frac{p_x*b_y - p_y*b_x}{a_x * b_y - a_y * b_x}
 $$
 
 After calculating the amount of times A should be pressed, calculate the amount of times B should be pressed.
@@ -195,7 +190,7 @@ If the intersection exists, but is not reachable in whole button presses, the fu
 ```rust
 fn solve(a: Point, b: Point, prize: Point) -> Option<i64> {
     // lines are never parallel in this question
-    assert!((a.y as f64 / a.x as f64) != (b.y as f64 / b.x as f64));
+    assert!(((a.y as f64 / a.x as f64) - (b.y as f64 / b.x as f64)).abs() > f64::EPSILON);
 
     let na = ((prize.x * b.y) - (prize.y * b.x)) / ((a.x * b.y) - (a.y * b.x));
     let nb = (prize.x - na * a.x) / b.x;
@@ -207,6 +202,7 @@ fn solve(a: Point, b: Point, prize: Point) -> Option<i64> {
 ### Code
 
 A short function because of the helper functions again.
+
 - Parse the input into a list of `[A, B, Prize]` points.
 - Solve using that combination of `Point`s
 - If solveable: add the solution cost to the sum

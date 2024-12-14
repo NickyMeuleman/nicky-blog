@@ -1,0 +1,347 @@
+---
+title: "Advent of Code 2024 Day 14"
+date: 2024-12-14
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 14: Restroom Redoubt
+
+https://adventofcode.com/2024/day/14
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_14.rs)
+</Aside>
+
+Another day, another [familiar location](https://adventofcode.com/2016/day/2).
+
+You are in the lobby of Easter Bunny HQ.
+There are a bunch of robots running around.
+
+Today's input is a list of all robots, it lists:
+
+1. Their initial position
+1. The change to their position each time they move.
+
+An example input looks like this:
+
+```txt title=input.txt
+p=0,4 v=3,-3
+p=6,3 v=-1,-3
+p=10,3 v=-1,2
+p=2,0 v=2,-1
+p=0,0 v=1,3
+p=3,0 v=-2,-2
+p=7,6 v=-1,-3
+p=3,0 v=-1,-2
+p=9,3 v=2,3
+p=7,3 v=-1,2
+p=2,4 v=2,-3
+p=9,5 v=-3,-3
+```
+
+Each line represents 1 robot, the position and velocity are 2 number pairs.
+A robot only ever moves along a straight line, in other words, each step it takes, add the velocity to its position.
+
+1. The first number is the column index
+1. The second number is the row index
+
+<Aside variant="info">
+  The directions are the same as on other days.
+  <ul>
+    <li>negative row: up</li>
+    <li>positive row: down</li>
+    <li>negative col: left</li>
+    <li>positive col: right</li>
+  </ul>
+</Aside>
+
+<Aside variant="danger">
+  Pay attention to the order of row and column, it was flipped to what I
+  expected!
+</Aside>
+
+The area the robots move in is:
+
+- 101 tiles wide
+- 103 tiles tall
+
+The robots have a special property, they wrap around the area they move in.
+That means:
+
+- if they go off the top, they continue from the bottom
+- if they go off the bottom, they continue from the top
+- if they go off the left, they continue from the right
+- if they go off the right, they continue from the left
+  For an example, the [problem description](https://adventofcode.com/2024/day/14) has a good one.
+
+<Aside variant="danger">
+You might think, "I know this, this is modulo math!", but watch out.
+
+MODULO IS NOT THE SAME AS REMAINDER.
+
+Because velocities can be negative, this distinction matters.
+
+---
+
+In many programming languages, the `%` symbol is the remainder operator.
+
+That means using `%` when you need the modulus operator is a mistake.
+
+For two integers `n` and `m`:
+
+- Remainder: `n % m`
+- Modulus: `((n % m) + m) % m`
+
+</Aside>
+
+## Parsing
+
+If you've been following along, you know what I do when I see a puzzle with coordinates by now, `Point`!
+And today, I expanded that with a `Robot` struct.
+You guessed it, that holds TWO `Point`s.
+
+### Data structures
+
+```rust
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i64,
+    col: i64,
+}
+
+impl Point {
+    fn new(row: i64, col: i64) -> Self {
+        Self { row, col }
+    }
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Robot {
+    pos: Point,
+    vel: Point,
+}
+
+impl Robot {
+    fn new(p_row: i64, p_col: i64, v_row: i64, v_col: i64) -> Self {
+        Self {
+            pos: Point::new(p_row, p_col),
+            vel: Point::new(v_row, v_col),
+        }
+    }
+}
+```
+
+---
+
+Turning the input into a list of `Robot`s:
+
+```rust
+fn parse(input: &str) -> Vec<Robot> {
+    let mut robots = Vec::new();
+    for line in input.lines() {
+        let mut nums = Vec::new();
+        for num in line
+            .split(|c: char| !c.is_ascii_digit() && c != '-')
+            .filter(|s| !s.is_empty())
+        {
+            let num: i64 = num.parse().unwrap();
+            nums.push(num);
+        }
+        // attention! because x is col and y is row this order might not be what you expect!
+        let robot = Robot::new(nums[1], nums[0], nums[3], nums[2]);
+        robots.push(robot);
+    }
+    robots
+}
+```
+
+## Part 1
+
+The question asks for the safety score after 100 steps.
+
+To calculate a safety score for an arrangement of robots, count the amount of bots in each quadrant.
+Robots that are in the exact middle row or column don't count towards the safety score.
+
+The safety score is the product of the amount of robots in each quadrant.
+
+### Helpers
+
+A function that takes in a list of robots, and calculates the safety score.
+Paying attention to the global values for the amount of rows and columns in the area.
+
+```rust
+const ROWS: i64 = 103;
+const COLS: i64 = 101;
+fn safety(robots: &[Robot]) -> usize {
+    let mut sectors = [0; 4];
+    let col_mid = COLS / 2;
+    let row_mid = ROWS / 2;
+    for &Robot { pos, .. } in robots {
+        if pos.row == row_mid || pos.col == col_mid {
+            continue;
+        }
+        let top = pos.row < row_mid;
+        let left = pos.col < col_mid;
+        match (top, left) {
+            (true, true) => sectors[0] += 1,
+            (true, false) => sectors[1] += 1,
+            (false, true) => sectors[2] += 1,
+            (false, false) => sectors[3] += 1,
+        }
+    }
+    sectors.iter().product()
+}
+```
+
+### Code
+
+Move the robots 100 steps and calculate the safety score.
+Because of [a math property](https://www.khanacademy.org/computing/computer-science/cryptography/modarithmetic/a/modular-addition-and-subtraction), I didn't loop 100 times and moved each robot once per step.
+I moved them 100 steps at once.
+
+<Aside variant="info">
+  That property is:
+
+$$
+(A + B) \mod C = (A \mod C + B \mod C) \mod C
+$$
+
+</Aside>
+
+```rust title=day_14.rs
+pub fn part_1(input: &str) -> usize {
+    let mut robots = parse(input);
+    for Robot { pos, vel } in &mut robots {
+        pos.row = (pos.row + vel.row * 100).rem_euclid(ROWS);
+        pos.col = (pos.col + vel.col * 100).rem_euclid(COLS);
+    }
+    safety(&robots)
+}
+```
+
+## Part 2
+
+The robots have an easter egg, at some point, they form a christms tree.
+
+There are many ways to verify this, the most straightforward, and the one I initially did, is to print out the arrangement of robots repeatedly.
+
+With the help of others, it turn out that the first time all robots occupy a unique position is the iteration the christmas tree is shown.
+
+So I looped infinitely and broke the loop the first time no 2 robots occupy the same location.
+
+```rust
+use itertools::Itertools;
+
+fn part_2(input: &str) -> usize {
+    let mut robots = parse(input);
+    for i in 0.. {
+        for Robot { pos, vel } in &mut robots {
+            pos.row = (pos.row + vel.row).rem_euclid(ROWS);
+            pos.col = (pos.col + vel.col).rem_euclid(COLS);
+        }
+        if robots.iter().map(|robot| robot.pos).all_unique() {
+            return i + 1;
+        }
+    }
+    panic!("No tree");
+}
+```
+
+## Final code
+
+```rust title=day_14.rs showLineNumbers
+use itertools::Itertools;
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i64,
+    col: i64,
+}
+
+impl Point {
+    fn new(row: i64, col: i64) -> Self {
+        Self { row, col }
+    }
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Robot {
+    pos: Point,
+    vel: Point,
+}
+
+impl Robot {
+    fn new(p_row: i64, p_col: i64, v_row: i64, v_col: i64) -> Self {
+        Self {
+            pos: Point::new(p_row, p_col),
+            vel: Point::new(v_row, v_col),
+        }
+    }
+}
+
+const ROWS: i64 = 103;
+const COLS: i64 = 101;
+fn parse(input: &str) -> Vec<Robot> {
+    let mut robots = Vec::new();
+    for line in input.lines() {
+        let mut nums = Vec::new();
+        for num in line
+            .split(|c: char| !c.is_ascii_digit() && c != '-')
+            .filter(|s| !s.is_empty())
+        {
+            let num: i64 = num.parse().unwrap();
+            nums.push(num);
+        }
+        // attention! because x is col and y is row this order might not be what you expect!
+        let robot = Robot::new(nums[1], nums[0], nums[3], nums[2]);
+        robots.push(robot);
+    }
+    robots
+}
+
+fn safety(robots: &[Robot]) -> usize {
+    let mut sectors = [0; 4];
+    let col_mid = COLS / 2;
+    let row_mid = ROWS / 2;
+    for &Robot { pos, .. } in robots {
+        if pos.row == row_mid || pos.col == col_mid {
+            continue;
+        }
+        let top = pos.row < row_mid;
+        let left = pos.col < col_mid;
+        match (top, left) {
+            (true, true) => sectors[0] += 1,
+            (true, false) => sectors[1] += 1,
+            (false, true) => sectors[2] += 1,
+            (false, false) => sectors[3] += 1,
+        }
+    }
+    sectors.iter().product()
+}
+
+pub fn part_1(input: &str) -> usize {
+    let mut robots = parse(input);
+    for Robot { pos, vel } in &mut robots {
+        pos.row = (pos.row + vel.row * 100).rem_euclid(ROWS);
+        pos.col = (pos.col + vel.col * 100).rem_euclid(COLS);
+    }
+    safety(&robots)
+}
+
+pub fn part_2(input: &str) -> usize {
+    let mut robots = parse(input);
+    for i in 0.. {
+        for Robot { pos, vel } in &mut robots {
+            pos.row = (pos.row + vel.row).rem_euclid(ROWS);
+            pos.col = (pos.col + vel.col).rem_euclid(COLS);
+        }
+        if robots.iter().map(|robot| robot.pos).all_unique() {
+            return i + 1;
+        }
+    }
+    panic!("No tree");
+}
+```
