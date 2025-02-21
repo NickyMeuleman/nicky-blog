@@ -1,0 +1,397 @@
+---
+title: "Advent of Code 2024 Day 18"
+date: 2024-12-18
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 18: RAM Run
+
+https://adventofcode.com/2024/day/18
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_18.rs)
+</Aside>
+
+Another day, another [familiar sensation](https://adventofcode.com/2017/day/2).
+This time, you're inside a computer again.
+
+Some algorithm is corrupting bytes in the memory where you are, one byte at a time.
+That's today's input, an ordered list of byte locations the algorithm is going to corrupt.
+When a position becomes corrupt, you can no longer be at that location.
+
+An example input looks like this:
+
+```txt title=input.txt
+5,4
+4,2
+4,5
+3,0
+2,1
+6,3
+2,4
+1,5
+0,6
+3,3
+2,6
+5,1
+1,2
+5,5
+2,5
+6,5
+1,4
+0,4
+6,4
+1,1
+6,1
+1,0
+0,5
+1,6
+2,0
+```
+
+Each line is a location, in a `col_idx,row_idx` form.
+
+> Wait a minute, this is another 2D-grid problem!
+
+## Parsing
+
+Alright, you might already know the drill, time for a `Point`.
+Then turn the input into a list of them.
+
+```rust
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+}
+
+fn parse(input: &str) -> Vec<Point> {
+    input
+        .lines()
+        .map(|line| {
+            let (col, row) = line.split_once(',').unwrap();
+            Point::new(row.parse().unwrap(), col.parse().unwrap())
+        })
+        .collect()
+}
+```
+
+<Aside variant="danger">
+  Row and column indexes are swapped to what I'm used to again!
+</Aside>
+
+## Part 1
+
+You need to get out of this place while you still can.
+
+- The grid you are in is 71 by 71 in size (the problem mentions 70, but those are 0-indexed numbers!).
+- You start at row: `0`, col: `0`
+- The goal is at row: `70`, col: `70`
+
+The question asks what the minimum amount of steps is to reach the goal after `1024` positions have become corrupted.
+
+Each step you can move in the 4 directions if that location isn't corrupted.
+This is a breadth-first-search again, so I used some of the helpers from previous days.
+
+### Helpers
+
+```rust
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+
+    fn add(&self, other: &Self) -> Self {
+        Self::new(self.row + other.row, self.col + other.col)
+    }
+
+    fn dirs() -> [Point; 4] {
+        [
+            // up
+            Self::new(-1, 0),
+            // right
+            Self::new(0, 1),
+            // down
+            Self::new(1, 0),
+            // left
+            Self::new(0, -1),
+        ]
+    }
+
+    fn is_in_bounds(&self, rows: i32, cols: i32) -> bool {
+        (self.row >= 0 && self.row < rows) && (self.col >= 0 && self.col < cols)
+    }
+
+    fn neighbours(&self, rows: i32, cols: i32) -> Vec<Self> {
+        let mut neighbours = Vec::new();
+        for dir in Self::dirs() {
+            let next = self.add(&dir);
+            if next.is_in_bounds(rows, cols) {
+                neighbours.push(next);
+            }
+        }
+        neighbours
+    }
+}
+```
+
+### Code
+
+Breadth-first-search, where each item in the queue is a `(point, score)` pair, and the score increases by 1 each step.
+Point neighbours are only considered if they are not corrupted.
+
+Before starting the search, I create a set of the first 1024 points in the input that become corrupted.
+
+```rust title=day_18.rs
+const ROWS: i32 = 71;
+const COLS: i32 = 71;
+const SIZE: usize = 1024;
+
+fn part_1(input: &str) -> u32 {
+    let falling = parse(input);
+    let corrupted: HashSet<&Point> = falling.iter().take(SIZE).collect();
+
+    let start = Point::new(0, 0);
+    let end = Point::new(ROWS - 1, COLS - 1);
+
+    let mut q = VecDeque::new();
+    let mut seen = HashSet::new();
+    q.push_back((start, 0));
+    seen.insert(start);
+
+    while let Some((pos, cost)) = q.pop_front() {
+        if pos == end {
+            return cost;
+        }
+        for neighbour in pos.neighbours(ROWS, COLS) {
+            if corrupted.contains(&neighbour) {
+                continue;
+            }
+            if seen.insert(neighbour) {
+                q.push_back((neighbour, cost + 1));
+            }
+        }
+    }
+
+    panic!("at the disco");
+}
+```
+
+## Part 2
+
+The historians want to know how slow they can go before a byte is corrupted that makes it impossible to reach the end from the start.
+I refactored my code from part1 a bit so the search logic is its own function that either returns a cost, or nothing.
+If it returns nothing, there is no possible path from start to finish.
+
+The helper takes in a set of locations that are corrupted.
+
+I then used that helper and performed a binary search on the list of input positions.
+At some position, crossing from start to end becomes impossible.
+
+- Everything before that point: a path exists
+- Everything after that point: no path exists
+
+<Aside variant="info">
+
+That means that for part 2 the score this helper returned is irrelevant,
+as I only care about if a path exists or not.
+
+I could have disregarded all info about cost and returned a boolean,
+but I wanted to reuse this helper in part1 where cost does matter.
+
+</Aside>
+
+### Helpers
+
+```rust
+fn search(
+    corrupted: &HashSet<&Point>,
+    start: Point,
+    end: Point,
+    rows: i32,
+    cols: i32,
+) -> Option<u32> {
+    let mut q = VecDeque::new();
+    let mut seen = HashSet::new();
+    q.push_back((start, 0));
+    seen.insert(start);
+
+    while let Some((pos, cost)) = q.pop_front() {
+        if pos == end {
+            return Some(cost);
+        }
+        for neighbour in pos.neighbours(rows, cols) {
+            if corrupted.contains(&neighbour) {
+                continue;
+            }
+            if seen.insert(neighbour) {
+                q.push_back((neighbour, cost + 1));
+            }
+        }
+    }
+
+    None
+}
+```
+
+### Code
+
+```rust
+fn part_2(input: &str) -> String {
+    let falling = parse(input);
+
+    let start = Point::new(0, 0);
+    let end = Point::new(ROWS - 1, COLS - 1);
+
+    let mut low = 0;
+    let mut high = falling.len() - 1;
+
+    while low < high {
+        let mid = (low + high) / 2;
+        let corrupted: HashSet<&Point> = falling.iter().take(mid + 1).collect();
+        if search(&corrupted, start, end, ROWS, COLS).is_some() {
+            low = mid + 1;
+        } else {
+            high = mid;
+        }
+    }
+
+    let last = falling[low];
+    format!("{},{}", last.col, last.row)
+}
+```
+
+## Final code
+
+```rust title=day_18.rs showLineNumbers
+use std::collections::{HashSet, VecDeque};
+
+const ROWS: i32 = 71;
+const COLS: i32 = 71;
+const SIZE: usize = 1024;
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+
+    fn add(&self, other: &Self) -> Self {
+        Self::new(self.row + other.row, self.col + other.col)
+    }
+
+    fn dirs() -> [Point; 4] {
+        [
+            // up
+            Self::new(-1, 0),
+            // right
+            Self::new(0, 1),
+            // down
+            Self::new(1, 0),
+            // left
+            Self::new(0, -1),
+        ]
+    }
+
+    fn is_in_bounds(&self, rows: i32, cols: i32) -> bool {
+        (self.row >= 0 && self.row < rows) && (self.col >= 0 && self.col < cols)
+    }
+
+    fn neighbours(&self, rows: i32, cols: i32) -> Vec<Self> {
+        let mut neighbours = Vec::new();
+        for dir in Self::dirs() {
+            let next = self.add(&dir);
+            if next.is_in_bounds(rows, cols) {
+                neighbours.push(next);
+            }
+        }
+        neighbours
+    }
+}
+
+fn parse(input: &str) -> Vec<Point> {
+    input
+        .lines()
+        .map(|line| {
+            let (col, row) = line.split_once(',').unwrap();
+            Point::new(row.parse().unwrap(), col.parse().unwrap())
+        })
+        .collect()
+}
+
+fn part_1(input: &str) -> u32 {
+    let falling = parse(input);
+    let corrupted: HashSet<&Point> = falling.iter().take(SIZE).collect();
+
+    let start = Point::new(0, 0);
+    let end = Point::new(ROWS - 1, COLS - 1);
+
+    search(&corrupted, start, end, ROWS, COLS).unwrap()
+}
+
+fn search(
+    corrupted: &HashSet<&Point>,
+    start: Point,
+    end: Point,
+    rows: i32,
+    cols: i32,
+) -> Option<u32> {
+    let mut q = VecDeque::new();
+    let mut seen = HashSet::new();
+    q.push_back((start, 0));
+    seen.insert(start);
+
+    while let Some((pos, cost)) = q.pop_front() {
+        if pos == end {
+            return Some(cost);
+        }
+        for neighbour in pos.neighbours(rows, cols) {
+            if corrupted.contains(&neighbour) {
+                continue;
+            }
+            if seen.insert(neighbour) {
+                q.push_back((neighbour, cost + 1));
+            }
+        }
+    }
+
+    None
+}
+
+fn part_2(input: &str) -> String {
+    let falling = parse(input);
+
+    let start = Point::new(0, 0);
+    let end = Point::new(ROWS - 1, COLS - 1);
+
+    let mut low = 0;
+    let mut high = falling.len() - 1;
+
+    while low < high {
+        let mid = (low + high) / 2;
+        let corrupted: HashSet<&Point> = falling.iter().take(mid + 1).collect();
+        if search(&corrupted, start, end, ROWS, COLS).is_some() {
+            low = mid + 1;
+        } else {
+            high = mid;
+        }
+    }
+
+    let last = falling[low];
+    format!("{},{}", last.col, last.row)
+}
+```

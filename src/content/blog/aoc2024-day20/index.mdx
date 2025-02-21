@@ -1,0 +1,434 @@
+---
+title: "Advent of Code 2024 Day 20"
+date: 2024-12-20
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 20: Race Condition
+
+https://adventofcode.com/2024/day/20
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_20.rs)
+</Aside>
+
+Another day, another [familiar sensation](https://adventofcode.com/2017/day/24).
+This time, you're inside a computer again, near the CPU.
+
+There is a race being held, on a ... drumroll please ... 2D-grid!
+
+An example input looks like this:
+
+```txt title=input.txt
+###############
+#...#...#.....#
+#.#.#.#.#.###.#
+#S#...#.#.#...#
+#######.#.#.###
+#######.#.#...#
+#######.#.###.#
+###..E#...#...#
+###.#######.###
+#...###...#...#
+#.#####.#.###.#
+#.#...#.#.#...#
+#.#.#.#.#.#.###
+#...#...#...###
+###############
+```
+
+- `#`: wall
+- `.`: empty
+- `S`: start, also empty
+- `E`: end, also empty
+
+- There is only one shortest route from the start to the end.
+- You can go in the 4 main directions.
+- Each step costs 1
+
+## Parsing
+
+Let's get the `Point` and `Tile` out again.
+Return a `Point` for start, one for end, and the grid as a map from `Point`s to `Tile`s.
+
+Again, this is not the most efficient way to store the grid, but one I like a lot.
+
+```rust
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+enum Tile {
+    Empty,
+    Wall,
+}
+
+fn parse(input: &str) -> (Point, Point, HashMap<Point, Tile>) {
+    let mut start = Point::new(0, 0);
+    let mut end = Point::new(0, 0);
+    let mut grid = HashMap::new();
+
+    for (row, line) in input.lines().enumerate() {
+        for (col, c) in line.chars().enumerate() {
+            let point = Point::new(row as i32, col as i32);
+            let tile = match c {
+                '.' => Tile::Empty,
+                '#' => Tile::Wall,
+                'S' => {
+                    start.row = row as i32;
+                    start.col = col as i32;
+                    Tile::Empty
+                }
+                'E' => {
+                    end.row = row as i32;
+                    end.col = col as i32;
+                    Tile::Empty
+                }
+                _ => panic!("at the disco"),
+            };
+            grid.insert(point, tile);
+        }
+    }
+
+    (start, end, grid)
+}
+```
+
+## Part 1
+
+Because there is only one shortest route, all contestant would take it, making the race boring.
+
+Contestants are allowed to cheat once.
+For a distance of 2 they can turn off their collision detection, this can be done once per race.
+They must be on an empty space again after that second step.
+
+In other words, in a 2D-grid, the [manhattan distance](https://en.wikipedia.org/wiki/Taxicab_geometry) between the start and endpoint of their cheat must be 2.
+
+It does not matter which route contestants take during a cheat, a cheat is only identified by its start and end position.
+
+The question asks how many cheats would save at least 100 steps.
+
+Some skeleton/pseudo-code I want to work towards:
+
+```rust
+let (start, end, grid) = parse(input);
+let pairs = valid_cheats_as_point_pairs(grid);
+
+pairs
+  .map(|(p1, p2)| cost_savings(p1, p2))
+  .filter(|savings| savings >= 100)
+  .count()
+```
+
+In that skeleton, I never use the starting or ending points.
+
+I need to build up a map of minimum costs to reach a location from the start,
+then I can use that map to calculate how much would be saved at each step of the loop over `pairs` above.
+
+### Helpers
+
+The `Point` struct got some familiar methods on it, and a new one to calculate the Manhattan distance.
+
+```rust
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+
+    fn add(&self, other: &Self) -> Self {
+        Self::new(self.row + other.row, self.col + other.col)
+    }
+
+    fn dirs() -> [Point; 4] {
+        [
+            // up
+            Self::new(-1, 0),
+            // right
+            Self::new(0, 1),
+            // down
+            Self::new(1, 0),
+            // left
+            Self::new(0, -1),
+        ]
+    }
+
+    fn neighbours(&self, grid: &HashMap<Point, Tile>) -> Vec<Self> {
+        let mut neighbours = Vec::new();
+        for dir in Self::dirs() {
+            let next = self.add(&dir);
+            if grid.contains_key(&next) {
+                neighbours.push(next);
+            }
+        }
+        neighbours
+    }
+
+    fn manhattan(&self, other: &Self) -> u32 {
+        self.row.abs_diff(other.row) + self.col.abs_diff(other.col)
+    }
+}
+```
+
+Next up, building the map of minimum costs to reach a `Point` when starting from `start`.
+
+That means that at the end of this helper, only reachable points will be in this map.
+
+I use a familiar strategy here, [bfs](https://en.wikipedia.org/wiki/Breadth-first_search) go BRRRRRRR.
+
+```rust
+fn build_distmap(grid: &HashMap<Point, Tile>, start: Point, end: Point) -> HashMap<Point, u32> {
+    let mut q = VecDeque::new();
+    let mut distmap = HashMap::new();
+
+    q.push_back((start, 0));
+
+    while let Some((pos, cost)) = q.pop_front() {
+        // update map of lowest cost distances to a position
+        if distmap.contains_key(&pos) {
+            continue;
+        }
+        distmap.insert(pos, cost);
+        // there is only one route, return the map of minimum distances
+        if pos == end {
+            return distmap;
+        }
+        for neighbour in pos.neighbours(grid) {
+            if grid[&neighbour] != Tile::Wall {
+                q.push_back((neighbour, cost + 1));
+            }
+        }
+    }
+
+    panic!("at the disco")
+}
+```
+
+### Code
+
+<Aside variant="info">
+
+I used the [`tuple_combinations` method from `Itertools`](https://docs.rs/itertools/latest/itertools/trait.Itertools.html#method.tuple_combinations) to get all possible combinations between 2 points.
+
+You can also get all combinations of 2 numbers from `0` to `N-1` like this:
+
+```rust
+for i in 0..N {
+  for j in i + 1..N {
+  }
+}
+```
+
+</Aside>
+
+```rust title=day_20.rs
+fn part_1(input: &str) -> usize {
+    let (start, end, grid) = parse(input);
+    let distmap = build_distmap(&grid, start, end);
+    distmap
+        .iter()
+        // get all possible 2 point pairs
+        .tuple_combinations()
+        .filter(|((p1, c1), (p2, &c2))| {
+            // confirm a skip between the 2 points is possible
+            if p1.manhattan(p2) == 2 {
+                let saved = c1.abs_diff(c2) - 2;
+                // confirm the savings after applying that skip would be large enough
+                if saved >= 100 {
+                    return true;
+                }
+            }
+            false
+        })
+        .count()
+}
+```
+
+## Part 2
+
+Now the largest skipsize is 20.
+It is allowed to be smaller.
+
+That's a small change.
+
+- Allow all skips with a distance smaller than 20.
+- Subtract the distance of the skip from the difference in costs to get the savings.
+
+```rust {8-10}
+fn part_2(input: &str) -> usize {
+    let (start, end, grid) = parse(input);
+    let distmap = build_distmap(&grid, start, end);
+    distmap
+        .iter()
+        .tuple_combinations()
+        .filter(|((p1, c1), (p2, &c2))| {
+            let skip_size = p1.manhattan(p2);
+            if skip_size <= 20 {
+                let saved = c1.abs_diff(c2) - skip_size;
+                if saved >= 100 {
+                    return true;
+                }
+            }
+            false
+        })
+        .count()
+}
+```
+
+## Final code
+
+I abstracted the main logic into a function that takes the maximum length of a ship as a parameter.
+
+```rust title=day_20.rs showLineNumbers
+use itertools::Itertools;
+use std::collections::{HashMap, VecDeque};
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+
+    fn add(&self, other: &Self) -> Self {
+        Self::new(self.row + other.row, self.col + other.col)
+    }
+
+    fn dirs() -> [Point; 4] {
+        [
+            // up
+            Self::new(-1, 0),
+            // right
+            Self::new(0, 1),
+            // down
+            Self::new(1, 0),
+            // left
+            Self::new(0, -1),
+        ]
+    }
+
+    fn neighbours(&self, grid: &HashMap<Point, Tile>) -> Vec<Self> {
+        let mut neighbours = Vec::new();
+        for dir in Self::dirs() {
+            let next = self.add(&dir);
+            if grid.contains_key(&next) {
+                neighbours.push(next);
+            }
+        }
+        neighbours
+    }
+
+    fn manhattan(&self, other: &Self) -> u32 {
+        self.row.abs_diff(other.row) + self.col.abs_diff(other.col)
+    }
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+enum Tile {
+    Empty,
+    Wall,
+}
+
+fn parse(input: &str) -> (Point, Point, HashMap<Point, Tile>) {
+    let mut start = Point::new(0, 0);
+    let mut end = Point::new(0, 0);
+    let mut grid = HashMap::new();
+
+    for (row, line) in input.lines().enumerate() {
+        for (col, c) in line.chars().enumerate() {
+            let point = Point::new(row as i32, col as i32);
+            let tile = match c {
+                '.' => Tile::Empty,
+                '#' => Tile::Wall,
+                'S' => {
+                    start.row = row as i32;
+                    start.col = col as i32;
+                    Tile::Empty
+                }
+                'E' => {
+                    end.row = row as i32;
+                    end.col = col as i32;
+                    Tile::Empty
+                }
+                _ => panic!("at the disco"),
+            };
+            grid.insert(point, tile);
+        }
+    }
+
+    (start, end, grid)
+}
+
+fn count(distmap: &HashMap<Point, u32>, max_skip: u32) -> usize {
+    distmap
+        .iter()
+        // get all possible 2 point pairs
+        .tuple_combinations()
+        .filter(|((p1, c1), (p2, &c2))| {
+            // confirm the distance between the 2 points is small enough
+            let skip_size = p1.manhattan(p2);
+            if skip_size <= max_skip {
+                let saved = c1.abs_diff(c2) - skip_size;
+                // confirm the savings after applying that skip would be large enough
+                if saved >= 100 {
+                    return true;
+                }
+            }
+            false
+        })
+        .count()
+}
+
+fn build_distmap(grid: &HashMap<Point, Tile>, start: Point, end: Point) -> HashMap<Point, u32> {
+    let mut q = VecDeque::new();
+    let mut distmap = HashMap::new();
+
+    q.push_back((start, 0));
+
+    while let Some((pos, cost)) = q.pop_front() {
+        // update map of lowest cost distances to a position
+        if distmap.contains_key(&pos) {
+            continue;
+        }
+        distmap.insert(pos, cost);
+        // there is only one route, return the map of minimum distances
+        if pos == end {
+            return distmap;
+        }
+        for neighbour in pos.neighbours(grid) {
+            if grid[&neighbour] != Tile::Wall {
+                q.push_back((neighbour, cost + 1));
+            }
+        }
+    }
+
+    panic!("at the disco")
+}
+
+pub fn part_1(input: &str) -> usize {
+    let (start, end, grid) = parse(input);
+    let distmap = build_distmap(&grid, start, end);
+    count(&distmap, 2)
+}
+
+pub fn part_2(input: &str) -> usize {
+    let (start, end, grid) = parse(input);
+    let distmap = build_distmap(&grid, start, end);
+    count(&distmap, 20)
+}
+```

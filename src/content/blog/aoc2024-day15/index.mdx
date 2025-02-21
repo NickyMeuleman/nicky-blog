@@ -1,0 +1,516 @@
+---
+title: "Advent of Code 2024 Day 15"
+date: 2024-12-15
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 15: Warehouse Woes
+
+https://adventofcode.com/2024/day/15
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_15.rs)
+</Aside>
+
+Another day, another [familiar location](https://adventofcode.com/2021/day/6).
+
+A robot in a warehouse is pushing around boxes.
+
+An example input looks like this:
+
+```txt title=input.txt
+##########
+#..O..O.O#
+#......O.#
+#.OO..O.O#
+#..O@..O.#
+#O#..O...#
+#O..O..O.#
+#.OO.O.OO#
+#....O...#
+##########
+
+<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^
+vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
+><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<
+<<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^
+^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><
+^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^
+>^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^
+<><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
+^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
+v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^
+```
+
+The top half is a map of the warehouse.
+The bottom half is a list of instructions the robot will **attempt** to perform.
+
+The map is another 2D-space representation:
+
+- `#`: a wall
+- `.`: an empty space
+- `O`: a box
+- `@`: the (single) robot
+
+For the instructions:
+
+- `^`: up
+- `>`: right
+- `v`: down
+- `<`: left
+
+<Aside variant="danger">
+  The input has line endings in the list of instructions that should be ignored!
+</Aside>
+
+## Parsing
+
+If you've been following along, you know what I do when I see a puzzle with coordinates by now, `Point`!
+I added a `Tile` enum for all the locations on the map.
+
+I converted each instruction into a `Point` too, one with the correct offset for that move.
+
+### Data structures
+
+```rust
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+
+    fn add(&self, other: &Self) -> Self {
+        Self::new(self.row + other.row, self.col + other.col)
+    }
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+enum Tile {
+    Empty,
+    Wall,
+    Robot,
+    Box,
+}
+```
+
+---
+
+I chose to store the grid in a map again where keys are `Point` and values are `Tile`.
+
+```rust
+fn parse(input: &str) -> (HashMap<Point, Tile>, Vec<Point>) {
+    let (map, moves) = input.split_once("\n\n").unwrap();
+    let mut grid = HashMap::new();
+    for (row, line) in map.lines().enumerate() {
+        for (col, c) in line.chars().enumerate() {
+            let point = Point::new(row as i32, col as i32);
+            let tile = match c {
+                '@' => Tile::Robot,
+                '.' => Tile::Empty,
+                '#' => Tile::Wall,
+                'O' => Tile::Box,
+                _ => panic!("at the disco"),
+            };
+            grid.insert(point, tile);
+        }
+    }
+
+    let mut instructions = Vec::new();
+    for c in moves.chars() {
+        let point = match c {
+            '^' => Point::new(-1, 0),
+            '>' => Point::new(0, 1),
+            'v' => Point::new(1, 0),
+            '<' => Point::new(0, -1),
+            _ => continue,
+        };
+        instructions.push(point);
+    }
+
+    (grid, instructions)
+}
+```
+
+## Part 1
+
+The robot will attemp to move in the direction of each instruction it gets.
+It is very strong and can push many boxes at once, but can not move if a wall blocks the path.
+When it is blocked, it doesn't execute the instruction, and waits for the next one.
+
+For a cleaner explanation of this logic, see [the question text](https://adventofcode.com/2024/day/15).
+
+A GPS score for a coordinate is: `100 * row_index + col_index`.
+
+The question asks for the sum of all GPS scores for boxes after all instructions.
+
+The bulk of the logic is in a helper function again.
+It takes in the grid and the list of all instructions.
+
+The broad layout of the function consists of 3 parts:
+
+1. Determine the position of the robot.
+1. Attempt to do each instruction
+1. Calculate the wanted sum
+
+Zooming in on the part where instructions are executed, because that's the most interesting part.
+
+It uses a breadth-first-search, adding each affected box to a queue. (and keeps track of each one in a set)
+When that search is over it moves each affected box one by one.
+During the bfs loop, continue to the next instruction when the next affected position is a wall.
+
+```rust title=day_15.rs
+fn do_instructions(mut grid: HashMap<Point, Tile>, instructions: Vec<Point>) -> i32 {
+    let mut robot = grid
+        .iter()
+        .find_map(|(point, tile)| (*tile == Tile::Robot).then_some(*point))
+        .unwrap();
+
+    'outer: for inst in instructions {
+        let mut q = VecDeque::new();
+        let mut seen = HashSet::new();
+        q.push_back(robot);
+        seen.insert(robot);
+
+        while let Some(point) = q.pop_front() {
+            let new = point.add(&inst);
+            let new_tile = grid[&new];
+            match new_tile {
+                Tile::Robot => continue,
+                Tile::Empty => continue,
+                Tile::Wall => continue 'outer,
+                Tile::Box => {
+                    if seen.insert(new) {
+                        q.push_back(new);
+                    }
+                }
+            }
+        }
+
+        while !seen.is_empty() {
+            for point in seen.iter().copied().collect_vec() {
+                let new = point.add(&inst);
+                if !seen.contains(&new) {
+                    *grid.entry(new).or_insert(Tile::Empty) = grid[&point];
+                    *grid.entry(point).or_insert(Tile::Empty) = Tile::Empty;
+                    seen.remove(&point);
+                }
+            }
+        }
+        robot = robot.add(&inst);
+    }
+
+    grid.iter()
+        .filter_map(|(point, &tile)| (tile == Tile::Box).then_some(100 * point.row + point.col))
+        .sum()
+}
+
+pub fn part_1(input: &str) -> i32 {
+    let (grid, instructions) = parse(input);
+    do_instructions(grid, instructions)
+}
+```
+
+## Part 2
+
+Apply the same logic on a second warehouse.
+Everything in it except for the robot is twice as big.
+
+You can construct the big warehouse's map from the small one in the input.
+
+- If the tile is `#`, the new map contains `##` instead.
+- If the tile is `O`, the new map contains `[]` instead.
+- If the tile is `.`, the new map contains `..` instead.
+- If the tile is `@`, the new map contains `@.` instead.
+
+As for GPS coordinates, those are measured from the edge of the map to the closest edge of the box in question.
+Because distances start from the top and the left, in practice, that means the `[` determines the coordinate.
+
+This changes the structures I used a bit.
+
+```rust {6,7}
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+enum Tile {
+    Empty,
+    Wall,
+    Robot,
+    BoxLeft,
+    BoxRight,
+}
+```
+
+And the parsing logic changes a bit too to handle the wideness of the new input.
+
+```rust {3,6-21}
+fn parse(input: &str) -> (HashMap<Point, Tile2>, Vec<Point>) {
+    let (map, moves) = input.split_once("\n\n").unwrap();
+    let mut col = 0;
+    let mut grid = HashMap::new();
+    for (row, line) in map.lines().enumerate() {
+        for c in line.chars() {
+            let point = Point::new(row as i32, col);
+            col += 1;
+            let point2 = Point::new(row as i32, col);
+            col += 1;
+            let tiles = match c {
+                '@' => [Tile2::Robot, Tile2::Empty],
+                '.' => [Tile2::Empty, Tile2::Empty],
+                '#' => [Tile2::Wall, Tile2::Wall],
+                'O' => [Tile2::BoxLeft, Tile2::BoxRight],
+                _ => panic!("at the disco"),
+            };
+            grid.insert(point, tiles[0]);
+            grid.insert(point2, tiles[1]);
+        }
+        col = 0;
+    }
+
+    let mut instructions = Vec::new();
+    for c in moves.chars() {
+        let point = match c {
+            '^' => Point::new(-1, 0),
+            '>' => Point::new(0, 1),
+            'v' => Point::new(1, 0),
+            '<' => Point::new(0, -1),
+            _ => continue,
+        };
+        instructions.push(point);
+    }
+
+    (grid, instructions)
+}
+```
+
+And the changes to the solving logic.
+I swapped my logic for duplicate checking around because that would make inserting into the queue a bit easier.
+But both methods are basically identical.
+
+```rust {13-15,22-31,49}
+fn do_instructions(mut grid: HashMap<Point, Tile>, instructions: Vec<Point>) -> i32 {
+    let mut robot = grid
+        .iter()
+        .find_map(|(point, tile)| (*tile == Tile::Robot).then_some(*point))
+        .unwrap();
+
+    'outer: for inst in instructions {
+        let mut q = VecDeque::new();
+        let mut seen = HashSet::new();
+        q.push_back(robot);
+
+        while let Some(point) = q.pop_front() {
+            if !seen.insert(point) {
+                continue;
+            }
+            let new = point.add(&inst);
+            let new_tile = grid[&new];
+            match new_tile {
+                Tile::Robot => continue,
+                Tile::Empty => continue,
+                Tile::Wall => continue 'outer,
+                Tile::BoxLeft => {
+                    q.push_back(new);
+                    let right = Point::new(new.row, new.col + 1);
+                    q.push_back(right);
+                }
+                Tile::BoxRight => {
+                    q.push_back(new);
+                    let left = Point::new(new.row, new.col - 1);
+                    q.push_back(left);
+                }
+            }
+        }
+
+        while !seen.is_empty() {
+            for point in seen.iter().copied().collect_vec() {
+                let new = point.add(&inst);
+                if !seen.contains(&new) {
+                    *grid.entry(new).or_insert(Tile::Empty) = grid[&point];
+                    *grid.entry(point).or_insert(Tile::Empty) = Tile::Empty;
+                    seen.remove(&point);
+                }
+            }
+        }
+        robot = robot.add(&inst);
+    }
+
+    grid.iter()
+        .filter_map(|(point, &tile)| (tile == Tile::BoxLeft).then_some(100 * point.row + point.col))
+        .sum()
+}
+```
+
+## Final code
+
+I had some fun combining both parts today with the goal of not duplicating my data structures.
+In hindsight, this combining would have been a lot easier if I worked with the raw characters instead.
+But I like using neat datastructures for explanations!
+
+I also had fun with not collecting the bigger map in part 2 into a new string, but that logic didn't make it into this post.
+
+```rust title=day_15.rs showLineNumbers
+use itertools::Itertools;
+use std::collections::{HashMap, HashSet, VecDeque};
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+
+    fn add(&self, other: &Self) -> Self {
+        Self::new(self.row + other.row, self.col + other.col)
+    }
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+enum Tile {
+    Empty,
+    Wall,
+    Robot,
+    Box,
+    BoxLeft,
+    BoxRight,
+}
+
+fn parse_grid(input: &str) -> HashMap<Point, Tile> {
+    let mut grid = HashMap::new();
+    for (row, line) in input.lines().enumerate() {
+        for (col, c) in line.chars().enumerate() {
+            let point = Point::new(row as i32, col as i32);
+            let tile = match c {
+                '@' => Tile::Robot,
+                '.' => Tile::Empty,
+                '#' => Tile::Wall,
+                'O' => Tile::Box,
+                '[' => Tile::BoxLeft,
+                ']' => Tile::BoxRight,
+                _ => panic!("at the disco"),
+            };
+            grid.insert(point, tile);
+        }
+    }
+    grid
+}
+
+fn parse_instructions(input: &str) -> Vec<Point> {
+    let mut instructions = Vec::new();
+    for c in input.chars() {
+        let point = match c {
+            '^' => Point::new(-1, 0),
+            '>' => Point::new(0, 1),
+            'v' => Point::new(1, 0),
+            '<' => Point::new(0, -1),
+            _ => continue,
+        };
+        instructions.push(point);
+    }
+    instructions
+}
+
+fn embiggen(input: &str) -> String {
+    let mut map = String::new();
+    for line in input.lines() {
+        for c in line.chars() {
+            let replacement = match c {
+                '#' => "##",
+                'O' => "[]",
+                '.' => "..",
+                '@' => "@.",
+                _ => panic!("at the disco"),
+            };
+            map.push_str(replacement);
+        }
+        map.push('\n');
+    }
+    map
+}
+
+fn do_instructions(
+    mut grid: HashMap<Point, Tile>,
+    instructions: Vec<Point>,
+) -> HashMap<Point, Tile> {
+    let mut robot = grid
+        .iter()
+        .find_map(|(point, tile)| (*tile == Tile::Robot).then_some(*point))
+        .unwrap();
+
+    'outer: for inst in instructions {
+        let mut q = VecDeque::new();
+        let mut seen = HashSet::new();
+        q.push_back(robot);
+
+        while let Some(point) = q.pop_front() {
+            if !seen.insert(point) {
+                continue;
+            }
+            let new = point.add(&inst);
+            let new_tile = grid[&new];
+            match new_tile {
+                Tile::Robot => continue,
+                Tile::Empty => continue,
+                Tile::Wall => continue 'outer,
+                Tile::Box => q.push_back(new),
+                Tile::BoxLeft => {
+                    q.push_back(new);
+                    let right = Point::new(new.row, new.col + 1);
+                    q.push_back(right);
+                }
+                Tile::BoxRight => {
+                    q.push_back(new);
+                    let left = Point::new(new.row, new.col - 1);
+                    q.push_back(left);
+                }
+            }
+        }
+
+        while !seen.is_empty() {
+            for point in seen.iter().copied().collect_vec() {
+                let new = point.add(&inst);
+                if !seen.contains(&new) {
+                    *grid.entry(new).or_insert(Tile::Empty) = grid[&point];
+                    *grid.entry(point).or_insert(Tile::Empty) = Tile::Empty;
+                    seen.remove(&point);
+                }
+            }
+        }
+        robot = robot.add(&inst);
+    }
+
+    grid
+}
+
+fn gps(grid: &HashMap<Point, Tile>, item: Tile) -> i32 {
+    grid.iter()
+        .filter_map(|(point, &tile)| (tile == item).then_some(100 * point.row + point.col))
+        .sum()
+}
+
+pub fn part_1(input: &str) -> i32 {
+    let (map, moves) = input.split_once("\n\n").unwrap();
+    let mut grid = parse_grid(map);
+    let instructions = parse_instructions(moves);
+    grid = do_instructions(grid, instructions);
+    gps(&grid, Tile::Box)
+}
+
+pub fn part_2(input: &str) -> i32 {
+    let (map, moves) = input.split_once("\n\n").unwrap();
+    let map = embiggen(map);
+    let mut grid = parse_grid(&map);
+    let instructions = parse_instructions(moves);
+    grid = do_instructions(grid, instructions);
+    gps(&grid, Tile::BoxLeft)
+}
+```

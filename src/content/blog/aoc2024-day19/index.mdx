@@ -1,0 +1,225 @@
+---
+title: "Advent of Code 2024 Day 19"
+date: 2024-12-19
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 19: Linen Layout
+
+https://adventofcode.com/2024/day/19
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_19.rs)
+</Aside>
+
+You are at a spa and have to arrange a bunch of towels into patterns.
+
+An example input looks like this:
+
+```txt title=input.txt
+r, wr, b, g, bwu, rb, gb, br
+
+brwrr
+bggr
+gbbr
+rrbgbr
+ubwu
+bwurrg
+brgr
+bbrgwb
+```
+
+The top section is a list of available towel types,
+the bottom section is a list of patterns to make with those towels.
+
+For each towel type, the spa has infinitely many of them, they want to know if it's possible to combine them in ways that make a certain pattern.
+
+What the letters in the input mean is not really important, but here goes anyway:
+each letter in a towel represents a coloured stripe.
+The patterns have a bunch of coloured stripes in a specific order.
+
+Flipping a towel to get its pattern in reverse in not allowed.
+
+## Parsing
+
+Making 2 lists of strings.
+
+```rust
+fn parse(input: &str) -> (Vec<&str>, Vec<&str>) {
+    let (towels, patterns) = input.split_once("\n\n").unwrap();
+    let towels = towels.split(", ").collect();
+    let patterns = patterns.lines().collect();
+    (towels, patterns)
+}
+```
+
+## Part 1
+
+The question asks how many patterns are possible to make given the available towel types.
+
+Yay, this is a recursive function!
+
+Count the amount of ways a pattern can be made, inside the function that does that count the amount of ways a smaller pattern can be made.
+
+<Aside variant="success">
+  This is a day where I did something I shouldn't have, I speculated on what
+  part2 might be, and coded part1 with that in mind. It ended up working out
+  today, but it rarely does!
+</Aside>
+
+First some skeleton/pseudo-code for the thing I want to code towards.
+
+```rust
+pub fn part_1(input: &str) -> usize {
+    let (towels, patterns) = parse(input);
+
+    patterns
+        .into_iter()
+        .filter(|pattern| count_sequences(pattern, &towels) != 0)
+        .count()
+}
+```
+
+### Helpers
+
+The recursive function.
+
+It takes a pattern I want to make, and a set of available towel types.
+For each available type of towel, I check if the wanted pattern starts with the stripes on that towel.
+If it does, I use that same function to count how many ways there are to make the pattern with that towel cut off from the start of the pattern.
+I then return the sum of all those ways.
+
+The base case for my resursion is when the pattern is empty, because then we successfully cut off a bunch of towels that make the original pattern.
+
+```rust
+fn count_sequences(pattern: &str, towels: &[&str]) -> u64 {
+    if pattern.is_empty() {
+        return 1;
+    }
+
+    towels
+        .iter()
+        .filter(|&towel| pattern.starts_with(towel))
+        .map(|towel| count_sequences(&pattern[towel.len()..], towels))
+        .sum()
+}
+```
+
+### Code
+
+Now, that code is correct, but slow.
+It recomputes the same thing over and over.
+
+So I remember previous work and store it in a cache.
+
+Feeding that cache into my recursive function and BAM, I just did some **dynamic programming**.
+
+```rust title=day_19.rs
+fn count_sequences<'a>(
+    pattern: &'a str,
+    towels: &[&str],
+    cache: &mut HashMap<&'a str, u64>,
+) -> u64 {
+    if pattern.is_empty() {
+        return 1;
+    }
+    if let Some(&num) = cache.get(&pattern) {
+        return num;
+    }
+
+    let sum = towels
+        .iter()
+        .filter(|&towel| pattern.starts_with(towel))
+        .map(|towel| count_sequences(&pattern[towel.len()..], towels, cache))
+        .sum();
+    cache.insert(pattern, sum);
+
+    sum
+}
+
+pub fn part_1(input: &str) -> usize {
+    let (towels, patterns) = parse(input);
+    let mut cache = HashMap::new();
+
+    patterns
+        .into_iter()
+        .filter(|pattern| count_sequences(pattern, &towels, &mut cache) != 0)
+        .count()
+}
+```
+
+## Part 2
+
+The question asks for the sum of the amount of ways the patterns can be made.
+
+My part1 paid off, and part2 is a tiny change now!
+
+```rust
+pub fn part_2(input: &str) -> u64 {
+    let (towels, patterns) = parse(input);
+    let mut cache = HashMap::new();
+
+    patterns
+        .into_iter()
+        .map(|pattern| count_sequences(pattern, &towels, &mut cache))
+        .sum()
+}
+```
+
+## Final code
+
+```rust title=day_19.rs showLineNumbers
+use std::collections::HashMap;
+
+fn count_sequences<'a>(
+    pattern: &'a str,
+    towels: &[&str],
+    cache: &mut HashMap<&'a str, u64>,
+) -> u64 {
+    if pattern.is_empty() {
+        return 1;
+    }
+    if let Some(&num) = cache.get(&pattern) {
+        return num;
+    }
+
+    let sum = towels
+        .iter()
+        .filter(|&towel| pattern.starts_with(towel))
+        .map(|towel| count_sequences(&pattern[towel.len()..], towels, cache))
+        .sum();
+    cache.insert(pattern, sum);
+
+    sum
+}
+
+fn parse(input: &str) -> (Vec<&str>, Vec<&str>) {
+    let (towels, patterns) = input.split_once("\n\n").unwrap();
+    let towels = towels.split(", ").collect();
+    let patterns = patterns.lines().collect();
+    (towels, patterns)
+}
+
+fn part_1(input: &str) -> usize {
+    let (towels, patterns) = parse(input);
+    let mut cache = HashMap::new();
+
+    patterns
+        .into_iter()
+        .filter(|pattern| count_sequences(pattern, &towels, &mut cache) != 0)
+        .count()
+}
+
+fn part_2(input: &str) -> u64 {
+    let (towels, patterns) = parse(input);
+    let mut cache = HashMap::new();
+
+    patterns
+        .into_iter()
+        .map(|pattern| count_sequences(pattern, &towels, &mut cache))
+        .sum()
+}
+```

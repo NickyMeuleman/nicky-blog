@@ -1,0 +1,177 @@
+---
+title: "Advent of Code 2024 Day 25"
+date: 2024-12-25
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 25: Crossed Wires
+
+https://adventofcode.com/2024/day/25
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_25.rs)
+</Aside>
+
+Back to the place where we started the search, the Chief Historian's office.
+
+The door is locked.
+An elf hands you schematics for every lock and every key used on the North Pole
+
+An example input looks like this:
+
+```txt title=input.txt
+#####
+.####
+.####
+.####
+.#.#.
+.#...
+.....
+
+#####
+##.##
+.#.##
+...##
+...#.
+...#.
+.....
+
+.....
+#....
+#....
+#...#
+#.#.#
+#.###
+#####
+
+.....
+.....
+#.#..
+###..
+###.#
+###.#
+#####
+
+.....
+.....
+.....
+#....
+#.#..
+#.#.#
+#####
+```
+
+A `#` is solid, a `.` is empty space.
+
+- Keys start from the bottom (so they have `.` at the start of their block).
+- Locks start from the top (so they have `#` at the start of their block).
+
+- Each lock has 5 pins (columns in a block)
+- Each lock is 7 deep (rows in a block)
+
+### Parsing
+
+Represenging the input as 2 sets, one for locks and one for keys.
+
+Per block:  
+For each column, I count the amount of space that is filled.
+
+```rust
+fn parse(input: &str) -> (HashSet<[u8; 5]>, HashSet<[u8; 5]>) {
+    let mut locks = HashSet::new();
+    let mut keys = HashSet::new();
+    for block in input.split("\n\n") {
+        let set = if block.starts_with('.') {
+            &mut keys
+        } else {
+            &mut locks
+        };
+        let mut heights = [0; 5];
+        for line in block.lines() {
+            for (idx, c) in line.chars().enumerate() {
+                if c == '#' {
+                    heights[idx] += 1;
+                }
+            }
+        }
+        set.insert(heights);
+    }
+    (locks, keys)
+}
+```
+
+## Part 1
+
+The question asks how many lock/key combinations do not have overlapping filled space.
+
+For any key/lock combination:  
+The amount of filled space in any column cannot be greater than the height of the lock.
+
+<Aside variant="danger">
+  The key does not have to fit perfectly. It is not allowed to have any overlap.
+</Aside>
+
+```rust title=day_25.rs
+fn part_1(input: &str) -> usize {
+    let (locks, keys) = parse(input);
+    let mut sum = 0;
+    for lock in &locks {
+        for key in &keys {
+            if lock.iter().zip(key).all(|(l, k)| l + k <= 7) {
+                sum += 1;
+            }
+        }
+    }
+    sum
+}
+```
+
+## Part 2
+
+This part is very secret.
+
+It started snowing, have a great year, and see you next year for more Advent of Code!
+
+## Final code
+
+```rust title=day_25.rs showLineNumbers
+use std::collections::HashSet;
+
+fn parse(input: &str) -> (HashSet<[u8; 5]>, HashSet<[u8; 5]>) {
+    let mut locks = HashSet::new();
+    let mut keys = HashSet::new();
+    for block in input.split("\n\n") {
+        let set = if block.starts_with('.') {
+            &mut keys
+        } else {
+            &mut locks
+        };
+        let mut heights = [0; 5];
+        for line in block.lines() {
+            for (idx, c) in line.chars().enumerate() {
+                if c == '#' {
+                    heights[idx] += 1;
+                }
+            }
+        }
+        set.insert(heights);
+    }
+    (locks, keys)
+}
+
+fn part_1(input: &str) -> usize {
+    let (locks, keys) = parse(input);
+    let mut sum = 0;
+    for lock in &locks {
+        for key in &keys {
+            if lock.iter().zip(key).all(|(l, k)| l + k <= 7) {
+                sum += 1;
+            }
+        }
+    }
+    sum
+}
+```

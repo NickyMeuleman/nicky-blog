@@ -1,0 +1,316 @@
+---
+title: "Advent of Code 2024 Day 23"
+date: 2024-12-23
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 23: LAN Party
+
+https://adventofcode.com/2024/day/23
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_23.rs)
+</Aside>
+
+You are at the Easter bunny HQ again, they are holding a LAN party.
+You [download](https://adventofcode.com/2016/day/9) a map of their network, that's your input.
+
+An example input looks like this:
+
+```txt title=input.txt
+kh-tc
+qp-kh
+de-cg
+ka-co
+yn-aq
+qp-ub
+cg-tb
+vc-aq
+tb-ka
+wh-tc
+yn-cg
+kh-ub
+ta-co
+de-co
+tc-td
+tb-wq
+wh-td
+ta-ka
+td-qp
+aq-cg
+wq-ub
+ub-vc
+de-ta
+wq-aq
+wq-vc
+wh-yn
+ka-de
+kh-ta
+co-tc
+wh-qp
+tb-vc
+td-yn
+```
+
+Each line describes a connection between two computer names.
+The connections don't have a direction, so the first line means:
+
+1. `kh` connects to `tc`
+1. `tc` connects to `kh`
+
+In other words, the network is a graph with a bunch of undirected edges.
+Get ready for a graph theory problem!
+
+### Parsing
+
+Creating the graph.
+
+```rust
+fn parse(input: &str) -> HashMap<&str, HashSet<&str>> {
+    let mut connections: HashMap<&str, HashSet<&str>> = HashMap::new();
+    for line in input.lines() {
+        let (left, right) = line.split_once('-').unwrap();
+        connections.entry(left).or_default().insert(right);
+        connections.entry(right).or_default().insert(left);
+    }
+    connections
+}
+```
+
+## Part 1
+
+The chief historian might be participating, their computer name starts with a `t`.
+Start by looking for sets of 3 computers that are all connected to each other where at least 1 name starts with a `t`.
+
+The question asks how many [cliques](https://en.wikipedia.org/wiki/Clique_(graph_theory)) of 3 contain a computer that starts with a `t`.
+
+```rust title=day_23.rs
+fn part_1(input: &str) -> usize {
+    let connections = parse(input);
+    let mut sets = HashSet::new();
+    for pc1 in connections.keys() {
+        // only count sets where first pc might be the chief historian's to avoid triplecounting
+        if !pc1.starts_with('t') {
+            continue;
+        }
+        // pcs connected to pc1
+        for pc2 in &connections[pc1] {
+            // pcs connected to both pc1 and pc2
+            for pc3 in connections[pc1].intersection(&connections[pc2]) {
+                let set = BTreeSet::from([pc1, pc2, pc3]);
+                sets.insert(set);
+            }
+        }
+    }
+
+    sets.len()
+}
+```
+
+## Part 2
+
+Now find the largest clique in the graph.
+
+The password is the alphbetically sorted names of all computers in the LAN party.
+
+The question asks what the password is.
+
+During my initial solve, I used a method that gave me the right answer, but turns out to be technically incorrect because it relies on the graph structure.
+The input happened to be constructed in a way that made my code work (and as far as I can tell, works on everyones input).
+
+I'll list it here too, but first, the way I should have done it.
+There exists an algorithm for finding the largest clique in a graph with undirected edges: [the Bron-Kerbosch algorithm](https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm).
+
+I dislike 1 letter variable names, so I gave them a more descriptive name.
+The comment above the helper is from wikipedia.
+
+```rust title=day_23.rs
+// More generally, given three disjoint sets of vertices R (all), P (some), and X (none)
+// it finds the maximal cliques that include all of the vertices in R
+// some of the vertices in P
+// and none of the vertices in X.
+fn bron_kerbosch<'a>(
+    graph: &HashMap<&'a str, HashSet<&'a str>>,
+    all: HashSet<&'a str>,
+    mut some: HashSet<&'a str>,
+    mut none: HashSet<&'a str>,
+    cliques: &mut Vec<HashSet<&'a str>>,
+) {
+    if some.is_empty() {
+        if none.is_empty() {
+            cliques.push(all);
+        }
+        return;
+    }
+
+    for node in some.clone() {
+        let neighbours = &graph[node];
+        // nodes both in neighbours and in some
+        let new_some = some.intersection(neighbours).copied().collect();
+        // nodes both in neighbours and none
+        let new_none = none.intersection(neighbours).copied().collect();
+        // add neighbour to all
+        let mut new_all = all.clone();
+        new_all.insert(node);
+
+        bron_kerbosch(graph, new_all, new_some, new_none, cliques);
+
+        // prepare for next iteration: move considered node from some to none
+        some.remove(node);
+        none.insert(node);
+    }
+}
+
+pub fn part_2(input: &str) -> String {
+    let connections = parse(input);
+    let mut cliques = Vec::new();
+    let pcs = connections.keys().copied().collect();
+
+    bron_kerbosch(
+        &connections,
+        &mut HashSet::new(),
+        pcs,
+        HashSet::new(),
+        &mut cliques,
+    );
+
+    let mut clique: Vec<_> = cliques
+        .into_iter()
+        .max_by_key(|clique| clique.len())
+        .unwrap()
+        .into_iter()
+        .collect();
+    clique.sort();
+    clique.join(",")
+}
+```
+
+### Bonus: faster, but maybe incomplete
+
+My original code, it works, but only because the input is crafted for it to work.
+
+```rust
+fn part_2(input: &str) -> String {
+    let mut largest = HashSet::new();
+
+    for (&name, neighbours) in &connections {
+        let mut group = HashSet::new();
+        group.insert(name);
+
+        for &neighbour in neighbours {
+            // if neighbour is connected to all group members, it joins the group
+            let new_neighbours = connections.get(neighbour).unwrap();
+            if group.is_subset(new_neighbours) {
+                group.insert(neighbour);
+            }
+        }
+
+        if group.len() > largest.len() {
+            largest = group;
+        }
+    }
+
+    let mut names: Vec<_> = largest.into_iter().collect();
+    names.sort();
+    names.join(",")
+}
+```
+
+## Final code
+
+```rust title=day_23.rs showLineNumbers
+use std::collections::{BTreeSet, HashMap, HashSet};
+
+// More generally, given three disjoint sets of vertices R (all), P (some), and X (none)
+// it finds the maximal cliques that include all of the vertices in R
+// some of the vertices in P
+// and none of the vertices in X.
+fn bron_kerbosch<'a>(
+    graph: &HashMap<&'a str, HashSet<&'a str>>,
+    all: HashSet<&'a str>,
+    mut some: HashSet<&'a str>,
+    mut none: HashSet<&'a str>,
+    cliques: &mut Vec<HashSet<&'a str>>,
+) {
+    if some.is_empty() {
+        if none.is_empty() {
+            cliques.push(all);
+        }
+        return;
+    }
+
+    for node in some.clone() {
+        let neighbours = &graph[node];
+        // nodes both in neighbours and in some
+        let new_some = some.intersection(neighbours).copied().collect();
+        // nodes both in neighbours and none
+        let new_none = none.intersection(neighbours).copied().collect();
+        // add neighbour to all
+        let mut new_all = all.clone();
+        new_all.insert(node);
+
+        bron_kerbosch(graph, new_all, new_some, new_none, cliques);
+
+        // prepare for next iteration: move considered node from some to none
+        some.remove(node);
+        none.insert(node);
+    }
+}
+
+fn parse(input: &str) -> HashMap<&str, HashSet<&str>> {
+    let mut connections: HashMap<&str, HashSet<&str>> = HashMap::new();
+    for line in input.lines() {
+        let (left, right) = line.split_once('-').unwrap();
+        connections.entry(left).or_default().insert(right);
+        connections.entry(right).or_default().insert(left);
+    }
+    connections
+}
+
+pub fn part_1(input: &str) -> usize {
+    let connections = parse(input);
+    let mut sets = HashSet::new();
+    for pc1 in connections.keys() {
+        // only count sets where first pc might be the chief historian's to avoid triplecounting
+        if !pc1.starts_with('t') {
+            continue;
+        }
+        // pcs connected to pc1
+        for pc2 in &connections[pc1] {
+            // pcs connected to both pc1 and pc2
+            for pc3 in connections[pc1].intersection(&connections[pc2]) {
+                let set = BTreeSet::from([pc1, pc2, pc3]);
+                sets.insert(set);
+            }
+        }
+    }
+
+    sets.len()
+}
+
+pub fn part_2(input: &str) -> String {
+    let connections = parse(input);
+    let mut cliques = Vec::new();
+    let pcs = connections.keys().copied().collect();
+
+    bron_kerbosch(
+        &connections,
+        HashSet::new(),
+        pcs,
+        HashSet::new(),
+        &mut cliques,
+    );
+
+    let mut clique: Vec<_> = cliques
+        .into_iter()
+        .max_by_key(|clique| clique.len())
+        .unwrap()
+        .into_iter()
+        .collect();
+    clique.sort();
+    clique.join(",")
+}
+```

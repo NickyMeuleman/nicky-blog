@@ -1,0 +1,737 @@
+---
+title: "Advent of Code 2024 Day 21"
+date: 2024-12-21
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 21: Keypad Conundrum
+
+https://adventofcode.com/2024/day/21
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_21.rs)
+</Aside>
+
+Another day, another [familiar location](https://adventofcode.com/2019/day/25).
+
+There is a door that needs to be opened by entering a bunch of codes on a keypad.
+
+An example input looks like this:
+
+```txt title=input.txt
+029A
+980A
+179A
+456A
+379A
+```
+
+Each line is a sequence of keys that should be pressed.
+That `A` is the submit key.
+A numeric keypad looks like this:
+
+```txt
++---+---+---+
+| 7 | 8 | 9 |
++---+---+---+
+| 4 | 5 | 6 |
++---+---+---+
+| 1 | 2 | 3 |
++---+---+---+
+    | 0 | A |
+    +---+---+
+```
+
+But there is a wrinkle (ofcourse there is),
+
+The codes have to be entered by a robot,
+robots can be controlled through another keypad, a directional one.
+
+A directional keypad looks like this:
+
+```txt
+    +---+---+
+    | ^ | A |
++---+---+---+
+| < | v | > |
++---+---+---+
+```
+
+A robot arrives at a keypad with their "finger" pointed at `A`.
+Each instruction pressed on a directional keypad causes the other robot's "finger" to move one spot in that direction,
+or press the key they are currently pointing at if the instruction was `A`.
+
+A robot can never point at the empty space on the keypad they are at,
+else ... they blow up or something? Bad things happen, better not find out.
+
+## Parsing
+
+Turning the input into a list of codes.
+
+```rust
+fn parse(input: &str) -> Vec<&str> {
+    input.lines().collect()
+}
+```
+
+## Part 1
+
+There is an additional wrinkle, the robot controlling the numeric keypad robot has to be controlled by a robot.
+You control that robot with your own directional keypad.
+
+[I heard you like controlling robots, so we made you control robots while you control robots](https://i.kym-cdn.com/photos/images/original/000/001/122/xzibit-happy.jpg)
+
+[The problem statement](https://adventofcode.com/2024/day/21) has a detailed explanation and examples.
+
+To summarize:
+
+- One directional keypad that you are using.
+- Two directional keypads that robots are using.
+- One numeric keypad (on a door) that a robot is using.
+
+The complexity of a single code (like 029A) is equal to the result of multiplying these two values:
+
+1. The length of the shortest sequence of button presses you need to type on your directional keypad in order to cause the code to be typed on the numeric keypad; for 029A, this would be 68.
+1. The numeric part of the code (ignoring leading zeroes); for 029A, this would be 29.
+
+The question asks for the sum of all complexities for the codes in your input.
+
+---
+
+The solution here is done with a lot of hindsight, my original solve was much messier.
+But I left in some of the logic duplication in the code for the individual parts because it's cleaner to explain.
+
+This is really 2 grid problems in disguise.
+
+1. A numeric keypad one
+1. A directional keypad one
+
+During the solving of the numeric keypad one, I solve the directional keypad one.
+Several times! As there are multiple directional keypads to control.
+
+Some skeleton/pseudocode I will works towards:
+
+```rust
+fn part_1(input: &str) -> usize {
+    let codes = parse(input);
+    let mut sum = 0;
+    for code in codes {
+        let num = get_code_num(code);
+        let len = solve(code);
+        sum += num * len
+    }
+    sum
+}
+```
+
+### Helpers
+
+As this is a grid problem, you might know what's coming, ~~the holidays~~ `Point`!
+The `Point` struct has a method that returns the new location of a point when you sent it an instruction.
+And optionally, an output (if that instruction was an `A`).
+
+It takes in a map of the keypad on which the instruction should be executed, those maps are made by my very next helper functions.
+
+```rust
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+
+    fn execute(&self, inst: char, pad: &HashMap<Point, char>) -> (Point, Option<char>) {
+        match inst {
+            '^' => (Self::new(self.row - 1, self.col), None),
+            '>' => (Self::new(self.row, self.col + 1), None),
+            'v' => (Self::new(self.row + 1, self.col), None),
+            '<' => (Self::new(self.row, self.col - 1), None),
+            'A' => (Self::new(self.row, self.col), Some(pad[self])),
+            _ => panic!("at the disco"),
+        }
+    }
+}
+```
+
+Then 2 helpers that turn keypads into maps from `Point` to the character at that location.
+Again, not the most efficient way to store it, but one I like a lot.
+And today, it pays off because of the empty spots that are not part of the grids!
+
+```rust
+fn make_numpad() -> HashMap<Point, char> {
+    // +---+---+---+
+    // | 7 | 8 | 9 |
+    // +---+---+---+
+    // | 4 | 5 | 6 |
+    // +---+---+---+
+    // | 1 | 2 | 3 |
+    // +---+---+---+
+    //     | 0 | A |
+    //     +---+---+
+    HashMap::from([
+        (Point::new(0, 0), '7'),
+        (Point::new(0, 1), '8'),
+        (Point::new(0, 2), '9'),
+        (Point::new(1, 0), '4'),
+        (Point::new(1, 1), '5'),
+        (Point::new(1, 2), '6'),
+        (Point::new(2, 0), '1'),
+        (Point::new(2, 1), '2'),
+        (Point::new(2, 2), '3'),
+        (Point::new(3, 1), '0'),
+        (Point::new(3, 2), 'A'),
+    ])
+}
+
+fn make_dirpad() -> HashMap<Point, char> {
+    //     +---+---+
+    //     | ^ | A |
+    // +---+---+---+
+    // | < | v | > |
+    // +---+---+---+
+    HashMap::from([
+        (Point::new(0, 1), '^'),
+        (Point::new(0, 2), 'A'),
+        (Point::new(1, 0), '<'),
+        (Point::new(1, 1), 'v'),
+        (Point::new(1, 2), '>'),
+    ])
+}
+```
+
+It's time to start working towards that `solve` function from the skeleton.
+It returns the length of the sequence you have to enter on your keypad.
+
+But it's really solving for the shortest path, and what's being navigated is the numeric keypad.
+Time for another round of our good pal [Edsgser](https://nl.wikipedia.org/wiki/Edsger_Dijkstra)!
+
+If you want a refresher, I used that algorithm in [day16](/blog/aoc2024-day16), and there are many online resources on it.
+
+First the definition of the node in the priority queue, then the shortest path algorithm itself.
+
+I chose to let the `solve` function take in a list of characters instead of the raw string.
+The same thing, but a bit easier to index into, which I do.
+
+```rust
+#[derive(Clone, PartialEq, Eq)]
+struct NumPadNode {
+    cost: usize,
+    pos: Point,
+    instr: char,
+    len: usize,
+}
+
+impl Ord for NumPadNode {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for NumPadNode {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+fn solve(code: Vec<char>) -> usize {
+    let numpad = make_numpad();
+
+    let mut pq = BinaryHeap::new();
+    let mut costmap = HashMap::new();
+
+    // start pointed at the A on the numpad
+    pq.push(NumPadNode {
+        cost: 0,
+        pos: Point::new(3, 2),
+        instr: 'A',
+        len: 0,
+    });
+
+    while let Some(node) = pq.pop() {
+        if node.len == code.len() {
+            return node.cost;
+        }
+
+        // insert (pos, instr, len) combo, if it was already seen, continue
+        if costmap
+            .insert((node.pos, node.instr, node.len), node.cost)
+            .is_some()
+        {
+            continue;
+        }
+
+        for new_instr in "^A<v>".chars() {
+            let (new_pos, output) = node.pos.execute(new_instr, &numpad);
+            // if new pos ends up in the empty position of the pad, skip
+            if !numpad.contains_key(&new_pos) {
+                continue;
+            }
+            let mut new_len = node.len;
+            if let Some(instr) = output {
+                if instr != code[new_len] {
+                    continue;
+                }
+                new_len += 1;
+            }
+            let new_cost = node.cost + calc_cost(new_instr, node.instr, 2);
+            pq.push(NumPadNode {
+                cost: new_cost,
+                pos: new_pos,
+                instr: new_instr,
+                len: new_len,
+            });
+        }
+    }
+
+    panic!("at the disco");
+}
+```
+
+In that code, I use a `calc_cost` function to calculate how much a move for the numeric keypad would cost at the final directional keypad I am controlling.
+
+That's a recursive function!
+It returns the cost for a certain amount of robots (called `depth`) in code.
+Each time I recurse, I decrement `depth` by 1.
+The base case for the recursion is when `depth` reaches 0, then the cost is 1 (meaning: 1 move has 1 cost).
+
+It also start off as a regular Dijkstra shortest path algorithm, but recurses each time the new cost for a node is calculated.
+
+The node in this priority queue is slightly different to the one in the queue for `solve`,
+instead of keeping track of the length of the path, it keeps track of the previously output of executing an instruction (can be empty!).
+
+```rust
+#[derive(Clone, PartialEq, Eq)]
+struct DirPadNode {
+    cost: usize,
+    pos: Point,
+    instr: char,
+    output: Option<char>,
+}
+
+impl Ord for DirPadNode {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for DirPadNode {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+fn calc_cost(goal: char, prev_instr: char, depth: usize) -> usize {
+    let point_to_key = make_dirpad();
+    let key_to_point: HashMap<_, _> = point_to_key.iter().map(|(pos, c)| (c, pos)).collect();
+
+    if depth == 0 {
+        return 1;
+    }
+
+    let mut pq = BinaryHeap::new();
+
+    // start pointed at prev instr
+    pq.push(DirPadNode {
+        cost: 0,
+        pos: *key_to_point[&prev_instr],
+        instr: 'A', // more accurate would be a "nothing" value
+        output: None,
+    });
+
+    while let Some(node) = pq.pop() {
+        if node.output.is_some_and(|key| key == goal) {
+            return node.cost;
+        }
+
+        for new_instr in "^A<v>".chars() {
+            let (new_pos, new_output) = node.pos.execute(new_instr, &point_to_key);
+            // if new pos ends up in the empty position of the pad, continue
+            if !point_to_key.contains_key(&new_pos) {
+                continue;
+            }
+            // if output isn't equal to goal, continue
+            if new_output.is_some_and(|instr| instr != goal) {
+                continue;
+            }
+
+            // calculate total cost of executing new_instr
+            let new_cost = node.cost + calc_cost(new_instr, node.instr, depth - 1);
+
+            pq.push(DirPadNode {
+                cost: new_cost,
+                pos: new_pos,
+                instr: new_instr,
+                output: new_output,
+            });
+        }
+    }
+
+    panic!("at the disco");
+}
+```
+
+### Code
+
+Put them all together, and it's very close to the original skeleton.
+
+```rust title=day_21.rs
+pub fn part_1(input: &str) -> usize {
+    let codes = parse(input);
+    let mut sum = 0;
+    for code in codes {
+        let num: usize = code.strip_suffix('A').unwrap().parse().unwrap();
+        let len = solve(code.chars().collect());
+        sum += num * len
+    }
+    sum
+}
+```
+
+## Part 2
+
+Now the number of intermediary robots is 25.
+
+- One directional keypad that you are using.
+- 25 directional keypads that robots are using.
+- One numeric keypad (on a door) that a robot is using.
+
+The code for part1 is nearly correct.
+Changing the hardcoded `2` to a `25` makes is correct.
+
+But it's too slow.
+
+A trick from previous days: slap a cache on that recursion and bam, we're dynamically programming over here!
+
+```rust {5,7-9,26,39}
+fn calc_cost(
+    goal: char,
+    prev_key: char,
+    depth: usize,
+    cache: &mut HashMap<(char, char, usize), usize>,
+) -> usize {
+    if let Some(&cost) = cache.get(&(goal, prev_key, depth)) {
+        return cost;
+    }
+    if depth == 0 {
+        return 1;
+    }
+
+    let point_to_key = make_dirpad();
+    let key_to_point: HashMap<_, _> = point_to_key.iter().map(|(pos, c)| (c, pos)).collect();
+    let mut pq = BinaryHeap::new();
+    pq.push(DirPadNode {
+        cost: 0,
+        pos: *key_to_point[&prev_key],
+        instr: 'A',
+        output: None,
+    });
+
+    while let Some(node) = pq.pop() {
+        if node.output.is_some_and(|key| key == goal) {
+            cache.insert((goal, prev_key, depth), node.cost);
+            return node.cost;
+        }
+        for new_move in "^A<v>".chars() {
+            let (new_pos, pressed) = node.pos.execute(new_move, &point_to_key);
+            if !point_to_key.contains_key(&new_pos) {
+                continue;
+            }
+            if let Some(pressed) = pressed {
+                if pressed != goal {
+                    continue;
+                }
+            }
+            let new_cost = node.cost + calc_cost(new_move, node.instr, depth - 1, cache);
+            pq.push(DirPadNode {
+                cost: new_cost,
+                pos: new_pos,
+                instr: new_move,
+                output: pressed,
+            });
+        }
+    }
+
+    panic!("at the disco");
+}
+```
+
+And the `solve` function where that cache gets constructed and passed to the original recursive function call.
+
+```rust {3,35}
+fn solve(code: Vec<char>) -> usize {
+    let numpad = make_numpad();
+    let mut cache = HashMap::new();
+    let mut pq = BinaryHeap::new();
+    let mut costmap = HashMap::new();
+    pq.push(NumPadNode {
+        cost: 0,
+        pos: Point::new(3, 2),
+        instr: 'A',
+        len: 0,
+    });
+
+    while let Some(node) = pq.pop() {
+        if node.len == code.len() {
+            return node.cost;
+        }
+        if costmap
+            .insert((node.pos, node.instr, node.len), node.cost)
+            .is_some()
+        {
+            continue;
+        }
+
+        for new_move in "A^<v>".chars() {
+            let (new_pos, pressed) = node.pos.execute(new_move, &numpad);
+            if !numpad.contains_key(&new_pos) {
+                continue;
+            }
+            let mut new_len = node.len;
+            if let Some(pressed) = pressed {
+                if pressed != code[new_len] {
+                    continue;
+                }
+                new_len += 1;
+            }
+            let new_cost = node.cost + calc_cost(new_move, node.instr, 25, &mut cache);
+            pq.push(NumPadNode {
+                cost: new_cost,
+                pos: new_pos,
+                instr: new_move,
+                len: new_len,
+            });
+        }
+    }
+
+    panic!("at the disco");
+}
+```
+
+### Code
+
+[Same as part 1](#code), the changes were in the helpers.
+
+## Final code
+
+1. I made the depth to recurse a parameter instead of hardcoding it
+1. I condensed the two node types into one and stored the specific part in a tuple in each function's queue.
+
+Making those changes to the code for part2:
+
+```rust title=day_21.rs showLineNumbers
+use std::{
+    cmp::Ordering,
+    collections::{BinaryHeap, HashMap},
+};
+
+fn make_numpad() -> HashMap<Point, char> {
+    HashMap::from([
+        (Point::new(0, 0), '7'),
+        (Point::new(0, 1), '8'),
+        (Point::new(0, 2), '9'),
+        (Point::new(1, 0), '4'),
+        (Point::new(1, 1), '5'),
+        (Point::new(1, 2), '6'),
+        (Point::new(2, 0), '1'),
+        (Point::new(2, 1), '2'),
+        (Point::new(2, 2), '3'),
+        (Point::new(3, 1), '0'),
+        (Point::new(3, 2), 'A'),
+    ])
+}
+
+fn make_dirpad() -> HashMap<Point, char> {
+    HashMap::from([
+        (Point::new(0, 1), '^'),
+        (Point::new(0, 2), 'A'),
+        (Point::new(1, 0), '<'),
+        (Point::new(1, 1), 'v'),
+        (Point::new(1, 2), '>'),
+    ])
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+
+    fn execute(&self, inst: char, pad: &HashMap<Point, char>) -> (Point, Option<char>) {
+        match inst {
+            '^' => (Self::new(self.row - 1, self.col), None),
+            '>' => (Self::new(self.row, self.col + 1), None),
+            'v' => (Self::new(self.row + 1, self.col), None),
+            '<' => (Self::new(self.row, self.col - 1), None),
+            'A' => (Self::new(self.row, self.col), Some(pad[self])),
+            _ => panic!("at the disco"),
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Eq)]
+struct Node {
+    cost: usize,
+    pos: Point,
+    instr: char,
+}
+
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+fn calc_cost(
+    goal: char,
+    prev_instr: char,
+    depth: u8,
+    cache: &mut HashMap<(char, char, u8), usize>,
+) -> usize {
+    if let Some(&cost) = cache.get(&(goal, prev_instr, depth)) {
+        return cost;
+    }
+    if depth == 0 {
+        return 1;
+    }
+
+    let point_to_key = make_dirpad();
+    let key_to_point: HashMap<_, _> = point_to_key.iter().map(|(pos, c)| (c, pos)).collect();
+    let mut pq = BinaryHeap::new();
+
+    pq.push((
+        Node {
+            cost: 0,
+            pos: *key_to_point[&prev_instr],
+            instr: 'A',
+        },
+        None,
+    ));
+
+    while let Some((node, output)) = pq.pop() {
+        if output.is_some_and(|key| key == goal) {
+            cache.insert((goal, prev_instr, depth), node.cost);
+            return node.cost;
+        }
+
+        for new_instr in "^A<v>".chars() {
+            let (new_pos, new_output) = node.pos.execute(new_instr, &point_to_key);
+            if !point_to_key.contains_key(&new_pos) {
+                continue;
+            }
+            if new_output.is_some_and(|instr| instr != goal) {
+                continue;
+            }
+            let new_cost = node.cost + calc_cost(new_instr, node.instr, depth - 1, cache);
+
+            pq.push((
+                Node {
+                    cost: new_cost,
+                    pos: new_pos,
+                    instr: new_instr,
+                },
+                new_output,
+            ));
+        }
+    }
+
+    panic!("at the disco");
+}
+
+fn solve(code: Vec<char>, depth: u8) -> usize {
+    let numpad = make_numpad();
+    let mut pq = BinaryHeap::new();
+    let mut costmap = HashMap::new();
+    let mut cache = HashMap::new();
+
+    pq.push((
+        Node {
+            cost: 0,
+            pos: Point::new(3, 2),
+            instr: 'A',
+        },
+        0,
+    ));
+
+    while let Some((node, len)) = pq.pop() {
+        if len == code.len() {
+            return node.cost;
+        }
+
+        if costmap
+            .insert((node.pos, node.instr, len), node.cost)
+            .is_some()
+        {
+            continue;
+        }
+
+        for new_instr in "^A<v>".chars() {
+            let (new_pos, output) = node.pos.execute(new_instr, &numpad);
+            if !numpad.contains_key(&new_pos) {
+                continue;
+            }
+            let mut new_len = len;
+            if let Some(instr) = output {
+                if instr != code[new_len] {
+                    continue;
+                }
+                new_len += 1;
+            }
+            let new_cost = node.cost + calc_cost(new_instr, node.instr, depth, &mut cache);
+            pq.push((
+                Node {
+                    cost: new_cost,
+                    pos: new_pos,
+                    instr: new_instr,
+                },
+                new_len,
+            ));
+        }
+    }
+
+    panic!("at the disco");
+}
+
+fn parse(input: &str) -> Vec<&str> {
+    input.lines().collect()
+}
+
+pub fn part_1(input: &str) -> usize {
+    let codes = parse(input);
+    let mut sum = 0;
+    for code in codes {
+        let num: usize = code.strip_suffix('A').unwrap().parse().unwrap();
+        let len = solve(code.chars().collect(), 2);
+        sum += num * len
+    }
+    sum
+}
+
+pub fn part_2(input: &str) -> usize {
+    let codes = parse(input);
+    let mut sum = 0;
+    for code in codes {
+        let num: usize = code.strip_suffix('A').unwrap().parse().unwrap();
+        let len = solve(code.chars().collect(), 25);
+        sum += num * len
+    }
+    sum
+}
+```

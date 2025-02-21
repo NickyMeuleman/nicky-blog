@@ -1,0 +1,591 @@
+---
+title: "Advent of Code 2024 Day 16"
+date: 2024-12-16
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 16: Reindeer Maze
+
+https://adventofcode.com/2024/day/16
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_16.rs)
+</Aside>
+
+Another day, another [familiar location](https://adventofcode.com/2015/day/14).
+
+You are at the reindeer olympics, where the big even is navigating through a maze in as short a route as possible.
+
+An example input looks like this:
+
+```txt title=input.txt
+###############
+#.......#....E#
+#.#.###.#.###.#
+#.....#.#...#.#
+#.###.#####.#.#
+#.#.#.......#.#
+#.#.#####.###.#
+#...........#.#
+###.#.#####.#.#
+#...#.....#.#.#
+#.#.#.###.#.#.#
+#.....#...#.#.#
+#.###.#.#.#.#.#
+#S..#.....#...#
+###############
+```
+
+O, look, a 2D-grid!
+
+- `#` is a wall
+- `.` is an empty space
+- `S` is the starting location
+- `E` is the ending location
+
+## Parsing
+
+If you've been following along, you know what I do when I see a puzzle with coordinates by now, `Point`!
+I added a `Tile` enum for all the locations on the map.
+
+### Data structures
+
+```rust
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+enum Tile {
+    Empty,
+    Wall,
+    Start,
+    End,
+}
+```
+
+---
+
+I chose to store the grid in a map again where keys are `Point` and values are `Tile`.
+Also the `Point`s for start and end are returned.
+
+```rust
+fn parse(input: &str) -> (Point, Point, HashMap<Point, Tile>) {
+    let mut map = HashMap::new();
+    let mut start = Point::new(0, 0);
+    let mut end = Point::new(0, 0);
+    for (row, line) in input.lines().enumerate() {
+        for (col, c) in line.chars().enumerate() {
+            let point = Point::new(row as i32, col as i32);
+            let tile = match c {
+                '.' => Tile::Empty,
+                '#' => Tile::Wall,
+                'E' => Tile::End,
+                'S' => Tile::Start,
+                _ => panic!("at the disco"),
+            };
+            if tile == Tile::Start {
+                start = point;
+            }
+            if tile == Tile::End {
+                end = point;
+            }
+            map.insert(point, tile);
+        }
+    }
+    (start, end, map)
+}
+```
+
+## Part 1
+
+The reindeer have to find the shortest path through a maze.
+They start at the starting position facing east (I will represent directions with a `Point` again).
+The maze is completed when they reach the ending direction, which direction they face at that point doesn't matter.
+
+The reindeer can only move forward or turn 90 degrees:
+
+- Each move forward costs 1.
+- Each 90 degree turns costs 1000.
+
+The reindeer have to find the shortest path you say?
+You want the lowest cost you say?
+BAM! [DIJKSTRA!](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm)
+
+I heavily commented my code today.
+
+### Helpers
+
+Dijkstra uses a [priority queue](https://en.wikipedia.org/wiki/Priority_queue).
+I want whatever item is in the queue that has the lowest `cost` to be popped from the queue first.
+
+To do this in Rust, I'll use a [`BinaryHeap`](https://doc.rust-lang.org/std/collections/struct.BinaryHeap.html), and define how things in that heap should be ordered.
+
+The things in that heap will be my own `Node` structs.
+Those hold 3 things:
+
+1. a position
+1. a direction
+1. a cost
+
+The `Node`s are ordered by their `cost`, so a `Node` in the priority queue with the lowest `cost` will get popped first.
+
+```rust
+#[derive(PartialEq, Eq)]
+struct Node {
+    pos: Point,
+    dir: Point,
+    cost: u32,
+}
+
+// The priority queue holds Nodes
+// We define an ordering trait so the one with the lowest cost gets popped from the pq first.
+// We do this by flipping the ordering on cost (comparing "other to self" instead of "self to other")
+// that way, nodes with a lower cost will compare as Ordering::Greater, and get sent to the front of the pq
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+// Ensure partialOrd is consistent with Ord. If you #[derive(PartialOrd)] this it might not be the same as that implementation uses a top-down ordering on the Node struct fields
+// in this case, it would order by idx first (as that field occurs first in the source code where Node is defined) and would not be consistent.
+// From the docs:
+// > If Ord is also implemented for Self and Rhs, it must also be consistent with partial_cmp (see the documentation of that trait for the exact requirements).
+// > It’s easy to accidentally make them disagree by deriving some of the traits and manually implementing others.
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+```
+
+Now, the rules for movement costs.
+At some point in the algorithm, I need to produce all possible next steps, and I decided to make a helper for it.
+It takes in the map, the current position and direction, and returns a list of all possible moves.
+
+And 2 possible moves are turns, so I updated the logic for `Point` to handle that.
+
+A resulting valid move consists of 3 things:
+
+1. the new position
+1. the new facing direction
+1. the cost for that move
+
+```rust title=day_16.rs
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+
+    fn add(&self, other: &Self) -> Self {
+        Self::new(self.row + other.row, self.col + other.col)
+    }
+
+    fn clockwise(&self) -> Self {
+        Point::new(self.col, -self.row)
+    }
+
+    fn counter_clockwise(&self) -> Self {
+        Point::new(-self.col, self.row)
+    }
+}
+
+fn moves(map: &HashMap<Point, Tile>, pos: Point, dir: Point) -> Vec<(Point, Point, u32)> {
+    let mut moves = Vec::new();
+
+    // move forward one
+    let new_loc = pos.add(&dir);
+    if let Some(&tile) = map.get(&new_loc) {
+        if tile != Tile::Wall {
+            moves.push((new_loc, dir, 1));
+        }
+    }
+    // turn clockwise
+    moves.push((pos, dir.clockwise(), 1000));
+    // turn counterclockwise
+    moves.push((pos, dir.counter_clockwise(), 1000));
+
+    moves
+}
+```
+
+Time to bring it all together and implement Dijkstra's shortest path algorithm.
+This function takes in the map, the start, and the end.
+It returns the minimum cost to reach the end given the rules.
+
+```rust
+fn shortest_path(map: &HashMap<Point, Tile>, start: Point, end: Point) -> u32 {
+    // total cost to reach a point facing a direction
+    let mut shortest: HashMap<(Point, Point), u32> = HashMap::new();
+    // priority queue with ordering so the Node with the lowest cost gets popped first
+    let mut pq = BinaryHeap::new();
+
+    // insert the initial position, facing east into the pq
+    pq.push(Node {
+        pos: start,
+        dir: Point::new(0, 1),
+        cost: 0,
+    });
+
+    // keep popping from the pq until it is empty (no path found), or we break out of the loop (shortest path found)
+    while let Some(node) = pq.pop() {
+        // did we pop our goal position off the pq?
+        // if so, it is guaranteed to have the lowest cost, and we're done
+        if node.pos == end {
+            return node.cost;
+        }
+
+        // did we pop something off the pq that got a lower-cost route to it in between the time it was added to the pq and popped off the pq?
+        // (this can happen when there are multiple ways to reach a node, and a lower cost one is discovered while this node was in the pq)
+        // if yes, disregard (don't update the shortest-list OR look at the possible next steps for this node.
+        // Looking at the next steps would calculate costs for paths through this node, but it's not the lowest cost way to reach it.)
+        if let Some(&lowest) = shortest.get(&(node.pos, node.dir)) {
+            if lowest < node.cost {
+                continue;
+            }
+        }
+
+        // the node we popped from the pq was the shortest path to that location, facint that direction. Update the shortest-map
+        shortest.insert((node.pos, node.dir), node.cost);
+
+        // look at all possible moves
+        for (new_pos, new_dir, move_cost) in moves(map, node.pos, node.dir) {
+            // calculate the total cost if you execute that move
+            let new_cost = node.cost + move_cost;
+
+            // if the new cost to get to that (new_pos, new_dir) pair isn't lower than what is already in the shortest-list, move on to the next move
+            if let Some(&lowest) = shortest.get(&(new_pos, new_dir)) {
+                if lowest <= new_cost {
+                    continue;
+                }
+            }
+
+            // add that move onto the pq
+            pq.push(Node {
+                pos: new_pos,
+                dir: new_dir,
+                cost: new_cost,
+            });
+
+            // important to not exit the loop here if the new position is equal to our goal
+            // we might not have looked at the lowest-cost way to reach the goal yet
+        }
+    }
+
+    unreachable!("No path found")
+}
+```
+
+### Code
+
+Another one where all heavy lifting is in helpers so the driving-code is nice and short.
+
+```rust title=day_16.rs
+fn part_1(input: &str) -> u32 {
+    let (start, end, map) = parse(input);
+    shortest_path(&map, start, end)
+}
+```
+
+## Part 2
+
+You want to watch the event and want a good place to sit.
+Each empty space (`.`, `S`, and `E`) is equipped with a seat.
+
+The question asks how many seats there are along **a** (not the! a!) shortest path.
+
+This requires some changes to our code.
+
+1. It can no longer stop when it finds a shortest path, it should find all shortest paths.
+1. I need to reconstruct all `Point`s along all shortest paths, the answer is the length of that set of `Point`s.
+
+That first part is done by no longer returning from the function when I find a node at the ending position, but continuing until I see an ending node whose cost is higher than a previous ending node.
+
+To do the second change I'll keep track of where a `Node` came from.
+For each `Node` that is created, it refers to the previous `Node` on its path.
+Whenever I find a `Node` whose position is at the ending, I backtrack through all those steps until I reach the start.
+
+I added a `from` field to my `Node` struct that points to another `Node`.
+In rust, this is a bit tricky, so I explicitly made it optional and made the compiler count how many times that `Node` is referenced while my code executes.
+In many other languages, this will "just work™️"
+
+```rust {6}
+#[derive(Clone, PartialEq, Eq)]
+struct Node {
+    pos: Point,
+    dir: Point,
+    cost: u32,
+    from: Option<Rc<Node>>,
+}
+```
+
+Now in the main algorithm function, I no longer return from the function when I see an ending position.
+I check if the cost for the current node is higher than the current global lowest cost.
+
+- If it is, that means all shortest paths have been found, and I can break out of the loop.
+- If it is not, it found a shortest path and I record all positions by backtracking starting at the end and going to the start, one `node.from` step at a time.
+  Then I continue looping.
+
+```rust {2-7, 16, 24-37, 61-62, 67}
+fn shortest_paths_positions(map: &HashMap<Point, Tile>, start: Point, end: Point) -> usize {
+    // keep track of all positions along a shortest path
+    let mut best_positions = HashSet::new();
+    best_positions.insert(start);
+    best_positions.insert(end);
+    // keep track of shortest cost from start to end
+    let mut lowest_cost = u32::MAX;
+    // total cost to reach a point facing a direction
+    let mut shortest: HashMap<(Point, Point), u32> = HashMap::new();
+    // priority queue with ordering so the Node with the lowest cost gets popped first
+    let mut pq = BinaryHeap::new();
+
+    pq.push(Node {
+        pos: start,
+        dir: Point::new(0, 1),
+        from: None,
+        cost: 0,
+    });
+
+    while let Some(node) = pq.pop() {
+        // did we pop our goal position off the pq?
+        // if so, it is guaranteed to have the lowest cost, and this completes a shortest path
+        if node.pos == end {
+            lowest_cost = lowest_cost.min(node.cost);
+            if node.cost > lowest_cost {
+                // we went further than the minimum cost, stop looping
+                break;
+            }
+            // reconstruct the path
+            let mut curr = Rc::new(node);
+            while curr.pos != start {
+                best_positions.insert(curr.pos);
+                if let Some(prev) = &curr.from {
+                    curr = prev.clone();
+                }
+            }
+            continue;
+        }
+
+        if let Some(&lowest) = shortest.get(&(node.pos, node.dir)) {
+            if lowest < node.cost {
+                continue;
+            }
+        }
+
+        shortest.insert((node.pos, node.dir), node.cost);
+
+        for (new_pos, new_dir, move_cost) in moves(map, node.pos, node.dir) {
+            let new_cost = node.cost + move_cost;
+
+            if let Some(&lowest) = shortest.get(&(new_pos, new_dir)) {
+                if lowest <= new_cost {
+                    continue;
+                }
+            }
+
+            pq.push(Node {
+                pos: new_pos,
+                dir: new_dir,
+                cost: new_cost,
+                // remember where this node came from
+                from: Some(Rc::new(node.clone())),
+            });
+        }
+    }
+
+    best_positions.len()
+}
+```
+
+### Code
+
+Again, nice and tidy because of helper functions.
+
+```rust title=day_16.rs
+fn part_2(input: &str) -> usize {
+    let (start, end, map) = parse(input);
+    shortest_paths_positions(&map, start, end)
+}
+```
+
+## Final code
+
+Combining both is as complicated as also returning the global lowest cost along with the set length in the part 2 function.
+
+```rust title=day_16.rs showLineNumbers
+use std::{
+    cmp::Ordering,
+    collections::{BinaryHeap, HashMap, HashSet},
+    rc::Rc,
+};
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+struct Point {
+    row: i32,
+    col: i32,
+}
+
+impl Point {
+    fn new(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+
+    fn add(&self, other: &Self) -> Self {
+        Self::new(self.row + other.row, self.col + other.col)
+    }
+
+    fn clockwise(&self) -> Self {
+        Point::new(self.col, -self.row)
+    }
+
+    fn counter_clockwise(&self) -> Self {
+        Point::new(-self.col, self.row)
+    }
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+enum Tile {
+    Empty,
+    Wall,
+    Start,
+    End,
+}
+
+#[derive(Clone, PartialEq, Eq)]
+struct Node {
+    pos: Point,
+    dir: Point,
+    cost: u32,
+    from: Option<Rc<Node>>,
+}
+
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+fn moves(map: &HashMap<Point, Tile>, pos: Point, dir: Point) -> Vec<(Point, Point, u32)> {
+    let mut moves = Vec::new();
+
+    let new_loc = pos.add(&dir);
+    if let Some(&tile) = map.get(&new_loc) {
+        if tile != Tile::Wall {
+            moves.push((new_loc, dir, 1));
+        }
+    }
+    moves.push((pos, dir.clockwise(), 1000));
+    moves.push((pos, dir.counter_clockwise(), 1000));
+
+    moves
+}
+
+fn parse(input: &str) -> (Point, Point, HashMap<Point, Tile>) {
+    let mut map = HashMap::new();
+    let mut start = Point::new(0, 0);
+    let mut end = Point::new(0, 0);
+    for (row, line) in input.lines().enumerate() {
+        for (col, c) in line.chars().enumerate() {
+            let point = Point::new(row as i32, col as i32);
+            let tile = match c {
+                '.' => Tile::Empty,
+                '#' => Tile::Wall,
+                'E' => Tile::End,
+                'S' => Tile::Start,
+                _ => panic!("at the disco"),
+            };
+            if tile == Tile::Start {
+                start = point;
+            }
+            if tile == Tile::End {
+                end = point;
+            }
+            map.insert(point, tile);
+        }
+    }
+    (start, end, map)
+}
+
+fn dijkstra(map: &HashMap<Point, Tile>, start: Point, end: Point) -> (u32, usize) {
+    let mut best_positions = HashSet::new();
+    best_positions.insert(start);
+    best_positions.insert(end);
+    let mut lowest_cost = u32::MAX;
+    let mut shortest: HashMap<(Point, Point), u32> = HashMap::new();
+    let mut pq = BinaryHeap::new();
+
+    pq.push(Node {
+        pos: start,
+        dir: Point::new(0, 1),
+        from: None,
+        cost: 0,
+    });
+
+    while let Some(node) = pq.pop() {
+        if node.pos == end {
+            lowest_cost = lowest_cost.min(node.cost);
+            if node.cost > lowest_cost {
+                break;
+            }
+            let mut curr = Rc::new(node);
+            while curr.pos != start {
+                best_positions.insert(curr.pos);
+                if let Some(prev) = &curr.from {
+                    curr = prev.clone();
+                }
+            }
+            continue;
+        }
+
+        if let Some(&lowest) = shortest.get(&(node.pos, node.dir)) {
+            if lowest < node.cost {
+                continue;
+            }
+        }
+
+        shortest.insert((node.pos, node.dir), node.cost);
+
+        for (new_pos, new_dir, move_cost) in moves(map, node.pos, node.dir) {
+            let new_cost = node.cost + move_cost;
+
+            if let Some(&lowest) = shortest.get(&(new_pos, new_dir)) {
+                if lowest <= new_cost {
+                    continue;
+                }
+            }
+
+            pq.push(Node {
+                pos: new_pos,
+                dir: new_dir,
+                cost: new_cost,
+                from: Some(Rc::new(node.clone())),
+            });
+        }
+    }
+
+    (lowest_cost, best_positions.len())
+}
+
+pub fn both(input: &str) -> (u32, usize) {
+    let (start, end, map) = parse(input);
+    dijkstra(&map, start, end)
+}
+```

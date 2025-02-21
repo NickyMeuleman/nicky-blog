@@ -1,0 +1,429 @@
+---
+title: "Advent of Code 2024 Day 17"
+date: 2024-12-17
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 17: Chronospatial Computer
+
+https://adventofcode.com/2024/day/17
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_17.rs)
+</Aside>
+
+Another day, another ... [familiar sensation](https://adventofcode.com/2018/day/6) this time, as you're falling.
+
+You need to debug the handheld timetravel/teleportation-device you have been using throughout this advent.
+
+It has a computer with 3 registers, those are storage spots for numbers.
+The program it is trying to run consists of a list of numbers, and it is listed at the bottom of the input.
+
+An example input looks like this:
+
+```txt title=input.txt
+Register A: 729
+Register B: 0
+Register C: 0
+
+Program: 0,1,5,4,3,0
+```
+
+## Parsing
+
+I parsed today's input into a list of numbers, nothing fancy.
+
+- first number is A
+- second number is B
+- third number is C
+- the rest of the numbers are the program
+
+```rust
+fn parse(input: &str) -> Vec<u64> {
+    input
+        .split(|c: char| !c.is_ascii_digit())
+        .filter(|s| !s.is_empty())
+        .map(|s| s.parse().unwrap())
+        .collect()
+}
+```
+
+## Part 1
+
+The computer uses an **instruction pointer**, it functions as an index into the program.
+That instruction pointer starts as 0, so it starts off pointing at the first number in the program (a list of numbers).
+
+A computer looks like this:
+
+```rust
+struct Computer {
+    ip: usize,
+    a: u64,
+    b: u64,
+    c: u64,
+    program: Vec<u64>,
+}
+```
+
+The program can do 8 operations.
+
+Each operation uses 2 numbers from the program memory.
+
+1. The **opcode** at `program[ip]`
+1. The **operand** at `program[ip + 2]`
+
+Per time it does an operation, I increment the `ip` (instruction pointer) by 2 to move past the 2 numbers the computer just used.
+
+Which type of instruction is executed is determined by the **opcode**.
+It might change the numbers in the registers, or change the `ip`.
+
+The operand might get modified before it gets used by an instruction.
+There are 2 options:
+
+1. literal operand: operand remains unchanged
+1. combo operand:
+   - operands 0 through 3 remain unchanged
+   - operand 4 turn into the value of register A.
+   - operand 5 turn into the value of register B.
+   - operand 6 turn into the value of register C.
+   - operand 7 is reserved and will not appear in valid programs.
+
+The 8 instructions:
+
+- `**` represents exponentiation.
+- `^` represent the bitwise XOR operation
+- `%` represents a modulo operation
+
+0. `adv`: `a / (2 ** combo)`, store result in `a`
+1. `bxl`: `b ^ literal`, store result in the `b`
+2. `bst`: `combo % 8`, store result in `b`
+3. `jnz`: change `ip` to literal operand if `a` is not 0
+4. `bxc`: `b ^ c` store result in `b` (this operation ignores its operand)
+5. `out`: `combo % 8`, output result
+6. `bdv`: `a / (2 ** combo)`, store result in `b`
+7. `cdv`: `a / (2 ** combo)`, store result in `c`
+
+### Helpers
+
+I used a data structure that holds a computer.
+
+- It has a method to turn an operand into a combo operand.
+- It has a method that runs the program until it outputs a number or halts (the instruction pointer points outside of the program memory).
+
+```rust
+struct Computer<'a> {
+    ip: usize,
+    a: u64,
+    b: u64,
+    c: u64,
+    program: &'a [u64],
+}
+
+impl Computer<'_> {
+    fn combo(&self, operand: u64) -> u64 {
+        match operand {
+            0..=3 => operand,
+            4 => self.a,
+            5 => self.b,
+            6 => self.c,
+            _ => panic!("at the disco"),
+        }
+    }
+    fn run(&mut self) -> Option<u64> {
+        while self.ip < self.program.len() {
+            let opcode = self.program[self.ip];
+            let operand = self.program[self.ip + 1];
+            self.ip += 2;
+
+            match opcode {
+                // adv: a/2^combo, store in a
+                0 => self.a >>= self.combo(operand),
+                // bxl: bitwise xor of b and literal-operand, store in b
+                1 => self.b ^= operand,
+                // bst: combo % 8, store in b
+                2 => self.b = self.combo(operand) % 8,
+                // jnz: jump to literal operand if a not zero
+                3 => {
+                    if self.a != 0 {
+                        self.ip = operand as usize;
+                        continue;
+                    }
+                }
+                // bxc: bitwise xor of b and c, store in b (ignores operand)
+                4 => self.b ^= self.c,
+                // out: combo % 8, outputs result
+                5 => {
+                    let out = self.combo(operand) % 8;
+                    return Some(out);
+                }
+                // bdv: a/2^combo, store in b
+                6 => self.b = self.a >> self.combo(operand),
+                // cdv: a/2^combo, store in c
+                7 => self.c = self.a >> self.combo(operand),
+                _ => panic!("at the disco"),
+            }
+        }
+
+        None
+    }
+}
+```
+
+### Code
+
+The question asks you to print the all the numbers the computer outputs, and place a comma between each one.
+
+```rust title=day_17.rs
+pub fn part_1(input: &str) -> String {
+    let nums = parse(input);
+    let mut computer = Computer {
+        ip: 0,
+        a: nums[0],
+        b: nums[1],
+        c: nums[2],
+        program: &nums[3..],
+    };
+    let mut out = Vec::new();
+
+    while let Some(n) = computer.run() {
+        out.push(n);
+    }
+
+    out.iter()
+        .map(|c| c.to_string())
+        .collect::<Vec<String>>()
+        .join(",")
+}
+```
+
+## Part 2
+
+The program is supposed to output another copy of the input program, but it doesn't,
+because the input value in register A is corrupt.
+
+The question asks what the lowest valid number for A is (so the program outputs another copy of itself).
+
+My solution (which heavily uses some help I got in the [Rust Adventure](https://www.rustadventure.dev/) Discord) makes a few assumptions about the input and uses them.
+
+- Your program ends in `3,0`.
+That means at the end of the program the value of `a` must be 0.
+
+- The initial values for `b` and `c` do not matter as they are set entirely based on the initial value in `a`.
+
+- There is only one operation in the program that modifies `a`,  
+and it is `a / (2 ** 3)`.
+That's equivalent to `a >> 3`.
+
+So I used backtracking to find the original value for `a`, given the program numbers.
+The last valid value for `a` is `0`, because that's necessary for the program to end.
+
+Starting with the last number the program should output and working backwards.
+Each loop, I try to figure out what the previous number for `a` could have been given a valid value for `a` in the next loop,
+and the number the program outputs.
+
+I keep track of these possible valid values in a list, as each loop can result in multiple valid numbers `a` could have been.
+
+I use the numbers in that list, call one `valid_next_a`, and I know that number is the result of `a >> 3`.
+
+In other words:
+`next_a = a >> 3`.
+
+The value for `next_a` is known, so I try all possible values for `a` and see if they cause the correct program output.
+
+That value the inverse of the operation + a number that has no inpact on the operation:
+`a = (next_a << 3) + something_with_3_bits`
+
+```rust
+pub fn part_2(input: &str) -> u64 {
+    let nums = parse(input);
+    let program = &nums[3..];
+    // a list of all valid values for a for the current step that causes the correct next number in
+    // the program being output.
+    // starts with [0] because a must be 0 at the end for the program to end
+    // reason: at the end of the input there is a jnz instruction that jumps back to ip 0
+    // (that means your program ends in 3,0)
+    let mut valid = vec![0];
+
+    // work backwards through the program to recreate it using known valid values for a that
+    // produce the correct next output number in the program
+    for &wanted in program.iter().rev() {
+        let mut curr_valid = Vec::new();
+
+        for valid_next_a in valid {
+            // try all possible values n that recreate the new a, so the valid_next_a << 3 operation still has the same result
+            for n in 0..8 {
+                // the value in the a register is only changed once, it is divided by 2^3 (or
+                // shifted right by 3)
+                // shift valid_next_a 3 to the left, then add the n to get the original value for a
+                let a = (valid_next_a << 3) | n;
+                let mut computer = Computer {
+                    ip: 0,
+                    a,
+                    // both b and c are set from the value in a so their starting value does not
+                    // matter
+                    b: 0,
+                    c: 0,
+                    program,
+                };
+
+                // if this program outputs the previous value in the program, the value for a was
+                // correct
+                if let Some(result) = computer.run() {
+                    if result == wanted {
+                        curr_valid.push(a);
+                    }
+                }
+            }
+        }
+
+        valid = curr_valid;
+    }
+
+    // the program is in the starting state now, so valid holds a list of valid numbers for the a
+    // register that output the entire program at this point
+    *valid.iter().min().unwrap()
+}
+```
+
+## Final code
+
+```rust title=day_17.rs showLineNumbers
+struct Computer<'a> {
+    ip: usize,
+    a: u64,
+    b: u64,
+    c: u64,
+    program: &'a [u64],
+}
+
+impl Computer<'_> {
+    fn combo(&self, operand: u64) -> u64 {
+        match operand {
+            0..=3 => operand,
+            4 => self.a,
+            5 => self.b,
+            6 => self.c,
+            _ => panic!("at the disco"),
+        }
+    }
+    fn run(&mut self) -> Option<u64> {
+        while self.ip < self.program.len() {
+            let opcode = self.program[self.ip];
+            let operand = self.program[self.ip + 1];
+            self.ip += 2;
+
+            match opcode {
+                // adv: a/2^combo, store in a
+                0 => self.a >>= self.combo(operand),
+                // bxl: bitwise xor of b and literal-operand, store in b
+                1 => self.b ^= operand,
+                // bst: combo % 8, store in b
+                2 => self.b = self.combo(operand) % 8,
+                // jnz: jump to literal operand if a not zero
+                3 => {
+                    if self.a != 0 {
+                        self.ip = operand as usize;
+                        continue;
+                    }
+                }
+                // bxc: bitwise xor of b and c, store in b (ignores operand)
+                4 => self.b ^= self.c,
+                // out: combo % 8, outputs result
+                5 => {
+                    let out = self.combo(operand) % 8;
+                    return Some(out);
+                }
+                // bdv: a/2^combo, store in b
+                6 => self.b = self.a >> self.combo(operand),
+                // cdv: a/2^combo, store in c
+                7 => self.c = self.a >> self.combo(operand),
+                _ => panic!("at the disco"),
+            }
+        }
+
+        None
+    }
+}
+
+fn parse(input: &str) -> Vec<u64> {
+    input
+        .split(|c: char| !c.is_ascii_digit())
+        .filter(|s| !s.is_empty())
+        .map(|s| s.parse().unwrap())
+        .collect()
+}
+
+pub fn part_1(input: &str) -> String {
+    let nums = parse(input);
+    let mut computer = Computer {
+        ip: 0,
+        a: nums[0],
+        b: nums[1],
+        c: nums[2],
+        program: &nums[3..],
+    };
+    let mut out = Vec::new();
+
+    while let Some(n) = computer.run() {
+        out.push(n);
+    }
+
+    out.iter()
+        .map(|c| c.to_string())
+        .collect::<Vec<String>>()
+        .join(",")
+}
+
+pub fn part_2(input: &str) -> u64 {
+    let nums = parse(input);
+    let program = &nums[3..];
+    // a list of all valid values for a for the current step that causes the correct next number in
+    // the program being output.
+    // starts with [0] because a must be 0 at the end for the program to end
+    // reason: at the end of the input there is a jnz instruction that jumps back to ip 0
+    // (that means your program ends in 3,0)
+    let mut valid = vec![0];
+
+    // work backwards through the program to recreate it using known valid values for a that
+    // produce the correct next output number in the program
+    for &wanted in program.iter().rev() {
+        let mut curr_valid = Vec::new();
+
+        for valid_next_a in valid {
+            // try all possible values n that recreate the new a, so the valid_next_a << 3 operation still has the same result
+            for n in 0..8 {
+                // the value in the a register is only changed once, it is divided by 2^3 (or
+                // shifted right by 3)
+                // shift valid_next_a 3 to the left, then add the n to get the original value for a
+                let a = (valid_next_a << 3) | n;
+                let mut computer = Computer {
+                    ip: 0,
+                    a,
+                    // both b and c are set from the value in a so their starting value does not
+                    // matter
+                    b: 0,
+                    c: 0,
+                    program,
+                };
+
+                // if this program outputs the previous value in the program, the value for a was
+                // correct
+                if let Some(result) = computer.run() {
+                    if result == wanted {
+                        curr_valid.push(a);
+                    }
+                }
+            }
+        }
+
+        valid = curr_valid;
+    }
+
+    // the program is in the starting state now, so valid holds a list of valid numbers for the a
+    // register that output the entire program at this point
+    *valid.iter().min().unwrap()
+}
+```

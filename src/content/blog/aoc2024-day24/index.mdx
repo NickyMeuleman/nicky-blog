@@ -1,0 +1,485 @@
+---
+title: "Advent of Code 2024 Day 24"
+date: 2024-12-24
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 24: Crossed Wires
+
+https://adventofcode.com/2024/day/24
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_24.rs)
+</Aside>
+
+Another day, another [familiar location](https://adventofcode.com/2022/day/23).
+
+Some device is acting up and you need to fix it (but thankfully, it's not a printer!).
+If works on a bunch of boolean logic.
+
+An example input looks like this:
+
+```txt title=input.txt
+x00: 1
+x01: 1
+x02: 1
+y00: 0
+y01: 1
+y02: 0
+
+x00 AND y00 -> z00
+x01 XOR y01 -> z01
+x02 OR y02 -> z02
+```
+
+The top part is a bunch of wires with the boolean value they currently hold.
+eg. the wire called `x00` is set to `true`, and `y02` is set to `false`.
+
+The bottom part describes the logic gates in the device.
+
+### Parsing
+
+I could throw everything in a string and work with those, I could, but I didn't.
+
+```rust
+#[derive(PartialEq, Eq, Clone, Copy)]
+enum Operator {
+    And,
+    Or,
+    Xor,
+}
+
+#[derive(Clone, Copy)]
+struct Operation<'a> {
+    lhs: &'a str,
+    op: Operator,
+    rhs: &'a str,
+}
+
+fn parse(input: &str) -> (HashMap<&str, bool>, HashMap<&str, Operation>) {
+    let (top, bottom) = input.split_once("\n\n").unwrap();
+    let mut wires = HashMap::new();
+    for line in top.lines() {
+        let (left, right) = line.split_once(": ").unwrap();
+        wires.insert(left, right == "1");
+    }
+    let mut operations = HashMap::new();
+    for line in bottom.lines() {
+        let (left, right) = line.split_once(" -> ").unwrap();
+        let (lhs, op, rhs) = left.split_whitespace().collect_tuple().unwrap();
+        let op = match op {
+            "AND" => Operator::And,
+            "OR" => Operator::Or,
+            "XOR" => Operator::Xor,
+            _ => panic!("at the disco"),
+        };
+        operations.insert(right, Operation { lhs, op, rhs });
+    }
+    (wires, operations)
+}
+```
+
+## Part 1
+
+After the logic gates do their thing completely (there are no loops).
+
+The system is trying to procude a number by combining the bits on all wires starting with a `z`.
+`z00` is the least significant bit.
+
+The question asks what that number is in decimal.
+
+### Helpers
+
+Adding a method to any `Operator` that actually does that bit operation.
+
+```rust
+impl Operator {
+    fn execute(&self, a: bool, b: bool) -> bool {
+        match self {
+            Self::And => a & b,
+            Self::Or => a | b,
+            Self::Xor => a ^ b,
+        }
+    }
+}
+```
+
+Now the actually interesting bit, the functon that recursively calculates the boolean on a given wire given the starting booleans on the wires and a map of all logic operations.
+
+```rust
+fn calc<'a>(
+    wires: &mut HashMap<&'a str, bool>,
+    ops: &HashMap<&'a str, Operation<'a>>,
+    wire: &'a str,
+) -> bool {
+    if let Some(&on) = wires.get(wire) {
+        return on;
+    }
+    let Operation { lhs, op, rhs } = &ops[wire];
+    let lhs = calc(wires, ops, lhs);
+    let rhs = calc(wires, ops, rhs);
+    let res = op.execute(lhs, rhs);
+    wires.insert(wire, res);
+    res
+}
+```
+
+### Code
+
+1. Gather all wires starting with a `z`
+1. Order them in reverse
+1. Calculate their boolean value
+1. Concatenate them
+1. Turn the resulting binary number into decimal
+
+```rust title=day_24.rs
+fn part_1(input: &str) -> u64 {
+    let (mut wires, ops) = parse(input);
+    ops.keys()
+        // get all wires that start with z and sort them
+        .filter(|name| name.starts_with('z'))
+        .sorted()
+        // least significant bit is first, reverse
+        .rev()
+        // calculate the bits those wires output
+        .map(|name| calc(&mut wires, &ops, name))
+        // concatenate the bits (with boolean math!)
+        .fold(0, |acc, bit| acc << 1 | bit as u64)
+}
+```
+
+## Part 2
+
+You know that first part of the input you parsed?
+Throw it away, it's useless in part2!
+
+The system is trying to add 2 binary numbers.
+
+1. the bits on wires starting with `x` form a binary number.
+1. the bits on wires starting with `y` form a binary number.
+1. Those 2 number are (binary) added together and the resulting bits are output to wires starting with `z`
+
+Again, `00` is the least significant bit, then `01`, then `02`, ...
+
+It's wrong because 4 pairs of wires are swapped.
+
+The question asks to print all wires that are wrong, sort them, and put a comma between them.
+
+The code I used is [Hyperneutrino's code](https://github.com/hyperneutrino/advent-of-code/blob/4988973ae38cce707ff983d8c1df3bc3c3465c72/2024/day24p2.py) translated to Rust.
+For an explanation of the logic it performs please watch [her video](https://www.youtube.com/watch?v=SU6lp6wyd3I).
+
+Basically, it starts a counter at `0` and checks how high it can go before a `z` wire with that number is wrong.
+It then bruteforce swaps wires and performs that check again for each swap.
+If the counter gets higher, it keeps that swap.
+
+The interesting parts are the functions that check if a `z` wire has the correct output boolean.
+
+```rust title=day_24.rs
+fn make_wire(c: char, n: i32) -> String {
+    format!("{}{:02}", c, n)
+}
+
+fn is_ok_z(ops: &HashMap<&str, Operation>, wire: &str, num: i32) -> bool {
+    if let Some(Operation { lhs, op, rhs }) = ops.get(wire) {
+        if *op != Operator::Xor {
+            return false;
+        }
+        if num == 0 {
+            let mut operands = [*lhs, *rhs];
+            operands.sort();
+            return operands == ["x00", "y00"];
+        }
+        return (is_ok_xor(ops, lhs, num) && is_ok_carry_bit(ops, rhs, num))
+            || (is_ok_xor(ops, rhs, num) && is_ok_carry_bit(ops, lhs, num));
+    }
+    false
+}
+
+fn is_ok_xor(ops: &HashMap<&str, Operation>, wire: &str, num: i32) -> bool {
+    if let Some(Operation { lhs, op, rhs }) = ops.get(wire) {
+        if *op != Operator::Xor {
+            return false;
+        }
+        let mut operands = [*lhs, *rhs];
+        operands.sort();
+        return operands == [make_wire('x', num), make_wire('y', num)];
+    }
+    false
+}
+
+fn is_ok_carry_bit(ops: &HashMap<&str, Operation>, wire: &str, num: i32) -> bool {
+    if let Some(Operation { lhs, op, rhs }) = ops.get(wire) {
+        if num == 1 {
+            if *op != Operator::And {
+                return false;
+            }
+            let mut operands = [*lhs, *rhs];
+            operands.sort();
+            return operands == ["x00", "y00"];
+        }
+        if *op != Operator::Or {
+            return false;
+        }
+        return (is_ok_direct_carry(ops, lhs, num - 1) && is_ok_recarry(ops, rhs, num - 1))
+            || (is_ok_direct_carry(ops, rhs, num - 1) && is_ok_recarry(ops, lhs, num - 1));
+    }
+    false
+}
+
+fn is_ok_direct_carry(ops: &HashMap<&str, Operation>, wire: &str, num: i32) -> bool {
+    if let Some(Operation { lhs, op, rhs }) = ops.get(wire) {
+        if *op != Operator::And {
+            return false;
+        }
+        let mut operands = [*lhs, *rhs];
+        operands.sort();
+        return operands == [make_wire('x', num), make_wire('y', num)];
+    }
+    false
+}
+
+fn is_ok_recarry(ops: &HashMap<&str, Operation>, wire: &str, num: i32) -> bool {
+    if let Some(Operation { lhs, op, rhs }) = ops.get(wire) {
+        if *op != Operator::And {
+            return false;
+        }
+        return (is_ok_xor(ops, lhs, num) && is_ok_carry_bit(ops, rhs, num))
+            || (is_ok_xor(ops, rhs, num) && is_ok_carry_bit(ops, lhs, num));
+    }
+    false
+}
+
+fn progress(ops: &HashMap<&str, Operation>) -> i32 {
+    (0..)
+        .find(|&idx| !is_ok_z(ops, &make_wire('z', idx), idx))
+        .unwrap()
+}
+
+fn swap_wires<'a>(map: &mut HashMap<&'a str, Operation<'a>>, a: &'a str, b: &'a str) {
+    let temp = map[a];
+    map.insert(a, map[b]);
+    map.insert(b, temp);
+}
+
+fn part_2(input: &str) -> String {
+    let (_, mut ops) = parse(input);
+    let mut swaps = Vec::new();
+
+    let wires: Vec<&str> = ops.keys().copied().collect();
+    for _ in 0..4 {
+        let baseline = progress(&ops);
+        for (a, b) in wires.iter().tuple_combinations() {
+            swap_wires(&mut ops, a, b);
+            if progress(&ops) > baseline {
+                swaps.push([*a, *b]);
+                break;
+            }
+            swap_wires(&mut ops, a, b);
+        }
+    }
+
+    swaps
+        .into_iter()
+        .flatten()
+        .sorted()
+        .intersperse(",")
+        .collect()
+}
+```
+
+## Final code
+
+```rust title=day_24.rs showLineNumbers
+use itertools::Itertools;
+use std::collections::HashMap;
+
+#[derive(PartialEq, Eq, Clone, Copy)]
+enum Operator {
+    And,
+    Or,
+    Xor,
+}
+
+impl Operator {
+    fn execute(&self, a: bool, b: bool) -> bool {
+        match self {
+            Self::And => a & b,
+            Self::Or => a | b,
+            Self::Xor => a ^ b,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+struct Operation<'a> {
+    lhs: &'a str,
+    op: Operator,
+    rhs: &'a str,
+}
+
+fn parse(input: &str) -> (HashMap<&str, bool>, HashMap<&str, Operation>) {
+    let (top, bottom) = input.split_once("\n\n").unwrap();
+    let mut wires = HashMap::new();
+    for line in top.lines() {
+        let (left, right) = line.split_once(": ").unwrap();
+        wires.insert(left, right == "1");
+    }
+    let mut operations = HashMap::new();
+    for line in bottom.lines() {
+        let (left, right) = line.split_once(" -> ").unwrap();
+        let (lhs, op, rhs) = left.split_whitespace().collect_tuple().unwrap();
+        let op = match op {
+            "AND" => Operator::And,
+            "OR" => Operator::Or,
+            "XOR" => Operator::Xor,
+            _ => panic!("at the disco"),
+        };
+        operations.insert(right, Operation { lhs, op, rhs });
+    }
+    (wires, operations)
+}
+
+fn calc<'a>(
+    wires: &mut HashMap<&'a str, bool>,
+    ops: &HashMap<&'a str, Operation<'a>>,
+    wire: &'a str,
+) -> bool {
+    if let Some(&on) = wires.get(wire) {
+        return on;
+    }
+    let Operation { lhs, op, rhs } = &ops[wire];
+    let lhs = calc(wires, ops, lhs);
+    let rhs = calc(wires, ops, rhs);
+    let res = op.execute(lhs, rhs);
+    wires.insert(wire, res);
+    res
+}
+
+fn part_1(input: &str) -> u64 {
+    let (mut wires, ops) = parse(input);
+    ops.keys()
+        // get all wires that start with z and sort them
+        .filter(|name| name.starts_with('z'))
+        .sorted()
+        // least significant bit is first, reverse
+        .rev()
+        // calculate the bits those wires output
+        .map(|name| calc(&mut wires, &ops, name))
+        // concatenate the bits (with boolean math!)
+        .fold(0, |acc, bit| acc << 1 | bit as u64)
+}
+
+fn make_wire(c: char, n: i32) -> String {
+    format!("{}{:02}", c, n)
+}
+
+fn is_ok_z(ops: &HashMap<&str, Operation>, wire: &str, num: i32) -> bool {
+    if let Some(Operation { lhs, op, rhs }) = ops.get(wire) {
+        if *op != Operator::Xor {
+            return false;
+        }
+        if num == 0 {
+            let mut operands = [*lhs, *rhs];
+            operands.sort();
+            return operands == ["x00", "y00"];
+        }
+        return (is_ok_xor(ops, lhs, num) && is_ok_carry_bit(ops, rhs, num))
+            || (is_ok_xor(ops, rhs, num) && is_ok_carry_bit(ops, lhs, num));
+    }
+    false
+}
+
+fn is_ok_xor(ops: &HashMap<&str, Operation>, wire: &str, num: i32) -> bool {
+    if let Some(Operation { lhs, op, rhs }) = ops.get(wire) {
+        if *op != Operator::Xor {
+            return false;
+        }
+        let mut operands = [*lhs, *rhs];
+        operands.sort();
+        return operands == [make_wire('x', num), make_wire('y', num)];
+    }
+    false
+}
+
+fn is_ok_carry_bit(ops: &HashMap<&str, Operation>, wire: &str, num: i32) -> bool {
+    if let Some(Operation { lhs, op, rhs }) = ops.get(wire) {
+        if num == 1 {
+            if *op != Operator::And {
+                return false;
+            }
+            let mut operands = [*lhs, *rhs];
+            operands.sort();
+            return operands == ["x00", "y00"];
+        }
+        if *op != Operator::Or {
+            return false;
+        }
+        return (is_ok_direct_carry(ops, lhs, num - 1) && is_ok_recarry(ops, rhs, num - 1))
+            || (is_ok_direct_carry(ops, rhs, num - 1) && is_ok_recarry(ops, lhs, num - 1));
+    }
+    false
+}
+
+fn is_ok_direct_carry(ops: &HashMap<&str, Operation>, wire: &str, num: i32) -> bool {
+    if let Some(Operation { lhs, op, rhs }) = ops.get(wire) {
+        if *op != Operator::And {
+            return false;
+        }
+        let mut operands = [*lhs, *rhs];
+        operands.sort();
+        return operands == [make_wire('x', num), make_wire('y', num)];
+    }
+    false
+}
+
+fn is_ok_recarry(ops: &HashMap<&str, Operation>, wire: &str, num: i32) -> bool {
+    if let Some(Operation { lhs, op, rhs }) = ops.get(wire) {
+        if *op != Operator::And {
+            return false;
+        }
+        return (is_ok_xor(ops, lhs, num) && is_ok_carry_bit(ops, rhs, num))
+            || (is_ok_xor(ops, rhs, num) && is_ok_carry_bit(ops, lhs, num));
+    }
+    false
+}
+
+fn progress(ops: &HashMap<&str, Operation>) -> i32 {
+    (0..)
+        .find(|&idx| !is_ok_z(ops, &make_wire('z', idx), idx))
+        .unwrap()
+}
+
+fn swap_wires<'a>(map: &mut HashMap<&'a str, Operation<'a>>, a: &'a str, b: &'a str) {
+    let temp = map[a];
+    map.insert(a, map[b]);
+    map.insert(b, temp);
+}
+
+fn part_2(input: &str) -> String {
+    let (_, mut ops) = parse(input);
+    let mut swaps = Vec::new();
+
+    let wires: Vec<&str> = ops.keys().copied().collect();
+    for _ in 0..4 {
+        let baseline = progress(&ops);
+        for (a, b) in wires.iter().tuple_combinations() {
+            swap_wires(&mut ops, a, b);
+            if progress(&ops) > baseline {
+                swaps.push([*a, *b]);
+                break;
+            }
+            swap_wires(&mut ops, a, b);
+        }
+    }
+
+    swaps
+        .into_iter()
+        .flatten()
+        .sorted()
+        .intersperse(",")
+        .collect()
+}
+```

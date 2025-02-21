@@ -1,0 +1,191 @@
+---
+title: "Advent of Code 2024 Day 22"
+date: 2024-12-22
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2024"
+section: "garden"
+---
+
+## Day 22: Keypad Conundrum
+
+https://adventofcode.com/2024/day/22
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2024/solutions/src/day_22.rs)
+</Aside>
+
+Another day, another [familiar ... adversary](https://adventofcode.com/2022/day/11).
+
+A monkey stole the device.
+
+To trade it back, aqcuire ~~currency~~ bananas from the local market.
+
+Every buyer on the market sets their prices seemingly random, but they're not really, they're [pseudorandom](https://en.wikipedia.org/wiki/Pseudorandom_number_generator).
+And a sneaky historian hands you the list of seed numbers for the pseudorandom number generator.
+
+An example input looks like this:
+
+```txt title=input.txt
+1
+10
+100
+2024
+```
+
+The pseudorandom generation goes like this:
+
+1. Number is set to the result of multiplying the secret number by 64.
+1. Number is set to the result of dividing the secret number by 32. Round the result down to the nearest integer.
+1. Number is set to the result of multiplying the secret number by 2048.
+
+Between each step, mix the step result into the previous number, then prune the number.
+
+- mixing: step result XOR number
+- prune: mix result modulo 16777216
+
+Not bothering with a parsing function today, each line is a number.
+
+## Part 1
+
+The question asks for the sum of the 2000th secret number for all buyers.
+
+A "read the instructions and code them" question, nothing special.
+
+```rust title=day_22.rs
+fn mix(a: i64, b: i64) -> i64 {
+    a ^ b
+}
+
+fn prune(a: i64) -> i64 {
+    a.rem_euclid(16777216)
+}
+
+fn next(mut n: i64) -> i64 {
+    n = prune(mix(n * 64, n));
+    n = prune(mix(n / 32, n));
+    n = prune(mix(n * 2048, n));
+    n
+}
+
+fn part_1(input: &str) -> usize {
+    input
+        .lines()
+        .map(|line| {
+            let mut num = line.parse().unwrap();
+            for _ in 0..2000 {
+                num = next(num);
+            }
+            num
+        })
+        .sum()
+}
+```
+
+## Part 2
+
+You figured out what every buyer's secret numbers are going to be.
+That means you know what their prices are going to be.
+
+A price is the last digit of a secret number.
+
+You've got stuff to sell, and want as much bananas as possible.
+
+You instruct a monkey to sell one thing when it sees a specific sequence of 4 consecutive differences in price.
+This sequence is the same for every buyer, and the monkey only sells the first time it sees the sequence (or not at all if it doesn't see the sequence).
+
+The question asks what the most bananas you can get is.
+
+The code builds up a map that maps a specific sequence to an amount of bananas it gets from all buyers combined.
+The answer to the question is the maximum value in that map.
+
+For each buyer:
+1. Generate 2000 prices (the last digit of each pseudorandom number).
+1. Looks through sliding windows of 5 numbers (so 4 differences).
+This produces a sequence of differences, and a price at that sequence.
+The first time that specific sequence is seen, put it into the map.
+
+```rust title=day_22.rs
+fn part_2(input: &str) -> i64 {
+    let mut profitmap = HashMap::new();
+
+    for line in input.lines() {
+        let mut num = line.parse().unwrap();
+        let mut prices = [0; 2000];
+        for price in prices.iter_mut() {
+            num = next(num);
+            *price = num.rem_euclid(10);
+        }
+
+        let mut seen = HashSet::new();
+        for (a, b, c, d, e) in prices.iter().tuple_windows() {
+            let diffs = ((b - a), (c - b), (d - c), (e - d));
+            // only buy once
+            if seen.insert(diffs) {
+                *profitmap.entry(diffs).or_default() += *e;
+            }
+        }
+    }
+
+    *profitmap.values().max().unwrap()
+}
+```
+
+## Final code
+
+```rust title=day_22.rs showLineNumbers
+use itertools::Itertools;
+use std::collections::{HashMap, HashSet};
+
+fn mix(a: i64, b: i64) -> i64 {
+    a ^ b
+}
+
+fn prune(a: i64) -> i64 {
+    a.rem_euclid(16777216)
+}
+
+fn next(mut n: i64) -> i64 {
+    n = prune(mix(n * 64, n));
+    n = prune(mix(n / 32, n));
+    n = prune(mix(n * 2048, n));
+    n
+}
+
+pub fn part_1(input: &str) -> i64 {
+    input
+        .lines()
+        .map(|line| {
+            let mut num = line.parse().unwrap();
+            for _ in 0..2000 {
+                num = next(num);
+            }
+            num
+        })
+        .sum()
+}
+
+pub fn part_2(input: &str) -> i64 {
+    let mut profitmap = HashMap::new();
+
+    for line in input.lines() {
+        let mut num = line.parse().unwrap();
+        let mut prices = [0; 2000];
+        for price in prices.iter_mut() {
+            num = next(num);
+            *price = num.rem_euclid(10);
+        }
+
+        let mut seen = HashSet::new();
+        for (a, b, c, d, e) in prices.iter().tuple_windows() {
+            let diffs = ((b - a), (c - b), (d - c), (e - d));
+            // only sell once
+            if seen.insert(diffs) {
+                *profitmap.entry(diffs).or_default() += *e;
+            }
+        }
+    }
+
+    *profitmap.values().max().unwrap()
+}
+```
