@@ -1,0 +1,127 @@
+---
+import Aside from "$components/Aside.astro";
+import Tweet from "$components/Tweet.astro";
+import Layout from "$layouts/Layout.astro";
+---
+
+<Layout title="Uses">
+  <div
+    class="prose col-start-2 max-w-none text-text prose-a:anchor prose-code:code prose-headings:text-text md:col-start-4"
+  >
+    <Aside variant="info">
+      TL;DR: <a href="https://github.com/NickyMeuleman/dotfiles">My dotfiles</a>
+    </Aside>
+    <h1>What I use</h1>
+    <p>My dev computer runs Fedora</p>
+    <p>I used Windows 10 with Subsystem for Linux 2 for a long time</p>
+    <p>
+      <a href="/blog/linux-on-windows-wsl2-zsh-docker/">
+        I wrote about how to set it up
+      </a>
+      . Starting from scratch and ending with launching a project in Docker through
+      a tricked out terminal.
+    </p>
+    <h2>Code Editor</h2>
+    <p>
+      The code editor I spend the most time in is <a href="https://neovim.io/"
+        >Neovim</a
+      >. That used to be <a href="https://code.visualstudio.com/">
+        Visual Studio Code
+      </a>, which I still use for debugging.
+    </p>
+    <p>Some of my favorite extensions for VSCode are:</p>
+    <ul>
+      <li>
+        Theme -{` `}
+        <a
+          href="https://marketplace.visualstudio.com/items?itemName=sdras.night-owl"
+        >
+          Night Owl
+        </a>
+      </li>
+      <li>
+        Font -{` `}
+        <a href="https://github.com/tonsky/FiraCode"> Fira Code </a>
+        {` `}
+        with ligatures turned on.
+      </li>
+      <li>
+        Icons -{` `}
+        <a
+          href="https://marketplace.visualstudio.com/items?itemName=PKief.material-icon-theme"
+        >
+          Material Icon Theme
+        </a>
+      </li>
+      <li>
+        More Extensions - I gathered some of my favorites in a{` `}
+        <a href="https://twitter.com/i/events/1227594604872114178">
+          Twitter moment.
+        </a>
+      </li>
+    </ul>
+    <h2>Terminal</h2>
+    <p>
+      I mainly use <a href="https://alacritty.org/">Alacritty</a>
+    </p>
+    <p>
+      On Windows, when I'm not using the built-in terminal in VSCode, I use the{` `}
+      <a href="https://github.com/microsoft/terminal"> Windows Terminal </a>
+    </p>
+    <p>
+      <a href="blog/windows-terminal/"> I think it&apos;s awesome. </a>
+    </p>
+    <h2>Other Software</h2>
+    <ul>
+      <li>
+        <a href="https://github.com/sindresorhus/refined-github">
+          Refined GitHub
+        </a>
+        {` `}- Browser extension that adds useful features to the GitHub
+        website.
+      </li>
+      <li>
+        <a href="https://getsharex.com/">ShareX</a> - Screenshot utility.
+      </li>
+      <li>
+        <a href="https://justgetflux.com/">f.lux</a> - Adjusts screen temperature
+        to the time of day.
+      </li>
+    </ul>
+    <h2>Hardware</h2>
+    <ul>
+      <li>
+        PC - Self-assembled desktop (Feel free to ask me questions about it!)
+      </li>
+      <li>
+        Keyboard -{` `}
+        <a
+          href="https://www.duckychannel.com.tw/en/Ducky-One2-Mini-Pure-White-RGB"
+        >
+          Ducky one 2 mini Pure White
+        </a>
+      </li>
+      <li>
+        Mouse -{` `}
+        <a href="https://www.pcgamingrace.com/products/glorious-model-o-white">
+          Glorious Model O in Matte White
+        </a>
+      </li>
+      <li>
+        Deskmat -{` `}
+        <a
+          href="https://www.pcgamingrace.com/products/glorious-xxl-gaming-mouse-pad"
+        >
+          Glorious XXL Extended
+        </a>
+      </li>
+    </ul>
+    <p>
+      That deskmat is <strong>LARGE</strong>. Highly recommend.
+    </p>
+    <Tweet
+      url="https://x.com/NMeuleman/status/1209168210379132928"
+      theme="dark"
+    />
+  </div>
+</Layout>
