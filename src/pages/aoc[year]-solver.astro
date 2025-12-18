@@ -8,13 +8,13 @@ interface Props {
 
 export const getStaticPaths = (() => {
   // years can not be a variable
-  return [2020, 2021, 2022, 2023, 2024].map((year) => ({ params: { year } }));
+  return [2020, 2021, 2022, 2023, 2024, 2025].map((year) => ({ params: { year } }));
 }) satisfies GetStaticPaths;
 
 const { year } = Astro.params;
 // TODO: figure out how to make dynamic images work so they don't have to be in public/ but can be in src/assets/
 // https://docs.astro.build/en/recipes/dynamically-importing-images/
-const images = [2020, 2021, 2022, 2023, 2024].reduce<Record<string, string>>(
+const images = [2020, 2021, 2022, 2023, 2024, 2025].reduce<Record<string, string>>(
   (acc, year) => {
     acc[year] = new URL(`aoc${year}-solver-og.png`, Astro.site).href;
     return acc;
@@ -37,7 +37,7 @@ const images = [2020, 2021, 2022, 2023, 2024].reduce<Record<string, string>>(
       id="day"
       type="number"
       min="1"
-      max="25"
+      max={year === 2025 ? 12 : 25}
       value="1"
       class="border bg-mutedBackground p-1 text-xl text-text hover:border-mutedPrimary"
     />
@@ -92,6 +92,15 @@ const images = [2020, 2021, 2022, 2023, 2024].reduce<Record<string, string>>(
     const dayInputEl = document.querySelector<HTMLInputElement>("#day");
     const partInputEl = document.querySelector<HTMLSelectElement>("#part");
     const resultEl = document.querySelector<HTMLOutputElement>("#result");
+
+    const numericYear = Number(year);
+    const maxDay = numericYear === 2025 ? 12 : 25;
+    if (dayInputEl) {
+      dayInputEl.max = String(maxDay);
+      if (Number(dayInputEl.value) > maxDay) {
+        dayInputEl.value = String(maxDay);
+      }
+    }
 
     worker.addEventListener("message", (event) => {
       switch (event.data.type) {

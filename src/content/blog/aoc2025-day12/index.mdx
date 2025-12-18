@@ -1,0 +1,208 @@
+---
+title: "Advent of Code 2025 Day 12"
+date: 2025-12-12
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2025"
+section: "garden"
+---
+
+## Day 12: Christmas Tree Farm
+
+https://adventofcode.com/2025/day/12
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2025/solutions/src/day_12.rs)
+</Aside>
+
+The elves are worried they won't be able to fit all presents under their respective trees.
+
+The input for today has 2 parts:
+
+1. The shapes of the possible presents
+2. Information about the tree regions
+
+The information about the trees also has 2 parts:
+
+1. The dimensions of the available area in width x length
+1. The amount of presents of each shape that the elves want to put underneath that tree.
+
+An example input looks like this:
+
+```txt title=input.txt
+0:
+###
+##.
+##.
+
+1:
+###
+##.
+.##
+
+2:
+.##
+###
+##.
+
+3:
+##.
+###
+##.
+
+4:
+###
+#..
+###
+
+5:
+###
+.#.
+###
+
+4x4: 0 0 0 0 2 0
+12x5: 1 0 1 0 2 2
+12x5: 1 0 1 0 3 2
+```
+
+## Parsing
+
+I parse the shapes into a list of 2D lists where `#` is true and `.` is false.
+The index in front of each package, I ignored because it's the same as that shape's index in the list anyway.
+
+The tree regions get their own data structure to keep things tidy.
+
+```rust title=day_12.rs
+struct Region {
+    width: u32,
+    length: u32,
+    counts: Vec<u32>,
+}
+
+fn parse(input: &str) -> (Vec<Vec<Vec<bool>>>, Vec<Region>) {
+    let (shapes_str, regions_str) = input.rsplit_once("\n\n").unwrap();
+
+    let shapes = shapes_str
+        .split("\n\n")
+        .map(|block| {
+            block
+                .lines()
+                .skip(1)
+                .map(|line| line.chars().map(|c| c == '#').collect())
+                .collect()
+        })
+        .collect();
+
+    let regions = regions_str
+        .lines()
+        .map(|line| {
+            let (tree, counts) = line.split_once(": ").unwrap();
+            let (width, length) = tree.split_once("x").unwrap();
+            Region {
+                width: width.parse().unwrap(),
+                length: length.parse().unwrap(),
+                counts: counts.split(" ").map(|s| s.parse().unwrap()).collect(),
+            }
+        })
+        .collect();
+
+    (shapes, regions)
+}
+```
+
+## Part 1
+
+The question asks how many regions can fit all of their presents.
+
+Initially, I looked for help solving this, because it's a [packing problem](https://en.wikipedia.org/wiki/Packing_problems) and those are [NP-hard](https://en.wikipedia.org/wiki/NP-hardness) (fancy math speak for "no fast solution exists").
+I even found a [public PhD defence](https://www.kuleuven.be/doctoraatsverdediging/fiches/3E19/3E190226.htm) on this topic. Having one of those exist for todays problem doesn't bode well.
+
+Turns out the author was kind and this problem can be drastically simplified.
+
+- Every present is shown in a 3x3 grid
+- Regions are either too small or big enough with a huge margin (meaning no rotation or flipping is needed)
+
+I made a helper function that determines if the area under a tree can definitely hold the amount of presents assigned to it.
+I treat all presents as a filled 3x3 square and see if they fit if that were the case.
+
+That's enough, all other regions are way too small!
+
+```rust title=day_12.rs
+// assume all presents are 3x3
+const BLOCK_SIZE: u32 = 3;
+
+impl Region {
+    fn definitely_fits(&self) -> bool {
+        let blocks_free = (self.width / BLOCK_SIZE) * (self.length / BLOCK_SIZE);
+        let blocks_to_place = self.counts.iter().sum();
+        blocks_free >= blocks_to_place
+    }
+}
+
+fn part_1(input: &str) -> usize {
+    let (_, regions) = parse(input);
+    regions.into_iter().filter(Region::definitely_fits).count()
+}
+```
+
+## Part 2
+
+The hardest button to button!
+
+<YouTube url="https://www.youtube.com/watch?v=K4dx42YzQCE" />
+
+## Final code
+
+```rust title=day_11.rs showLineNumbers
+// assume all presents are 3x3
+const BLOCK_SIZE: u32 = 3;
+
+struct Region {
+    width: u32,
+    length: u32,
+    counts: Vec<u32>,
+}
+
+impl Region {
+    fn definitely_fits(&self) -> bool {
+        let blocks_free = (self.width / BLOCK_SIZE) * (self.length / BLOCK_SIZE);
+        let blocks_to_place = self.counts.iter().sum();
+        blocks_free >= blocks_to_place
+    }
+}
+
+fn parse(input: &str) -> (Vec<Vec<Vec<bool>>>, Vec<Region>) {
+    let (shapes_str, regions_str) = input.rsplit_once("\n\n").unwrap();
+
+    let shapes = shapes_str
+        .split("\n\n")
+        .map(|block| {
+            block
+                .lines()
+                .skip(1)
+                .map(|line| line.chars().map(|c| c == '#').collect())
+                .collect()
+        })
+        .collect();
+
+    let regions = regions_str
+        .lines()
+        .map(|line| {
+            let (tree, counts) = line.split_once(": ").unwrap();
+            let (width, length) = tree.split_once("x").unwrap();
+            Region {
+                width: width.parse().unwrap(),
+                length: length.parse().unwrap(),
+                counts: counts.split(" ").map(|s| s.parse().unwrap()).collect(),
+            }
+        })
+        .collect();
+
+    (shapes, regions)
+}
+
+fn part_1(input: &str) -> usize {
+    let (_, regions) = parse(input);
+    regions.into_iter().filter(Region::definitely_fits).count()
+}
+```

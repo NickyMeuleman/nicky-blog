@@ -1,0 +1,144 @@
+---
+title: "Advent of Code 2025 Day 1"
+date: 2025-12-01
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2025"
+section: "garden"
+---
+
+## Day 1: Secret Entrance
+
+https://adventofcode.com/2025/day/1
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2025/solutions/src/day_01.rs)
+</Aside>
+
+This year, you need to help decorate the North Pole.
+The elves left to deal with their latest emergency.
+
+When you arrive at the gate to the North Pole, it's locked.
+The lock is [one of the rotary doo-dads](https://en.wikipedia.org/wiki/Rotary_combination_lock).
+You know, the ones you see safe crackers put their ear against in the movies to listen for clicks.
+
+You listen for clicks, but quickly remember you're [not a lawyer](https://www.youtube.com/watch?v=9NHxQ0J9AT0),
+so this might take a while.
+
+The lock has the numbers 0 through 99 in clockwise order.
+
+Todays input is a list of turn instructions that just so happens to be left near the lock.
+Neat! Convenient! Secure!
+
+An example input looks like this:
+
+```txt title=input.txt
+L68
+L30
+R48
+L5
+R60
+L55
+L1
+L99
+R14
+L82
+```
+
+Each line is an instruction.
+`L` or `R` indicates the direction to turn.
+
+- `L` for left or counterclockwise.
+- `R` for right or clockwise.
+
+The number indicates how many steps you should turn in that direction.
+
+The dial on the lock starts pointed at `50`.
+
+## Part 1
+
+The instuctions don't really open the lock,
+the amount of times the dial is left pointing at `0` after an instruction does.
+
+<Aside variant="info">
+  This problem uses modular logic (in other words, the `%` sign in many
+  languages).
+
+I [wrote about modular arithmetic](https://nickymeuleman.netlify.app/blog/affine-cipher/) in a previous post.  
+The reason I don't use `%` is explained there too,
+it's because what it does depends on the language you use!
+</Aside>
+
+```rust title=day_01.rs
+fn part_1(input: &str) -> usize {
+    let mut pos: i32 = 50;
+    let mut sum = 0;
+    for line in input.lines() {
+        let dir = if line.starts_with('R') { 1 } else { -1 };
+        let num: i32 = line[1..].parse().unwrap();
+        pos = (pos + dir * num).rem_euclid(100);
+        if pos == 0 {
+            sum += 1
+        }
+    }
+    sum
+}
+```
+
+## Part 2
+
+That wasn't correct either.
+The password is the amount of times the dial points at `0` at any time,
+not just at the end of an instruction.
+
+```rust title=day_01.rs
+fn part_2(input: &str) -> usize {
+    let mut pos: i32 = 50;
+    let mut sum = 0;
+    for line in input.lines() {
+        let dir = if line.starts_with('R') { 1 } else { -1 };
+        let num: i32 = line[1..].parse().unwrap();
+        for _ in 0..num {
+            pos = (pos + dir).rem_euclid(100);
+            if pos == 0 {
+                sum += 1
+            }
+        }
+    }
+    sum
+}
+```
+
+## Final code
+
+```rust title=day_01.rs showLineNumbers
+pub fn part_1(input: &str) -> usize {
+    let mut pos: i32 = 50;
+    let mut sum = 0;
+    for line in input.lines() {
+        let dir = if line.starts_with('R') { 1 } else { -1 };
+        let num: i32 = line[1..].parse().unwrap();
+        pos = (pos + dir * num).rem_euclid(100);
+        if pos == 0 {
+            sum += 1
+        }
+    }
+    sum
+}
+
+pub fn part_2(input: &str) -> usize {
+    let mut pos: i32 = 50;
+    let mut sum = 0;
+    for line in input.lines() {
+        let dir = if line.starts_with('R') { 1 } else { -1 };
+        let num: i32 = line[1..].parse().unwrap();
+        for _ in 0..num {
+            pos = (pos + dir).rem_euclid(100);
+            if pos == 0 {
+                sum += 1
+            }
+        }
+    }
+    sum
+}
+```

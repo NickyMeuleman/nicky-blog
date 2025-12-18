@@ -41,6 +41,7 @@ const blog = defineCollection({
           "Advent of Code 2022",
           "Advent of Code 2023",
           "Advent of Code 2024",
+          "Advent of Code 2025",
           "Fresh environment, 2018",
           "Serverless GraphQL",
           "Smart pointers in Rust",

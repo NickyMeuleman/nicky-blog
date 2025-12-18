@@ -1,0 +1,186 @@
+---
+title: "Advent of Code 2025 Day 2"
+date: 2025-12-02
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2025"
+section: "garden"
+---
+
+## Day 2: Gift Shop
+
+https://adventofcode.com/2025/day/2
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2025/solutions/src/day_02.rs)
+</Aside>
+
+You're at a gift shop and an elf managed to add a bunch of invalid product IDs into its database.
+
+The input for today is a list of product ID ranges.
+An example input looks like this:
+
+```txt title=input.txt
+11-22,95-115,998-1012,1188511880-1188511890,222220-222224,
+1698522-1698528,446443-446449,38593856-38593862,565653-565659,
+824824821-824824827,2121212118-2121212124
+```
+
+<Aside variant="info">
+  Your real input is on one line, this example one has line breaks for
+  readability.
+</Aside>
+
+Each range is separated by a comma (`,`).
+The beginning and ending number of a range are separated by a dash (`-`).
+
+That means the first range in this example represents numbers 11 through 22.
+
+Identify the invalid IDs in all ranges.
+
+## Part 1
+
+The question asks for the sum of all invalid IDs.
+An invalid ID consists of a sequence of digits that is repeated twice.
+
+I chopped every ID in half and checked if those halves were identical.
+
+```rust title=day_02.rs
+pub fn part_1(input: &str) -> i64 {
+    let mut sum = 0;
+    for range in input.trim().split(',') {
+        let (a, b) = range.split_once('-').unwrap();
+        let start: i64 = a.parse().unwrap();
+        let end: i64 = b.parse().unwrap();
+        for num in start..=end {
+            let s = num.to_string();
+            if s.len() % 2 != 0 {
+                continue;
+            }
+            let (left, right) = s.split_at(s.len() / 2);
+            if left == right {
+                sum += num;
+            }
+        }
+    }
+    sum
+}
+```
+
+## Part 2
+
+That wasn't correct either. [wow, shocker](http://i.imgur.com/I14F1Bm.gif).
+An ID is invalid if it is entirely made up out of a pattern that repeats at least twice.
+
+For every number in a range, I check if it consists entirely out of a repeating pattern.
+
+### Option 1: for loopin'
+
+```rust title=day_02.rs
+fn part_2(input: &str) -> i64 {
+    let mut sum = 0;
+    for range in input.trim().split(',') {
+        let (a, b) = range.split_once('-').unwrap();
+        let start: i64 = a.parse().unwrap();
+        let end: i64 = b.parse().unwrap();
+        for num in start..=end {
+            let s = num.to_string();
+            for pattern_len in 1..=s.len() / 2 {
+                if !s.len().is_multiple_of(pattern_len) {
+                    continue;
+                }
+                let pattern = &s[0..pattern_len];
+                if (pattern_len..s.len())
+                    .step_by(pattern_len)
+                    .all(|start_idx| &s[start_idx..start_idx + pattern_len] == pattern)
+                {
+                    sum += num;
+                    // avoid double counting a number, break once a pattern repeats
+                    break;
+                }
+            }
+        }
+    }
+    sum
+}
+```
+
+### Option 2: Iterators
+
+A bit cleaner is this version that uses more iterators and a helper function to determine if any pattern repeats.
+
+```rust title=day_02.rs
+fn has_repetition(s: &str, pattern_len: usize) -> bool {
+    if !s.len().is_multiple_of(pattern_len) {
+        return false;
+    }
+    let pattern = &s[0..pattern_len];
+    (pattern_len..s.len())
+        .step_by(pattern_len)
+        .all(|i| &s[i..i + pattern_len] == pattern)
+}
+
+fn part_2(input: &str) -> i64 {
+    input
+        .trim()
+        .split(',')
+        .map(|range| {
+            let (a, b) = range.split_once('-').unwrap();
+            let start: i64 = a.parse().unwrap();
+            let end: i64 = b.parse().unwrap();
+            let sum_within_range: i64 = (start..=end)
+                .filter(|num| {
+                    let s = num.to_string();
+                    (1..=s.len() / 2).any(|pattern_len| has_repetition(&s, pattern_len))
+                })
+                .sum();
+            sum_within_range
+        })
+        .sum()
+}
+```
+
+## Final code
+
+I [code golfed](https://en.wikipedia.org/wiki/Code_golf) a tiny bit and combined the two parts into a single function that returns a tuple: `(part1, part2)`.
+
+```rust title=day_02.rs showLineNumbers
+fn has_repetition(s: &str, pattern_len: usize) -> bool {
+    if !s.len().is_multiple_of(pattern_len) {
+        return false;
+    }
+    let pattern = &s[0..pattern_len];
+    (pattern_len..s.len())
+        .step_by(pattern_len)
+        .all(|i| &s[i..i + pattern_len] == pattern)
+}
+
+fn both(input: &str) -> (i64, i64) {
+    input
+        .trim()
+        .split(',')
+        .map(|range| {
+            let (a, b) = range.split_once('-').unwrap();
+            let start: i64 = a.parse().unwrap();
+            let end: i64 = b.parse().unwrap();
+            (start..=end).fold((0, 0), |(p1, p2), num| {
+                let s = num.to_string();
+                let len = s.len();
+                let p1_add = if len.is_multiple_of(2) && has_repetition(&s, len / 2) {
+                    num
+                } else {
+                    0
+                };
+                let p2_add = if (1..=len / 2).any(|pat_len| has_repetition(&s, pat_len)) {
+                    num
+                } else {
+                    0
+                };
+                (p1 + p1_add, p2 + p2_add)
+            })
+        })
+        .fold((0, 0), |(acc1, acc2), (sum1, sum2)| {
+            (acc1 + sum1, acc2 + sum2)
+        })
+}
+```

@@ -1,0 +1,303 @@
+---
+title: "Advent of Code 2025 Day 9"
+date: 2025-12-09
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2025"
+section: "garden"
+---
+
+## Day 9: Movie Theater
+
+https://adventofcode.com/2025/day/9
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2025/solutions/src/day_09.rs)
+</Aside>
+
+You are standing in a large movie theater, the floor is a big grid of squares.
+
+The input for today is a list of 2D locations for all red tiles.
+
+An example input looks like this:
+
+```txt title=input.txt
+7,1
+11,1
+11,7
+9,7
+9,5
+2,5
+2,3
+7,3
+```
+
+## Parsing
+
+What did you say? Represent a point in 2D space? `Point`!
+The parsed input is a list of `Point`s.
+
+```rust title=day_09.rs
+#[derive(Debug, Clone, Copy, Hash, Eq, Ord, PartialEq, PartialOrd)]
+struct Point {
+    row: usize,
+    col: usize,
+}
+
+fn parse(input: &str) -> Vec<Point> {
+    input
+        .lines()
+        .map(|line| {
+            let mut parts = line.split(',');
+            Point {
+                row: parts.next().unwrap().parse().unwrap(),
+                col: parts.next().unwrap().parse().unwrap(),
+            }
+        })
+        .collect()
+}
+```
+
+## Part 1
+
+The question asks for the largest area a rectangle constructed by choosing 2 red tiles as opposite corners makes.
+
+### Helpers
+
+The area for a rectangle made by 2 points.
+
+```rust title=day_09.rs
+impl Point {
+    fn area(&self, other: &Self) -> usize {
+        (self.row.abs_diff(other.row) + 1) * (self.col.abs_diff(other.col) + 1)
+    }
+}
+```
+
+<Aside variant="danger">Pay attention to the +1 to each side.</Aside>
+
+---
+
+Part 1 is straightforward,
+loop through all combinations of red tiles,
+calculate the area of the rectangle those points form, and return the maximum.
+
+```rust title=day_09.rs
+use itertools::Itertools;
+
+fn part_1(input: &str) -> usize {
+    parse(input)
+        .iter()
+        .tuple_combinations()
+        .map(|(p1, p2)| p1.area(p2))
+        .max()
+        .unwrap()
+}
+```
+
+## Part 2
+
+You are only allowed to switch out red or green tiles.
+
+The only red tiles are the ones in your input.  
+The straight lines that connect two red tiles are filled with green tiles.
+
+The red tiles in your input are already in order, and the last red tile in the list also connects to the first red tile.
+
+All tiles inside the loop you just made by connecting the tiles are also green.
+
+All other tiles are a different color.
+
+The question asks for the largest area a rectangle (that only uses red or green tiles) constructed by choosing 2 red tiles as opposite corners makes.
+
+Some pseudocode I want to work towards:
+
+```rust
+fn part_2(input: &str) -> usize {
+    let red = parse(input);
+    let lines= red.all_connecting_lines();
+
+    red.iter()
+        .tuple_combinations()
+        .filter(|(p1, p2)| /* filter to all valid rectangles using the lines */)
+        .map(|(p1, p2)| p1.area(p2))
+        .max()
+        .unwrap()
+}
+```
+
+That looks very similar to part1!
+
+### Helpers
+
+The main challenge is determining when a rectangle is valid.
+
+A rectangle is valid if every segment of the surrounding loop (green tiles with red edges) lies outside of the rectangle.  
+If a loop segment lies inside the rectangle,
+that means the rectangle extends outside the green region somewhere,
+and it would be invalid.
+
+A line segment can also lie on an edge of the rectangle (because all red and green tiles are valid).
+
+A rectangle that lies completely within the loop is allowed by the puzzle rules,
+but is always smaller than rectangles that touch the sides,
+so it is also deemed invalid.
+
+To determine whether a line is safely outside a rectangle:
+- If the line is entirely left, right, above, or below the rectangle, it’s outside.
+- If the line touches the rectangle’s border, that still counts as outside
+- Otherwise, the line overlaps the rectangle’s interior or lies fully inside it, which makes the rectangle invalid.
+
+```rust title=day_09.rs
+impl Point {
+    fn valid_rect(&self, other: &Self, lines: &[Line]) -> bool {
+        lines.iter().all(|line| line.outside_rect(self, other))
+    }
+}
+
+#[derive(Debug, Clone, Copy, Hash, Eq, Ord, PartialEq, PartialOrd)]
+struct Line {
+    start: Point,
+    end: Point,
+}
+
+impl Line {
+    /// returns true if line is outside rectangle made by 2 points
+    /// a line that touches the edges of the rectangle is still considered as outside
+    /// returns false if line overlaps or lies inside the rectangle
+    fn outside_rect(&self, p1: &Point, p2: &Point) -> bool {
+        let min_row = p1.row.min(p2.row);
+        let max_row = p1.row.max(p2.row);
+        let min_col = p1.col.min(p2.col);
+        let max_col = p1.col.max(p2.col);
+
+        let line_min_row = self.start.row.min(self.end.row);
+        let line_max_row = self.start.row.max(self.end.row);
+        let line_min_col = self.start.col.min(self.end.col);
+        let line_max_col = self.start.col.max(self.end.col);
+
+        let left = line_max_col <= min_col;
+        let right = line_min_col >= max_col;
+        let above = line_max_row <= min_row;
+        let below = line_min_row >= max_row;
+
+        left || right || above || below
+    }
+}
+```
+
+---
+
+```rust title=day_09.rs
+fn part_2(input: &str) -> usize {
+    let red = parse(input);
+    let lines: Vec<Line> = red
+        .iter()
+        .circular_tuple_windows()
+        .map(|(p1, p2)| Line {
+            start: *p1,
+            end: *p2,
+        })
+        .collect();
+
+    red.iter()
+        .tuple_combinations()
+        .filter(|(p1, p2)| p1.valid_rect(p2, &lines))
+        .map(|(p1, p2)| p1.area(p2))
+        .max()
+        .unwrap()
+}
+```
+
+## Final code
+
+```rust title=day_09.rs showLineNumbers
+use itertools::Itertools;
+
+#[derive(Debug, Clone, Copy, Hash, Eq, Ord, PartialEq, PartialOrd)]
+struct Point {
+    row: usize,
+    col: usize,
+}
+
+impl Point {
+    fn area(&self, other: &Self) -> usize {
+        (self.row.abs_diff(other.row) + 1) * (self.col.abs_diff(other.col) + 1)
+    }
+
+    fn valid_rect(&self, other: &Self, lines: &[Line]) -> bool {
+        lines.iter().all(|line| line.outside_rect(self, other))
+    }
+}
+
+#[derive(Debug, Clone, Copy, Hash, Eq, Ord, PartialEq, PartialOrd)]
+struct Line {
+    start: Point,
+    end: Point,
+}
+
+impl Line {
+    /// returns true if line is outside rectangle made by 2 points
+    /// a line that touches the edges of the rectangle is still considered as outside
+    /// returns false if line overlaps or lies inside the rectangle
+    fn outside_rect(&self, p1: &Point, p2: &Point) -> bool {
+        let min_row = p1.row.min(p2.row);
+        let max_row = p1.row.max(p2.row);
+        let min_col = p1.col.min(p2.col);
+        let max_col = p1.col.max(p2.col);
+
+        let line_min_row = self.start.row.min(self.end.row);
+        let line_max_row = self.start.row.max(self.end.row);
+        let line_min_col = self.start.col.min(self.end.col);
+        let line_max_col = self.start.col.max(self.end.col);
+
+        let left = line_max_col <= min_col;
+        let right = line_min_col >= max_col;
+        let above = line_max_row <= min_row;
+        let below = line_min_row >= max_row;
+
+        left || right || above || below
+    }
+}
+
+fn parse(input: &str) -> Vec<Point> {
+    input
+        .lines()
+        .map(|line| {
+            let mut parts = line.split(',');
+            Point {
+                row: parts.next().unwrap().parse().unwrap(),
+                col: parts.next().unwrap().parse().unwrap(),
+            }
+        })
+        .collect()
+}
+
+pub fn part_1(input: &str) -> usize {
+    parse(input)
+        .iter()
+        .tuple_combinations()
+        .map(|(p1, p2)| p1.area(p2))
+        .max()
+        .unwrap()
+}
+
+pub fn part_2(input: &str) -> usize {
+    let red = parse(input);
+    let lines: Vec<Line> = red
+        .iter()
+        .circular_tuple_windows()
+        .map(|(p1, p2)| Line {
+            start: *p1,
+            end: *p2,
+        })
+        .collect();
+
+    red.iter()
+        .tuple_combinations()
+        .filter(|(p1, p2)| p1.valid_rect(p2, &lines))
+        .map(|(p1, p2)| p1.area(p2))
+        .max()
+        .unwrap()
+}
+```

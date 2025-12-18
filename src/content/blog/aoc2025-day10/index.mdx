@@ -1,0 +1,341 @@
+---
+title: "Advent of Code 2025 Day 10"
+date: 2025-12-10
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2025"
+section: "garden"
+---
+
+## Day 10: Factory
+
+https://adventofcode.com/2025/day/10
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2025/solutions/src/day_10.rs)
+</Aside>
+
+You are standing in a large movie factory filled with machine.
+
+The input for today is a list of information about those machines.
+
+An example input looks like this:
+
+```txt title=input.txt
+[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
+[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
+[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}
+```
+
+Each line is a machine.
+
+The part in square bois `[]` represents the target indicator lights state, they are on `#` or off `.`.
+
+The parts in round bois `()` represents the buttons on the machine.
+
+The part in curly bois `{}` represents the target joltage levels.
+
+## Parsing
+
+Each line gets parsed into a `Machine`.
+
+- The target lights state is a list of booleans
+- The target joltage state is a list of numbers.
+- The buttons are a list of lists of indexes.
+
+```rust title=day_10.rs
+#[derive(Debug, Clone)]
+struct Machine {
+    lights: Vec<bool>,
+    buttons: Vec<Vec<usize>>,
+    jolts: Vec<u32>,
+}
+
+fn parse(input: &str) -> Vec<Machine> {
+    input.lines().map(|line| {
+        let (lights_str, rest) = line.split_once(' ').unwrap();
+        let (buttons_str, jolts_str) = rest.rsplit_once(' ').unwrap();
+
+        let lights = lights_str
+            .trim_matches(['[', ']'])
+            .chars()
+            .map(|c| c == '#')
+            .collect();
+
+        let buttons = buttons_str
+            .split(' ')
+            .map(|s| {
+                s.trim_matches(['(', ')'])
+                    .split(',')
+                    .map(|s| s.parse().unwrap())
+                    .collect()
+            })
+            .collect();
+
+        let jolts = jolts_str
+            .trim_matches(['{', '}'])
+            .split(',')
+            .map(|s| s.parse().unwrap())
+            .collect();
+
+        Machine {
+            lights,
+            buttons,
+            jolts,
+        }
+    })
+}
+```
+
+## Part 1
+
+Each machine starts off, all the indicator lights are off.
+
+Each button affects a list of lights.
+
+For instance if a button has the list `(0, 2, 3)` pressing it would toggle the indicator lights at index 0, 2, and 3.
+
+The question asks for the minimum amount of button presses that sets the lights like the goal ones in the input.
+
+The `part` solving function is fairly boring, it's the helper where interesting things happen.
+
+It's a classic BFS that stops once the state matches the target.
+As a bonus I convert the target list of light states into a single number,
+the lights the buttons affect also get turned into a single number per button.
+
+That way, I can toggle all lights a button affects at once by XORing it with the current state of the lights.
+
+```rust title=day_10.rs
+impl Machine {
+    fn min_presses_lights(&self) -> usize {
+        let goal: u32 =
+            self.lights
+                .iter()
+                .enumerate()
+                .fold(0, |acc, (i, &on)| if on { acc | (1 << i) } else { acc });
+        let buttons: Vec<u32> = self
+            .buttons
+            .iter()
+            .map(|idxs| idxs.iter().fold(0, |acc, &idx| acc | (1 << idx)))
+            .collect();
+
+        // queue of (curr_lights, num_presses)
+        let mut q = VecDeque::from([(0, 0)]);
+        let mut seen = HashSet::from([0]);
+
+        while let Some((lights, presses)) = q.pop_front() {
+            if lights == goal {
+                return presses;
+            }
+            for button in &buttons {
+                let next = lights ^ button;
+                if seen.insert(next) {
+                    q.push_back((next, presses + 1));
+                }
+            }
+        }
+
+        0
+    }
+}
+
+fn part_1(input: &str) -> usize {
+    parse(input).iter().map(|m| m.min_presses_lights()).sum()
+}
+```
+
+## Part 2
+
+The machines are on!  
+Now you need to bring them up to their exact joltage requirements.
+
+The buttons now no longer affect the lights, but they increment a joltage counter.
+
+Every counter starts at 0.  
+Every press of a button that affects a counter at that index increases it by 1.
+
+The question asks for the minimum amount of button presses that sets the joltage levels like the goal ones in the input.
+
+The `part` solving function is fairly boring, it's the helper where interesting things happen.
+
+It uses a linear algebra solving package.
+
+The package I used is called [`good_lp`](https://docs.rs/good_lp/latest/good_lp/).
+
+I used the default solver, and don't want it to depend on anything being installed on my machine.
+
+```toml title=Cargo.toml
+good_lp = { version = "1.14.2", features = ["minilp"], default-features = false }
+```
+
+```rust title=day_10.rs
+impl Machine {
+    fn min_presses_jolts(&self) -> u32 {
+        use good_lp::*;
+
+        // create variable per button (number of times it got pressed)
+        let mut vars = variables!();
+        let presses: Vec<Variable> = (0..self.buttons.len())
+            .map(|_| vars.add(variable().min(0).integer()))
+            .collect();
+
+        // minimize total presses
+        let total_presses: Expression = presses.iter().sum();
+        let mut problem = vars.minimise(total_presses).using(default_solver);
+
+        // for each jolt counter, sum of relevant presses must equal the target joltage
+        for (jolt_idx, &target) in self.jolts.iter().enumerate() {
+            let mut expr = Expression::from(0.0);
+
+            for (btn_idx, relevant_idxs) in self.buttons.iter().enumerate() {
+                // if button is relevant, add its press variable to the constraint
+                if relevant_idxs.contains(&jolt_idx) {
+                    expr += presses[btn_idx];
+                }
+            }
+
+            // sum of relevant presses == target joltage
+            problem.add_constraint(expr.eq(target as f64));
+        }
+
+        let solution = problem.solve().unwrap();
+
+        presses
+            .iter()
+            .map(|v| solution.value(*v).round() as u32)
+            .sum()
+    }
+}
+
+fn part_2(input: &str) -> u32 {
+    parse(input).iter().map(|m| m.min_presses_jolts()).sum()
+}
+```
+
+## Final code
+
+```rust title=day_10.rs showLineNumbers
+use std::collections::{HashSet, VecDeque};
+
+#[derive(Debug, Clone)]
+struct Machine {
+    lights: Vec<bool>,
+    buttons: Vec<Vec<usize>>,
+    jolts: Vec<u32>,
+}
+
+impl Machine {
+    fn min_presses_lights(&self) -> usize {
+        let goal: u32 =
+            self.lights
+                .iter()
+                .enumerate()
+                .fold(0, |acc, (i, &on)| if on { acc | (1 << i) } else { acc });
+        let buttons: Vec<u32> = self
+            .buttons
+            .iter()
+            .map(|idxs| idxs.iter().fold(0, |acc, &idx| acc | (1 << idx)))
+            .collect();
+
+        // queue of (curr_lights, num_presses)
+        let mut q = VecDeque::from([(0, 0)]);
+        let mut seen = HashSet::from([0]);
+
+        while let Some((lights, presses)) = q.pop_front() {
+            if lights == goal {
+                return presses;
+            }
+            for button in &buttons {
+                let next = lights ^ button;
+                if seen.insert(next) {
+                    q.push_back((next, presses + 1));
+                }
+            }
+        }
+
+        0
+    }
+
+    fn min_presses_jolts(&self) -> u32 {
+        use good_lp::*;
+
+        // create variable per button (number of times it got pressed)
+        let mut vars = variables!();
+        let presses: Vec<Variable> = (0..self.buttons.len())
+            .map(|_| vars.add(variable().min(0).integer()))
+            .collect();
+
+        // minimize total presses
+        let total_presses: Expression = presses.iter().sum();
+        let mut problem = vars.minimise(total_presses).using(default_solver);
+
+        // for each jolt counter, sum of relevant presses must equal the target joltage
+        for (jolt_idx, &target) in self.jolts.iter().enumerate() {
+            let mut expr = Expression::from(0.0);
+
+            for (btn_idx, relevant_idxs) in self.buttons.iter().enumerate() {
+                // if button is relevant, add its press variable to the constraint
+                if relevant_idxs.contains(&jolt_idx) {
+                    expr += presses[btn_idx];
+                }
+            }
+
+            // sum of relevant presses == target joltage
+            problem.add_constraint(expr.eq(target as f64));
+        }
+
+        let solution = problem.solve().unwrap();
+
+        presses
+            .iter()
+            .map(|v| solution.value(*v).round() as u32)
+            .sum()
+    }
+}
+
+fn parse(input: &str) -> Vec<Machine> {
+    input
+        .lines()
+        .map(|line| {
+            let (lights_str, rest) = line.split_once(' ').unwrap();
+            let (buttons_str, jolts_str) = rest.rsplit_once(' ').unwrap();
+
+            let lights = lights_str
+                .trim_matches(['[', ']'])
+                .chars()
+                .map(|c| c == '#')
+                .collect();
+
+            let buttons = buttons_str
+                .split(' ')
+                .map(|s| {
+                    s.trim_matches(['(', ')'])
+                        .split(',')
+                        .map(|s| s.parse().unwrap())
+                        .collect()
+                })
+                .collect();
+
+            let jolts = jolts_str
+                .trim_matches(['{', '}'])
+                .split(',')
+                .map(|s| s.parse().unwrap())
+                .collect();
+
+            Machine {
+                lights,
+                buttons,
+                jolts,
+            }
+        })
+        .collect()
+}
+
+pub fn part_1(input: &str) -> usize {
+    parse(input).iter().map(|m| m.min_presses_lights()).sum()
+}
+
+pub fn part_2(input: &str) -> u32 {
+    parse(input).iter().map(|m| m.min_presses_jolts_2()).sum()
+}
+```

@@ -1,0 +1,130 @@
+---
+title: "Advent of Code 2025 Day 3"
+date: 2025-12-03
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2025"
+section: "garden"
+---
+
+## Day 3: Lobby
+
+https://adventofcode.com/2025/day/3
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2025/solutions/src/day_03.rs)
+</Aside>
+
+You're at some elevators and escalators that are out of order.
+Not very uplifting news 🥁 (I'm here all day folks).
+You need to fix that, so that in Joe Cocker's words, [the lift goes up where it belongs](https://youtu.be/bjrOcrisGyI?si=hyEThyfKKmlwIl55&t=62).
+
+There are some batteries nearby that can power them.
+That's the input for today, the arrangement of those batteries.
+An example input looks like this:
+
+```txt title=input.txt
+987654321111111
+811111111111119
+234234234234278
+818181911112111
+```
+
+Each digit is a battery [joltage](https://adventofcode.com/2020/day/10).  
+Each line is a battery bank.
+
+## Part 1
+
+Per battery bank, you should turn on two batteries.
+The battery bank joltage is formed by the individual battery joltages concatenated.
+So if you turn on `6` and `9`, the bank joltage is `69`.
+Maximize each bank's joltage.
+
+The question asks for the sum of all bank joltages.
+
+For the first battery, I consider all batteries bar the last one (to ensure I can always pick a second battery).
+I pick the first highest joltage battery among those.
+
+Then I do it again starting from the battery to the right of the one I just picked,
+this time I do include the last battery as an option.
+
+```rust title=day_03.rs
+fn part_1(input: &str) -> u32 {
+    input
+        .lines()
+        .map(|line| {
+            let digits: Vec<u8> = line.bytes().map(|b| b - b'0').collect();
+
+            let possibilities_first = &digits[0..(digits.len() - 1)];
+            let first = possibilities_first.iter().max().unwrap();
+            let idx = possibilities_first.iter().position(|d| d == first).unwrap();
+
+            let possibilities_second = &digits[idx + 1..digits.len()];
+            let second = possibilities_second.iter().max().unwrap();
+
+            u32::from(first * 10 + second)
+        })
+        .sum()
+}
+```
+
+## Part 2
+
+[What is this? A battery bank for ants?](https://www.youtube.com/shorts/_JlXd_tD9gc)
+It needs to be at least 6 times bigger!
+
+The question asks for the sum of all bank joltages again, only this time, turn on 12 batteries per bank.
+
+```rust title=day_03.rs
+fn part_2(input: &str) -> u64 {
+    input
+        .lines()
+        .map(|line| {
+            let digits: Vec<u8> = line.bytes().map(|b| b - b'0').collect();
+            let mut result = 0;
+            let mut start = 0;
+            for reserved in (0..12).rev() {
+                // first index we cannot pick
+                let end = digits.len() - reserved;
+                let possibilities = &digits[start..end];
+                let max = possibilities.iter().copied().max().unwrap();
+                // Max digit can appear more than once, pick the leftmost one to keep more options for next digit.
+                let idx = possibilities.iter().position(|&d| d == max).unwrap();
+                result = result * 10 + max as u64;
+                start += idx + 1;
+            }
+            result
+        })
+        .sum()
+}
+```
+
+## Final code
+
+Some minor codegolfing to return a `(part_1, part_2)` tuple later:
+
+```rust title=day_03.rs showLineNumbers
+fn max_joltage(line: &str, batteries: usize) -> u64 {
+    let digits: Vec<u8> = line.bytes().map(|b| b - b'0').collect();
+    let mut result = 0;
+    let mut start = 0;
+    for reserved in (0..batteries).rev() {
+        let end = digits.len() - reserved;
+        let possibilities = &digits[start..end];
+        let max = possibilities.iter().copied().max().unwrap();
+        let idx = possibilities.iter().position(|&d| d == max).unwrap();
+        result = result * 10 + max as u64;
+        start += idx + 1;
+    }
+    result
+}
+
+pub fn both(input: &str) -> (u64, u64) {
+    input
+        .lines()
+        .map(|line| (max_joltage(line, 2), max_joltage(line, 12)))
+        .fold((0, 0), |(sum1, sum2), (item1, item2)| {
+            (sum1 + item1, sum2 + item2)
+        })
+}
+```

@@ -16,7 +16,7 @@ const posts: CollectionEntry<"blog">[] = await getCollection("blog", (p) => {
     </h2>
     <ul class="list-inside">
       {
-        [2020, 2021, 2022, 2023, 2024].map((year) => (
+        [2020, 2021, 2022, 2023, 2024, 2025].map((year) => (
           <li class="mt-1 list-disc">
             <a href={`/aoc${year}-solver`}>{year}</a>
           </li>

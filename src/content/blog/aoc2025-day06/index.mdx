@@ -1,0 +1,215 @@
+---
+title: "Advent of Code 2025 Day 6"
+date: 2025-12-06
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2025"
+section: "garden"
+---
+
+## Day 6: Trash Compactor
+
+https://adventofcode.com/2025/day/6
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2025/solutions/src/day_06.rs)
+</Aside>
+
+Time to help someone with their [math homework again](https://adventofcode.com/2021/day/18).
+
+The input for today is the homework, it consists of long horizontal list with several blocks of problems.
+
+An example input looks like this:
+
+```txt title=input.txt
+123 328  51 64
+ 45 64  387 23
+  6 98  215 314
+*   +   *   +
+```
+
+Each problem is a block of numbers that need to be added or multiplied together.  
+The operation for each block is found on the last line.
+
+<Aside variant="info">
+  Again, big numbers. If you use a language that has typed integers, pick a
+  large one.
+</Aside>
+
+## Part 1
+
+Solving the problems in the example:
+
+- 123 \* 45 \* 6 = 33210
+- 328 + 64 + 98 = 490
+- 51 \* 387 \* 215 = 4243455
+- 64 + 23 + 314 = 401
+
+The question asks for the sum of all problem solutions.
+
+### Helper
+
+All that multiplying and adding is a perfect usecase for a helper function.
+
+```rust title=day_06.rs
+fn calc(nums: &[Vec<u64>], ops: &[char]) -> u64 {
+    nums.iter()
+        .zip(ops)
+        .map(|(nums, op)| match op {
+            '+' => nums.iter().sum::<u64>(),
+            '*' => nums.iter().product::<u64>(),
+            _ => unreachable!(),
+        })
+        .sum()
+}
+```
+
+---
+
+I split the problem input into 2:
+
+1. A 2D-list of all the numbers (`nums`)
+1. A list of all the operators (`ops`)
+
+```rust title=day_06.rs
+fn part_1(input: &str) -> u64 {
+    let (top, bottom) = input.trim().rsplit_once('\n').unwrap();
+
+    let num_problems = top.lines().next().unwrap().split_whitespace().count();
+    let mut nums = vec![Vec::new(); num_problems];
+
+    for line in top.lines() {
+        for (idx, s) in line.split_whitespace().enumerate() {
+            nums[idx].push(s.parse().unwrap());
+        }
+    }
+
+    let ops: Vec<char> = bottom.chars().filter(|c| !c.is_whitespace()).collect();
+
+    calc(&nums, &ops)
+}
+```
+
+## Part 2
+
+Not like that!
+In part 1 you read individual numbers from left to right, they should be read from top to bottom.
+
+Solving the problems in the example:
+
+- 4 + 431 + 623 = 1058
+- 175 \* 581 \* 32 = 3253600
+- 8 + 248 + 369 = 625
+- 356 \* 24 \* 1 = 8544
+
+The question asks for the sum of all problem solutions.
+
+Only the part where I get the numbers is different from part 1.
+I iterate through every column.
+For each column, I construct a single number by scanning that column top to bottom and concatenating each digit.
+
+<Aside variant="info">
+  I do this concatenation with math instead of collecting each digit into a
+  `String`.
+</Aside>
+
+Each problem is seperated by a vertical line of whitespace,
+so each loop that doesn't find a number indicates the end of the previous problem.
+
+If I find a number in a column I add it to the current problem.  
+If I do not find a number I add the current problem to the list of all problems and start an empty current problem.  
+At the end of the loop I add the current problem to the list of all problems.
+
+```rust title=day_06.rs
+fn part_2(input: &str) -> u64 {
+    let (top, bottom) = input.trim().rsplit_once('\n').unwrap();
+
+    let lines: Vec<&str> = top.lines().collect();
+    let cols = lines[0].len();
+
+    let mut problems = Vec::new();
+    let mut curr = Vec::new();
+
+    for col in 0..cols {
+        let num = lines
+            .iter()
+            .filter_map(|line| (line.as_bytes()[col] as char).to_digit(10))
+            .reduce(|acc, d| acc * 10 + d);
+
+        match num {
+            Some(n) => curr.push(n as u64),
+            None => {
+                problems.push(curr);
+                curr = Vec::new();
+            }
+        }
+    }
+    problems.push(curr);
+
+    let ops: Vec<char> = bottom.chars().filter(|c| !c.is_whitespace()).collect();
+
+    calc(&problems, &ops)
+}
+```
+
+## Final code
+
+```rust title=day_06.rs showLineNumbers
+fn calc(nums: &[Vec<u64>], ops: &[char]) -> u64 {
+    nums.iter()
+        .zip(ops)
+        .map(|(nums, op)| match op {
+            '+' => nums.iter().sum::<u64>(),
+            '*' => nums.iter().product::<u64>(),
+            _ => unreachable!(),
+        })
+        .sum()
+}
+
+fn part_1(input: &str) -> u64 {
+    let (top, bottom) = input.trim().rsplit_once('\n').unwrap();
+
+    let num_problems = top.lines().next().unwrap().split_whitespace().count();
+    let mut nums = vec![Vec::new(); num_problems];
+
+    for line in top.lines() {
+        for (idx, s) in line.split_whitespace().enumerate() {
+            nums[idx].push(s.parse().unwrap());
+        }
+    }
+
+    let ops: Vec<char> = bottom.chars().filter(|c| !c.is_whitespace()).collect();
+
+    calc(&nums, &ops)
+}
+
+fn part_2(input: &str) -> u64 {
+    let (top, bottom) = input.trim().rsplit_once('\n').unwrap();
+
+    let lines: Vec<&str> = top.lines().collect();
+    let cols = lines[0].len();
+
+    let mut problems = Vec::new();
+    let mut curr = Vec::new();
+
+    for col in 0..cols {
+        let num = lines
+            .iter()
+            .filter_map(|line| (line.as_bytes()[col] as char).to_digit(10))
+            .reduce(|acc, d| acc * 10 + d);
+
+        match num {
+            Some(n) => curr.push(n as u64),
+            None => {
+                problems.push(curr);
+                curr = Vec::new();
+            }
+        }
+    }
+    problems.push(curr);
+
+    let ops: Vec<char> = bottom.chars().filter(|c| !c.is_whitespace()).collect();
+
+    calc(&problems, &ops)
+}
+```

@@ -1,0 +1,261 @@
+---
+title: "Advent of Code 2025 Day 4"
+date: 2025-12-04
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2025"
+section: "garden"
+---
+
+## Day 4: Printing Department
+
+https://adventofcode.com/2025/day/4
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2025/solutions/src/day_04.rs)
+</Aside>
+
+You arrive at a warehouse filled with rolls of paper.
+That's the input for today, a 2D-map of the warehouse.
+
+An example input looks like this:
+
+```txt title=input.txt
+..@@.@@@@.
+@@@.@.@.@@
+@@@@@.@.@@
+@.@@@@..@.
+@@.@@@@.@@
+.@@@@@@@.@
+.@.@.@.@@@
+@.@@@.@@@@
+.@@@@@@@@.
+@.@.@@@.@.
+```
+
+- `@` is paper
+- `.` is empty
+
+Paper can only be accessed if there are fewer than 4 rolls of paper near it.  
+"Near" means the 8 neighbouring positions.
+
+## Helpers
+
+It's time! It's a 2D grid puzzle, time to make a `Point` data type.
+You don't need to do this if you're reading this, but I like to.
+
+While I'm at it, I created a helper to find the 8 neighbours a `Point` has,
+and even a function that counts how many rolls of paper are in those positions.
+
+If you're confused about the weird logic in that neighbour function (the `checked_add_signed(dr)?`),
+what it's really doing is `point + delta`.
+But Rust has signed and unsigned integers and forces you to deal with under/overflows.
+
+That `?` handles that uncertainty, I call it the [Annie operator](https://nickymeuleman.netlify.app/blog/rust-syntax-questionmark/).
+
+```rust title=day_04.rs
+#[derive(Debug, Clone, Copy, Hash, Eq, Ord, PartialEq, PartialOrd)]
+struct Point {
+    row: usize,
+    col: usize,
+}
+
+const DELTAS: [(isize, isize); 8] = [
+    (-1, 0),  // up
+    (-1, 1),  // up right
+    (0, 1),   // right
+    (1, 1),   // down right
+    (1, 0),   // down
+    (1, -1),  // down left
+    (0, -1),  // left
+    (-1, -1), // up left
+];
+
+impl Point {
+    fn neighbours(&self) -> Vec<Point> {
+        DELTAS
+            .iter()
+            .filter_map(|&(dr, dc)| {
+                Some(Point {
+                    row: self.row.checked_add_signed(dr)?,
+                    col: self.col.checked_add_signed(dc)?,
+                })
+            })
+            .collect()
+    }
+
+    fn count_neighbours(&self, map: &[Vec<char>]) -> usize {
+        self.neighbours()
+            .iter()
+            .filter(|point| {
+                matches!(
+                    map.get(point.row).and_then(|row| row.get(point.col)),
+                    Some('@')
+                )
+            })
+            .count()
+    }
+}
+```
+
+## Part 1
+
+The question asks how many rolls of paper can be accessed.
+
+```rust title=day_04.rs
+fn part_1(input: &str) -> usize {
+    let map: Vec<Vec<char>> = input.lines().map(|l| l.chars().collect()).collect();
+
+    let mut sum = 0;
+    for (row, line) in map.iter().enumerate() {
+        for (col, c) in line.iter().enumerate() {
+            if *c != '@' {
+                continue;
+            }
+            let point = Point { row, col };
+            if point.count_neighbours(&map) < 4 {
+                sum += 1;
+            }
+        }
+    }
+    sum
+}
+```
+
+## Part 2
+
+Once you complete a first wave of paper removal, the elves want you to do it again, and again, and again, ...  
+Until no paper is removed.
+
+The logic is split up in 2 parts:
+
+1. Marking rolls to be removed
+1. Removing the marked rolls
+
+I do it this way because removing a roll during the first loop might cause a next roll to be removed early.
+It turns out that this leads to the same result because you keep going until no roll is able to be removed.
+
+```rust title=day_04.rs
+fn part_2(input: &str) -> usize {
+    let mut map: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
+
+    let mut sum = 0;
+    loop {
+        let mut to_remove = Vec::new();
+        for (row, line) in map.iter().enumerate() {
+            for (col, c) in line.iter().enumerate() {
+                if *c != '@' {
+                    continue;
+                }
+                let point = Point { row, col };
+                if point.count_neighbours(&map) < 4 {
+                    to_remove.push(point);
+                }
+            }
+        }
+
+        if to_remove.is_empty() {
+            break;
+        }
+        sum += to_remove.len();
+        for point in to_remove {
+            map[point.row][point.col] = '.';
+        }
+    }
+    sum
+}
+```
+
+## Final code
+
+```rust title=day_04.rs showLineNumbers
+#[derive(Debug, Clone, Copy, Hash, Eq, Ord, PartialEq, PartialOrd)]
+struct Point {
+    row: usize,
+    col: usize,
+}
+
+const DELTAS: [(isize, isize); 8] = [
+    (-1, 0),  // up
+    (-1, 1),  // up right
+    (0, 1),   // right
+    (1, 1),   // down right
+    (1, 0),   // down
+    (1, -1),  // down left
+    (0, -1),  // left
+    (-1, -1), // up left
+];
+
+impl Point {
+    fn neighbours(&self) -> Vec<Point> {
+        DELTAS
+            .iter()
+            .filter_map(|&(dr, dc)| {
+                Some(Point {
+                    row: self.row.checked_add_signed(dr)?,
+                    col: self.col.checked_add_signed(dc)?,
+                })
+            })
+            .collect()
+    }
+
+    fn count_neighbours(&self, map: &[Vec<char>]) -> usize {
+        self.neighbours()
+            .iter()
+            .filter(|point| {
+                matches!(
+                    map.get(point.row).and_then(|row| row.get(point.col)),
+                    Some('@')
+                )
+            })
+            .count()
+    }
+}
+
+pub fn part_1(input: &str) -> usize {
+    let map: Vec<Vec<char>> = input.lines().map(|l| l.chars().collect()).collect();
+
+    let mut sum = 0;
+    for (row, line) in map.iter().enumerate() {
+        for (col, c) in line.iter().enumerate() {
+            if *c != '@' {
+                continue;
+            }
+            let point = Point { row, col };
+            if point.count_neighbours(&map) < 4 {
+                sum += 1;
+            }
+        }
+    }
+    sum
+}
+
+fn part_2(input: &str) -> usize {
+    let mut map: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
+
+    let mut sum = 0;
+    loop {
+        let mut to_remove = Vec::new();
+        for (row, line) in map.iter().enumerate() {
+            for (col, c) in line.iter().enumerate() {
+                if *c != '@' {
+                    continue;
+                }
+                let point = Point { row, col };
+                if point.count_neighbours(&map) < 4 {
+                    to_remove.push(point);
+                }
+            }
+        }
+
+        if to_remove.is_empty() {
+            break;
+        }
+        sum += to_remove.len();
+        for point in to_remove {
+            map[point.row][point.col] = '.';
+        }
+    }
+    sum
+}
+```

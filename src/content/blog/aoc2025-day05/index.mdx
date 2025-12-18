@@ -1,0 +1,180 @@
+---
+title: "Advent of Code 2025 Day 5"
+date: 2025-12-05
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2025"
+section: "garden"
+---
+
+## Day 5: Cafeteria
+
+https://adventofcode.com/2025/day/5
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2025/solutions/src/day_05.rs)
+</Aside>
+
+You arrive at a cafeteria.  
+The input for today is the cafeteria's inventory system.
+
+An example input looks like this:
+
+```txt title=input.txt
+3-5
+10-14
+16-20
+12-18
+
+1
+5
+8
+11
+17
+32
+```
+
+The top block of numbers are inclusive ID ranges for ingredients that are fresh.
+In this example ingredients with id 3 through 5 are fresh, 10 through 14, etc.
+
+The bottom block are individual IDs that are currently in stock.
+
+The ranges can overlap, and not all ingredients in stock are still fresh.
+
+<Aside variant="info">
+  These numbers are really great, [but the numbers in the actual input are
+  bigger, much bigger](https://www.youtube.com/watch?v=XAnln0sGYSg).
+</Aside>
+
+## Parsing
+
+I store the ranges in a list where each item is `(start, end)`.
+
+The ingredient IDs that are in stock are stored in a list too.
+
+```rust title=day_05.rs
+fn parse(input: &str) -> (Vec<(u64, u64)>, Vec<u64>) {
+    let (top, bottom) = input.split_once("\n\n").unwrap();
+
+    let ranges = top
+        .lines()
+        .map(|line| {
+            let (low, high) = line.split_once('-').unwrap();
+            (low.parse().unwrap(), high.parse().unwrap())
+        })
+        .collect();
+
+    let foods = bottom.lines().map(|line| line.parse().unwrap()).collect();
+
+    (ranges, foods)
+}
+```
+
+## Part 1
+
+The question asks how many of the available ingredient IDs are fresh.
+
+Per ID, I check if it fits into any range, and count the amount of filtered IDs.
+
+```rust title=day_05.rs
+fn part_1(input: &str) -> usize {
+    let (ranges, foods) = parse(input);
+
+    foods
+        .iter()
+        .filter(|food| ranges.iter().any(|(low, high)| (low..=high).contains(food)))
+        .count()
+}
+```
+
+## Part 2
+
+Ignore the ingredients that are currently in stock, consider all ingredients.  
+The question asks for the number of ingredient IDs that are considered fresh.
+
+The ranges use very large numbers, so bruteforcing by looping over every ID won't work.
+
+First, I sort the ranges based on their starting number.
+
+I keep track of a single range.
+Then, loop through the remaining ranges.
+
+1. If a new range doesn't overlap with the current one,
+   I add the amount of IDs in the current range to a total and update the current range.
+1. It the new range overlaps the current one, I merge them.
+   This is done by changing the bounds of the current range (eg. turn the 2 ranges `1-5`, `2-20` into the single range `1-20`).
+
+At the end of the loop, add the IDs that are in the current range.
+
+```rust title=day_05.rs
+fn part_2(input: &str) -> u64 {
+    let (mut ranges, _) = parse(input);
+    ranges.sort_unstable_by_key(|range| range.0);
+
+    let mut sum = 0;
+    let (mut low, mut high) = ranges[0];
+
+    for &(next_low, next_high) in &ranges[1..] {
+        if high < next_low {
+            sum += high - low + 1;
+            (low, high) = (next_low, next_high);
+        } else {
+            // overlap, merge ranges
+            high = high.max(next_high);
+        }
+    }
+    // count last range
+    sum += high - low + 1;
+
+    sum
+}
+```
+
+## Final code
+
+```rust title=day_05.rs showLineNumbers
+fn parse(input: &str) -> (Vec<(u64, u64)>, Vec<u64>) {
+    let (top, bottom) = input.split_once("\n\n").unwrap();
+
+    let ranges = top
+        .lines()
+        .map(|line| {
+            let (low, high) = line.split_once('-').unwrap();
+            (low.parse().unwrap(), high.parse().unwrap())
+        })
+        .collect();
+
+    let foods = bottom.lines().map(|line| line.parse().unwrap()).collect();
+
+    (ranges, foods)
+}
+
+fn part_1(input: &str) -> usize {
+    let (ranges, foods) = parse(input);
+
+    foods
+        .iter()
+        .filter(|food| ranges.iter().any(|(low, high)| (low..=high).contains(food)))
+        .count()
+}
+
+fn part_2(input: &str) -> u64 {
+    let (mut ranges, _) = parse(input);
+    ranges.sort_unstable_by_key(|range| range.0);
+
+    let mut sum = 0;
+    let (mut low, mut high) = ranges[0];
+
+    for &(next_low, next_high) in &ranges[1..] {
+        if high < next_low {
+            sum += high - low + 1;
+            (low, high) = (next_low, next_high);
+        } else {
+            high = high.max(next_high);
+        }
+    }
+    sum += high - low + 1;
+
+    sum
+}
+```

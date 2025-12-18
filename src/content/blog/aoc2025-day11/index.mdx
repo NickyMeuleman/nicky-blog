@@ -1,0 +1,301 @@
+---
+title: "Advent of Code 2025 Day 11"
+date: 2025-12-11
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2025"
+section: "garden"
+---
+
+## Day 11: Reactor
+
+https://adventofcode.com/2025/day/11
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2025/solutions/src/day_11.rs)
+</Aside>
+
+You are at a reactor.
+
+The elves are installing a new server rack.
+There are a bunch of devices connected by cables from the server rack to the reactor.
+
+The input for today is a graph of how those devices are connected.
+
+An example input looks like this:
+
+```txt title=input.txt
+aaa: you hhh
+you: bbb ccc
+bbb: ddd eee
+ccc: ddd eee fff
+ddd: ggg
+eee: out
+fff: out
+ggg: out
+hhh: ccc fff iii
+iii: out
+```
+
+Each line is a device followed by a list of other devices it outputs to.
+
+So for the first line of the input that means device `aaa` outputs to both `you`, and `hhh`.
+
+Connections are directed, data can't flow backwards from an output to the origin device.
+
+## Parsing
+
+The input represents a [directed graph](https://en.wikipedia.org/wiki/Directed_graph) where devices are nodes and connections are edges.
+
+I'll store them in a map where each value is a node, and values are a list of edges that depart from that node.
+
+```rust title=day_11.rs
+fn parse(input: &str) -> HashMap<&str, Vec<&str>> {
+    input
+        .lines()
+        .map(|line| {
+            let (from, to_str) = line.split_once(": ").unwrap();
+            let to_list = to_str.split(" ").collect();
+            (from, to_list)
+        })
+        .collect()
+}
+```
+
+## Part 1
+
+The question asks for the sum of every path from `you` to `out`.
+
+This indirectly means there are no cycles in any of those paths,
+as if there was a cycle in a path that leads to the end,
+the sum would be infinity.
+
+Similar to yesterday, the code for the problem is boring, the helper function in interesting.
+
+It's a recursive function that sums all paths from one device to a different device.
+
+Recursion is scary at first, but it's often a really nice way to solve a problem.
+
+Computerphile did a neat video on it a while ago.
+
+<YouTube url="https://www.youtube.com/watch?v=8lhxIOAfDss" />{" "}
+
+```rust title=day_10.rs
+fn count(graph: &HashMap<&str, Vec<&str>>, from: &str, to: &str) -> usize {
+    if from == to {
+        return 1;
+    }
+    graph
+        .get(from)
+        .map(|outputs| outputs.iter().map(|output| count(graph, output, to)).sum())
+        .unwrap_or(0)
+}
+
+fn part_1(input: &str) -> usize {
+    let graph = parse(input);
+    count(&graph, "you", "out")
+}
+```
+
+## Part 2
+
+The elves figured out the problematic path they are looking for flows through `dac` and `fft`.
+
+The question asks for the sum of every path from `svr` to `out` that visits both `dac` and `fft`.
+
+### Helpers
+
+Tweaking the helper function from part1 to also keep track if `dac` and `fft` are visited yet.
+
+```rust title=day_11.rs
+fn count_2(graph: &HashMap<&str, Vec<&str>>, from: &str, to: &str, dac: bool, fft: bool) -> u64 {
+    if from == to {
+        let count = if dac && fft { 1 } else { 0 };
+        return count;
+    }
+
+    let new_dac = dac || from == "dac";
+    let new_fft = fft || from == "fft";
+
+    graph
+        .get(from)
+        .map(|outputs| {
+            outputs
+                .iter()
+                .map(|new_from| count_2(graph, new_from, to, new_dac, new_fft))
+                .sum()
+        })
+        .unwrap_or(0)
+}
+```
+
+This works, job done.
+Just run the full input aaaaaaaaaaaand, it runs forever.
+
+Slap a cache on it, and boom, dynamic programming.
+
+The cache is a map where each key is a tuple of the current node, if `dac` was visited yet, and if `fft` was visited yet.
+The value for each key is how many total paths it produces.
+
+That means if a future recursive call to the function has inputs it saw before, it doesn't have to recompute the result.
+
+<Aside variant="info">
+Notice those `'a` things all over the place?
+If you're not programming in Rust, you can ignore them,
+they assure the compiler all strings will still be there when the code tries to access them.
+
+They are needed because the same strings are also referenced inside the cache in this version.
+
+</Aside>
+
+```rust title=day_11.rs {7,13-15, 30,31}
+fn count_2<'a>(
+    graph: &'a HashMap<&str, Vec<&str>>,
+    from: &'a str,
+    to: &str,
+    dac: bool,
+    fft: bool,
+    cache: &mut HashMap<(&'a str, bool, bool), u64>,
+) -> u64 {
+    if from == to {
+        let count = if dac && fft { 1 } else { 0 };
+        return count;
+    }
+    if let Some(&count) = cache.get(&(from, dac, fft)) {
+        return count;
+    }
+
+    let new_dac = dac || from == "dac";
+    let new_fft = fft || from == "fft";
+
+    let sum = graph
+        .get(from)
+        .map(|outputs| {
+            outputs
+                .iter()
+                .map(|new_from| count_2(graph, new_from, to, new_dac, new_fft, cache))
+                .sum()
+        })
+        .unwrap_or(0);
+
+    cache.insert((from, new_dac, new_fft), sum);
+    sum
+}
+```
+
+---
+
+```rust title=day_11.rs
+fn count_2<'a>(
+    graph: &'a HashMap<&str, Vec<&str>>,
+    from: &'a str,
+    to: &str,
+    dac: bool,
+    fft: bool,
+    cache: &mut HashMap<(&'a str, bool, bool), u64>,
+) -> u64 {
+    if from == to {
+        let count = if dac && fft { 1 } else { 0 };
+        return count;
+    }
+    if let Some(&count) = cache.get(&(from, dac, fft)) {
+        return count;
+    }
+
+    let new_dac = dac || from == "dac";
+    let new_fft = fft || from == "fft";
+
+    let sum = graph
+        .get(from)
+        .map(|outputs| {
+            outputs
+                .iter()
+                .map(|new_from| count_2(graph, new_from, to, new_dac, new_fft, cache))
+                .sum()
+        })
+        .unwrap_or(0);
+
+    cache.insert((from, new_dac, new_fft), sum);
+    sum
+}
+
+fn part_2(input: &str) -> u64 {
+    let graph = parse(input);
+    count_2(&graph, "svr", "out", false, false, &mut HashMap::new())
+}
+```
+
+## Final code
+
+```rust title=day_11.rs showLineNumbers
+use std::collections::HashMap;
+
+fn parse(input: &str) -> HashMap<&str, Vec<&str>> {
+    input
+        .lines()
+        .map(|line| {
+            let (from, to_str) = line.split_once(": ").unwrap();
+            let to_list = to_str.split(" ").collect();
+            (from, to_list)
+        })
+        .collect()
+}
+
+fn count_1(graph: &HashMap<&str, Vec<&str>>, from: &str, to: &str) -> usize {
+    if from == to {
+        return 1;
+    }
+    graph
+        .get(from)
+        .map(|outputs| {
+            outputs
+                .iter()
+                .map(|output| count_1(graph, output, to))
+                .sum()
+        })
+        .unwrap_or(0)
+}
+
+fn count_2<'a>(
+    graph: &'a HashMap<&str, Vec<&str>>,
+    from: &'a str,
+    to: &str,
+    dac: bool,
+    fft: bool,
+    cache: &mut HashMap<(&'a str, bool, bool), u64>,
+) -> u64 {
+    if from == to {
+        let count = if dac && fft { 1 } else { 0 };
+        return count;
+    }
+    if let Some(&count) = cache.get(&(from, dac, fft)) {
+        return count;
+    }
+
+    let new_dac = dac || from == "dac";
+    let new_fft = fft || from == "fft";
+
+    let sum = graph
+        .get(from)
+        .map(|outputs| {
+            outputs
+                .iter()
+                .map(|new_from| count_2(graph, new_from, to, new_dac, new_fft, cache))
+                .sum()
+        })
+        .unwrap_or(0);
+
+    cache.insert((from, new_dac, new_fft), sum);
+    sum
+}
+
+fn part_1(input: &str) -> usize {
+    let graph = parse(input);
+    count_1(&graph, "you", "out")
+}
+
+fn part_2(input: &str) -> u64 {
+    let graph = parse(input);
+    count_2(&graph, "svr", "out", false, false, &mut HashMap::new())
+}
+```

@@ -1,0 +1,304 @@
+---
+title: "Advent of Code 2025 Day 7"
+date: 2025-12-07
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2025"
+section: "garden"
+---
+
+## Day 7: Laboratories
+
+https://adventofcode.com/2025/day/7
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2025/solutions/src/day_07.rs)
+</Aside>
+
+You are in a teleporter lab without an exit.
+The input for today is a map of the tachyon manifold of the teleporter, which, surprise, surpise, is broken.
+
+An example input looks like this:
+
+```txt title=input.txt
+.......S.......
+...............
+.......^.......
+...............
+......^.^......
+...............
+.....^.^.^.....
+...............
+....^.^...^....
+...............
+...^.^...^.^...
+...............
+..^...^.....^..
+...............
+.^.^.^.^.^...^.
+...............
+```
+
+A tachyon beam enters the manifold at `S`.
+Tachyon beams always move down.
+
+- They pass freely through empty space (`.`).
+- They stop and turn into 2 new beams when they encounter a splitter (`^`).
+  1. One immediately to the left of the splitter
+  1. One immediately to the right of the splitter
+
+## Helpers
+
+What did you say? Represent a point in 2D space? `Point`!
+
+```rust title=day_07.rs
+#[derive(Debug, Clone, Copy, Hash, Eq, Ord, PartialEq, PartialOrd)]
+struct Point {
+    row: usize,
+    col: usize,
+}
+```
+
+## Part 1
+
+The question asks how many times the beam will be split.
+
+I represent the manifold as a 2D grid of characters.  
+A single beam is represented by a `Point`, the tip of the beam.  
+All beams are stored in a set.
+
+The set of beams starts with a single point, the starting point.
+
+I loop through that set of beams.
+Each loop I create a new set of `beams`, and at the end I replace the old set with the new one.
+If the new set is empty, the loop ends.
+
+For each beam in the set, I look at the position straight down:
+
+1. If it's empty, the beam moves into it.
+1. If it's a splitter, the beam splits to the left and right of it.
+
+Each time a splitter is encountered the `sum` gets incremented.
+
+```rust title=day_07.rs
+fn part_1(input: &str) -> usize {
+    let grid: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
+    let rows = grid.len();
+    let cols = grid[0].len();
+    let start = grid[0].iter().position(|&c| c == 'S').unwrap();
+
+    let mut beams = HashSet::new();
+    beams.insert(Point { row: 0, col: start });
+    let mut sum = 0;
+
+    while !beams.is_empty() {
+        let mut next = HashSet::new();
+
+        for Point { row, col } in beams {
+            if row + 1 >= rows {
+                continue;
+            }
+            match grid[row + 1][col] {
+                '.' => {
+                    let down = Point { row: row + 1, col };
+                    next.insert(down);
+                }
+                '^' => {
+                    sum += 1;
+                    if col > 0 {
+                        let down_left = Point {
+                            row: row + 1,
+                            col: col - 1,
+                        };
+                        next.insert(down_left);
+                    }
+                    if col + 1 < cols {
+                        let down_right = Point {
+                            row: row + 1,
+                            col: col + 1,
+                        };
+                        next.insert(down_right);
+                    }
+                }
+                _ => unreachable!("Unexpected character in grid"),
+            }
+        }
+        beams = next;
+    }
+
+    sum
+}
+```
+
+## Part 2
+
+It's a special manifold (because ofcourse it is).
+Each time a splitter is encountered, time splits in 2, one timeline for each direction the beam took.
+
+The question asks how many timelines are created.
+
+The solution is largely similar to part1.
+This time, the set of beam heads turns into a map of beam heads where the key is a beam head,
+and the value is the amount of timelines that head exists in.
+
+The next change is where `sum` get updated.
+It gets updated every time a beam falls off the map.
+When that happens, the amount of timelines (the value in my map) get added to it.
+
+```rust title=day_07.rs
+fn part_2(input: &str) -> u64 {
+    let grid: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
+    let rows = grid.len();
+    let cols = grid[0].len();
+    let start = grid[0].iter().position(|&c| c == 'S').unwrap();
+
+    let mut beams = HashMap::new();
+    beams.insert(Point { row: 0, col: start }, 1);
+    let mut sum = 0;
+
+    while !beams.is_empty() {
+        let mut next = HashMap::new();
+
+        for (Point { row, col }, count) in beams {
+            if row + 1 >= rows {
+                sum += count;
+                continue;
+            }
+            match grid[row + 1][col] {
+                '.' => {
+                    let down = Point { row: row + 1, col };
+                    *next.entry(down).or_default() += count;
+                }
+                '^' => {
+                    if col > 0 {
+                        let down_left = Point {
+                            row: row + 1,
+                            col: col - 1,
+                        };
+                        *next.entry(down_left).or_default() += count;
+                    }
+                    if col + 1 < cols {
+                        let down_right = Point {
+                            row: row + 1,
+                            col: col + 1,
+                        };
+                        *next.entry(down_right).or_default() += count;
+                    }
+                }
+                _ => unreachable!("Unexpected character in grid"),
+            }
+        }
+        beams = next;
+    }
+
+    sum
+}
+```
+
+## Final code
+
+```rust title=day_07.rs showLineNumbers
+use std::collections::{HashMap, HashSet};
+
+#[derive(Debug, Clone, Copy, Hash, Eq, Ord, PartialEq, PartialOrd)]
+struct Point {
+    row: usize,
+    col: usize,
+}
+
+fn part_1(input: &str) -> usize {
+    let grid: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
+    let rows = grid.len();
+    let cols = grid[0].len();
+    let start = grid[0].iter().position(|&c| c == 'S').unwrap();
+
+    let mut beams = HashSet::new();
+    beams.insert(Point { row: 0, col: start });
+    let mut sum = 0;
+
+    while !beams.is_empty() {
+        let mut next = HashSet::new();
+
+        for Point { row, col } in beams {
+            if row + 1 >= rows {
+                continue;
+            }
+            match grid[row + 1][col] {
+                '.' => {
+                    let down = Point { row: row + 1, col };
+                    next.insert(down);
+                }
+                '^' => {
+                    sum += 1;
+                    if col > 0 {
+                        let down_left = Point {
+                            row: row + 1,
+                            col: col - 1,
+                        };
+                        next.insert(down_left);
+                    }
+                    if col + 1 < cols {
+                        let down_right = Point {
+                            row: row + 1,
+                            col: col + 1,
+                        };
+                        next.insert(down_right);
+                    }
+                }
+                _ => unreachable!("Unexpected character in grid"),
+            }
+        }
+        beams = next;
+    }
+
+    sum
+}
+
+fn part_2(input: &str) -> u64 {
+    let grid: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
+    let rows = grid.len();
+    let cols = grid[0].len();
+    let start = grid[0].iter().position(|&c| c == 'S').unwrap();
+
+    let mut beams = HashMap::new();
+    beams.insert(Point { row: 0, col: start }, 1);
+    let mut sum = 0;
+
+    while !beams.is_empty() {
+        let mut next = HashMap::new();
+
+        for (Point { row, col }, count) in beams {
+            if row + 1 >= rows {
+                sum += count;
+                continue;
+            }
+            match grid[row + 1][col] {
+                '.' => {
+                    let down = Point { row: row + 1, col };
+                    *next.entry(down).or_default() += count;
+                }
+                '^' => {
+                    if col > 0 {
+                        let down_left = Point {
+                            row: row + 1,
+                            col: col - 1,
+                        };
+                        *next.entry(down_left).or_default() += count;
+                    }
+                    if col + 1 < cols {
+                        let down_right = Point {
+                            row: row + 1,
+                            col: col + 1,
+                        };
+                        *next.entry(down_right).or_default() += count;
+                    }
+                }
+                _ => unreachable!("Unexpected character in grid"),
+            }
+        }
+        beams = next;
+    }
+
+    sum
+}
+```

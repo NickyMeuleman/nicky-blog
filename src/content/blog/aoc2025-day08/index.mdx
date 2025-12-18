@@ -1,0 +1,292 @@
+---
+title: "Advent of Code 2025 Day 8"
+date: 2025-12-08
+tags: ["Advent of Code", "Rust"]
+series: "Advent of Code 2025"
+section: "garden"
+---
+
+## Day 8: Playground
+
+https://adventofcode.com/2025/day/8
+
+<Aside>
+  TL;DR: [my solution in
+  Rust](https://github.com/NickyMeuleman/scrapyard/blob/main/advent_of_code/2025/solutions/src/day_08.rs)
+</Aside>
+
+You are standing in a large playground the elves are decorating with lights.
+The already put up junction boxes, but they aren't powered yet.
+
+The input for today is a list of all the junction box locations in 3D space.
+
+An example input looks like this:
+
+```txt title=input.txt
+162,817,812
+57,618,57
+906,360,560
+592,479,940
+352,342,300
+466,668,158
+542,29,236
+431,825,988
+739,650,466
+52,470,668
+216,146,977
+819,987,18
+117,168,530
+805,96,715
+346,949,466
+970,615,88
+941,993,340
+862,61,35
+984,92,344
+425,690,689
+```
+
+Each line is an `X,Y,Z` coordinate, so the box on the first line is located at `X=162, Y=817, Z=812`.
+
+The elves want to focus on connecting pairs of boxes (by using lights) that are as close together as possible (using [staight-line distance](https://en.wikipedia.org/wiki/Euclidean_distance)).
+
+Connecting boxes together makes them part of the same circuit,
+which means elctricity can flow between them, and the lights ... well, light up.
+
+## Parsing
+
+What did you say? Represent a point in 3D space? `Point`!
+The parsed input is a list of `Point`s.
+
+```rust title=day_08.rs
+#[derive(Debug, Clone, Copy, Hash, Eq, Ord, PartialEq, PartialOrd)]
+struct Point {
+    x: usize,
+    y: usize,
+    z: usize,
+}
+
+fn parse(input: &str) -> Vec<Point> {
+    input
+        .lines()
+        .map(|line| {
+            let mut parts = line.split(',');
+            Point {
+                x: parts.next().unwrap().parse().unwrap(),
+                y: parts.next().unwrap().parse().unwrap(),
+                z: parts.next().unwrap().parse().unwrap(),
+            }
+        })
+        .collect()
+}
+```
+
+## Part 1
+
+Connect 1000 pairs of junction boxes.  
+The question asks what number you get when you multiply the sizes of the 3 largest circuits.
+
+This is a disjoint set union problem!
+Before coding today,
+I read [a great resource that explains what that is, how you code one, and even how you optimize one for speed.](https://cp-algorithms.com/data_structures/disjoint_set_union.html)
+
+### Helpers
+
+First, a helper to calculate distances, and one to sort the points by it.
+
+```rust title=day_08.rs
+use itertools::Itertools;
+
+impl Point {
+    fn dist_squared(&self, other: &Point) -> usize {
+        self.x.abs_diff(other.x).pow(2)
+            + self.y.abs_diff(other.y).pow(2)
+            + self.z.abs_diff(other.z).pow(2)
+    }
+}
+
+fn get_sorted_pairs(points: &[Point]) -> Vec<(usize, usize)> {
+    (0..points.len())
+        .tuple_combinations()
+        .sorted_by_key(|&(a, b)| points[a].dist_squared(&points[b]))
+        .collect()
+}
+```
+
+<Aside variant="info">
+  Since only the order of distances matters in this problem, I didn't take the
+  square root to get the actual distance, but used the squared distance
+</Aside>
+
+Next, some functions to help implement that Disjoint Set Union.
+
+```rust title=day_08.rs
+fn find(parents: &mut [usize], id: usize) -> usize {
+    if id != parents[id] {
+        parents[id] = find(parents, parents[id]);
+    }
+    parents[id]
+}
+
+fn merge(parents: &mut [usize], a: usize, b: usize) {
+    let a_root = find(parents, a);
+    let b_root = find(parents, b);
+    if a_root != b_root {
+        parents[b_root] = a_root;
+    }
+}
+```
+
+---
+
+First, I merge the first 1000 pairs.
+
+At the end I calculate the size of each `root` in the set union,
+and calculate the product of the 3 largest ones.
+
+```rust title=day_08.rs
+fn part_1(input: &str) -> usize {
+    let points = parse(input);
+    let pairs = get_sorted_pairs(&points);
+
+    // vec where parent of an index is its value
+    let mut parents: Vec<usize> = (0..points.len()).collect();
+
+    for &(a, b) in pairs.iter().take(1_000) {
+        merge(&mut parents, a, b);
+    }
+
+    let mut sizes = vec![0; points.len()];
+    for id in 0..points.len() {
+        let root_id = find(&mut parents, id);
+        sizes[root_id] += 1;
+    }
+
+    sizes.iter().sorted().rev().take(3).product()
+}
+```
+
+## Part 2
+
+You'll need to keep connecting junction boxes with strings of lights until every box is in the same circuit.
+
+The question asks what number you get when you multiply the x coordinate for the last pair of boxes you connect.
+
+If a pair isn't already in the same circuit, I connect the 2 boxes.
+I stop the loop and return the answer once every box is connected.
+
+```rust title=day_08.rs
+fn part_2(input: &str) -> usize {
+    let points = parse(input);
+    let pairs = get_sorted_pairs(&points);
+
+    let mut parents: Vec<usize> = (0..points.len()).collect();
+    let mut count = 0;
+
+    for (a, b) in pairs {
+        if find(&mut parents, a) != find(&mut parents, b) {
+            count += 1;
+            if count == points.len() - 1 {
+                return points[a].x * points[b].x;
+            }
+            merge(&mut parents, a, b);
+        }
+    }
+
+    panic!("no solution")
+}
+```
+
+## Final code
+
+```rust title=day_08.rs showLineNumbers
+use itertools::Itertools;
+
+struct Point {
+    x: usize,
+    y: usize,
+    z: usize,
+}
+
+impl Point {
+    fn dist_squared(&self, other: &Point) -> usize {
+        self.x.abs_diff(other.x).pow(2)
+            + self.y.abs_diff(other.y).pow(2)
+            + self.z.abs_diff(other.z).pow(2)
+    }
+}
+
+fn parse(input: &str) -> Vec<Point> {
+    input
+        .lines()
+        .map(|line| {
+            let mut parts = line.split(',');
+            Point {
+                x: parts.next().unwrap().parse().unwrap(),
+                y: parts.next().unwrap().parse().unwrap(),
+                z: parts.next().unwrap().parse().unwrap(),
+            }
+        })
+        .collect()
+}
+
+fn get_sorted_pairs(points: &[Point]) -> Vec<(usize, usize)> {
+    (0..points.len())
+        .tuple_combinations()
+        .sorted_by_key(|&(a, b)| points[a].dist_squared(&points[b]))
+        .collect()
+}
+
+pub fn part_1(input: &str) -> usize {
+    let points = parse(input);
+    let pairs = get_sorted_pairs(&points);
+
+    let mut parents: Vec<usize> = (0..points.len()).collect();
+
+    for &(a, b) in pairs.iter().take(1_000) {
+        merge(&mut parents, a, b);
+    }
+
+    let mut sizes = vec![0; points.len()];
+    for id in 0..points.len() {
+        let root_id = find(&mut parents, id);
+        sizes[root_id] += 1;
+    }
+
+    sizes.iter().sorted().rev().take(3).product()
+}
+
+fn find(parents: &mut [usize], id: usize) -> usize {
+    if id != parents[id] {
+        parents[id] = find(parents, parents[id]);
+    }
+    parents[id]
+}
+
+fn merge(parents: &mut [usize], a: usize, b: usize) {
+    let a_root = find(parents, a);
+    let b_root = find(parents, b);
+    if a_root != b_root {
+        parents[b_root] = a_root;
+    }
+}
+
+pub fn part_2(input: &str) -> usize {
+    let points = parse(input);
+    let pairs = get_sorted_pairs(&points);
+
+    let mut parents: Vec<usize> = (0..points.len()).collect();
+    let mut count = 0;
+
+    for (a, b) in pairs {
+        if find(&mut parents, a) != find(&mut parents, b) {
+            count += 1;
+            if count == points.len() - 1 {
+                return points[a].x * points[b].x;
+            }
+            merge(&mut parents, a, b);
+        }
+    }
+
+    panic!("no solution")
+}
+```
