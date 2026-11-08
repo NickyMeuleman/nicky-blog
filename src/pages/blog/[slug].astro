@@ -1,7 +1,7 @@
 ---
 import type { GetStaticPaths } from "astro";
 import { type CollectionEntry } from "astro:content";
-import { getCollection } from "astro:content";
+import { getCollection, render } from "astro:content";
 import Layout from "$layouts/Layout.astro";
 import Aside from "$components/Aside.astro";
 import Tweet from "$components/Tweet.astro";
@@ -17,12 +17,12 @@ type Post = CollectionEntry<"blog">;
 type Props = { post: Post; prev: Post; next: Post };
 
 export const getStaticPaths = (async () => {
-  const allPosts: Post[] = await getCollection("blog") ;
-  const posts = allPosts.filter((p) => !p.data.draft).toSorted(
-    (a, b) => b.data.date.getTime() - a.data.date.getTime(),
-  );
+  const allPosts: Post[] = await getCollection("blog");
+  const posts = allPosts
+    .filter((p) => !p.data.draft)
+    .toSorted((a, b) => b.data.date.getTime() - a.data.date.getTime());
   return posts.map((post, idx) => ({
-    params: { slug: post.slug },
+    params: { slug: post.id },
     props: {
       post,
       prev: idx === 0 ? null : posts[idx - 1],
@@ -33,7 +33,7 @@ export const getStaticPaths = (async () => {
 
 const { post, prev, next } = Astro.props;
 if (!post) return Astro.rewrite("/404");
-const { Content, headings } = await post.render();
+const { Content, headings } = await render(post);
 
 const urlObj = post.data.canonicalUrl ? new URL(post.data.canonicalUrl) : null;
 const seriesPosts = post.data.series
@@ -112,8 +112,8 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
                       <a
                         class="anchor"
                         style={{ "--underlineWidth": "1px" }}
-                        href={`/blog/${entry.slug}`}
-                        data-current={post.slug === entry.slug}
+                        href={`/blog/${entry.id}`}
+                        data-current={post.id === entry.id}
                       >
                         {entry.data.title}
                       </a>
@@ -129,7 +129,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
                 <a
                   class="anchor"
                   style={{ "--underlineWidth": "1px" }}
-                  href={`/blog/${prev.slug}`}
+                  href={`/blog/${prev.id}`}
                 >
                   {prev.data.title}
                 </a>
@@ -142,7 +142,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
                 <a
                   class="anchor"
                   style={{ "--underlineWidth": "1px" }}
-                  href={`/blog/${next.slug}`}
+                  href={`/blog/${next.id}`}
                 >
                   {next.data.title}
                 </a>
@@ -154,7 +154,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
       <TableOfContents headings={headings} />
     </div>
     <div class="col-start-2 col-end-auto md:col-start-4 md:row-start-1">
-      <h1 class="my-2 text-4xl" transition:name={`${post.slug}-title`}>
+      <h1 class="my-2 text-4xl" transition:name={`${post.id}-title`}>
         {post.data.title}
       </h1>
       {
@@ -167,7 +167,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
             formats={["avif", "webp"]}
             loading="eager"
             fetchpriority="high"
-            transition:name={`${post.slug}-image`}
+            transition:name={`${post.id}-image`}
           />
         )
       }

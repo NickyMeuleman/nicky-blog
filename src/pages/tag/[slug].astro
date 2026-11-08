@@ -48,7 +48,7 @@ const { slug, name, posts, count } = Astro.props;
         posts.map((p) => {
           return (
             <li>
-              <a href={`/blog/${p.slug}`} transition:name={`${p.slug}-title`}>
+              <a href={`/blog/${p.id}`} transition:name={`${p.id}-title`}>
                 {p.data.title}
               </a>
             </li>
