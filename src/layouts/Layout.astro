@@ -1,5 +1,5 @@
 ---
-import { ViewTransitions } from "astro:transitions";
+import { ClientRouter } from "astro:transitions";
 import Font from "$components/Font.astro";
 import "$styles/tailwind.css";
 import Header from "$components/Header.astro";
@@ -36,7 +36,7 @@ const { title, description, date, canonicalUrl, image } = Astro.props;
       date={date ?? undefined}
     />
     <Font />
-    <ViewTransitions />
+    <ClientRouter />
   </head>
   <!-- using the 4rem spacing as columns instead of gap-16 intentionally -->
   <body

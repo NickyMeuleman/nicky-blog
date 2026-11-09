@@ -1,45 +1,22 @@
 {
-  "extends": "astro/tsconfigs/strictest",
-  "compilerOptions": {
-    "baseUrl": ".",
-    "allowJs": true,
-    "jsx": "react-jsx",
-    "jsxImportSource": "react",
-    "exactOptionalPropertyTypes": false,
-    "paths": {
-      "$/*": [
-        "src/*"
-      ],
-      "$layouts/*": [
-        "src/layouts/*"
-      ],
-      "$components/*": [
-        "src/components/*"
-      ],
-      "$content/*": [
-        "src/content/*"
-      ],
-      "$utils/*": [
-        "src/utils/*"
-      ],
-      "$wasm/*": [
-        "src/wasm/*"
-      ],
-      "$workers/*": [
-        "src/workers/*"
-      ],
-      "$styles/*": [
-        "src/styles/*"
-      ]
-    }
-  },
-  "include": [
-    ".astro/types.d.ts",
-    "**/*",
-    "**/*.astro"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+	"extends": "astro/tsconfigs/strictest",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"allowJs": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "react",
+		"exactOptionalPropertyTypes": false,
+		"paths": {
+			"$/*": ["src/*"],
+			"$layouts/*": ["src/layouts/*"],
+			"$components/*": ["src/components/*"],
+			"$content/*": ["src/content/*"],
+			"$utils/*": ["src/utils/*"],
+			"$wasm/*": ["src/wasm/*"],
+			"$workers/*": ["src/workers/*"],
+			"$styles/*": ["src/styles/*"]
+		}
+	},
+	"include": [".astro/types.d.ts", "**/*", "**/*.astro"],
+	"exclude": ["node_modules", "dist"]
 }

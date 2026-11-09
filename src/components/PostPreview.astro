@@ -15,7 +15,7 @@ const { post } = Astro.props;
   <!-- originally the grid was on the li and the a was display:contents -->
   <!-- https://codepen.io/leaverou/pen/oROLQm  -->
   <!-- https://hidde.blog/more-accessible-markup-with-display-contents/ -->
-  <a href={`/blog/${post.slug}`} class="grid grid-cols-[20ex_1fr] gap-8">
+  <a href={`/blog/${post.id}`} class="grid grid-cols-[20ex_1fr] gap-8">
     {
       post.data.cover && (
         <Picture
@@ -25,7 +25,7 @@ const { post } = Astro.props;
           densities={[1.5, 2]}
           formats={["avif", "webp"]}
           class="aspect-square h-full object-cover"
-          transition:name={`${post.slug}-image`}
+          transition:name={`${post.id}-image`}
         />
       )
     }
@@ -44,7 +44,7 @@ const { post } = Astro.props;
         }
       </time>
       <h2
-        transition:name={`${post.slug}-title`}
+        transition:name={`${post.id}-title`}
         class="text-xl font-bold text-text group-hover:underline"
       >
         {post.data.title}
