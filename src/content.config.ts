@@ -1,5 +1,6 @@
-import { defineCollection, z } from "astro:content";
+import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
+import { z } from "astro/zod";
 
 const blog = defineCollection({
 	loader: glob({ pattern: "**/[^_]*.{md,mdx}", base: "./src/content/blog" }),
@@ -35,7 +36,7 @@ const blog = defineCollection({
 				])
 				.array()
 				.default([]),
-			canonicalUrl: z.string().url().optional(),
+			canonicalUrl: z.url().optional(),
 			series: z
 				.enum([
 					"Advent of Code 2015",
