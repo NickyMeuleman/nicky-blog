@@ -10,7 +10,6 @@
 		"astro": "astro"
 	},
 	"dependencies": {
-		"@astrojs/check": "0.9.12",
 		"@astrojs/markdown-remark": "^7.3.6",
 		"@astrojs/mdx": "8.1.3",
 		"@astrojs/react": "7.1.4",
@@ -32,30 +31,17 @@
 		"rehype": "^13.0.2",
 		"rehype-katex": "^7.0.1",
 		"remark-math": "^6.0.0",
-		"sharp": "^0.33.5",
+		"sharp": "^0.35.5",
 		"tailwindcss": "^3.4.14",
-		"typescript": "^5.6.3",
 		"unist-util-visit": "^5.0.0"
 	},
 	"devDependencies": {
-		"@eslint/js": "^9.13.0",
+		"@biomejs/biome": "^2.6.6",
 		"@iconify-json/lucide": "^1.2.11",
 		"@tailwindcss/typography": "^0.5.15",
-		"@types/eslint": "^9.6.1",
-		"@types/eslint__js": "^8.42.3",
 		"@types/katex": "^0.16.7",
-		"@typescript-eslint/parser": "^8.12.2",
-		"eslint": "^9.13.0",
-		"eslint-config-prettier": "^9.1.0",
-		"eslint-plugin-astro": "^1.3.0",
-		"eslint-plugin-jsx-a11y": "^6.10.2",
-		"eslint-plugin-react": "^7.37.2",
-		"eslint-plugin-react-hooks": "5.1.0-rc-603e6108-20241029",
-		"globals": "^15.11.0",
-		"prettier": "^3.3.3",
-		"prettier-plugin-astro": "^0.14.1",
-		"prettier-plugin-tailwindcss": "^0.6.8",
-		"typescript-eslint": "^8.12.2",
+		"@typescript/typescript6": "^6.0.2",
+		"typescript": "^7.0.2",
 		"vfile": "^6.0.3"
 	}
 }

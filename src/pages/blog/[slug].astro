@@ -1,17 +1,16 @@
 ---
-import type { GetStaticPaths } from "astro";
-import { type CollectionEntry } from "astro:content";
-import { getCollection, render } from "astro:content";
-import Layout from "$layouts/Layout.astro";
-import Aside from "$components/Aside.astro";
-import Tweet from "$components/Tweet.astro";
-import CodePen from "$components/CodePen.astro";
-import YouTube from "$components/YouTube.astro";
 import { Picture } from "astro:assets";
-import { slugify } from "$/utils";
+import { type CollectionEntry, getCollection, render } from "astro:content";
+import type { GetStaticPaths } from "astro";
 import MetadataItem from "$/components/MetadataItem.astro";
-import TableOfContents from "$/components/TableOfContents.astro";
 import Prose from "$/components/Prose.astro";
+import TableOfContents from "$/components/TableOfContents.astro";
+import { slugify } from "$/utils";
+import Aside from "$components/Aside.astro";
+import CodePen from "$components/CodePen.astro";
+import Tweet from "$components/Tweet.astro";
+import YouTube from "$components/YouTube.astro";
+import Layout from "$layouts/Layout.astro";
 
 type Post = CollectionEntry<"blog">;
 type Props = { post: Post; prev: Post; next: Post };
