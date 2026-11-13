@@ -4,8 +4,8 @@ import { unified } from "@astrojs/markdown-remark";
 import mdx from "@astrojs/mdx";
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
-import tailwind from "@astrojs/tailwind";
 import { pluginLineNumbers } from "@expressive-code/plugin-line-numbers";
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import expressiveCode from "astro-expressive-code";
 import icon from "astro-icon";
@@ -46,10 +46,10 @@ export default defineConfig({
 		}),
 		mdx(),
 		sitemap(),
-		tailwind({
-			// Disable the default styles as they are added with the @tailwind; css directives
-			applyBaseStyles: false,
-		}),
+		// tailwind({
+		//     // Disable the default styles as they are added with the @tailwind; css directives
+		//     applyBaseStyles: false,
+		// }),
 		icon(),
 	],
 	vite: {
@@ -57,5 +57,6 @@ export default defineConfig({
 			// allow dynamic import in webworker: https://github.com/vitejs/vite/issues/18585
 			format: "es",
 		},
+		plugins: [tailwindcss()],
 	},
 });

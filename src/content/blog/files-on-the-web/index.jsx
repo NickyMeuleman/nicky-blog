@@ -13,7 +13,7 @@ const DemoArea = ({ title, children }) => {
 
 const Input = ({ title, children, ...props }) => {
   return (
-    <div className="data-[span]:col-span-full" {...props}>
+    <div className="data-span:col-span-full" {...props}>
       <p className="m-0 mb-1 text-sm font-bold uppercase tracking-wider text-mutedText">
         {title}
       </p>
@@ -24,7 +24,7 @@ const Input = ({ title, children, ...props }) => {
 
 const Output = ({ title, children, passedSx, ...props }) => {
   return (
-    <div className="text-mutedText data-[span]:col-span-full" {...props}>
+    <div className="text-mutedText data-span:col-span-full" {...props}>
       <p className="m-0 mb-1 text-sm font-bold uppercase tracking-wider">
         {title}
       </p>

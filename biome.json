@@ -28,6 +28,14 @@
 		"formatter": { "enabled": true },
 		"linter": { "enabled": true }
 	},
+	"css": {
+		"formatter": { "enabled": true },
+		"linter": { "enabled": true },
+		"parser": { "tailwindDirectives": true }
+	},
+	"tailwind": {
+		"stylesheet": "./src/styles/global.css"
+	},
 	"assist": {
 		"enabled": true,
 		"actions": {

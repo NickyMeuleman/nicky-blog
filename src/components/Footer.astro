@@ -3,35 +3,39 @@ import { Icon } from "astro-icon/components";
 ---
 
 <footer
-  class="col-span-full mt-16 grid grid-cols-subgrid items-center bg-mutedBackground px-[5vw] py-8 text-mutedText"
+	class="col-span-full mt-16 grid grid-cols-subgrid items-center bg-mutedBackground px-[5vw] py-8 text-mutedText"
 >
-  <div
-    class="col-start-2 col-end-auto row-start-1 row-end-2 justify-self-start text-sm md:col-start-4"
-  >
-    <p class="m-0">Designed and developed by Nicky Meuleman</p>
-    <p class="m-0">
-      Built with
-      <a href="https://astro.build/" target="_blank" rel="noopener noreferrer" class="anchor">
-        Astro</a
-      >. Hosted on
-      <a
-        href="https://www.netlify.com/"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="anchor"
-      >
-        Netlify</a
-      >.
-    </p>
-  </div>
-  <nav
-    class="col-start-2 col-end-auto row-start-1 row-end-2 flex gap-8 justify-self-end md:col-start-4"
-  >
-    <a href="https://twitter.com/NMeuleman" aria-label="Twitter">
-      <Icon name="twitter" class="size-6 hover:text-mutedPrimary" />
-    </a>
-    <a href="https://github.com/NickyMeuleman" aria-label="GitHub">
-      <Icon name="lucide:github" class="size-6 hover:text-mutedPrimary" />
-    </a>
-  </nav>
+	<div
+		class="col-start-2 col-end-auto row-start-1 row-end-2 justify-self-start text-sm md:col-start-4"
+	>
+		<p class="m-0">Designed and developed by Nicky Meuleman</p>
+		<p class="m-0">
+			Built with{" "}
+			<a
+				href="https://astro.build/"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="anchor"
+				>Astro</a
+			>. Hosted on{" "}
+			<a
+				href="https://www.netlify.com/"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="anchor"
+			>
+				Netlify</a
+			>.
+		</p>
+	</div>
+	<nav
+		class="col-start-2 col-end-auto row-start-1 row-end-2 flex gap-8 justify-self-end md:col-start-4"
+	>
+		<a href="https://twitter.com/NMeuleman" aria-label="Twitter">
+			<Icon name="twitter" class="size-6 hover:text-mutedPrimary" />
+		</a>
+		<a href="https://github.com/NickyMeuleman" aria-label="GitHub">
+			<Icon name="lucide:github" class="size-6 hover:text-mutedPrimary" />
+		</a>
+	</nav>
 </footer>

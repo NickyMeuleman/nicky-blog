@@ -184,7 +184,7 @@ const RelativeDemo = () => {
   const [left, setLeft] = useState(50);
 
   const boxClasses =
-    "grid place-items-center aspect-square rounded-sm border-4 border-black/30 text-5xl";
+    "grid place-items-center aspect-square rounded-xs border-4 border-black/30 text-5xl";
   const codeStr = `
 .two {
   position: relative;
@@ -211,7 +211,7 @@ ${top != null ? `  top: ${top}px;\n` : ""}${
         </div>
         <div className={`bg-mutedBackground ${boxClasses}`}>3</div>
       </div>
-      <div className="relative mt-4 grid grid-cols-1 gap-4 bg-background/50 backdrop-blur-sm lg:grid-cols-2">
+      <div className="relative mt-4 grid grid-cols-1 gap-4 bg-background/50 backdrop-blur-xs lg:grid-cols-2">
         <Slider
           labelText="top"
           idPrepend="relative"
@@ -253,7 +253,7 @@ const AbsoluteDemo = () => {
   const [left, setLeft] = useState(50);
 
   const boxClasses =
-    "grid place-items-center aspect-square rounded-sm border-4 border-black/30 text-5xl";
+    "grid place-items-center aspect-square rounded-xs border-4 border-black/30 text-5xl";
   const codeStr = `
 .two {
   position: absolute;
@@ -280,7 +280,7 @@ ${top != null ? `  top: ${top}px;\n` : ""}${
         </div>
         <div className={`bg-mutedBackground ${boxClasses}`}>3</div>
       </div>
-      <div className="relative mt-4 grid grid-cols-1 gap-4 bg-background/50 backdrop-blur-sm lg:grid-cols-2">
+      <div className="relative mt-4 grid grid-cols-1 gap-4 bg-background/50 backdrop-blur-xs lg:grid-cols-2">
         <Slider
           labelText="top"
           idPrepend="absolute"
@@ -319,7 +319,7 @@ const StickyDemo = () => {
   const [top, setTop] = useState(50);
 
   const boxClasses =
-    "grid place-items-center aspect-square rounded-sm border-4 border-black/30 text-5xl";
+    "grid place-items-center aspect-square rounded-xs border-4 border-black/30 text-5xl";
 
   const codeStr = `
 .two {
@@ -370,7 +370,7 @@ ${top != null ? `  top: ${top}px;\n` : ""}}`;
           </div>
         </div>
       </div>
-      <div className="relative grid grid-cols-1 gap-4 bg-background/50 backdrop-blur-sm lg:grid-cols-2">
+      <div className="relative grid grid-cols-1 gap-4 bg-background/50 backdrop-blur-xs lg:grid-cols-2">
         <Slider
           marginTop={true}
           labelText="top"

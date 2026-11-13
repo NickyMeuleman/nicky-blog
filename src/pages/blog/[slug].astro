@@ -16,18 +16,18 @@ type Post = CollectionEntry<"blog">;
 type Props = { post: Post; prev: Post; next: Post };
 
 export const getStaticPaths = (async () => {
-  const allPosts: Post[] = await getCollection("blog");
-  const posts = allPosts
-    .filter((p) => !p.data.draft)
-    .toSorted((a, b) => b.data.date.getTime() - a.data.date.getTime());
-  return posts.map((post, idx) => ({
-    params: { slug: post.id },
-    props: {
-      post,
-      prev: idx === 0 ? null : posts[idx - 1],
-      next: idx + 1 === posts.length ? null : posts[idx + 1],
-    },
-  }));
+	const allPosts: Post[] = await getCollection("blog");
+	const posts = allPosts
+		.filter((p) => !p.data.draft)
+		.toSorted((a, b) => b.data.date.getTime() - a.data.date.getTime());
+	return posts.map((post, idx) => ({
+		params: { slug: post.id },
+		props: {
+			post,
+			prev: idx === 0 ? null : posts[idx - 1],
+			next: idx + 1 === posts.length ? null : posts[idx + 1],
+		},
+	}));
 }) satisfies GetStaticPaths;
 
 const { post, prev, next } = Astro.props;
@@ -36,149 +36,137 @@ const { Content, headings } = await render(post);
 
 const urlObj = post.data.canonicalUrl ? new URL(post.data.canonicalUrl) : null;
 const seriesPosts = post.data.series
-  ? await getCollection(
-      "blog",
-      (entry) => entry.data.series === post.data.series,
-    )
-  : null;
+	? await getCollection(
+			"blog",
+			(entry) => entry.data.series === post.data.series,
+		)
+	: null;
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
+	day: "numeric",
+	month: "long",
+	year: "numeric",
+	timeZone: "UTC",
 });
 ---
 
 <Layout
-  date={post.data.date}
-  title={post.data.title}
-  canonicalUrl={post.data.canonicalUrl ?? undefined}
+	date={post.data.date}
+	title={post.data.title}
+	canonicalUrl={post.data.canonicalUrl ?? undefined}
 >
-  <article class="col-span-full grid grid-cols-subgrid">
-    <div class="col-start-2 col-end-auto md:col-start-6 md:row-start-1">
-      <details open class="mb-8 border border-watermarkBg p-4">
-        <summary class="m-0 font-bold uppercase tracking-wider text-mutedTextBg"
-          >Metadata</summary
-        >
-        <ul>
-          <MetadataItem title="Date">
-            <time datetime={post.data.date.toISOString()}>
-              {dateFormatter.format(post.data.date)}
-            </time>
-          </MetadataItem>
-          {
-            post.data.updatedAt && (
-              <MetadataItem title="Last update">
-                <time datetime={post.data.updatedAt.toISOString()}>
-                  {dateFormatter.format(post.data.updatedAt)}
-                </time>
-              </MetadataItem>
-            )
-          }
-          {
-            urlObj && (
-              <MetadataItem title="Originally at">
-                <a href={urlObj.toString()}>{urlObj.hostname}</a>
-              </MetadataItem>
-            )
-          }
-          {
-            post.data.tags && (
-              <MetadataItem title="Tagged">
-                <ul>
-                  {post.data.tags.map((tag, idx) => (
-                    <li class={idx === 0 ? "mt-0" : "mt-1"}>
-                      <a
-                        class="anchor"
-                        style={{ "--underlineWidth": "1px" }}
-                        href={`/tag/${slugify(tag)}`}
-                      >
-                        {tag}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </MetadataItem>
-            )
-          }
-          {
-            seriesPosts && (
-              <MetadataItem title="Part of series">
-                <ul>
-                  {seriesPosts.map((entry, idx) => (
-                    <li class={idx === 0 ? "mt-0" : "mt-1"}>
-                      <a
-                        class="anchor"
-                        style={{ "--underlineWidth": "1px" }}
-                        href={`/blog/${entry.id}`}
-                        data-current={post.id === entry.id}
-                      >
-                        {entry.data.title}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </MetadataItem>
-            )
-          }
-          {
-            prev && (
-              <MetadataItem title="Older post">
-                <a
-                  class="anchor"
-                  style={{ "--underlineWidth": "1px" }}
-                  href={`/blog/${prev.id}`}
-                >
-                  {prev.data.title}
-                </a>
-              </MetadataItem>
-            )
-          }
-          {
-            next && (
-              <MetadataItem title="Newer post">
-                <a
-                  class="anchor"
-                  style={{ "--underlineWidth": "1px" }}
-                  href={`/blog/${next.id}`}
-                >
-                  {next.data.title}
-                </a>
-              </MetadataItem>
-            )
-          }
-        </ul>
-      </details>
-      <TableOfContents headings={headings} />
-    </div>
-    <div class="col-start-2 col-end-auto md:col-start-4 md:row-start-1">
-      <h1 class="my-2 text-4xl" transition:name={`${post.id}-title`}>
-        {post.data.title}
-      </h1>
-      {
-        post.data.cover && (
-          <Picture
-            src={post.data.cover}
-            alt={post.data.coverAlt ?? ""}
-            width={post.data.cover.width / 2}
-            densities={[1.5, 2]}
-            formats={["avif", "webp"]}
-            loading="eager"
-            fetchpriority="high"
-            transition:name={`${post.id}-image`}
-          />
-        )
-      }
-      <Prose class="max-w-none prose-a:anchor">
-        <Content components={{ Aside, Tweet, YouTube, CodePen }} />
-      </Prose>
-    </div>
-  </article>
+	<article class="col-span-full grid grid-cols-subgrid">
+		<div class="col-start-2 col-end-auto md:col-start-6 md:row-start-1">
+			<details open class="mb-8 border border-watermarkBg p-4">
+				<summary
+					class="m-0 font-bold uppercase tracking-wider text-mutedTextBg"
+				>
+					Metadata
+				</summary>
+				<ul>
+					<MetadataItem title="Date">
+						<time datetime={post.data.date.toISOString()}>
+							{dateFormatter.format(post.data.date)}
+						</time>
+					</MetadataItem>
+					{post.data.updatedAt && (
+						<MetadataItem title="Last update">
+							<time datetime={post.data.updatedAt.toISOString()}>
+								{dateFormatter.format(post.data.updatedAt)}
+							</time>
+						</MetadataItem>
+					)}
+					{urlObj && (
+						<MetadataItem title="Originally at">
+							<a href={urlObj.toString()}>{urlObj.hostname}</a>
+						</MetadataItem>
+					)}
+					{post.data.tags && (
+						<MetadataItem title="Tagged">
+							<ul>
+								{post.data.tags.map((tag, idx) => (
+									<li class={idx === 0 ? "mt-0" : "mt-1"}>
+										<a
+											class="anchor"
+											style={{ "--underlineWidth": "1px" }}
+											href={`/tag/${slugify(tag)}`}
+										>
+											{tag}
+										</a>
+									</li>
+								))}
+							</ul>
+						</MetadataItem>
+					)}
+					{seriesPosts && (
+						<MetadataItem title="Part of series">
+							<ul>
+								{seriesPosts.map((entry, idx) => (
+									<li class={idx === 0 ? "mt-0" : "mt-1"}>
+										<a
+											class="anchor"
+											style={{ "--underlineWidth": "1px" }}
+											href={`/blog/${entry.id}`}
+											data-current={post.id === entry.id}
+										>
+											{entry.data.title}
+										</a>
+									</li>
+								))}
+							</ul>
+						</MetadataItem>
+					)}
+					{prev && (
+						<MetadataItem title="Older post">
+							<a
+								class="anchor"
+								style={{ "--underlineWidth": "1px" }}
+								href={`/blog/${prev.id}`}
+							>
+								{prev.data.title}
+							</a>
+						</MetadataItem>
+					)}
+					{next && (
+						<MetadataItem title="Newer post">
+							<a
+								class="anchor"
+								style={{ "--underlineWidth": "1px" }}
+								href={`/blog/${next.id}`}
+							>
+								{next.data.title}
+							</a>
+						</MetadataItem>
+					)}
+				</ul>
+			</details>
+			<TableOfContents headings={headings} />
+		</div>
+		<div class="col-start-2 col-end-auto md:col-start-4 md:row-start-1">
+			<h1 class="my-2 text-4xl" transition:name={`${post.id}-title`}>
+				{post.data.title}
+			</h1>
+			{post.data.cover && (
+				<Picture
+					src={post.data.cover}
+					alt={post.data.coverAlt ?? ""}
+					width={post.data.cover.width / 2}
+					densities={[1.5, 2]}
+					formats={["avif", "webp"]}
+					loading="eager"
+					fetchpriority="high"
+					transition:name={`${post.id}-image`}
+				/>
+			)}
+			<Prose class="max-w-none">
+				<Content components={{ Aside, Tweet, YouTube, CodePen }} />
+			</Prose>
+		</div>
+	</article>
 </Layout>
 
 <style>
-  [data-current] {
-    @apply text-mutedPrimary;
-  }
+[data-current] {
+	color: var(--color-mutedPrimary);
+}
 </style>

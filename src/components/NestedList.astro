@@ -2,117 +2,97 @@
 import type { NestedHeading } from "$utils/types";
 
 interface Props {
-  headings: NestedHeading[];
-  recursive: boolean;
+	headings: NestedHeading[];
+	recursive: boolean;
 }
 
 const { headings, recursive } = Astro.props;
 ---
 
 <ol class={`list-none p-0 ${recursive && "pl-2"}`}>
-  {
-    headings.map((heading) => (
-      <li class={`${recursive ? "mt-1" : "mt-4"}`}>
-        <a href={`#${heading.slug}`}>{heading.text}</a>
-        {heading.items.length > 0 && (
-          <Astro.self headings={heading.items} recursive={true} />
-        )}
-      </li>
-    ))
-  }
+	{headings.map((heading) => (
+		<li class={`${recursive ? "mt-1" : "mt-4"}`}>
+			<a href={`#${heading.slug}`}>{heading.text}</a>
+			{heading.items.length > 0 && (
+				<Astro.self headings={heading.items} recursive={true} />
+			)}
+		</li>
+	))}
 </ol>
 
 <style>
-  a {
-    --underlineWidth: theme("borderWidth.2");
-    --blockLength: theme("spacing.4");
-    color: theme("colors.mutedText");
-    text-decoration: none;
-    background-image: linear-gradient(
-        90deg,
-        theme("colors.background"),
-        theme("colors.background")
-      ),
-      linear-gradient(
-        theme("colors.mutedPrimary"),
-        theme("colors.mutedPrimary")
-      ),
-      linear-gradient(theme("colors.primary"), theme("colors.primary"));
-    background-repeat: no-repeat;
-    background-size:
-      var(--blockLength) var(--underlineWidth),
-      0 var(--underlineWidth),
-      0 var(--underlineWidth);
-    background-position:
-      calc(var(--blockLength) * -1) 100%,
-      100% 100%,
-      0 100%;
-    transition:
-      background-size cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s,
-      background-position cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s,
-      color cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s;
-    &:hover {
-      color: theme("colors.mutedPrimary");
-      background-image: linear-gradient(
-          90deg,
-          theme("colors.background"),
-          theme("colors.background")
-        ),
-        linear-gradient(
-          theme("colors.mutedPrimary"),
-          theme("colors.mutedPrimary")
-        ),
-        linear-gradient(theme("colors.primary"), theme("colors.primary"));
-      background-size:
-        var(--blockLength) var(--underlineWidth),
-        0 var(--underlineWidth),
-        100% var(--underlineWidth);
-      background-position:
-        calc(100% + var(--blockLength)) 100%,
-        100% 100%,
-        0 100%;
-    }
-  }
+a {
+	--underlineWidth: 2px;
+	--blockLength: calc(var(--spacing) * 3);
+	color: var(--color-mutedText);
+	text-decoration: none;
+	background-image:
+		linear-gradient(90deg, var(--color-background), var(--color-background)),
+		linear-gradient(var(--color-mutedPrimary), var(--color-mutedPrimary)),
+		linear-gradient(var(--color-primary), var(--color-primary));
+	background-repeat: no-repeat;
+	background-size:
+		var(--blockLength) var(--underlineWidth),
+		0 var(--underlineWidth),
+		0 var(--underlineWidth);
+	background-position:
+		calc(var(--blockLength) * -1) 100%,
+		100% 100%,
+		0 100%;
+	transition:
+		background-size cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s,
+		background-position cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s,
+		color cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s;
+	&:hover {
+		color: var(--color-mutedPrimary);
+		background-image:
+			linear-gradient(90deg, var(--color-background), var(--color-background)),
+			linear-gradient(var(--color-mutedPrimary), var(--color-mutedPrimary)),
+			linear-gradient(var(--color-primary), var(--color-primary));
+		background-size:
+			var(--blockLength) var(--underlineWidth),
+			0 var(--underlineWidth),
+			100% var(--underlineWidth);
+		background-position:
+			calc(100% + var(--blockLength)) 100%,
+			100% 100%,
+			0 100%;
+	}
+}
 
-  .active {
-    --underlineWidth: theme("borderWidth.2");
-    --blockLength: theme("spacing.4");
-    color: theme("colors.mutedPrimary");
-    text-decoration: none;
-    background-image: linear-gradient(
-        90deg,
-        theme("colors.background"),
-        theme("colors.background")
-      ),
-      linear-gradient(
-        theme("colors.mutedPrimary"),
-        theme("colors.mutedPrimary")
-      ),
-      linear-gradient(theme("colors.primary"), theme("colors.primary"));
-    background-repeat: no-repeat;
-    background-size:
-      var(--blockLength) var(--underlineWidth),
-      100% var(--underlineWidth),
-      0 var(--underlineWidth);
-    background-position:
-      calc(var(--blockLength) * -1) 100%,
-      100% 100%,
-      0 100%;
-    transition:
-      background-size cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s,
-      background-position cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s,
-      color cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s;
-    border: none;
-    &:hover {
-      color: theme("colors.mutedPrimary");
-      background-size:
-        var(--blockLength) var(--underlineWidth),
-        0 var(--underlineWidth),
-        100% var(--underlineWidth);
-      background-position:
-        calc(100% + var(--blockLength)) 100%,
-        100% 100%,
-        0 100%;
-    }
-  }
+.active {
+	--underlineWidth: 2px;
+	--blockLength: calc(var(--spacing) * 3);
+	color: var(--color-mutedPrimary);
+	text-decoration: none;
+	background-image:
+		linear-gradient(90deg, var(--color-background), var(--color-background)),
+		linear-gradient(var(--color-mutedPrimary), var(--color-mutedPrimary)),
+		linear-gradient(var(--color-primary), var(--color-primary));
+	background-repeat: no-repeat;
+	background-size:
+		var(--blockLength) var(--underlineWidth),
+		100% var(--underlineWidth),
+		0 var(--underlineWidth);
+	background-position:
+		calc(var(--blockLength) * -1) 100%,
+		100% 100%,
+		0 100%;
+	transition:
+		background-size cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s,
+		background-position cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s,
+		color cubic-bezier(0.39, 0.575, 0.565, 1) 0.3s;
+	border: none;
+	&:hover {
+		color: var(--color-mutedPrimary);
+		background-size:
+			var(--blockLength) var(--underlineWidth),
+			0 var(--underlineWidth),
+			100% var(--underlineWidth);
+		background-position:
+			calc(100% + var(--blockLength)) 100%,
+			100% 100%,
+			0 100%;
+	}
+}
 </style>

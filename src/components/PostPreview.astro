@@ -9,7 +9,7 @@ const { post } = Astro.props;
 ---
 
 <li
-  class={`${post.data.cover ? "" : "hover:-mx-2 hover:px-2 focus-within:-mx-2 focus-within:px-2"} group mt-4 rounded-sm focus-within:bg-mutedBackground focus-within:text-mutedText hover:bg-mutedBackground hover:text-mutedText`}
+  class={`${post.data.cover ? "" : "hover:-mx-2 hover:px-2 focus-within:-mx-2 focus-within:px-2"} group mt-4 rounded-xs focus-within:bg-mutedBackground focus-within:text-mutedText hover:bg-mutedBackground hover:text-mutedText`}
 >
   <!-- TODO: fix focus https://github.com/mozilla/standards-positions/issues/772  -->
   <!-- originally the grid was on the li and the a was display:contents -->

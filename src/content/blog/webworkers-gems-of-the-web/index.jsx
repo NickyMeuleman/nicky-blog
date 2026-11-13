@@ -110,7 +110,7 @@ const ProblemDemo = () => {
         <Output title="JS Animation">
           <div
             ref={jsAnimEl}
-            className="min-h-16 min-w-4 rotate-[--degrees] self-center justify-self-center rounded-sm bg-primary"
+            className="min-h-16 min-w-4 rotate-(--degrees) self-center justify-self-center rounded-xs bg-primary"
           />
         </Output>
         <Output title="GIF">
@@ -190,7 +190,7 @@ const SolutionDemo = () => {
         <Output title="JS Animation">
           <div
             ref={jsAnimEl}
-            className="min-h-16 min-w-4 rotate-[--degrees] self-center justify-self-center rounded-sm bg-primary"
+            className="min-h-16 min-w-4 rotate-(--degrees) self-center justify-self-center rounded-xs bg-primary"
           />
         </Output>
         <Output title="GIF">
@@ -637,7 +637,7 @@ const ProgressDemo = () => {
         <Output title="JS Animation">
           <div
             ref={jsAnimEl}
-            className="min-h-16 min-w-4 rotate-[--degrees] self-center justify-self-center rounded-sm bg-primary"
+            className="min-h-16 min-w-4 rotate-(--degrees) self-center justify-self-center rounded-xs bg-primary"
           />
         </Output>
         <Output title="GIF">
