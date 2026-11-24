@@ -24,8 +24,8 @@ export const getStaticPaths = (async () => {
 		params: { slug: post.id },
 		props: {
 			post,
-			prev: idx === 0 ? null : posts[idx - 1],
-			next: idx + 1 === posts.length ? null : posts[idx + 1],
+			prev: idx + 1 === posts.length ? null : posts[idx + 1],
+			next: idx === 0 ? null : posts[idx - 1],
 		},
 	}));
 }) satisfies GetStaticPaths;
