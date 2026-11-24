@@ -3,154 +3,147 @@ import type { GetStaticPaths } from "astro";
 import Layout from "$layouts/Layout.astro";
 
 interface Props {
-  year: number;
+	year: number;
 }
 
 export const getStaticPaths = (() => {
-  // years can not be a variable
-  return [2020, 2021, 2022, 2023, 2024, 2025].map((year) => ({
-    params: { year: year.toString() },
-  }));
+	// years can not be a variable
+	return [2020, 2021, 2022, 2023, 2024, 2025].map((year) => ({
+		params: { year: year.toString() },
+	}));
 }) satisfies GetStaticPaths;
 
 const { year } = Astro.params;
 // TODO: figure out how to make dynamic images work so they don't have to be in public/ but can be in src/assets/
 // https://docs.astro.build/en/recipes/dynamically-importing-images/
 const images = [2020, 2021, 2022, 2023, 2024, 2025].reduce<
-  Record<string, string>
+	Record<string, string>
 >((acc, year) => {
-  acc[year] = new URL(`aoc${year}-solver-og.png`, Astro.site).href;
-  return acc;
+	acc[year] = new URL(`aoc${year}-solver-og.png`, Astro.site).href;
+	return acc;
 }, {});
 ---
 
 <Layout
-  title={`Advent of Code ${year} solver`}
-  description="Choose a day, choose an input file, get the answers!"
-  image={images[year]}
+	title={`Advent of Code ${year} solver`}
+	description="Choose a day, choose an input file, get the answers!"
+	image={images[year]}
 >
-  <div class="col-start-4">
-    <h1 class="my-4 text-2xl" data-year={year}>
-      <span>Advent of Code {year}</span> solver
-    </h1>
-    <h2 class="my-2 text-xl">Day:</h2>
-    <input
-      id="day"
-      type="number"
-      min="1"
-      max={year === "2025" ? 12 : 25}
-      value="1"
-      class="border bg-mutedBackground p-1 text-xl text-text hover:border-mutedPrimary"
-    />
-    <h2 class="my-2 text-xl">Part:</h2>
-    <select
-      id="part"
-      class="border bg-mutedBackground p-1 text-xl text-text hover:border-mutedPrimary"
-    >
-      <option value="1">1</option>
-      <option value="2">2</option>
-      <option selected value="3">Both</option>
-    </select>
-    <h2 class="my-2 text-xl">Input (starts calculation):</h2>
-    <input
-      id="file"
-      type="file"
-      disabled
-      class="outline-1 outline-offset-2 file:border-text file:bg-mutedBackground file:px-2 file:py-1 file:text-text file:hover:border-mutedPrimary disabled:cursor-not-allowed disabled:border-inherit disabled:bg-gray-800/90 disabled:text-mutedText"
-    />
-    <h2 class="my-2 text-2xl">Result:</h2>
-    <output id="result" class="prose text-text prose-headings:text-text"
-      >No result yet!</output
-    >
-  </div>
+	<div class="col-start-4">
+		<h1 class="my-4 text-2xl" data-year={year}>
+			<span>Advent of Code {year}</span>{" "}solver
+		</h1>
+		<h2 class="my-2 text-xl">Day:</h2>
+		<input
+			id="day"
+			type="number"
+			min="1"
+			max={year === "2025" ? 12 : 25}
+			value="1"
+			class="border bg-mutedBackground p-1 text-xl text-text hover:border-mutedPrimary"
+		>
+		<h2 class="my-2 text-xl">Part:</h2>
+		<select
+			id="part"
+			class="border bg-mutedBackground p-1 text-xl text-text hover:border-mutedPrimary"
+		>
+			<option value="1">1</option>
+			<option value="2">2</option>
+			<option selected value="3">Both</option>
+		</select>
+		<h2 class="my-2 text-xl">Input (starts calculation):</h2>
+		<input
+			id="file"
+			type="file"
+			disabled
+			class="file:border file:border-text file:bg-mutedBackground file:px-2 file:py-1 file:text-text file:hover:border-mutedPrimary disabled:cursor-not-allowed disabled:border-inherit disabled:bg-gray-800/90 disabled:text-mutedText"
+		>
+		<h2 class="my-2 text-2xl">Result:</h2>
+		<output id="result" class="prose text-text prose-headings:text-text"
+			>No result yet!</output
+		>
+	</div>
 </Layout>
 
 <script>
-  document.addEventListener("astro:page-load", () => {
-    const worker = new Worker(new URL("$workers/aoc.ts", import.meta.url), {
-      type: "module",
-      name: "aocworker",
-    });
+document.addEventListener("astro:page-load", () => {
+	const worker = new Worker(new URL("$workers/aoc.ts", import.meta.url), {
+		type: "module",
+		name: "aocworker",
+	});
 
-    const year = document.querySelector("h1")?.dataset.year;
-    // make sure year exists (before number coersion and passing it) or else this code errors when navigating from a solver to another page
-    // Uncaught (in promise) Error: Unknown variable dynamic import: ../wasm/aoc-NaN/aocNaN_wasm.js
-    // at dynamic-import-helper.js:10:9 -- this is an internal Vite thing
-    // at new Promise (<anonymous>)
-    // at default (dynamic-import-helper.js:6:10)
-    // at importWasm (aoc.ts:34:10) -- this is the function in my worker that does the dynamic importing
-    // at handleMessage (aoc.ts:46:12)
-    // at aoc.ts:18:8
-    if (!year) {
-      return;
-    }
-    worker.postMessage({
-      type: "init",
-      payload: { year: Number(year) },
-    });
+	const year = document.querySelector("h1")?.dataset.year;
+	// make sure year exists (before number coersion and passing it) or else this code errors when navigating from a solver to another page
+	if (!year) {
+		return;
+	}
+	worker.postMessage({
+		type: "init",
+		payload: { year: Number(year) },
+	});
 
-    const fileInputEl = document.querySelector<HTMLInputElement>("#file");
-    const dayInputEl = document.querySelector<HTMLInputElement>("#day");
-    const partInputEl = document.querySelector<HTMLSelectElement>("#part");
-    const resultEl = document.querySelector<HTMLOutputElement>("#result");
+	const fileInputEl = document.querySelector<HTMLInputElement>("#file");
+	const dayInputEl = document.querySelector<HTMLInputElement>("#day");
+	const partInputEl = document.querySelector<HTMLSelectElement>("#part");
+	const resultEl = document.querySelector<HTMLOutputElement>("#result");
 
-    const numericYear = Number(year);
-    const maxDay = numericYear === 2025 ? 12 : 25;
-    if (dayInputEl) {
-      dayInputEl.max = String(maxDay);
-      if (Number(dayInputEl.value) > maxDay) {
-        dayInputEl.value = String(maxDay);
-      }
-    }
+	const numericYear = Number(year);
+	const maxDay = numericYear === 2025 ? 12 : 25;
+	if (dayInputEl) {
+		dayInputEl.max = String(maxDay);
+		if (Number(dayInputEl.value) > maxDay) {
+			dayInputEl.value = String(maxDay);
+		}
+	}
 
-    worker.addEventListener("message", (event) => {
-      switch (event.data.type) {
-        case "ready": {
-          fileInputEl?.removeAttribute("disabled");
-          break;
-        }
-        case "solved": {
-          const { part1, part2, elapsed } = event.data.payload;
+	worker.addEventListener("message", (event) => {
+		switch (event.data.type) {
+			case "ready": {
+				fileInputEl?.removeAttribute("disabled");
+				break;
+			}
+			case "solved": {
+				const { part1, part2, elapsed } = event.data.payload;
 
-          let resultHTML = "";
-          if (part1) {
-            resultHTML += `<h3>Part1:</h3><p>${part1}</p>`;
-          }
-          if (part2) {
-            resultHTML += `<h3>Part2:</h3><p>${part2}</p>`;
-          }
+				let resultHTML = "";
+				if (part1) {
+					resultHTML += `<h3>Part1:</h3><p>${part1}</p>`;
+				}
+				if (part2) {
+					resultHTML += `<h3>Part2:</h3><p>${part2}</p>`;
+				}
 
-          if (resultEl) {
-            resultHTML += `<p>Time to calculate: ${elapsed} ms</p>`;
-            resultEl.innerHTML = resultHTML;
-          }
-          break;
-        }
-        case "error": {
-          const { day, message } = event.data.payload;
-          if (resultEl) {
-            resultEl.innerHTML = `
+				if (resultEl) {
+					resultHTML += `<p>Time to calculate: ${elapsed} ms</p>`;
+					resultEl.innerHTML = resultHTML;
+				}
+				break;
+			}
+			case "error": {
+				const { day, message } = event.data.payload;
+				if (resultEl) {
+					resultEl.innerHTML = `
 <h3>Ya done goofed!<h3>
 <p>Failed to solve day ${day}</p>
 <p>Error message: ${message}</p>
 `;
-          }
-          break;
-        }
-      }
-    });
+				}
+				break;
+			}
+		}
+	});
 
-    fileInputEl?.addEventListener("change", async function (event) {
-      const day = Number(dayInputEl?.value);
-      const part = Number(partInputEl?.value);
-      const file = (event.target as HTMLInputElement)?.files?.[0];
-      const input = await file?.text();
+	fileInputEl?.addEventListener("change", async (event) => {
+		const day = Number(dayInputEl?.value);
+		const part = Number(partInputEl?.value);
+		const file = (event.target as HTMLInputElement)?.files?.[0];
+		const input = await file?.text();
 
-      if (!day || !part || !input) {
-        return;
-      }
+		if (!day || !part || !input) {
+			return;
+		}
 
-      worker.postMessage({ type: "solve", payload: { day, part, input } });
-    });
-  });
+		worker.postMessage({ type: "solve", payload: { day, part, input } });
+	});
+});
 </script>
