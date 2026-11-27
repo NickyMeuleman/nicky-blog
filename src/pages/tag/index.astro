@@ -1,33 +1,30 @@
 ---
-import { type CollectionEntry } from "astro:content";
-import { getCollection } from "astro:content";
+import { type CollectionEntry, getCollection } from "astro:content";
 import Layout from "$layouts/Layout.astro";
 import { slugify } from "$utils/index";
 
 const posts: CollectionEntry<"blog">[] = await getCollection("blog");
 const tagsNames = [...new Set(posts.flatMap((p) => p.data.tags))];
 const tags = tagsNames.map((name) => ({
-  slug: slugify(name),
-  name,
-  count: posts.filter((post) => post.data.tags.includes(name)).length,
+	slug: slugify(name),
+	name,
+	count: posts.filter((post) => post.data.tags.includes(name)).length,
 }));
 ---
 
 <Layout title="All tags">
-  <div class="col-start-2 md:col-start-4">
-    <h1 class="my-5 text-2xl">All tags</h1>
-    <ul class="m-4 list-inside list-disc">
-      {
-        tags.map((tag) => {
-          return (
-            <li>
-              <a href={`/tag/${tag.slug}`} transition:name={`${tag.slug}-tag`}>
-                {tag.name} ({tag.count})
-              </a>
-            </li>
-          );
-        })
-      }
-    </ul>
-  </div>
+	<div class="col-start-2 md:col-start-4">
+		<h1 class="my-5 text-2xl">All tags</h1>
+		<ul class="m-4 list-inside list-disc">
+			{tags.map((tag) => {
+				return (
+					<li>
+						<a href={`/tag/${tag.slug}`} transition:name={`${tag.slug}-tag`}>
+							{tag.name} ({tag.count})
+						</a>
+					</li>
+				);
+			})}
+		</ul>
+	</div>
 </Layout>
